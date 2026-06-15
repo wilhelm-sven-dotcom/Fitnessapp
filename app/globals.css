@@ -29,3 +29,10 @@ html {
     -moz-appearance: textfield;
   }
 }
+
+/* Frosted material for floating chrome (nav, sheet header, top bar) */
+.glass {
+  background-color: rgba(22, 22, 24, 0.72);
+  -webkit-backdrop-filter: saturate(160%) blur(20px);
+  backdrop-filter: saturate(160%) blur(20px);
+}
