@@ -9,6 +9,12 @@ import {
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { presc, resolveSession, warmupSets } from "@/lib/progression";
+import {
+  NEUTRAL_SCALE,
+  band,
+  scaleFor,
+  type ReadinessScale,
+} from "@/lib/readiness";
 import { estimateSessionMin, fitToBudget } from "@/lib/session-time";
 import { RING, type RingMetric } from "@/lib/ring-colors";
 import {
@@ -23,6 +29,7 @@ import type {
   AppSettings,
   BodyMetric,
   EquipKey,
+  Readiness,
   Exercise,
   LastPerf,
   LoggedSession,
@@ -54,6 +61,16 @@ export interface ExportEnvelope {
 
 const DEFAULT_SETTINGS: AppSettings = { timeBudgetMin: 25, autoregOn: true };
 
+/** Apply readiness set-count delta to weighted slots (clamped 2..sets+1). */
+function applyReadiness(list: ResolvedSlot[], scale: ReadinessScale): ResolvedSlot[] {
+  if (scale.setDelta === 0) return list;
+  return list.map((s) => {
+    if (!s.ex.weighted) return s;
+    const sets = Math.max(2, Math.min(s.ex.sets + 1, s.ex.sets + scale.setDelta));
+    return sets === s.ex.sets ? s : { ...s, ex: { ...s.ex, sets } };
+  });
+}
+
 interface TrainingContextValue {
   log: LoggedSession[];
   equip: EquipKey[];
@@ -74,6 +91,8 @@ interface TrainingContextValue {
   activeList: ResolvedSlot[];
   estimatedMin: number;
   settings: AppSettings;
+  todayReadiness: Readiness | null;
+  readinessScale: ReadinessScale;
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
   weekCount: number;
@@ -83,7 +102,7 @@ interface TrainingContextValue {
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
   sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
-  startSession: (key: string) => void;
+  startSession: (key: string, readiness?: Readiness) => void;
   setEntry: (
     exId: string,
     i: number,
@@ -100,6 +119,7 @@ interface TrainingContextValue {
   setBackTraffic: (v: TrafficLight | null) => void;
   setNote: (v: string) => void;
   setBudget: (min: number) => void;
+  setReadiness: (r: Readiness) => void;
   addBodyMetric: (m: BodyMetric) => Promise<void>;
   deleteBodyMetric: (idx: number) => Promise<void>;
   exportData: () => ExportEnvelope;
@@ -128,6 +148,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useState<Record<string, SetEntry[]>>({});
   const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
   const [note, setNoteState] = useState("");
+  const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
 
   useEffect(() => {
     let on = true;
@@ -185,29 +206,42 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1].dayKey);
     return (idx + 1) % TEMPLATE.length;
   }, [log]);
-  const recTpl = TEMPLATE[nextIndex];
-  const recFit = useMemo(
+  const readinessScale = useMemo(
     () =>
-      fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
-        protectCore: lastBackRed,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin],
+      settings.autoregOn && todayReadiness
+        ? scaleFor(band(todayReadiness.score))
+        : NEUTRAL_SCALE,
+    [settings.autoregOn, todayReadiness],
   );
-  const recList = recFit.list;
-  const estimatedMin = recFit.estMin;
 
-  // The session actually being trained — budget-trimmed, back-safe. Both the
-  // workout screen and saveSession read this so the shown and saved sessions agree.
+  const recTpl = TEMPLATE[nextIndex];
+  const recList = useMemo(
+    () =>
+      applyReadiness(
+        fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
+          protectCore: lastBackRed,
+        }).list,
+        readinessScale,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin, readinessScale],
+  );
+  const estimatedMin = useMemo(() => estimateSessionMin(recList), [recList]);
+
+  // The session actually being trained — budget-trimmed, back-safe, readiness-scaled.
+  // Both the workout screen and saveSession read this so shown == saved.
   const activeList = useMemo(
     () =>
       activeKey
-        ? fitToBudget(sessionOf(activeKey, lastBackRed), settings.timeBudgetMin, {
-            protectCore: lastBackRed,
-          }).list
+        ? applyReadiness(
+            fitToBudget(sessionOf(activeKey, lastBackRed), settings.timeBudgetMin, {
+              protectCore: lastBackRed,
+            }).list,
+            readinessScale,
+          )
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeKey, choices, equip, custom, lastBackRed, settings.timeBudgetMin],
+    [activeKey, choices, equip, custom, lastBackRed, settings.timeBudgetMin, readinessScale],
   );
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
@@ -250,9 +284,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ];
   }, [log, weekCount, muscleVolumes]);
 
-  const initEntryFor = (ex: Exercise): SetEntry[] => {
+  const initEntryFor = (
+    ex: Exercise,
+    scale: ReadinessScale = readinessScale,
+  ): SetEntry[] => {
     const p = presc(ex, lastPerf(ex.id), {
       lighter: daysAgo != null && daysAgo > 5,
+      loadMult: scale.loadMult,
+      cap: scale.cap,
     });
     const working: SetEntry[] = Array.from({ length: ex.sets }, () => ({
       weight: p.w,
@@ -263,13 +302,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return [...warm, ...working];
   };
 
-  const startSession = (key: string) => {
-    const list = fitToBudget(sessionOf(key, lastBackRed), settings.timeBudgetMin, {
-      protectCore: lastBackRed,
-    }).list;
+  const startSession = (key: string, readiness?: Readiness) => {
+    const r = readiness ?? todayReadiness;
+    const scale =
+      settings.autoregOn && r ? scaleFor(band(r.score)) : NEUTRAL_SCALE;
+    if (readiness) setTodayReadiness(readiness);
+    const list = applyReadiness(
+      fitToBudget(sessionOf(key, lastBackRed), settings.timeBudgetMin, {
+        protectCore: lastBackRed,
+      }).list,
+      scale,
+    );
     const init: Record<string, SetEntry[]> = {};
     list.forEach(({ ex }) => {
-      init[ex.id] = initEntryFor(ex);
+      init[ex.id] = initEntryFor(ex, scale);
     });
     setEntries(init);
     setActiveKey(key);
@@ -377,6 +423,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     };
     if (backTraffic) newSession.backTraffic = backTraffic;
     if (note.trim()) newSession.note = note.trim();
+    if (todayReadiness) newSession.readiness = todayReadiness;
     const newLog = [...log, newSession];
     setSaving(true);
     await storage.setJSON(KEYS.log, newLog);
@@ -386,6 +433,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setEntries({});
     setBackTrafficState(null);
     setNoteState("");
+    setTodayReadiness(null);
   };
 
   const deleteSession = async (realIdx: number) => {
@@ -478,6 +526,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     activeList,
     estimatedMin,
     settings,
+    todayReadiness,
+    readinessScale,
     ringMetrics,
     muscleVolumes,
     weekCount,
@@ -499,6 +549,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTraffic: (v) => setBackTrafficState(v),
     setNote: (v) => setNoteState(v),
     setBudget,
+    setReadiness: (r) => setTodayReadiness(r),
     addBodyMetric,
     deleteBodyMetric,
     exportData,

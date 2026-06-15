@@ -22,7 +22,6 @@ export default function HomePage() {
     recList,
     activeKey,
     lastLabel,
-    startSession,
     seeDoctor,
     log,
     daysAgo,
@@ -36,10 +35,7 @@ export default function HomePage() {
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
   const chips = homeChips({ daysAgo, weekCount });
 
-  const start = (key: string) => {
-    startSession(key);
-    router.push(`/workout/${key}`);
-  };
+  const start = (key: string) => router.push(`/workout/${key}`);
 
   return (
     <div>

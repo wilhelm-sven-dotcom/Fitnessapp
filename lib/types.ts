@@ -115,12 +115,21 @@ export interface LoggedSession {
   estimatedMin?: number;
   /** Marked as a deload session (reduced load/volume). */
   isDeload?: boolean;
+  /** Pre-session readiness check. */
+  readiness?: Readiness;
 }
 
 export interface BodyMetric {
   date: string; // ISO
   weightKg?: number;
   waistCm?: number;
+}
+
+export interface Readiness {
+  sleep: 1 | 2 | 3;
+  energy: 1 | 2 | 3;
+  back: 1 | 2 | 3;
+  score: number; // 0..1
 }
 
 export interface AppSettings {

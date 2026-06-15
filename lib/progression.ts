@@ -148,14 +148,21 @@ export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
   return { weight: null, repTarget: Math.max(ex.repLow, maxReps), reason: "hold" };
 }
 
-/** Automatic progression toward hypertrophy — RIR-driven, with a rep-based fallback. */
+/**
+ * Automatic progression toward hypertrophy — RIR-driven, rep-based fallback.
+ * `opts.loadMult` scales the suggested weight (daily readiness / deload),
+ * `opts.cap` clamps the rep target to the low end (don't chase reps on a low day).
+ */
 export function presc(
   ex: Exercise,
   lp: LastPerf | null,
-  opts: { lighter?: boolean } = {},
+  opts: { lighter?: boolean; loadMult?: number; cap?: boolean } = {},
 ): Prescription {
   const weighted = !!ex.weighted;
   const timed = ex.unit === "Sek";
+  const lm = opts.loadMult ?? 1;
+  const scaleW = (w: number) => round25(w * lm);
+  const repOf = (r: number) => (opts.cap ? ex.repLow : r);
 
   if (!lp) {
     return {
@@ -181,14 +188,16 @@ export function presc(
         reason: "lighter",
         line: `Ruhig einsteigen: ${ex.sets} × ${Math.max(ex.repLow, maxReps)} s`,
       };
-    if (weighted)
+    if (weighted) {
+      const w = scaleW(lastW);
       return {
-        w: lastW ? String(lastW) : "",
+        w: lastW ? String(w) : "",
         r: String(ex.repLow),
-        suggestedWeight: lastW || undefined,
+        suggestedWeight: lastW ? w : undefined,
         reason: "lighter",
-        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW || "?"} kg`,
+        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW ? w : "?"} kg`,
       };
+    }
     return {
       w: "",
       r: String(Math.max(ex.repLow, maxReps)),
@@ -200,34 +209,42 @@ export function presc(
   const adj = rirAdjust(ex, work);
   if (adj) {
     if (timed) {
+      const t = opts.cap ? ex.repLow : adj.repTarget;
       return {
         w: "",
-        r: String(adj.repTarget),
+        r: String(t),
         reason: adj.reason,
         line:
-          `Heute: ${ex.sets} × ${adj.repTarget} s halten` +
-          (adj.reason === "up" ? " (länger!)" : ""),
+          `Heute: ${ex.sets} × ${t} s halten` +
+          (adj.reason === "up" && !opts.cap ? " (länger!)" : ""),
       };
     }
     if (weighted) {
-      const w = adj.weight ?? lastW;
-      const note =
-        adj.reason === "up" ? " — hoch!" : adj.reason === "down" ? " — etwas leichter" : "";
+      const w = scaleW(adj.weight ?? lastW);
+      const r = repOf(adj.repTarget);
+      const note = opts.cap
+        ? ""
+        : adj.reason === "up"
+          ? " — hoch!"
+          : adj.reason === "down"
+            ? " — etwas leichter"
+            : "";
       return {
         w: String(w),
-        r: String(adj.repTarget),
-        suggestedWeight: adj.weight ?? undefined,
+        r: String(r),
+        suggestedWeight: w,
         reason: adj.reason,
-        line: `Heute: ${ex.sets} × ${adj.repTarget} @ ${w} kg${note}`,
+        line: `Heute: ${ex.sets} × ${r} @ ${w} kg${note}`,
       };
     }
+    const r = repOf(adj.repTarget);
     return {
       w: "",
-      r: String(adj.repTarget),
+      r: String(r),
       reason: adj.reason,
       line:
-        `Heute: ${ex.sets} × ${adj.repTarget} Wdh` +
-        (adj.reason === "up" ? " (mehr!)" : ""),
+        `Heute: ${ex.sets} × ${r} Wdh` +
+        (adj.reason === "up" && !opts.cap ? " (mehr!)" : ""),
     };
   }
 
@@ -236,39 +253,51 @@ export function presc(
   const top =
     enough && work.slice(0, ex.sets).every((s) => Number(s.reps) >= ex.repHigh);
   if (timed) {
-    const target = top ? maxReps + 5 : Math.max(ex.repLow, maxReps);
+    const target = opts.cap
+      ? ex.repLow
+      : top
+        ? maxReps + 5
+        : Math.max(ex.repLow, maxReps);
     return {
       w: "",
       r: String(target),
       reason: top ? "up" : "hold",
-      line: `Heute: ${ex.sets} × ${target} s halten` + (top ? " (länger!)" : ""),
+      line:
+        `Heute: ${ex.sets} × ${target} s halten` +
+        (top && !opts.cap ? " (länger!)" : ""),
     };
   }
   if (weighted) {
     if (top) {
-      const nw = round25(lastW + 2.5);
+      const w = scaleW(lastW + 2.5);
+      const r = repOf(ex.repLow);
       return {
-        w: String(nw),
-        r: String(ex.repLow),
-        suggestedWeight: nw,
+        w: String(w),
+        r: String(r),
+        suggestedWeight: w,
         reason: "up",
-        line: `Heute: ${ex.sets} × ${ex.repLow} @ ${nw} kg — hoch!`,
+        line: `Heute: ${ex.sets} × ${r} @ ${w} kg${opts.cap ? "" : " — hoch!"}`,
       };
     }
-    const tr = Math.min(ex.repHigh, maxReps + 1);
+    const tr = repOf(Math.min(ex.repHigh, maxReps + 1));
+    const w = scaleW(lastW);
     return {
-      w: lastW ? String(lastW) : "",
+      w: lastW ? String(w) : "",
       r: String(tr),
-      suggestedWeight: lastW || undefined,
+      suggestedWeight: lastW ? w : undefined,
       reason: "rep",
-      line: `Heute: ${ex.sets} × ${tr} @ ${lastW || "?"} kg`,
+      line: `Heute: ${ex.sets} × ${tr} @ ${lastW ? w : "?"} kg`,
     };
   }
-  const tr = top ? maxReps + 1 : Math.min(ex.repHigh, maxReps + 1);
+  const tr = opts.cap
+    ? ex.repLow
+    : top
+      ? maxReps + 1
+      : Math.min(ex.repHigh, maxReps + 1);
   return {
     w: "",
     r: String(tr),
     reason: top ? "up" : "rep",
-    line: `Heute: ${ex.sets} × ${tr} Wdh` + (top ? " (mehr!)" : ""),
+    line: `Heute: ${ex.sets} × ${tr} Wdh` + (top && !opts.cap ? " (mehr!)" : ""),
   };
 }

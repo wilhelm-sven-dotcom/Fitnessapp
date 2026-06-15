@@ -11,6 +11,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
+import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
@@ -46,6 +47,8 @@ export default function WorkoutPage() {
     saving,
     activeList,
     settings,
+    todayReadiness,
+    readinessScale,
     lastPerf,
     backTraffic,
     setBackTraffic,
@@ -58,11 +61,15 @@ export default function WorkoutPage() {
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
   const [pickSlot, setPickSlot] = useState<string | null>(null);
+  const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restOn, setRestOn] = useState(false);
 
   useEffect(() => {
-    if (key && activeKey !== key) startSession(key);
+    if (key && activeKey !== key) {
+      if (settings.autoregOn && !todayReadiness) setGateOpen(true);
+      else startSession(key);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, activeKey]);
 
@@ -104,7 +111,24 @@ export default function WorkoutPage() {
   }
 
   if (activeKey !== key) {
-    return <div className="py-10 text-center font-mono text-sm text-neutral-600">bereite vor…</div>;
+    return (
+      <>
+        <div className="py-10 text-center font-mono text-sm text-neutral-600">
+          bereite vor…
+        </div>
+        <ReadinessGate
+          open={gateOpen}
+          onClose={() => {
+            setGateOpen(false);
+            if (key) startSession(key);
+          }}
+          onSubmit={(r) => {
+            setGateOpen(false);
+            if (key) startSession(key, r);
+          }}
+        />
+      </>
+    );
   }
 
   const done = list.filter(({ ex }) =>
@@ -148,7 +172,11 @@ export default function WorkoutPage() {
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
           const lp = lastPerf(ex.id);
-          const p = presc(ex, lp, { lighter });
+          const p = presc(ex, lp, {
+            lighter,
+            loadMult: readinessScale.loadMult,
+            cap: readinessScale.cap,
+          });
           const chips = exerciseChips({
             ex,
             prescription: p,
