@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { ActivityRings } from "@/components/rings/ActivityRings";
 import { RingLegend } from "@/components/rings/RingLegend";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
+import { DurationBadge } from "@/components/home/DurationBadge";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
+import { cn } from "@/lib/utils";
+
+const BUDGETS = [20, 25, 30];
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,6 +28,9 @@ export default function HomePage() {
     daysAgo,
     weekCount,
     ringMetrics,
+    estimatedMin,
+    settings,
+    setBudget,
   } = useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
@@ -97,7 +104,26 @@ export default function HomePage() {
           Empfohlen heute
         </p>
         <h2 className="text-3xl font-semibold tracking-tight">{recTpl.name}</h2>
-        <p className="mb-4 text-neutral-400">{recTpl.focus}</p>
+        <p className="mb-3 text-neutral-400">{recTpl.focus}</p>
+        <div className="mb-4 flex items-center gap-2">
+          <DurationBadge min={estimatedMin} />
+          <div className="ml-auto flex gap-1">
+            {BUDGETS.map((b) => (
+              <Pressable
+                key={b}
+                onClick={() => setBudget(b)}
+                className={cn(
+                  "rounded-lg px-2.5 py-1 text-xs font-medium tabular-nums focus:outline-none",
+                  settings.timeBudgetMin === b
+                    ? "bg-accent-coverage text-neutral-950"
+                    : "bg-neutral-800 text-neutral-400",
+                )}
+              >
+                {b}
+              </Pressable>
+            ))}
+          </div>
+        </div>
         <div className="mb-5 flex flex-wrap gap-1.5">
           {tags.map((t) => (
             <span

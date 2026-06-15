@@ -9,6 +9,7 @@ import {
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { presc, resolveSession, warmupSets } from "@/lib/progression";
+import { estimateSessionMin, fitToBudget } from "@/lib/session-time";
 import { RING, type RingMetric } from "@/lib/ring-colors";
 import {
   coverageCount,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/volume";
 import { KEYS, storage } from "@/lib/storage";
 import type {
+  AppSettings,
   BodyMetric,
   EquipKey,
   Exercise,
@@ -47,7 +49,10 @@ export interface ExportEnvelope {
   choices: Record<string, string>;
   custom: Exercise[];
   body: BodyMetric[];
+  settings?: AppSettings;
 }
+
+const DEFAULT_SETTINGS: AppSettings = { timeBudgetMin: 25, autoregOn: true };
 
 interface TrainingContextValue {
   log: LoggedSession[];
@@ -66,6 +71,9 @@ interface TrainingContextValue {
   nextIndex: number;
   recTpl: Template;
   recList: ResolvedSlot[];
+  activeList: ResolvedSlot[];
+  estimatedMin: number;
+  settings: AppSettings;
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
   weekCount: number;
@@ -91,6 +99,7 @@ interface TrainingContextValue {
   resetAll: () => Promise<void>;
   setBackTraffic: (v: TrafficLight | null) => void;
   setNote: (v: string) => void;
+  setBudget: (min: number) => void;
   addBodyMetric: (m: BodyMetric) => Promise<void>;
   deleteBodyMetric: (idx: number) => Promise<void>;
   exportData: () => ExportEnvelope;
@@ -111,6 +120,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -122,12 +132,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let on = true;
     (async () => {
-      const [l, e, c, cu, b] = await Promise.all([
+      const [l, e, c, cu, b, s] = await Promise.all([
         storage.getJSON<LoggedSession[]>(KEYS.log, []),
         storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
         storage.getJSON<Record<string, string>>(KEYS.choices, {}),
         storage.getJSON<Exercise[]>(KEYS.custom, []),
         storage.getJSON<BodyMetric[]>(KEYS.body, []),
+        storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
       ]);
       if (!on) return;
       if (Array.isArray(l)) setLog(l);
@@ -135,6 +146,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       if (c && typeof c === "object") setChoices(c);
       if (Array.isArray(cu)) setCustom(cu);
       if (Array.isArray(b)) setBody(b);
+      if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
       setLoading(false);
     })();
     return () => {
@@ -174,10 +186,28 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return (idx + 1) % TEMPLATE.length;
   }, [log]);
   const recTpl = TEMPLATE[nextIndex];
-  const recList = useMemo(
-    () => sessionOf(recTpl.key, lastBackRed),
+  const recFit = useMemo(
+    () =>
+      fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
+        protectCore: lastBackRed,
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, lastBackRed],
+    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin],
+  );
+  const recList = recFit.list;
+  const estimatedMin = recFit.estMin;
+
+  // The session actually being trained — budget-trimmed, back-safe. Both the
+  // workout screen and saveSession read this so the shown and saved sessions agree.
+  const activeList = useMemo(
+    () =>
+      activeKey
+        ? fitToBudget(sessionOf(activeKey, lastBackRed), settings.timeBudgetMin, {
+            protectCore: lastBackRed,
+          }).list
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeKey, choices, equip, custom, lastBackRed, settings.timeBudgetMin],
   );
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
@@ -234,7 +264,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
 
   const startSession = (key: string) => {
-    const list = sessionOf(key, lastBackRed);
+    const list = fitToBudget(sessionOf(key, lastBackRed), settings.timeBudgetMin, {
+      protectCore: lastBackRed,
+    }).list;
     const init: Record<string, SetEntry[]> = {};
     list.forEach(({ ex }) => {
       init[ex.id] = initEntryFor(ex);
@@ -267,6 +299,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCustom(next);
     await storage.setJSON(KEYS.custom, next);
   };
+  const saveSettings = async (next: AppSettings) => {
+    setSettings(next);
+    await storage.setJSON(KEYS.settings, next);
+  };
+  const setBudget = (min: number) =>
+    void saveSettings({ ...settings, timeBudgetMin: min });
 
   const swapExercise = (slotKey: string, newId: string) => {
     const next = { ...choices, [slotKey]: newId };
@@ -310,7 +348,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const saveSession = async () => {
     const tpl = TEMPLATE.find((t) => t.key === activeKey);
     if (!tpl) return;
-    const list = sessionOf(tpl.key, lastBackRed);
+    const list = activeList;
     const exercises = list.map(({ ex }) => ({
       id: ex.id,
       name: ex.name,
@@ -335,6 +373,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       dayName: tpl.name,
       focus: tpl.focus,
       exercises,
+      estimatedMin: estimateSessionMin(activeList),
     };
     if (backTraffic) newSession.backTraffic = backTraffic;
     if (note.trim()) newSession.note = note.trim();
@@ -376,13 +415,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
 
   const exportData = (): ExportEnvelope => ({
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: new Date().toISOString(),
     log,
     equip,
     choices,
     custom,
     body,
+    settings,
   });
 
   const importData = async (raw: unknown): Promise<boolean> => {
@@ -397,17 +437,23 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         : choices;
     const nextCustom = Array.isArray(d.custom) ? (d.custom as Exercise[]) : custom;
     const nextBody = Array.isArray(d.body) ? (d.body as BodyMetric[]) : body;
+    const nextSettings =
+      d.settings && typeof d.settings === "object"
+        ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
+        : settings;
     setLog(nextLog);
     setEquip(nextEquip);
     setChoices(nextChoices);
     setCustom(nextCustom);
     setBody(nextBody);
+    setSettings(nextSettings);
     await Promise.all([
       storage.setJSON(KEYS.log, nextLog),
       storage.setJSON(KEYS.equip, nextEquip),
       storage.setJSON(KEYS.choices, nextChoices),
       storage.setJSON(KEYS.custom, nextCustom),
       storage.setJSON(KEYS.body, nextBody),
+      storage.setJSON(KEYS.settings, nextSettings),
     ]);
     return true;
   };
@@ -429,6 +475,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     nextIndex,
     recTpl,
     recList,
+    activeList,
+    estimatedMin,
+    settings,
     ringMetrics,
     muscleVolumes,
     weekCount,
@@ -449,6 +498,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     resetAll,
     setBackTraffic: (v) => setBackTrafficState(v),
     setNote: (v) => setNoteState(v),
+    setBudget,
     addBodyMetric,
     deleteBodyMetric,
     exportData,

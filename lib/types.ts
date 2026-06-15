@@ -111,12 +111,25 @@ export interface LoggedSession {
   backTraffic?: TrafficLight;
   /** Free-text note ("Wie war's?"). */
   note?: string;
+  /** Estimated session length at start (minutes). */
+  estimatedMin?: number;
+  /** Marked as a deload session (reduced load/volume). */
+  isDeload?: boolean;
 }
 
 export interface BodyMetric {
   date: string; // ISO
   weightKg?: number;
   waistCm?: number;
+}
+
+export interface AppSettings {
+  /** Target session length in minutes. */
+  timeBudgetMin: number;
+  /** Master switch for daily readiness autoregulation. */
+  autoregOn: boolean;
+  /** ISO date of the last accepted deload week. */
+  lastDeloadDate?: string;
 }
 
 /** Most recent performance of one exercise, used to derive the next prescription. */

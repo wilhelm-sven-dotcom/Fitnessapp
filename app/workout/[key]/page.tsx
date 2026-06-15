@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { RestTimer } from "@/components/workout/RestTimer";
+import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
@@ -19,6 +20,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
+import { estimateSessionMin } from "@/lib/session-time";
 import { cn } from "@/lib/utils";
 import type { TrafficLight } from "@/lib/types";
 
@@ -42,9 +44,9 @@ export default function WorkoutPage() {
     swapExercise,
     saveSession,
     saving,
-    sessionOf,
+    activeList,
+    settings,
     lastPerf,
-    lastBackRed,
     backTraffic,
     setBackTraffic,
     note,
@@ -85,7 +87,7 @@ export default function WorkoutPage() {
   };
 
   const tpl = TEMPLATE.find((t) => t.key === key);
-  const list = key ? sessionOf(key, lastBackRed) : [];
+  const list = activeList;
 
   if (!tpl) {
     return (
@@ -140,6 +142,8 @@ export default function WorkoutPage() {
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
+
+      <SessionTimeBar estMin={estimateSessionMin(list)} budgetMin={settings.timeBudgetMin} />
 
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
