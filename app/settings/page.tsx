@@ -1,10 +1,19 @@
 "use client";
 
-import { Check, ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Check,
+  ChevronRight,
+  Download,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { fmtDateShort } from "@/lib/format";
 import { EQUIP_LIST, PATTERN_LABEL, PROFILE, TEMPLATE } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import type { Exercise, Pattern, Unit } from "@/lib/types";
@@ -18,6 +27,11 @@ export default function SettingsPage() {
     removeCustom,
     sessionOf,
     resetAll,
+    body,
+    addBodyMetric,
+    deleteBodyMetric,
+    exportData,
+    importData,
   } = useTraining();
 
   const [name, setName] = useState("");
@@ -26,6 +40,10 @@ export default function SettingsPage() {
   const [weighted, setWeighted] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);
   const [guideEx, setGuideEx] = useState<Exercise | null>(null);
+  const [bw, setBw] = useState("");
+  const [waist, setWaist] = useState("");
+  const [importMsg, setImportMsg] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const submit = () => {
     if (!name.trim()) return;
@@ -36,6 +54,41 @@ export default function SettingsPage() {
       weighted: unit === "Sek" ? false : weighted,
     });
     setName("");
+  };
+
+  const addBody = () => {
+    if (!bw.trim() && !waist.trim()) return;
+    void addBodyMetric({
+      date: new Date().toISOString(),
+      weightKg: bw.trim() ? Number(bw) : undefined,
+      waistCm: waist.trim() ? Number(waist) : undefined,
+    });
+    setBw("");
+    setWaist("");
+  };
+
+  const exportFile = () => {
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `training-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const ok = await importData(JSON.parse(await file.text()));
+      setImportMsg(ok ? "Import erfolgreich." : "Datei nicht erkannt.");
+    } catch {
+      setImportMsg("Datei konnte nicht gelesen werden.");
+    }
   };
 
   return (
@@ -169,6 +222,64 @@ export default function SettingsPage() {
         )}
       </section>
 
+      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-amber-400">
+          Körperdaten
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            value={bw}
+            onChange={(e) => setBw(e.target.value)}
+            placeholder="Gewicht kg"
+            className="min-w-0 flex-1 rounded-xl bg-neutral-800 px-3 py-2.5 text-center font-mono tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            value={waist}
+            onChange={(e) => setWaist(e.target.value)}
+            placeholder="Bauch cm"
+            className="min-w-0 flex-1 rounded-xl bg-neutral-800 px-3 py-2.5 text-center font-mono tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
+        </div>
+        <Pressable
+          onClick={addBody}
+          disabled={!bw.trim() && !waist.trim()}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-100 py-2.5 text-sm font-medium text-neutral-950 focus:outline-none disabled:opacity-40"
+        >
+          <Plus size={16} strokeWidth={2.5} /> Eintragen
+        </Pressable>
+        {body.length > 0 && (
+          <div className="mt-3 space-y-1">
+            {[...body]
+              .map((m, i) => ({ m, i }))
+              .reverse()
+              .map(({ m, i }) => (
+                <div
+                  key={m.date + i}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-neutral-950 px-3 py-2"
+                >
+                  <span className="text-sm text-neutral-300">
+                    {fmtDateShort(m.date)}
+                    {m.weightKg != null ? ` · ${m.weightKg} kg` : ""}
+                    {m.waistCm != null ? ` · ${m.waistCm} cm` : ""}
+                  </span>
+                  <Pressable
+                    onClick={() => deleteBodyMetric(i)}
+                    className="shrink-0 rounded p-1 text-neutral-500 focus:outline-none"
+                  >
+                    <Trash2 size={14} />
+                  </Pressable>
+                </div>
+              ))}
+          </div>
+        )}
+      </section>
+
       <p className="mb-3 px-1 text-xs text-neutral-500">
         Übung antippen für Animation und Ausführung. Die grüne Linie ist deine
         Wirbelsäule, halte sie gerade.
@@ -207,8 +318,31 @@ export default function SettingsPage() {
       <section className="rounded-2xl bg-neutral-900 p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-500">Daten</p>
         <p className="mb-3 text-xs leading-relaxed text-neutral-500">
-          Alle Einheiten werden auf diesem Gerät gespeichert und bleiben erhalten.
+          Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als
+          Datei oder spiele ein Backup zurück.
         </p>
+        <div className="mb-4 flex flex-col gap-2">
+          <Pressable
+            onClick={exportFile}
+            className="flex items-center justify-center gap-2 rounded-xl bg-neutral-800 py-2.5 text-sm font-medium text-neutral-100 focus:outline-none"
+          >
+            <Download size={16} /> Export (JSON)
+          </Pressable>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={onImport}
+            className="hidden"
+          />
+          <Pressable
+            onClick={() => fileRef.current?.click()}
+            className="flex items-center justify-center gap-2 rounded-xl bg-neutral-800 py-2.5 text-sm font-medium text-neutral-100 focus:outline-none"
+          >
+            <Upload size={16} /> Import (JSON)
+          </Pressable>
+          {importMsg && <p className="text-xs text-neutral-400">{importMsg}</p>}
+        </div>
         {!confirmReset ? (
           <Pressable
             onClick={() => setConfirmReset(true)}

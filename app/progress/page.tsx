@@ -27,8 +27,49 @@ const kindLabel: Record<Kind, string> = {
   time: "Haltezeit",
 };
 
+function BodyCard({
+  label,
+  unit,
+  values,
+}: {
+  label: string;
+  unit: string;
+  values: number[];
+}) {
+  const latest = values[values.length - 1];
+  const delta = values.length > 1 ? latest - values[0] : 0;
+  return (
+    <div className="rounded-2xl bg-neutral-900 p-4">
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="font-mono text-3xl tabular-nums text-neutral-100">
+            {latest}
+            <span className="text-base text-neutral-500"> {unit}</span>
+          </p>
+          <p className="mt-0.5 text-xs text-neutral-500">{label}</p>
+        </div>
+        {values.length > 1 && (
+          <span className="text-xs tabular-nums text-neutral-400">
+            {delta > 0 ? "+" : ""}
+            {delta.toFixed(1)} {unit}
+          </span>
+        )}
+      </div>
+      <div className="mt-2">
+        <TrendChart values={values} />
+      </div>
+    </div>
+  );
+}
+
 export default function ProgressPage() {
-  const { log } = useTraining();
+  const { log, body } = useTraining();
+  const weightSeries = body
+    .filter((m) => m.weightKg != null)
+    .map((m) => m.weightKg as number);
+  const waistSeries = body
+    .filter((m) => m.waistCm != null)
+    .map((m) => m.waistCm as number);
 
   const byEx = useMemo(() => {
     const m: Record<string, ExSeries> = {};
@@ -101,14 +142,28 @@ export default function ProgressPage() {
 
       <BackTraffic log={log} />
 
-      {list.length === 0 && (
-        <div className="rounded-2xl bg-neutral-900 p-8 text-center">
-          <p className="text-neutral-400">Noch nichts zu zeigen.</p>
-          <p className="mt-1 text-sm text-neutral-600">
-            Trainiere ein paar Einheiten, dann erscheinen hier deine Kurven und Rekorde.
-          </p>
+      {(weightSeries.length > 0 || waistSeries.length > 0) && (
+        <div className="mb-3 space-y-3">
+          {weightSeries.length > 0 && (
+            <BodyCard label="Körpergewicht" unit="kg" values={weightSeries} />
+          )}
+          {waistSeries.length > 0 && (
+            <BodyCard label="Bauchumfang" unit="cm" values={waistSeries} />
+          )}
         </div>
       )}
+
+      {list.length === 0 &&
+        weightSeries.length === 0 &&
+        waistSeries.length === 0 &&
+        !log.some((s) => s.backTraffic) && (
+          <div className="rounded-2xl bg-neutral-900 p-8 text-center">
+            <p className="text-neutral-400">Noch nichts zu zeigen.</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              Trainiere ein paar Einheiten, dann erscheinen hier deine Kurven und Rekorde.
+            </p>
+          </div>
+        )}
 
       <div className="space-y-3">
         {list.map((e) => (
