@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { BackTraffic } from "@/components/progress/BackTraffic";
+import { GoalCard } from "@/components/progress/GoalCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
@@ -161,6 +162,8 @@ export default function ProgressPage() {
       )}
 
       <ProgressPhotos body={body} />
+
+      <GoalCard />
 
       {list.length === 0 &&
         weightSeries.length === 0 &&
