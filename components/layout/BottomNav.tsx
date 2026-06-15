@@ -21,7 +21,10 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-neutral-950">
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-neutral-950"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="mx-auto flex max-w-md">
         {tabs.map(({ href, label, Icon }) => {
           const active =

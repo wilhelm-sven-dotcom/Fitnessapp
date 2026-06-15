@@ -315,6 +315,17 @@ export default function SettingsPage() {
         );
       })}
 
+      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-amber-400">
+          Als App installieren
+        </p>
+        <p className="text-xs leading-relaxed text-neutral-500">
+          iPhone: in Safari unten auf „Teilen“ tippen → „Zum Home-Bildschirm“.
+          Android: im Chrome-Menü „App installieren“. Danach startet Training im
+          Vollbild mit eigenem Icon — und läuft auch offline.
+        </p>
+      </section>
+
       <section className="rounded-2xl bg-neutral-900 p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-500">Daten</p>
         <p className="mb-3 text-xs leading-relaxed text-neutral-500">

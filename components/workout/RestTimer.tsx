@@ -19,6 +19,7 @@ export function RestTimer({
   return (
     <motion.div
       className="fixed inset-x-0 bottom-0 z-40"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       initial={{ y: 90, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 90, opacity: 0 }}
