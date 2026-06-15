@@ -11,7 +11,8 @@ import { PageTransition } from "./PageTransition";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loading } = useTraining();
   const pathname = usePathname();
-  const hideChrome = pathname?.startsWith("/workout") ?? false;
+  const hideChrome =
+    pathname?.startsWith("/workout") || pathname?.startsWith("/form") || false;
 
   if (loading) {
     return (

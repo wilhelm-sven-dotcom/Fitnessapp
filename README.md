@@ -22,6 +22,11 @@ empfindlichen unteren Rücken.
 - **Fortschritts-Fotos** — zu jeder Körper-Messung ein Foto (lokal in IndexedDB,
   bei Cloud-Sync zusätzlich im privaten Supabase-Storage-Bucket), inkl.
   Start/Jetzt-Vergleich.
+- **Muskel-Balance-Radar** & **Ziel-Rechner** — Balance je Muskel und lineare
+  Fortschritts-Prognose („in ~8 Wochen bei …").
+- **Kamera-Form-Check (Beta)** — Pose-Erkennung im Browser (MediaPipe, on-device,
+  kein Upload): Live-Wiederholungszähler und Warnung, wenn der Oberkörper unter
+  Last zu weit nach vorne kippt (Rücken-Schutz).
 - **Export/Import** als JSON.
 
 ## Stack

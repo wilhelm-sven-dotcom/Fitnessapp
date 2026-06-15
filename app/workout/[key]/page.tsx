@@ -3,6 +3,7 @@
 import { AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
+  Camera,
   ChevronRight,
   Mic,
   Repeat,
@@ -23,6 +24,7 @@ import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
+import { isPoseSupported } from "@/lib/pose/landmarker";
 import {
   createRecognizer,
   isVoiceInputSupported,
@@ -77,6 +79,7 @@ export default function WorkoutPage() {
   const [restOn, setRestOn] = useState(false);
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [poseSupported, setPoseSupported] = useState(false);
   const announcedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -87,8 +90,9 @@ export default function WorkoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, activeKey]);
 
-  // Probe speech support after mount so SSR and first client render agree.
+  // Probe device support after mount so SSR and first client render agree.
   useEffect(() => setVoiceSupported(isVoiceInputSupported()), []);
+  useEffect(() => setPoseSupported(isPoseSupported()), []);
 
   useEffect(() => {
     if (!restOn) return;
@@ -363,6 +367,14 @@ export default function WorkoutPage() {
                     className="flex items-center gap-1 rounded px-1 py-1 text-xs text-neutral-400 focus:outline-none"
                   >
                     <Repeat size={13} /> Übung ändern
+                  </Pressable>
+                )}
+                {poseSupported && (
+                  <Pressable
+                    onClick={() => router.push(`/form/${ex.id}`)}
+                    className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-coverage focus:outline-none"
+                  >
+                    <Camera size={13} /> Kamera-Check
                   </Pressable>
                 )}
               </div>
