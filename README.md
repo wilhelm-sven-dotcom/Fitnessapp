@@ -19,6 +19,9 @@ empfindlichen unteren Rücken.
   (Claude, serverseitig; siehe Umgebungsvariablen).
 - **Cloud-Sync** — optionaler Login per E-Mail (Supabase), synchronisiert die
   Daten über mehrere Geräte. Ohne Konfiguration bleibt alles lokal.
+- **Fortschritts-Fotos** — zu jeder Körper-Messung ein Foto (lokal in IndexedDB,
+  bei Cloud-Sync zusätzlich im privaten Supabase-Storage-Bucket), inkl.
+  Start/Jetzt-Vergleich.
 - **Export/Import** als JSON.
 
 ## Stack

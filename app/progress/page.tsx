@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { BackTraffic } from "@/components/progress/BackTraffic";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
+import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { TrendChart } from "@/components/progress/TrendChart";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
@@ -156,9 +157,12 @@ export default function ProgressPage() {
         </div>
       )}
 
+      <ProgressPhotos body={body} />
+
       {list.length === 0 &&
         weightSeries.length === 0 &&
         waistSeries.length === 0 &&
+        !body.some((b) => b.photoId) &&
         !log.some((s) => s.backTraffic) && (
           <div className="rounded-2xl bg-neutral-900 p-8 text-center">
             <p className="text-neutral-400">Noch nichts zu zeigen.</p>

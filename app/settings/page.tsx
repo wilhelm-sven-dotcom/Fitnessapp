@@ -1,11 +1,12 @@
 "use client";
 
-import { Download, Plus, RotateCcw, Trash2, Upload } from "lucide-react";
+import { Camera, Download, Plus, RotateCcw, Trash2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
 import { PROFILE } from "@/lib/exercises";
 
@@ -28,15 +29,46 @@ export default function SettingsPage() {
   const [importMsg, setImportMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const photoRef = useRef<HTMLInputElement>(null);
+  const [photoId, setPhotoId] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+
+  const clearPhoto = () => {
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    setPhotoUrl(null);
+    setPhotoId(null);
+  };
+
+  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoBusy(true);
+    try {
+      const blob = await downscaleImage(file);
+      const id = genPhotoId();
+      await putPhoto(id, blob);
+      void uploadPhoto(id, blob);
+      if (photoUrl) URL.revokeObjectURL(photoUrl);
+      setPhotoId(id);
+      setPhotoUrl(URL.createObjectURL(blob));
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
   const addBody = () => {
-    if (!bw.trim() && !waist.trim()) return;
+    if (!bw.trim() && !waist.trim() && !photoId) return;
     void addBodyMetric({
       date: new Date().toISOString(),
       weightKg: bw.trim() ? Number(bw) : undefined,
       waistCm: waist.trim() ? Number(waist) : undefined,
+      photoId: photoId ?? undefined,
     });
     setBw("");
     setWaist("");
+    clearPhoto();
   };
 
   const exportFile = () => {
@@ -110,9 +142,43 @@ export default function SettingsPage() {
             className="min-w-0 flex-1 rounded-xl bg-neutral-800 px-3 py-2.5 text-center font-mono tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
         </div>
+        <input
+          ref={photoRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={onPhoto}
+          className="hidden"
+        />
+        {photoUrl ? (
+          <div className="mt-2 flex items-center gap-3 rounded-xl bg-neutral-800 p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoUrl}
+              alt="Vorschau"
+              className="h-14 w-14 rounded-lg object-cover"
+            />
+            <span className="flex-1 text-sm text-neutral-300">Foto angehängt</span>
+            <Pressable
+              onClick={clearPhoto}
+              aria-label="Foto entfernen"
+              className="rounded-lg p-1.5 text-neutral-400 focus:outline-none"
+            >
+              <X size={16} />
+            </Pressable>
+          </div>
+        ) : (
+          <Pressable
+            onClick={() => photoRef.current?.click()}
+            disabled={photoBusy}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-800 py-2.5 text-sm font-medium text-neutral-200 focus:outline-none disabled:opacity-50"
+          >
+            <Camera size={16} /> {photoBusy ? "Lädt…" : "Fortschritts-Foto"}
+          </Pressable>
+        )}
         <Pressable
           onClick={addBody}
-          disabled={!bw.trim() && !waist.trim()}
+          disabled={!bw.trim() && !waist.trim() && !photoId}
           className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-100 py-2.5 text-sm font-medium text-neutral-950 focus:outline-none disabled:opacity-40"
         >
           <Plus size={16} strokeWidth={2.5} /> Eintragen
@@ -127,10 +193,11 @@ export default function SettingsPage() {
                   key={m.date + i}
                   className="flex items-center justify-between gap-2 rounded-lg bg-neutral-950 px-3 py-2"
                 >
-                  <span className="text-sm text-neutral-300">
+                  <span className="flex items-center gap-1.5 text-sm text-neutral-300">
                     {fmtDateShort(m.date)}
                     {m.weightKg != null ? ` · ${m.weightKg} kg` : ""}
                     {m.waistCm != null ? ` · ${m.waistCm} cm` : ""}
+                    {m.photoId && <Camera size={13} className="text-neutral-500" />}
                   </span>
                   <Pressable
                     onClick={() => deleteBodyMetric(i)}

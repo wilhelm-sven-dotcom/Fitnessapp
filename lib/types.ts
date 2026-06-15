@@ -123,6 +123,8 @@ export interface BodyMetric {
   date: string; // ISO
   weightKg?: number;
   waistCm?: number;
+  /** Progress photo — blob in IndexedDB (and Supabase Storage when synced). */
+  photoId?: string;
 }
 
 export interface Readiness {

@@ -28,6 +28,7 @@ import {
 } from "@/lib/volume";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
+import { deletePhoto } from "@/lib/photo-store";
 import type {
   AppSettings,
   BodyMetric,
@@ -605,6 +606,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.body, next);
   };
   const deleteBodyMetric = async (idx: number) => {
+    const target = body[idx];
+    if (target?.photoId) void deletePhoto(target.photoId);
     const next = body.filter((_, i) => i !== idx);
     setBody(next);
     if (next.length) await storage.setJSON(KEYS.body, next);
