@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Training
 
-## Getting Started
+Hochpersonalisierte Trainings-App für Muskelaufbau — 3× pro Woche Ganzkörper
+(A/B/C), 20–30 Minuten pro Einheit, mit besonderem Augenmerk auf einen
+empfindlichen unteren Rücken.
 
-First, run the development server:
+## Features
+
+- **RIR-Autoregulation** — Gewicht steigt/sinkt anhand der Reps-in-Reserve pro
+  Satz (alle Sätze RIR 0–1 → +2,5 kg; RIR 2 → +1 Wdh; RIR ≥3 → eine Stufe runter).
+- **Rücken-Intelligenz** — Ampel nach jeder Einheit; rot priorisiert beim
+  nächsten Mal Rücken-Stabis und ersetzt schwere Hinges. 2× rot → Arzt-Hinweis.
+- **Automatische Aufwärmsätze** (40 % / 65 %), aus der Progression ausgeschlossen.
+- **Coaching-Hinweise**, Wochen-Streak, Notizen, Körperdaten-Kurven.
+- **Animierte Übungsfiguren** (grüne Linie = Wirbelsäule) für alle 32 Übungen.
+- **Export/Import** als JSON.
+
+## Stack
+
+Next.js 14 (App Router) · React 18 · TypeScript (strict) · Tailwind CSS v3 ·
+Framer Motion. Persistenz über `localStorage`, abstrahiert in `lib/storage.ts`
+(Supabase-Naht vorbereitet: ein Adapter-Tausch genügt).
+
+## Entwicklung
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # Produktions-Build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Struktur
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `app/` — Seiten: Start (`/`), Einheit (`/workout/[key]`), Fortschritt,
+  Verlauf, Programm/Einstellungen
+- `components/` — Workout-, Fortschritts-, Figuren- und UI-Komponenten
+- `lib/` — Typen, Übungsdaten, Progression (RIR), Coaching, Stats, Storage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Daten bleiben auf dem Gerät. Schlüssel: `wilhelm-training-{log,equip,choices,custom,body}`.

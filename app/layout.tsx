@@ -6,6 +6,12 @@ import { AppShell } from "@/components/layout/AppShell";
 export const metadata: Metadata = {
   title: "Training",
   description: "Dein persönlicher Trainingsplan — Muskelaufbau, 3× pro Woche.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Training",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
