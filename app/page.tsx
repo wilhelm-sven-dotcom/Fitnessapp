@@ -2,6 +2,8 @@
 
 import { ChevronRight, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ActivityRings } from "@/components/rings/ActivityRings";
+import { RingLegend } from "@/components/rings/RingLegend";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
@@ -21,6 +23,7 @@ export default function HomePage() {
     log,
     daysAgo,
     weekCount,
+    ringMetrics,
   } = useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
@@ -45,6 +48,24 @@ export default function HomePage() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="mb-5 flex items-center gap-5 rounded-3xl bg-neutral-900 p-5">
+        <ActivityRings
+          metrics={ringMetrics}
+          size={132}
+          stroke={12}
+          gap={5}
+          center={
+            <p className="font-mono text-2xl font-semibold leading-none tabular-nums">
+              {weekCount}
+              <span className="text-base text-neutral-500">/3</span>
+            </p>
+          }
+        />
+        <div className="min-w-0 flex-1">
+          <RingLegend metrics={ringMetrics} />
+        </div>
       </div>
 
       {seeDoctor && (

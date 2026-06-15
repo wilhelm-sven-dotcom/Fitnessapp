@@ -9,6 +9,8 @@ import {
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { presc, resolveSession, warmupSets } from "@/lib/progression";
+import { RING, type RingMetric } from "@/lib/ring-colors";
+import { rollingWeeklyBaseline, weeklyVolume } from "@/lib/volume";
 import { KEYS, storage } from "@/lib/storage";
 import type {
   BodyMetric,
@@ -58,6 +60,7 @@ interface TrainingContextValue {
   nextIndex: number;
   recTpl: Template;
   recList: ResolvedSlot[];
+  ringMetrics: RingMetric[];
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
@@ -191,6 +194,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     mon.setDate(now.getDate() - off);
     return log.filter((s) => new Date(s.date) >= mon).length;
   }, [log]);
+
+  // Apple-Fitness activity rings. Coverage is stubbed to sessions until the
+  // muscle-volume feature lands (Phase 3).
+  const ringMetrics = useMemo<RingMetric[]>(() => {
+    const wv = weeklyVolume(log);
+    const baseline = rollingWeeklyBaseline(log);
+    const volTarget = baseline > 0 ? baseline : Math.max(Math.round(wv), 1);
+    return [
+      { id: "move", value: weekCount, target: 3, label: "Einheiten", color: RING.move },
+      { id: "exercise", value: Math.round(wv), target: volTarget, label: "Volumen", color: RING.exercise },
+      { id: "stand", value: weekCount, target: 3, label: "Abdeckung", color: RING.stand },
+    ];
+  }, [log, weekCount]);
 
   const initEntryFor = (ex: Exercise): SetEntry[] => {
     const p = presc(ex, lastPerf(ex.id), {
@@ -401,6 +417,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     nextIndex,
     recTpl,
     recList,
+    ringMetrics,
     weekCount,
     daysAgo,
     lastLabel,

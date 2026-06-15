@@ -12,3 +12,11 @@ export const RING = {
 export const RING_TRACK = "#2a2a30"; // unfilled groove (surface.3)
 
 export type RingId = keyof typeof RING;
+
+export interface RingMetric {
+  id: RingId;
+  value: number;
+  target: number;
+  label: string;
+  color: string;
+}
