@@ -110,6 +110,8 @@ export interface LastPerf {
   date: string;
 }
 
+export type PrescReason = "start" | "up" | "rep" | "down" | "hold" | "lighter";
+
 /** Output of `presc()` — the suggestion shown on the workout card. */
 export interface Prescription {
   /** Suggested weight as string for the input (empty if not weighted/unknown). */
@@ -120,12 +122,8 @@ export interface Prescription {
   line: string;
   /** Suggested weight numeric, already rounded to 2.5 kg — for coaching chips. */
   suggestedWeight?: number;
-  /** Suggestion is heavier than anything done before → coaching chip. */
-  firstTimeAtWeight?: boolean;
-  /** Projected to beat the historical best → PR coaching chip. */
-  isPR?: boolean;
-  /** Eased entry after a long break (> 5 days). */
-  lighter?: boolean;
+  /** Why the suggestion changed — drives line text and coaching chips. */
+  reason?: PrescReason;
 }
 
 /** A resolved template slot: the chosen exercise plus its swap pool. */

@@ -210,6 +210,8 @@ export default function WorkoutPage() {
                     set={s}
                     onWeight={(val) => setEntry(ex.id, i, "weight", val)}
                     onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
+                    onRir={(val) => setEntry(ex.id, i, "rir", val)}
+                    onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
                   />
                 ))}
               </div>
