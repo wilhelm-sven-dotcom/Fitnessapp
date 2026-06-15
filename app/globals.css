@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-950 text-neutral-100 font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Native number inputs: hide spinners for a cleaner, app-like look */
+@layer base {
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
