@@ -61,8 +61,10 @@ interface TrainingContextValue {
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
+  lastBackRed: boolean;
+  seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
-  sessionOf: (key: string) => ResolvedSlot[];
+  sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
   startSession: (key: string) => void;
   setEntry: (
     exId: string,
@@ -142,11 +144,18 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
-  const sessionOf = (key: string): ResolvedSlot[] => {
+  const lastBackRed =
+    log.length > 0 && log[log.length - 1].backTraffic === "red";
+  const seeDoctor =
+    log.length >= 2 &&
+    log[log.length - 1].backTraffic === "red" &&
+    log[log.length - 2].backTraffic === "red";
+
+  const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
-    return resolveSession(tpl, idx, choices, has, allLib);
+    return resolveSession(tpl, idx, choices, has, allLib, backSafe);
   };
 
   const nextIndex = useMemo(() => {
@@ -156,9 +165,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [log]);
   const recTpl = TEMPLATE[nextIndex];
   const recList = useMemo(
-    () => sessionOf(recTpl.key),
+    () => sessionOf(recTpl.key, lastBackRed),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom],
+    [recTpl, choices, equip, custom, lastBackRed],
   );
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
@@ -195,7 +204,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
 
   const startSession = (key: string) => {
-    const list = sessionOf(key);
+    const list = sessionOf(key, lastBackRed);
     const init: Record<string, SetEntry[]> = {};
     list.forEach(({ ex }) => {
       init[ex.id] = initEntryFor(ex);
@@ -271,7 +280,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const saveSession = async () => {
     const tpl = TEMPLATE.find((t) => t.key === activeKey);
     if (!tpl) return;
-    const list = sessionOf(tpl.key);
+    const list = sessionOf(tpl.key, lastBackRed);
     const exercises = list.map(({ ex }) => ({
       id: ex.id,
       name: ex.name,
@@ -393,6 +402,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     weekCount,
     daysAgo,
     lastLabel,
+    lastBackRed,
+    seeDoctor,
     lastPerf,
     sessionOf,
     startSession,

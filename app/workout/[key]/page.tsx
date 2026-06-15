@@ -18,8 +18,15 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
 import { cn } from "@/lib/utils";
+import type { TrafficLight } from "@/lib/types";
 
 const REST_SECONDS = 90;
+
+const BACK_OPTIONS: { v: TrafficLight; label: string; on: string }[] = [
+  { v: "green", label: "Gut", on: "bg-emerald-500 text-neutral-950" },
+  { v: "yellow", label: "Mittel", on: "bg-amber-400 text-neutral-950" },
+  { v: "red", label: "Gereizt", on: "bg-rose-500 text-neutral-50" },
+];
 
 export default function WorkoutPage() {
   const params = useParams();
@@ -35,6 +42,9 @@ export default function WorkoutPage() {
     saving,
     sessionOf,
     lastPerf,
+    lastBackRed,
+    backTraffic,
+    setBackTraffic,
   } = useTraining();
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
@@ -68,7 +78,7 @@ export default function WorkoutPage() {
   };
 
   const tpl = TEMPLATE.find((t) => t.key === key);
-  const list = key ? sessionOf(key) : [];
+  const list = key ? sessionOf(key, lastBackRed) : [];
 
   if (!tpl) {
     return (
@@ -228,10 +238,31 @@ export default function WorkoutPage() {
         })}
       </div>
 
+      <div className="mt-6 rounded-2xl bg-neutral-900 p-4">
+        <p className="text-sm font-medium">Wie fühlt sich dein unterer Rücken an?</p>
+        <p className="mb-3 mt-0.5 text-xs text-neutral-500">
+          Kurz einschätzen — steuert die nächste Einheit.
+        </p>
+        <div className="flex gap-2">
+          {BACK_OPTIONS.map((o) => (
+            <Pressable
+              key={o.v}
+              onClick={() => setBackTraffic(backTraffic === o.v ? null : o.v)}
+              className={cn(
+                "flex-1 rounded-xl py-3 text-sm font-medium focus:outline-none",
+                backTraffic === o.v ? o.on : "bg-neutral-800 text-neutral-400",
+              )}
+            >
+              {o.label}
+            </Pressable>
+          ))}
+        </div>
+      </div>
+
       <Pressable
         onClick={onSave}
         disabled={saving}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-lg font-semibold text-neutral-950 focus:outline-none disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-lg font-semibold text-neutral-950 focus:outline-none disabled:opacity-60"
       >
         <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training speichern"}
       </Pressable>

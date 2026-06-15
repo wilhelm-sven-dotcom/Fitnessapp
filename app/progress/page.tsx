@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useMemo } from "react";
+import { BackTraffic } from "@/components/progress/BackTraffic";
 import { TrendChart } from "@/components/progress/TrendChart";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
@@ -97,6 +98,8 @@ export default function ProgressPage() {
           : "Noch keine Daten"}
         .
       </p>
+
+      <BackTraffic log={log} />
 
       {list.length === 0 && (
         <div className="rounded-2xl bg-neutral-900 p-8 text-center">

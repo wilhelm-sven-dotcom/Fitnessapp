@@ -42,22 +42,42 @@ export function poolFor(
   return allLib.filter((e) => e.pattern === pattern && reqOk(e, has));
 }
 
+/** Heavy hinges to avoid when the lower back is irritated. */
+const HEAVY_HINGE = new Set(["rdl_db", "hip_thrust"]);
+
 export function resolveSession(
   tpl: Template,
   sessIdx: number,
   choices: Record<string, string>,
   has: (k: string) => boolean,
   allLib: Exercise[],
+  backSafe = false,
 ): ResolvedSlot[] {
   return tpl.slots
     .map((pat, slotIdx): ResolvedSlot | null => {
       const pool = poolFor(pat, has, allLib);
       if (!pool.length) return null;
       const slotKey = tpl.key + ":" + slotIdx;
-      const chosen = choices[slotKey]
+      const explicit = choices[slotKey]
         ? pool.find((e) => e.id === choices[slotKey])
         : undefined;
-      const ex = chosen || pool[(sessIdx + slotIdx) % pool.length];
+      let ex = explicit || pool[(sessIdx + slotIdx) % pool.length];
+
+      // Back-safe adaptation (after a red back signal) — only when the user
+      // has not explicitly chosen this slot, so manual swaps always win.
+      if (backSafe && !explicit) {
+        if (pat === "core") {
+          const stabs = pool.filter((e) => e.backStabilizer);
+          if (stabs.length) ex = stabs[(sessIdx + slotIdx) % stabs.length];
+        } else if (pat === "hinge" || pat === "squat") {
+          if (ex.backCaution || HEAVY_HINGE.has(ex.id)) {
+            const gentle = pool.filter(
+              (e) => !e.backCaution && !HEAVY_HINGE.has(e.id),
+            );
+            if (gentle.length) ex = gentle[(sessIdx + slotIdx) % gentle.length];
+          }
+        }
+      }
       return { ex, slotKey, pool };
     })
     .filter((s): s is ResolvedSlot => s !== null);

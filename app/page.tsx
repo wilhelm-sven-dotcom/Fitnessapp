@@ -8,7 +8,8 @@ import { TEMPLATE } from "@/lib/exercises";
 
 export default function HomePage() {
   const router = useRouter();
-  const { recTpl, recList, activeKey, lastLabel, startSession } = useTraining();
+  const { recTpl, recList, activeKey, lastLabel, startSession, seeDoctor } =
+    useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
 
@@ -21,6 +22,18 @@ export default function HomePage() {
     <div>
       <p className="mb-1 text-2xl font-semibold tracking-tight">Servus.</p>
       <p className="mb-6 text-sm text-neutral-500">{lastLabel}.</p>
+
+      {seeDoctor && (
+        <div className="mb-4 rounded-2xl bg-rose-950 p-4">
+          <p className="text-sm font-medium text-rose-200">
+            Rücken zweimal in Folge gereizt
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-rose-300">
+            Nimm das ernst — sprich mit Arzt oder Physio, bevor du wieder schwer
+            trainierst. Heute lieber nur Stabis und Mobilität.
+          </p>
+        </div>
+      )}
 
       {activeKey && (
         <Pressable
