@@ -6,6 +6,7 @@ import { ActivityRings } from "@/components/rings/ActivityRings";
 import { RingLegend } from "@/components/rings/RingLegend";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { DurationBadge } from "@/components/home/DurationBadge";
+import { CoachCard } from "@/components/coach/CoachCard";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -22,7 +23,6 @@ export default function HomePage() {
     recList,
     activeKey,
     lastLabel,
-    seeDoctor,
     log,
     daysAgo,
     weekCount,
@@ -30,6 +30,9 @@ export default function HomePage() {
     estimatedMin,
     settings,
     setBudget,
+    coach,
+    acceptDeload,
+    dismissCard,
   } = useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
@@ -71,15 +74,16 @@ export default function HomePage() {
         </div>
       </div>
 
-      {seeDoctor && (
-        <div className="mb-4 rounded-2xl bg-rose-950 p-4">
-          <p className="text-sm font-medium text-rose-200">
-            Rücken zweimal in Folge gereizt
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-rose-300">
-            Nimm das ernst — sprich mit Arzt oder Physio, bevor du wieder schwer
-            trainierst. Heute lieber nur Stabis und Mobilität.
-          </p>
+      {coach.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {coach.map((c, i) => (
+            <CoachCard
+              key={c.kind + (c.exId ?? "") + i}
+              card={c}
+              onAccept={c.action === "deload" ? acceptDeload : undefined}
+              onDismiss={() => dismissCard(c)}
+            />
+          ))}
         </div>
       )}
 

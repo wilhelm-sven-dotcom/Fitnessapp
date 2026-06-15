@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
+import { coachCards, type CoachCard } from "@/lib/advisor";
 import { presc, resolveSession, warmupSets } from "@/lib/progression";
 import {
   NEUTRAL_SCALE,
@@ -61,6 +62,13 @@ export interface ExportEnvelope {
 
 const DEFAULT_SETTINGS: AppSettings = { timeBudgetMin: 25, autoregOn: true };
 
+/** A deload overrides readiness with a clearly lighter week. */
+function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
+  return deloadActive
+    ? { setDelta: -1, loadMult: Math.min(base.loadMult, 0.6), cap: true }
+    : base;
+}
+
 /** Apply readiness set-count delta to weighted slots (clamped 2..sets+1). */
 function applyReadiness(list: ResolvedSlot[], scale: ReadinessScale): ResolvedSlot[] {
   if (scale.setDelta === 0) return list;
@@ -95,6 +103,7 @@ interface TrainingContextValue {
   readinessScale: ReadinessScale;
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
+  coach: CoachCard[];
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
@@ -120,6 +129,8 @@ interface TrainingContextValue {
   setNote: (v: string) => void;
   setBudget: (min: number) => void;
   setReadiness: (r: Readiness) => void;
+  acceptDeload: () => void;
+  dismissCard: (card: CoachCard) => void;
   addBodyMetric: (m: BodyMetric) => Promise<void>;
   deleteBodyMetric: (idx: number) => Promise<void>;
   exportData: () => ExportEnvelope;
@@ -149,6 +160,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
   const [note, setNoteState] = useState("");
   const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
+  const [dismissed, setDismissed] = useState<string[]>([]);
 
   useEffect(() => {
     let on = true;
@@ -206,12 +218,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1].dayKey);
     return (idx + 1) % TEMPLATE.length;
   }, [log]);
+  const deloadActive =
+    !!settings.lastDeloadDate &&
+    Date.now() - new Date(settings.lastDeloadDate).getTime() < 7 * 86400000;
+
   const readinessScale = useMemo(
     () =>
-      settings.autoregOn && todayReadiness
-        ? scaleFor(band(todayReadiness.score))
-        : NEUTRAL_SCALE,
-    [settings.autoregOn, todayReadiness],
+      withDeload(
+        settings.autoregOn && todayReadiness
+          ? scaleFor(band(todayReadiness.score))
+          : NEUTRAL_SCALE,
+        deloadActive,
+      ),
+    [settings.autoregOn, todayReadiness, deloadActive],
   );
 
   const recTpl = TEMPLATE[nextIndex];
@@ -271,6 +290,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     [log, allLib],
   );
 
+  const coach = useMemo(
+    () =>
+      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes }).filter(
+        (c) => !dismissed.includes(c.kind + (c.exId ?? "")),
+      ),
+    [log, allLib, settings, seeDoctor, muscleVolumes, dismissed],
+  );
+
   // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
   const ringMetrics = useMemo<RingMetric[]>(() => {
     const wv = weeklyVolume(log);
@@ -304,8 +331,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const startSession = (key: string, readiness?: Readiness) => {
     const r = readiness ?? todayReadiness;
-    const scale =
-      settings.autoregOn && r ? scaleFor(band(r.score)) : NEUTRAL_SCALE;
+    const scale = withDeload(
+      settings.autoregOn && r ? scaleFor(band(r.score)) : NEUTRAL_SCALE,
+      deloadActive,
+    );
     if (readiness) setTodayReadiness(readiness);
     const list = applyReadiness(
       fitToBudget(sessionOf(key, lastBackRed), settings.timeBudgetMin, {
@@ -351,6 +380,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
   const setBudget = (min: number) =>
     void saveSettings({ ...settings, timeBudgetMin: min });
+  const acceptDeload = () =>
+    void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
+  const dismissCard = (card: CoachCard) =>
+    setDismissed((d) => [...d, card.kind + (card.exId ?? "")]);
 
   const swapExercise = (slotKey: string, newId: string) => {
     const next = { ...choices, [slotKey]: newId };
@@ -424,6 +457,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (backTraffic) newSession.backTraffic = backTraffic;
     if (note.trim()) newSession.note = note.trim();
     if (todayReadiness) newSession.readiness = todayReadiness;
+    if (deloadActive) newSession.isDeload = true;
     const newLog = [...log, newSession];
     setSaving(true);
     await storage.setJSON(KEYS.log, newLog);
@@ -530,6 +564,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     readinessScale,
     ringMetrics,
     muscleVolumes,
+    coach,
     weekCount,
     daysAgo,
     lastLabel,
@@ -550,6 +585,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setNote: (v) => setNoteState(v),
     setBudget,
     setReadiness: (r) => setTodayReadiness(r),
+    acceptDeload,
+    dismissCard,
     addBodyMetric,
     deleteBodyMetric,
     exportData,
