@@ -27,7 +27,7 @@ export function RestTimer({
     >
       <div className="mx-auto m-3 max-w-md rounded-2xl bg-neutral-900 p-3 backdrop-blur">
         <div className="mb-2 flex items-center justify-between">
-          <span className="font-mono text-xs uppercase tracking-widest text-amber-400">
+          <span className="font-mono text-xs uppercase tracking-widest text-accent-sessions">
             Satzpause
           </span>
           <span className="font-mono text-2xl tabular-nums text-neutral-100">
@@ -36,7 +36,7 @@ export function RestTimer({
         </div>
         <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-neutral-800">
           <div
-            className="h-full rounded-full bg-amber-400 transition-all"
+            className="h-full rounded-full bg-accent-sessions transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -49,7 +49,7 @@ export function RestTimer({
           </Pressable>
           <Pressable
             onClick={onSkip}
-            className="flex-1 rounded-xl bg-amber-400 px-3 py-2 text-sm font-medium text-neutral-950 focus:outline-none"
+            className="flex-1 rounded-xl bg-accent-sessions px-3 py-2 text-sm font-medium text-neutral-950 focus:outline-none"
           >
             Überspringen
           </Pressable>

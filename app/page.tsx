@@ -83,17 +83,17 @@ export default function HomePage() {
       {activeKey && (
         <Pressable
           onClick={() => router.push(`/workout/${activeKey}`)}
-          className="mb-4 flex w-full items-center justify-between rounded-2xl bg-amber-950 px-4 py-3 text-left focus:outline-none"
+          className="mb-4 flex w-full items-center justify-between rounded-2xl bg-neutral-900 px-4 py-3 text-left focus:outline-none"
         >
-          <span className="text-sm text-amber-300">Einheit läuft · {activeName}</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-amber-300">
+          <span className="text-sm text-accent-sessions">Einheit läuft · {activeName}</span>
+          <span className="flex items-center gap-1 text-sm font-medium text-accent-sessions">
             Fortsetzen <ChevronRight size={16} />
           </span>
         </Pressable>
       )}
 
       <div className="mb-5 rounded-3xl bg-neutral-900 p-5">
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-amber-400">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
           Empfohlen heute
         </p>
         <h2 className="text-3xl font-semibold tracking-tight">{recTpl.name}</h2>
@@ -110,7 +110,7 @@ export default function HomePage() {
         </div>
         <Pressable
           onClick={() => start(recTpl.key)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-lg font-semibold text-neutral-950 focus:outline-none"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 focus:outline-none"
         >
           <Play size={18} strokeWidth={2.5} /> Training starten
         </Pressable>
@@ -127,7 +127,7 @@ export default function HomePage() {
             <span
               className={
                 t.key === recTpl.key
-                  ? "font-mono text-xs text-amber-400"
+                  ? "font-mono text-xs text-accent-sessions"
                   : "font-mono text-xs text-neutral-500"
               }
             >

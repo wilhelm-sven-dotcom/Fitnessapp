@@ -93,7 +93,7 @@ export default function WorkoutPage() {
         <p className="text-neutral-400">Einheit nicht gefunden.</p>
         <Pressable
           onClick={() => router.push("/")}
-          className="mt-3 flex items-center gap-1 text-sm text-amber-400 focus:outline-none"
+          className="mt-3 flex items-center gap-1 text-sm text-accent-sessions focus:outline-none"
         >
           <ArrowLeft size={16} /> Zur Startseite
         </Pressable>
@@ -136,7 +136,7 @@ export default function WorkoutPage() {
       <p className="mb-1 text-sm text-neutral-500">{tpl.focus}</p>
       <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-neutral-800">
         <div
-          className="h-full rounded-full bg-amber-400 transition-all"
+          className="h-full rounded-full bg-accent-sessions transition-all"
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
@@ -187,7 +187,7 @@ export default function WorkoutPage() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-mono text-sm tabular-nums text-amber-400">
+                  <p className="font-mono text-sm tabular-nums text-accent-sessions">
                     {ex.sets} × {ex.repLow}–{ex.repHigh}
                   </p>
                   <p className="text-xs uppercase tracking-wider text-neutral-600">
@@ -211,7 +211,7 @@ export default function WorkoutPage() {
               <div className="mt-2 flex items-center gap-4">
                 <Pressable
                   onClick={() => setGuideSlot(slotKey)}
-                  className="flex items-center gap-1 rounded px-1 py-1 text-xs text-amber-400 focus:outline-none"
+                  className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-sessions focus:outline-none"
                 >
                   <ChevronRight size={14} /> Ausführung
                 </Pressable>
@@ -232,7 +232,7 @@ export default function WorkoutPage() {
                 <p className="font-mono text-sm tabular-nums text-neutral-200">
                   {ps || "—"}
                 </p>
-                <p className="mt-1 text-xs text-amber-300">{p.line}</p>
+                <p className="mt-1 text-xs text-accent-sessions">{p.line}</p>
               </div>
 
               <div className="mt-3 space-y-2">
@@ -285,14 +285,14 @@ export default function WorkoutPage() {
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz zur Einheit — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-xl bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          className="mt-4 w-full resize-none rounded-xl bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         />
       </div>
 
       <Pressable
         onClick={onSave}
         disabled={saving}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 py-4 text-lg font-semibold text-neutral-950 focus:outline-none disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 focus:outline-none disabled:opacity-60"
       >
         <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training speichern"}
       </Pressable>

@@ -1,16 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Settings } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { loading, weekCount, log } = useTraining();
+  const { loading } = useTraining();
   const pathname = usePathname();
-  const hideNav = pathname?.startsWith("/workout") ?? false;
+  const hideChrome = pathname?.startsWith("/workout") ?? false;
 
   if (loading) {
     return (
@@ -20,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
         >
-          <Dumbbell size={20} className="text-amber-400" />
+          <Dumbbell size={20} className="text-accent-sessions" />
           <span className="font-mono text-sm uppercase tracking-widest">lädt…</span>
         </motion.div>
       </div>
@@ -29,21 +30,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <div className="mx-auto max-w-md px-5 pb-28 pt-6">
-        <header className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-400">
-              <Dumbbell size={14} className="text-neutral-950" strokeWidth={2.5} />
-            </span>
-            <span className="text-lg font-semibold tracking-tight">Training</span>
+      {!hideChrome && (
+        <header
+          className="glass sticky top-0 z-30 border-b border-surface-3"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-sessions">
+                <Dumbbell size={14} className="text-neutral-950" strokeWidth={2.5} />
+              </span>
+              <span className="text-base font-semibold tracking-tight">Training</span>
+            </div>
+            <Link
+              href="/settings"
+              aria-label="Einstellungen"
+              className="rounded-full p-1.5 text-neutral-400 transition-colors focus:outline-none"
+            >
+              <Settings size={20} />
+            </Link>
           </div>
-          <span className="font-mono text-xs tabular-nums text-neutral-500">
-            {weekCount} diese Woche · {log.length} gesamt
-          </span>
         </header>
+      )}
+      <div className="mx-auto max-w-md px-5 pb-28 pt-5">
         <PageTransition>{children}</PageTransition>
       </div>
-      {!hideNav && <BottomNav />}
+      {!hideChrome && <BottomNav />}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import type { SetEntry, Unit } from "@/lib/types";
 
 const inputClass =
-  "min-w-0 flex-1 rounded-xl bg-neutral-800 py-2.5 text-center font-mono text-lg tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-400";
+  "min-w-0 flex-1 rounded-xl bg-neutral-800 py-2.5 text-center font-mono text-lg tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions";
 
 const RIR_OPTIONS = [0, 1, 2, 3, 4];
 const INTENSITY_OPTIONS = [1, 2, 3, 4, 5];
@@ -34,7 +34,7 @@ function Scale({
             className={cn(
               "flex-1 rounded-lg py-1.5 text-sm font-medium tabular-nums focus:outline-none",
               value === o
-                ? "bg-amber-400 text-neutral-950"
+                ? "bg-accent-sessions text-neutral-950"
                 : "bg-neutral-800 text-neutral-400",
             )}
           >

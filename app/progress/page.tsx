@@ -180,12 +180,12 @@ export default function ProgressPage() {
                       initial={{ scale: 0.7, opacity: 0 }}
                       animate={{ scale: [0.7, 1.2, 1], opacity: 1 }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
-                      className="rounded bg-amber-400 px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-neutral-950"
+                      className="rounded bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-neutral-950"
                     >
                       Rekord
                     </motion.span>
                   )}
-                  <p className="font-mono text-lg leading-none tabular-nums text-amber-400">
+                  <p className="font-mono text-lg leading-none tabular-nums text-accent-volume">
                     {e.top}
                   </p>
                 </div>

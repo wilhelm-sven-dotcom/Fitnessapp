@@ -12,7 +12,7 @@ export function TrendChart({ values }: { values: number[] }) {
   if (values.length === 1) {
     return (
       <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}>
-        <circle cx={W / 2} cy={H / 2} r="3.5" fill="#fbbf24" />
+        <circle cx={W / 2} cy={H / 2} r="3.5" fill="#30d158" />
       </svg>
     );
   }
@@ -33,8 +33,8 @@ export function TrendChart({ values }: { values: number[] }) {
     <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}>
       <motion.path
         d={area}
-        fill="#78350f"
-        fillOpacity={0.25}
+        fill="#14532d"
+        fillOpacity={0.3}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -42,7 +42,7 @@ export function TrendChart({ values }: { values: number[] }) {
       <motion.path
         d={line}
         fill="none"
-        stroke="#fbbf24"
+        stroke="#30d158"
         strokeWidth={2}
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -51,7 +51,7 @@ export function TrendChart({ values }: { values: number[] }) {
         animate={{ pathLength: 1 }}
         transition={{ duration: 0.9, ease: "easeOut" }}
       />
-      <circle cx={x(maxIdx)} cy={y(max)} r="3.5" fill="#fbbf24" />
+      <circle cx={x(maxIdx)} cy={y(max)} r="3.5" fill="#30d158" />
       <circle cx={x(n - 1)} cy={y(values[n - 1])} r="3" fill="#e5e5e5" />
     </svg>
   );

@@ -67,7 +67,7 @@ export default function HistoryPage() {
                   </div>
                   <div className="ml-2 shrink-0 text-right">
                     {v > 0 && (
-                      <p className="font-mono text-sm tabular-nums text-amber-400">
+                      <p className="font-mono text-sm tabular-nums text-accent-volume">
                         {v.toLocaleString("de-DE")} kg
                       </p>
                     )}

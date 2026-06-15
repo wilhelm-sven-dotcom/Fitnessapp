@@ -33,12 +33,12 @@ export function ExercisePicker({
               }}
               className={cn(
                 "flex w-full items-center justify-between gap-2 rounded-xl px-4 py-3 text-left focus:outline-none",
-                active ? "bg-amber-950" : "bg-neutral-800",
+                active ? "bg-neutral-700" : "bg-neutral-800",
               )}
             >
               <span className="text-sm text-neutral-100">{opt.name}</span>
               {active ? (
-                <Check size={16} className="shrink-0 text-amber-400" />
+                <Check size={16} className="shrink-0 text-accent-sessions" />
               ) : (
                 <span className="shrink-0 font-mono text-xs text-neutral-500">
                   {opt.tag}

@@ -30,7 +30,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   return (
     <div className="rounded-3xl bg-neutral-900 p-5">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-xs uppercase tracking-widest text-amber-400">
+        <p className="font-mono text-xs uppercase tracking-widest text-neutral-400">
           Diese & letzte Wochen
         </p>
         <span className="text-xs text-neutral-500">Ziel 3× / Woche</span>
@@ -58,8 +58,8 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
                       className={
                         done
                           ? goalMet
-                            ? "h-3 w-3 rounded-full bg-emerald-400"
-                            : "h-3 w-3 rounded-full bg-amber-400"
+                            ? "h-3 w-3 rounded-full bg-accent-volume"
+                            : "h-3 w-3 rounded-full bg-accent-sessions"
                           : "h-3 w-3 rounded-full bg-neutral-800"
                       }
                     />

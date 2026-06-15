@@ -1,5 +1,5 @@
 /**
- * Icon motif for the app: amber square with a near-black dumbbell.
+ * Icon motif for the app: rose square with a near-black dumbbell.
  * Pure shapes (no text) so `next/og` ImageResponse needs no embedded font.
  * Kept within the central safe zone so it survives maskable cropping.
  */
@@ -17,7 +17,7 @@ export function iconArt(size: number) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f59e0b",
+        background: "#ff375f",
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
