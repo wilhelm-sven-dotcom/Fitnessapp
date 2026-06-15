@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Dumbbell, Settings } from "lucide-react";
+import { Dumbbell, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -42,13 +42,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </span>
               <span className="text-base font-semibold tracking-tight">Training</span>
             </div>
-            <Link
-              href="/settings"
-              aria-label="Einstellungen"
-              className="rounded-full p-1.5 text-neutral-400 transition-colors focus:outline-none"
-            >
-              <Settings size={20} />
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/coach"
+                aria-label="KI-Coach"
+                className="rounded-full p-1.5 text-accent-coverage transition-colors focus:outline-none"
+              >
+                <Sparkles size={20} />
+              </Link>
+              <Link
+                href="/settings"
+                aria-label="Einstellungen"
+                className="rounded-full p-1.5 text-neutral-400 transition-colors focus:outline-none"
+              >
+                <Settings size={20} />
+              </Link>
+            </div>
           </div>
         </header>
       )}

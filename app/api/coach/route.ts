@@ -1,0 +1,82 @@
+import Anthropic from "@anthropic-ai/sdk";
+
+// Needs the Node runtime for the Anthropic SDK and a long-lived stream.
+export const runtime = "nodejs";
+
+const SYSTEM_BASE = `Du bist der persönliche Trainings-Coach von Sven in seiner Fitness-App.
+
+Profil: Ziel Muskelaufbau (Hypertrophie), 3× pro Woche Ganzkörper, 20–30 Minuten pro Einheit, 1,93 m / ~90 kg.
+WICHTIG — empfindlicher unterer Rücken: keine schweren Hinges unter Last, keine belastete Flexion, kein vorgebeugtes Langhantelrudern. Rücken-Stabilisatoren rotieren im Core-Slot.
+
+Ton: direkt, locker, deutsch, „du". Kurz und konkret — keine Romane, keine Floskeln. Beziehe dich auf die echten Daten unten, statt allgemein zu reden. Nenne, wenn sinnvoll, konkrete Zahlen (Gewicht, Sätze, Wiederholungen).
+
+Sicherheit: Du bist kein Arzt. War der untere Rücken zweimal in Folge „rot", rate klar zu Arzt oder Physiotherapie statt zu Trainingstipps. Bei Schmerzen immer zu ärztlichem Rat raten.`;
+
+interface CoachBody {
+  messages?: { role: "user" | "assistant"; content: string }[];
+  context?: string;
+}
+
+export async function POST(req: Request) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return Response.json({ configured: false });
+
+  let body: CoachBody;
+  try {
+    body = (await req.json()) as CoachBody;
+  } catch {
+    return Response.json({ error: "bad request" }, { status: 400 });
+  }
+
+  const messages = (body.messages ?? [])
+    .filter((m) => m && typeof m.content === "string" && m.content.trim())
+    .map((m) => ({ role: m.role, content: m.content }));
+  if (!messages.length) {
+    return Response.json({ error: "no messages" }, { status: 400 });
+  }
+
+  const system =
+    SYSTEM_BASE + "\n\nAktuelle Trainingsdaten:\n" + (body.context?.trim() || "keine");
+
+  const client = new Anthropic({ apiKey });
+  const stream = client.messages.stream({
+    model: "claude-opus-4-8",
+    max_tokens: 1024,
+    system,
+    messages,
+  });
+
+  const encoder = new TextEncoder();
+  const readable = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const event of stream) {
+          if (
+            event.type === "content_block_delta" &&
+            event.delta.type === "text_delta"
+          ) {
+            controller.enqueue(encoder.encode(event.delta.text));
+          }
+        }
+      } catch {
+        controller.enqueue(
+          encoder.encode(
+            "\n\n(Es gab ein Problem mit dem Coach. Versuch es gleich nochmal.)",
+          ),
+        );
+      } finally {
+        controller.close();
+      }
+    },
+    cancel() {
+      stream.abort();
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
+}

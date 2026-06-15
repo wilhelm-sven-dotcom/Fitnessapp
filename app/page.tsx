@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Play } from "lucide-react";
+import { ChevronRight, Play, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ActivityRings } from "@/components/rings/ActivityRings";
 import { RingLegend } from "@/components/rings/RingLegend";
@@ -86,6 +86,16 @@ export default function HomePage() {
           ))}
         </div>
       )}
+
+      <Pressable
+        onClick={() => router.push("/coach")}
+        className="mb-4 flex w-full items-center justify-between rounded-2xl bg-neutral-900 px-4 py-3 text-left focus:outline-none"
+      >
+        <span className="flex items-center gap-2 text-sm font-medium text-neutral-100">
+          <Sparkles size={17} className="text-accent-coverage" /> Frag den Coach
+        </span>
+        <ChevronRight size={16} className="text-neutral-500" />
+      </Pressable>
 
       {activeKey && (
         <Pressable

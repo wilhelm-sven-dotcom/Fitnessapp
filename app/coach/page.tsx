@@ -1,0 +1,194 @@
+"use client";
+
+import { ArrowLeft, KeyRound, Send, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useRef, useState } from "react";
+import { Pressable } from "@/components/ui/pressable";
+import { useTraining } from "@/components/providers/TrainingProvider";
+import { buildCoachContext } from "@/lib/coach-context";
+import { cn } from "@/lib/utils";
+
+interface Msg {
+  role: "user" | "assistant";
+  content: string;
+}
+
+const SUGGESTIONS = [
+  "Wie war meine Woche?",
+  "Worauf soll ich die nächste Einheit achten?",
+  "Mein unterer Rücken zwickt — was tun?",
+];
+const RECAP_PROMPT =
+  "Gib mir ein kurzes Wochen-Recap: 2–3 Sätze, was gut lief, plus 1–2 konkrete Fokus-Punkte für nächste Woche.";
+
+export default function CoachPage() {
+  const router = useRouter();
+  const { log, allLib, body } = useTraining();
+  const context = useMemo(
+    () => buildCoachContext({ log, allLib, body }),
+    [log, allLib, body],
+  );
+
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [notConfigured, setNotConfigured] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const send = async (text: string) => {
+    const userText = text.trim();
+    if (!userText || busy) return;
+    setInput("");
+    const base = [...messages, { role: "user", content: userText } as Msg];
+    setMessages([...base, { role: "assistant", content: "" }]);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: base, context }),
+      });
+      if (res.headers.get("content-type")?.includes("application/json")) {
+        const j = (await res.json()) as { configured?: boolean };
+        if (j.configured === false) {
+          setNotConfigured(true);
+          setMessages(messages);
+          return;
+        }
+      }
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("no stream");
+      const dec = new TextDecoder();
+      let acc = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += dec.decode(value, { stream: true });
+        setMessages((prev) => {
+          const copy = prev.slice();
+          copy[copy.length - 1] = { role: "assistant", content: acc };
+          return copy;
+        });
+        endRef.current?.scrollIntoView({ block: "end" });
+      }
+    } catch {
+      setMessages((prev) => {
+        const copy = prev.slice();
+        copy[copy.length - 1] = {
+          role: "assistant",
+          content: "Es hat gerade nicht geklappt. Versuch es nochmal.",
+        };
+        return copy;
+      });
+    } finally {
+      setBusy(false);
+      endRef.current?.scrollIntoView({ block: "end" });
+    }
+  };
+
+  if (notConfigured) {
+    return (
+      <div>
+        <BackRow onBack={() => router.push("/")} />
+        <div className="mt-10 flex flex-col items-center text-center">
+          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-800">
+            <KeyRound size={26} className="text-neutral-400" />
+          </span>
+          <h2 className="text-xl font-semibold tracking-tight">Coach noch nicht eingerichtet</h2>
+          <p className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-400">
+            Damit der KI-Coach antwortet, muss in Vercel der Schlüssel
+            <span className="font-mono text-neutral-300"> ANTHROPIC_API_KEY </span>
+            hinterlegt sein. Danach läuft alles serverseitig — dein Schlüssel
+            bleibt geheim.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <BackRow onBack={() => router.push("/")} />
+      <div className="mb-5 flex items-center gap-2">
+        <Sparkles size={22} className="text-accent-coverage" />
+        <h2 className="text-2xl font-semibold tracking-tight">Coach</h2>
+      </div>
+
+      {messages.length === 0 ? (
+        <div>
+          <Pressable
+            onClick={() => send(RECAP_PROMPT)}
+            className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-neutral-950 focus:outline-none"
+          >
+            <Sparkles size={18} strokeWidth={2.5} /> Wochen-Recap
+          </Pressable>
+          <p className="mb-2 px-1 text-xs text-neutral-500">Oder frag direkt:</p>
+          <div className="space-y-2">
+            {SUGGESTIONS.map((s) => (
+              <Pressable
+                key={s}
+                onClick={() => send(s)}
+                className="flex w-full items-center justify-between gap-2 rounded-2xl bg-neutral-900 px-4 py-3 text-left text-sm text-neutral-200 focus:outline-none"
+              >
+                {s}
+                <Send size={15} className="shrink-0 text-neutral-600" />
+              </Pressable>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={cn(
+                "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                m.role === "user"
+                  ? "ml-8 bg-accent-coverage text-neutral-950"
+                  : "mr-4 whitespace-pre-wrap bg-neutral-900 text-neutral-100",
+              )}
+            >
+              {m.content || (busy ? "…" : "")}
+            </div>
+          ))}
+          <div ref={endRef} />
+        </div>
+      )}
+
+      <div className="mt-4 flex items-end gap-2">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void send(input);
+            }
+          }}
+          rows={1}
+          placeholder="Frag deinen Coach…"
+          className="flex-1 resize-none rounded-2xl bg-neutral-800 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+        />
+        <Pressable
+          onClick={() => void send(input)}
+          disabled={busy || !input.trim()}
+          aria-label="Senden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-950 focus:outline-none disabled:opacity-40"
+        >
+          <Send size={18} strokeWidth={2.5} />
+        </Pressable>
+      </div>
+    </div>
+  );
+}
+
+function BackRow({ onBack }: { onBack: () => void }) {
+  return (
+    <Pressable
+      onClick={onBack}
+      className="mb-4 flex items-center gap-1 rounded-md px-1 py-1 text-sm text-neutral-400 focus:outline-none"
+    >
+      <ArrowLeft size={18} /> Zurück
+    </Pressable>
+  );
+}

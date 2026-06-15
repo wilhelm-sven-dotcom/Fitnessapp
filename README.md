@@ -13,6 +13,10 @@ empfindlichen unteren Rücken.
 - **Automatische Aufwärmsätze** (40 % / 65 %), aus der Progression ausgeschlossen.
 - **Coaching-Hinweise**, Wochen-Streak, Notizen, Körperdaten-Kurven.
 - **Animierte Übungsfiguren** (grüne Linie = Wirbelsäule) für alle 32 Übungen.
+- **Gym-Modus (hands-free)** — Sprach-Ansagen für die Satzpause und neue
+  Rekorde, Sätze per Stimme eintragen, Hantel-Hinweis, Supersätze.
+- **KI-Coach** — Chat und Wochen-Recap auf Basis deiner echten Trainingsdaten
+  (Claude, serverseitig; siehe Umgebungsvariablen).
 - **Export/Import** als JSON.
 
 ## Stack
@@ -28,6 +32,13 @@ npm install
 npm run dev      # http://localhost:3000
 npm run build    # Produktions-Build
 ```
+
+## Umgebungsvariablen
+
+Siehe `.env.local.example`. Für den KI-Coach wird `ANTHROPIC_API_KEY`
+**serverseitig** benötigt (lokal in `.env.local`, in Produktion in den Vercel-
+Projekt-Einstellungen). Der Schlüssel verlässt nie den Server. Ohne Schlüssel
+zeigt der Coach „noch nicht eingerichtet" — der Rest der App funktioniert normal.
 
 ## Struktur
 
