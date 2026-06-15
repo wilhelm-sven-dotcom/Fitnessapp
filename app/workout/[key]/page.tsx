@@ -45,6 +45,8 @@ export default function WorkoutPage() {
     lastBackRed,
     backTraffic,
     setBackTraffic,
+    note,
+    setNote,
   } = useTraining();
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
@@ -257,6 +259,13 @@ export default function WorkoutPage() {
             </Pressable>
           ))}
         </div>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Notiz zur Einheit — wie war's?"
+          rows={2}
+          className="mt-4 w-full resize-none rounded-xl bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+        />
       </div>
 
       <Pressable

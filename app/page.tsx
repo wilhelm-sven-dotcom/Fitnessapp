@@ -2,13 +2,14 @@
 
 import { ChevronRight, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { TEMPLATE } from "@/lib/exercises";
 
 export default function HomePage() {
   const router = useRouter();
-  const { recTpl, recList, activeKey, lastLabel, startSession, seeDoctor } =
+  const { recTpl, recList, activeKey, lastLabel, startSession, seeDoctor, log } =
     useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
@@ -91,6 +92,10 @@ export default function HomePage() {
             <p className="mt-1 text-sm font-medium leading-tight">{t.focus}</p>
           </Pressable>
         ))}
+      </div>
+
+      <div className="mt-6">
+        <StreakCalendar log={log} />
       </div>
     </div>
   );
