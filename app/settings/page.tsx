@@ -4,6 +4,7 @@ import { Download, Plus, RotateCcw, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
+import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { PROFILE } from "@/lib/exercises";
@@ -162,6 +163,8 @@ export default function SettingsPage() {
           />
         </div>
       </section>
+
+      <CloudSyncSection />
 
       <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">

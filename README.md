@@ -17,6 +17,8 @@ empfindlichen unteren Rücken.
   Rekorde, Sätze per Stimme eintragen, Hantel-Hinweis, Supersätze.
 - **KI-Coach** — Chat und Wochen-Recap auf Basis deiner echten Trainingsdaten
   (Claude, serverseitig; siehe Umgebungsvariablen).
+- **Cloud-Sync** — optionaler Login per E-Mail (Supabase), synchronisiert die
+  Daten über mehrere Geräte. Ohne Konfiguration bleibt alles lokal.
 - **Export/Import** als JSON.
 
 ## Stack
@@ -39,6 +41,12 @@ Siehe `.env.local.example`. Für den KI-Coach wird `ANTHROPIC_API_KEY`
 **serverseitig** benötigt (lokal in `.env.local`, in Produktion in den Vercel-
 Projekt-Einstellungen). Der Schlüssel verlässt nie den Server. Ohne Schlüssel
 zeigt der Coach „noch nicht eingerichtet" — der Rest der App funktioniert normal.
+
+Für Cloud-Sync werden `NEXT_PUBLIC_SUPABASE_URL` und
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` gesetzt und die Migration
+`supabase/migrations/0001_app_state.sql` ausgeführt (Tabelle `app_state` mit
+Row-Level-Security pro Nutzer). Der Anon-Key darf öffentlich sein — der Schutz
+kommt aus RLS. Ohne Konfiguration bleiben die Daten lokal in `localStorage`.
 
 ## Struktur
 

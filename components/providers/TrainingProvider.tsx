@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -25,7 +26,8 @@ import {
   weeklyVolume,
   type MuscleVolume,
 } from "@/lib/volume";
-import { KEYS, storage } from "@/lib/storage";
+import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
+import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import type {
   AppSettings,
   BodyMetric,
@@ -142,6 +144,16 @@ interface TrainingContextValue {
   deleteBodyMetric: (idx: number) => Promise<void>;
   exportData: () => ExportEnvelope;
   importData: (raw: unknown) => Promise<boolean>;
+  cloud: CloudApi;
+}
+
+export interface CloudApi {
+  configured: boolean;
+  email: string | null;
+  busy: boolean;
+  signIn: (email: string) => Promise<boolean>;
+  signOut: () => Promise<void>;
+  syncNow: () => Promise<void>;
 }
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
@@ -169,30 +181,116 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
   const [dismissed, setDismissed] = useState<string[]>([]);
 
-  useEffect(() => {
-    let on = true;
-    (async () => {
-      const [l, e, c, cu, b, s] = await Promise.all([
-        storage.getJSON<LoggedSession[]>(KEYS.log, []),
-        storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
-        storage.getJSON<Record<string, string>>(KEYS.choices, {}),
-        storage.getJSON<Exercise[]>(KEYS.custom, []),
-        storage.getJSON<BodyMetric[]>(KEYS.body, []),
-        storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
-      ]);
-      if (!on) return;
-      if (Array.isArray(l)) setLog(l);
-      if (Array.isArray(e)) setEquip(e);
-      if (c && typeof c === "object") setChoices(c);
-      if (Array.isArray(cu)) setCustom(cu);
-      if (Array.isArray(b)) setBody(b);
-      if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
-      setLoading(false);
-    })();
-    return () => {
-      on = false;
-    };
+  // Read every key from the local cache into state. Reused after a cloud pull.
+  const loadAll = useCallback(async () => {
+    const [l, e, c, cu, b, s] = await Promise.all([
+      storage.getJSON<LoggedSession[]>(KEYS.log, []),
+      storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
+      storage.getJSON<Record<string, string>>(KEYS.choices, {}),
+      storage.getJSON<Exercise[]>(KEYS.custom, []),
+      storage.getJSON<BodyMetric[]>(KEYS.body, []),
+      storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
+    ]);
+    if (Array.isArray(l)) setLog(l);
+    if (Array.isArray(e)) setEquip(e);
+    if (c && typeof c === "object") setChoices(c);
+    if (Array.isArray(cu)) setCustom(cu);
+    if (Array.isArray(b)) setBody(b);
+    if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
+
+  // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
+  const cloudConfigured = isCloudConfigured();
+  const [cloudEmail, setCloudEmail] = useState<string | null>(null);
+  const [cloudBusy, setCloudBusy] = useState(false);
+
+  const collectLocal = useCallback(async (): Promise<[string, string][]> => {
+    const entries: [string, string][] = [];
+    for (const k of Object.values(KEYS)) {
+      const raw = await storage.getRaw(k);
+      if (raw != null) entries.push([k, raw]);
+    }
+    return entries;
+  }, []);
+
+  const pullOrSeed = useCallback(async () => {
+    const map = await cloudPull();
+    if (map && Object.keys(map).length) {
+      const known = new Set<string>(Object.values(KEYS));
+      await Promise.all(
+        Object.entries(map)
+          .filter(([k]) => known.has(k))
+          .map(([k, v]) => storage.setRaw(k, v)),
+      );
+      await loadAll();
+    } else {
+      // First login with an empty cloud → seed it from local data.
+      await cloudPushAll(await collectLocal());
+    }
+  }, [loadAll, collectLocal]);
+
+  useEffect(() => {
+    if (!cloudConfigured) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    let active = true;
+    void sb.auth.getSession().then(({ data: { session } }) => {
+      if (active) setCloudEmail(session?.user.email ?? null);
+    });
+    const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
+      setCloudEmail(session?.user.email ?? null);
+      if (event === "SIGNED_IN") void pullOrSeed();
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [cloudConfigured, pullOrSeed]);
+
+  const cloud: CloudApi = {
+    configured: cloudConfigured,
+    email: cloudEmail,
+    busy: cloudBusy,
+    signIn: async (email) => {
+      const sb = getSupabase();
+      if (!sb || !email.trim()) return false;
+      setCloudBusy(true);
+      try {
+        const { error } = await sb.auth.signInWithOtp({
+          email: email.trim(),
+          options: {
+            emailRedirectTo:
+              typeof window !== "undefined" ? window.location.origin + "/settings" : undefined,
+          },
+        });
+        return !error;
+      } catch {
+        return false;
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    signOut: async () => {
+      const sb = getSupabase();
+      if (!sb) return;
+      await sb.auth.signOut();
+      setCloudEmail(null);
+    },
+    syncNow: async () => {
+      setCloudBusy(true);
+      try {
+        await cloudPushAll(await collectLocal());
+        await pullOrSeed();
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+  };
 
   const allLib = useMemo(() => [...LIB, ...custom], [custom]);
   const has = useMemo(() => (k: string) => (equip as string[]).includes(k), [equip]);
@@ -610,6 +708,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     deleteBodyMetric,
     exportData,
     importData,
+    cloud,
   };
 
   return (
