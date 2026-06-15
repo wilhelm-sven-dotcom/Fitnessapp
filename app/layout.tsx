@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { TrainingProvider } from "@/components/providers/TrainingProvider";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: "Training",
@@ -18,7 +20,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="de" className="dark">
-      <body>{children}</body>
+      <body>
+        <TrainingProvider>
+          <AppShell>{children}</AppShell>
+        </TrainingProvider>
+      </body>
     </html>
   );
 }
