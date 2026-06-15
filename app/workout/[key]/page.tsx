@@ -4,11 +4,12 @@ import { AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   ChevronRight,
+  Mic,
   Repeat,
   Save,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
@@ -21,7 +22,14 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
-import { estimateSessionMin } from "@/lib/session-time";
+import { estimateSessionMin, supersetPair } from "@/lib/session-time";
+import {
+  createRecognizer,
+  isVoiceInputSupported,
+  parseSetSpeech,
+  speak,
+  type ParsedSet,
+} from "@/lib/voice";
 import { cn } from "@/lib/utils";
 import type { TrafficLight } from "@/lib/types";
 
@@ -58,12 +66,18 @@ export default function WorkoutPage() {
     daysAgo,
   } = useTraining();
   const lighter = daysAgo != null && daysAgo > 5;
+  const say = (text: string) => {
+    if (settings.voiceCues) speak(text);
+  };
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
   const [pickSlot, setPickSlot] = useState<string | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restOn, setRestOn] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const announcedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (key && activeKey !== key) {
@@ -73,16 +87,50 @@ export default function WorkoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, activeKey]);
 
+  // Probe speech support after mount so SSR and first client render agree.
+  useEffect(() => setVoiceSupported(isVoiceInputSupported()), []);
+
   useEffect(() => {
     if (!restOn) return;
     if (restLeft <= 0) {
       setRestOn(false);
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(200);
+      if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
       return;
+    }
+    if (settings.voiceCues) {
+      if (restLeft === 10) speak("Noch zehn Sekunden");
+      else if (restLeft <= 3) speak(["", "eins", "zwei", "drei"][restLeft]);
     }
     const id = setTimeout(() => setRestLeft((x) => x - 1), 1000);
     return () => clearTimeout(id);
-  }, [restOn, restLeft]);
+  }, [restOn, restLeft, settings.voiceCues]);
+
+  // Announce a new record once per exercise, hands-free.
+  useEffect(() => {
+    if (!settings.voiceCues || activeKey !== key) return;
+    activeList.forEach(({ ex }) => {
+      const p = presc(ex, lastPerf(ex.id), {
+        lighter,
+        loadMult: readinessScale.loadMult,
+        cap: readinessScale.cap,
+      });
+      const chips = exerciseChips({
+        ex,
+        prescription: p,
+        log,
+        currentSets: entries[ex.id] || [],
+      });
+      if (
+        chips.some((c) => c.text.startsWith("Neuer Rekord")) &&
+        !announcedRef.current.has(ex.id)
+      ) {
+        announcedRef.current.add(ex.id);
+        speak("Neuer Rekord! Stark.");
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, settings.voiceCues]);
 
   const startRest = () => {
     setRestLeft(REST_SECONDS);
@@ -95,6 +143,43 @@ export default function WorkoutPage() {
 
   const tpl = TEMPLATE.find((t) => t.key === key);
   const list = activeList;
+  const ssPair = settings.superset ? supersetPair(list) : null;
+
+  // Fill the first still-open working set from a spoken set entry.
+  const fillFromSpeech = (parsed: ParsedSet) => {
+    for (const { ex } of list) {
+      const arr = entries[ex.id] || [];
+      const i = arr.findIndex((s) => !s.warmup && (s.reps === "" || s.reps == null));
+      if (i < 0) continue;
+      if (parsed.weight != null && ex.weighted)
+        setEntry(ex.id, i, "weight", String(parsed.weight));
+      if (parsed.reps != null) setEntry(ex.id, i, "reps", String(parsed.reps));
+      if (parsed.rir != null) setEntry(ex.id, i, "rir", parsed.rir);
+      if (parsed.reps != null) {
+        setRestLeft(REST_SECONDS);
+        setRestOn(true);
+      }
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(60);
+      say(
+        `${ex.name}: ${parsed.reps ?? "?"} Wiederholungen` +
+          (parsed.weight != null ? `, ${parsed.weight} Kilo.` : "."),
+      );
+      return;
+    }
+    say("Alle Sätze sind schon ausgefüllt.");
+  };
+
+  const startVoiceLog = () => {
+    if (listening) return;
+    const rec = createRecognizer({
+      onResult: (t) => fillFromSpeech(parseSetSpeech(t)),
+      onEnd: () => setListening(false),
+      onError: () => setListening(false),
+    });
+    if (!rec) return;
+    setListening(true);
+    rec.start();
+  };
 
   if (!tpl) {
     return (
@@ -153,9 +238,25 @@ export default function WorkoutPage() {
         >
           <ArrowLeft size={18} /> Zurück
         </Pressable>
-        <span className="font-mono text-xs tabular-nums text-neutral-500">
-          {done}/{list.length} erledigt
-        </span>
+        <div className="flex items-center gap-3">
+          {voiceSupported && (
+            <Pressable
+              onClick={startVoiceLog}
+              aria-label="Satz per Sprache eintragen"
+              className={cn(
+                "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium focus:outline-none",
+                listening
+                  ? "bg-accent-sessions text-neutral-950"
+                  : "bg-neutral-800 text-neutral-300",
+              )}
+            >
+              <Mic size={14} /> {listening ? "Hört zu…" : "Sprechen"}
+            </Pressable>
+          )}
+          <span className="font-mono text-xs tabular-nums text-neutral-500">
+            {done}/{list.length} erledigt
+          </span>
+        </div>
       </div>
 
       <h2 className="text-2xl font-semibold tracking-tight">{tpl.name}</h2>
@@ -167,10 +268,14 @@ export default function WorkoutPage() {
         />
       </div>
 
-      <SessionTimeBar estMin={estimateSessionMin(list)} budgetMin={settings.timeBudgetMin} />
+      <SessionTimeBar
+        estMin={estimateSessionMin(list, { superset: settings.superset })}
+        budgetMin={settings.timeBudgetMin}
+      />
 
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
+          const isSuperset = !!ssPair && (idx === ssPair[0] || idx === ssPair[1]);
           const lp = lastPerf(ex.id);
           const p = presc(ex, lp, {
             lighter,
@@ -217,6 +322,11 @@ export default function WorkoutPage() {
                   <p className="mt-0.5 text-xs text-neutral-500">
                     {ex.tag} · {PATTERN_LABEL[ex.pattern]}
                   </p>
+                  {isSuperset && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-accent-coverage px-1.5 py-0.5 text-xs font-medium text-neutral-950">
+                      <Repeat size={11} /> im Wechsel
+                    </span>
+                  )}
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="font-mono text-sm tabular-nums text-accent-sessions">
@@ -279,6 +389,7 @@ export default function WorkoutPage() {
                         isWarmup={!!s.warmup}
                         unit={ex.unit}
                         set={s}
+                        isDumbbell={ex.req.includes("dumbbell")}
                         onWeight={(val) => setEntry(ex.id, i, "weight", val)}
                         onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
                         onRir={(val) => setEntry(ex.id, i, "rir", val)}

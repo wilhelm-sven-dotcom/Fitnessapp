@@ -139,6 +139,10 @@ export interface AppSettings {
   autoregOn: boolean;
   /** ISO date of the last accepted deload week. */
   lastDeloadDate?: string;
+  /** Speak rest-timer countdown and PR cues aloud (Gym-Modus, hands-free). */
+  voiceCues?: boolean;
+  /** Pair the last two accessory slots as a superset — saves rest time. */
+  superset?: boolean;
 }
 
 /** Most recent performance of one exercise, used to derive the next prescription. */

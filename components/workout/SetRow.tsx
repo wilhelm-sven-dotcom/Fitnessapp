@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import { TimedSet } from "./TimedSet";
 import { Pressable } from "@/components/ui/pressable";
+import { dumbbellHint } from "@/lib/equipment";
 import { cn } from "@/lib/utils";
 import type { SetEntry, Unit } from "@/lib/types";
 
@@ -52,6 +53,7 @@ export function SetRow({
   isWarmup,
   unit,
   set,
+  isDumbbell,
   onWeight,
   onReps,
   onRir,
@@ -61,6 +63,8 @@ export function SetRow({
   isWarmup: boolean;
   unit: Unit;
   set: SetEntry;
+  /** Per-dumbbell exercise — show the "× 2 / total" hint under the weight. */
+  isDumbbell?: boolean;
   onWeight: (val: string) => void;
   onReps: (oldVal: string, val: string) => void;
   onRir: (val: number) => void;
@@ -68,6 +72,7 @@ export function SetRow({
 }) {
   const filled = set.reps !== "" && set.reps != null;
   const timed = unit === "Sek";
+  const dbHint = isDumbbell && !timed ? dumbbellHint(Number(set.weight) || 0) : null;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
@@ -115,6 +120,7 @@ export function SetRow({
           <Check size={18} strokeWidth={2.5} />
         </span>
       </div>
+      {dbHint && <p className="pl-14 font-mono text-xs text-neutral-500">{dbHint}</p>}
       {!isWarmup &&
         (timed ? (
           <Scale label="Int." options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />

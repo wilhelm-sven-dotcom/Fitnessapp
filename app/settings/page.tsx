@@ -3,13 +3,23 @@
 import { Download, Plus, RotateCcw, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
+import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { PROFILE } from "@/lib/exercises";
 
 export default function SettingsPage() {
-  const { resetAll, body, addBodyMetric, deleteBodyMetric, exportData, importData } =
-    useTraining();
+  const {
+    resetAll,
+    body,
+    addBodyMetric,
+    deleteBodyMetric,
+    exportData,
+    importData,
+    settings,
+    setVoiceCues,
+    setSuperset,
+  } = useTraining();
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [bw, setBw] = useState("");
@@ -131,6 +141,26 @@ export default function SettingsPage() {
               ))}
           </div>
         )}
+      </section>
+
+      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+        <p className="mb-4 font-mono text-xs uppercase tracking-widest text-neutral-400">
+          Gym-Modus
+        </p>
+        <div className="space-y-5">
+          <Toggle
+            checked={!!settings.voiceCues}
+            onChange={setVoiceCues}
+            label="Sprach-Ansagen"
+            hint="Sagt Satzpause-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
+          />
+          <Toggle
+            checked={!!settings.superset}
+            onChange={setSuperset}
+            label="Supersätze"
+            hint="Die letzten zwei Übungen im Wechsel — spart Pausenzeit, mehr passt ins Zeitfenster."
+          />
+        </div>
       </section>
 
       <section className="mb-4 rounded-2xl bg-neutral-900 p-5">

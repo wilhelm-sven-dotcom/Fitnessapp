@@ -60,7 +60,12 @@ export interface ExportEnvelope {
   settings?: AppSettings;
 }
 
-const DEFAULT_SETTINGS: AppSettings = { timeBudgetMin: 25, autoregOn: true };
+const DEFAULT_SETTINGS: AppSettings = {
+  timeBudgetMin: 25,
+  autoregOn: true,
+  voiceCues: false,
+  superset: false,
+};
 
 /** A deload overrides readiness with a clearly lighter week. */
 function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
@@ -128,6 +133,8 @@ interface TrainingContextValue {
   setBackTraffic: (v: TrafficLight | null) => void;
   setNote: (v: string) => void;
   setBudget: (min: number) => void;
+  setVoiceCues: (on: boolean) => void;
+  setSuperset: (on: boolean) => void;
   setReadiness: (r: Readiness) => void;
   acceptDeload: () => void;
   dismissCard: (card: CoachCard) => void;
@@ -239,13 +246,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       applyReadiness(
         fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
           protectCore: lastBackRed,
+          superset: settings.superset,
         }).list,
         readinessScale,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin, readinessScale],
+    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin, settings.superset, readinessScale],
   );
-  const estimatedMin = useMemo(() => estimateSessionMin(recList), [recList]);
+  const estimatedMin = useMemo(
+    () => estimateSessionMin(recList, { superset: settings.superset }),
+    [recList, settings.superset],
+  );
 
   // The session actually being trained — budget-trimmed, back-safe, readiness-scaled.
   // Both the workout screen and saveSession read this so shown == saved.
@@ -255,12 +266,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         ? applyReadiness(
             fitToBudget(sessionOf(activeKey, lastBackRed), settings.timeBudgetMin, {
               protectCore: lastBackRed,
+              superset: settings.superset,
             }).list,
             readinessScale,
           )
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeKey, choices, equip, custom, lastBackRed, settings.timeBudgetMin, readinessScale],
+    [activeKey, choices, equip, custom, lastBackRed, settings.timeBudgetMin, settings.superset, readinessScale],
   );
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
@@ -339,6 +351,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const list = applyReadiness(
       fitToBudget(sessionOf(key, lastBackRed), settings.timeBudgetMin, {
         protectCore: lastBackRed,
+        superset: settings.superset,
       }).list,
       scale,
     );
@@ -380,6 +393,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
   const setBudget = (min: number) =>
     void saveSettings({ ...settings, timeBudgetMin: min });
+  const setVoiceCues = (on: boolean) =>
+    void saveSettings({ ...settings, voiceCues: on });
+  const setSuperset = (on: boolean) =>
+    void saveSettings({ ...settings, superset: on });
   const acceptDeload = () =>
     void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
   const dismissCard = (card: CoachCard) =>
@@ -452,7 +469,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       dayName: tpl.name,
       focus: tpl.focus,
       exercises,
-      estimatedMin: estimateSessionMin(activeList),
+      estimatedMin: estimateSessionMin(activeList, { superset: settings.superset }),
     };
     if (backTraffic) newSession.backTraffic = backTraffic;
     if (note.trim()) newSession.note = note.trim();
@@ -584,6 +601,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTraffic: (v) => setBackTrafficState(v),
     setNote: (v) => setNoteState(v),
     setBudget,
+    setVoiceCues,
+    setSuperset,
     setReadiness: (r) => setTodayReadiness(r),
     acceptDeload,
     dismissCard,

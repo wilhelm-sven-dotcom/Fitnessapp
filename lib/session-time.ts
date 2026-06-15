@@ -45,8 +45,33 @@ export function estimateSlotMin(ex: Exercise): number {
   return sec / 60;
 }
 
-export function estimateSessionMin(list: ResolvedSlot[]): number {
-  return Math.round(list.reduce((s, { ex }) => s + estimateSlotMin(ex), 0));
+/**
+ * The two accessory slots paired in superset mode — the last two non-core
+ * slots, performed im Wechsel. Null when there aren't two accessories.
+ */
+export function supersetPair(list: ResolvedSlot[]): [number, number] | null {
+  const acc = list
+    .map((s, i) => ({ pattern: s.ex.pattern, i }))
+    .filter((x) => x.pattern !== "core");
+  if (acc.length < 2) return null;
+  return [acc[acc.length - 2].i, acc[acc.length - 1].i];
+}
+
+export function estimateSessionMin(
+  list: ResolvedSlot[],
+  opts: { superset?: boolean } = {},
+): number {
+  let min = list.reduce((s, { ex }) => s + estimateSlotMin(ex), 0);
+  if (opts.superset) {
+    const pair = supersetPair(list);
+    if (pair) {
+      // Paired exercises share rest (one rest per round) — save the rest of
+      // the shorter slot of the two.
+      const saved = Math.min(list[pair[0]].ex.sets, list[pair[1]].ex.sets);
+      min -= (saved * TIME.restSec) / 60;
+    }
+  }
+  return Math.round(min);
 }
 
 export interface FitResult {
@@ -64,10 +89,11 @@ export interface FitResult {
 export function fitToBudget(
   list: ResolvedSlot[],
   budgetMin: number,
-  opts: { protectCore?: boolean } = {},
+  opts: { protectCore?: boolean; superset?: boolean } = {},
 ): FitResult {
   const slots: ResolvedSlot[] = list.map((s) => ({ ...s, ex: { ...s.ex } }));
-  let est = estimateSessionMin(slots);
+  const est0 = () => estimateSessionMin(slots, { superset: opts.superset });
+  let est = est0();
   let adjusted: FitResult["adjusted"] = "none";
 
   let guard = 0;
@@ -91,7 +117,7 @@ export function fitToBudget(
       slots.splice(idx, 1);
     }
     adjusted = "trim";
-    est = estimateSessionMin(slots);
+    est = est0();
   }
 
   guard = 0;
@@ -100,7 +126,7 @@ export function fitToBudget(
     if (!slot) break;
     slot.ex.sets += 1;
     adjusted = adjusted === "trim" ? "trim" : "pad";
-    est = estimateSessionMin(slots);
+    est = est0();
   }
 
   return { list: slots, estMin: est, adjusted };
