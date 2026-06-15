@@ -193,7 +193,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [log]);
 
   const initEntryFor = (ex: Exercise): SetEntry[] => {
-    const p = presc(ex, lastPerf(ex.id));
+    const p = presc(ex, lastPerf(ex.id), {
+      lighter: daysAgo != null && daysAgo > 5,
+    });
     const working: SetEntry[] = Array.from({ length: ex.sets }, () => ({
       weight: p.w,
       reps: "",

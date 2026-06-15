@@ -3,16 +3,28 @@
 import { ChevronRight, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
+import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
 
 export default function HomePage() {
   const router = useRouter();
-  const { recTpl, recList, activeKey, lastLabel, startSession, seeDoctor, log } =
-    useTraining();
+  const {
+    recTpl,
+    recList,
+    activeKey,
+    lastLabel,
+    startSession,
+    seeDoctor,
+    log,
+    daysAgo,
+    weekCount,
+  } = useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
+  const chips = homeChips({ daysAgo, weekCount });
 
   const start = (key: string) => {
     startSession(key);
@@ -21,8 +33,19 @@ export default function HomePage() {
 
   return (
     <div>
-      <p className="mb-1 text-2xl font-semibold tracking-tight">Servus.</p>
-      <p className="mb-6 text-sm text-neutral-500">{lastLabel}.</p>
+      <div className="mb-6">
+        <p className="text-2xl font-semibold tracking-tight">{greeting(daysAgo)}</p>
+        <p className="mt-1 text-sm text-neutral-500">{lastLabel}.</p>
+        {chips.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {chips.map((c, i) => (
+              <Chip key={i} tone={c.tone}>
+                {c.text}
+              </Chip>
+            ))}
+          </div>
+        )}
+      </div>
 
       {seeDoctor && (
         <div className="mb-4 rounded-2xl bg-rose-950 p-4">

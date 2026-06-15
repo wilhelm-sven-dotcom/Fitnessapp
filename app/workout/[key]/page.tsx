@@ -13,8 +13,10 @@ import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SetRow } from "@/components/workout/SetRow";
+import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
 import { cn } from "@/lib/utils";
@@ -47,7 +49,10 @@ export default function WorkoutPage() {
     setBackTraffic,
     note,
     setNote,
+    log,
+    daysAgo,
   } = useTraining();
+  const lighter = daysAgo != null && daysAgo > 5;
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
   const [pickSlot, setPickSlot] = useState<string | null>(null);
@@ -139,7 +144,13 @@ export default function WorkoutPage() {
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
           const lp = lastPerf(ex.id);
-          const p = presc(ex, lp);
+          const p = presc(ex, lp, { lighter });
+          const chips = exerciseChips({
+            ex,
+            prescription: p,
+            log,
+            currentSets: entries[ex.id] || [],
+          });
           const ps = lp
             ? lp.sets
                 .filter((s) => !s.warmup)
@@ -186,6 +197,16 @@ export default function WorkoutPage() {
               </div>
 
               <p className="mt-2 text-xs leading-relaxed text-neutral-400">{ex.cue}</p>
+
+              {chips.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {chips.map((c, i) => (
+                    <Chip key={i} tone={c.tone}>
+                      {c.text}
+                    </Chip>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-2 flex items-center gap-4">
                 <Pressable
