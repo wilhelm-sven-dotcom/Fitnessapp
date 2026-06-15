@@ -26,6 +26,17 @@ export type EquipKey =
 
 export type TrafficLight = "green" | "yellow" | "red";
 
+export type Muscle =
+  | "chest"
+  | "back"
+  | "shoulders"
+  | "biceps"
+  | "triceps"
+  | "quads"
+  | "hamstrings"
+  | "glutes"
+  | "core";
+
 export interface Exercise {
   id: string;
   name: string;
@@ -46,6 +57,10 @@ export interface Exercise {
   backCaution?: boolean;
   /** Dedicated lower-back stabilizer — prioritized in the core slot after a red back signal. */
   backStabilizer?: boolean;
+  /** Primary muscle (optional; otherwise derived from pattern/tag by muscleOf). */
+  muscle?: Muscle;
+  /** Secondary muscle — counts as half a set toward weekly volume. */
+  muscleSecondary?: Muscle;
   /** User-defined exercise (created in settings). */
   custom?: boolean;
 }

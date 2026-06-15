@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { BackTraffic } from "@/components/progress/BackTraffic";
+import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { TrendChart } from "@/components/progress/TrendChart";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
@@ -63,7 +64,7 @@ function BodyCard({
 }
 
 export default function ProgressPage() {
-  const { log, body } = useTraining();
+  const { log, body, muscleVolumes } = useTraining();
   const weightSeries = body
     .filter((m) => m.weightKg != null)
     .map((m) => m.weightKg as number);
@@ -139,6 +140,8 @@ export default function ProgressPage() {
           : "Noch keine Daten"}
         .
       </p>
+
+      {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 
       <BackTraffic log={log} />
 

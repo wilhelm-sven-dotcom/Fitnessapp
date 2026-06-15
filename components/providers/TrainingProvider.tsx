@@ -10,7 +10,13 @@ import {
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { presc, resolveSession, warmupSets } from "@/lib/progression";
 import { RING, type RingMetric } from "@/lib/ring-colors";
-import { rollingWeeklyBaseline, weeklyVolume } from "@/lib/volume";
+import {
+  coverageCount,
+  rollingWeeklyBaseline,
+  weeklyMuscleVolume,
+  weeklyVolume,
+  type MuscleVolume,
+} from "@/lib/volume";
 import { KEYS, storage } from "@/lib/storage";
 import type {
   BodyMetric,
@@ -61,6 +67,7 @@ interface TrainingContextValue {
   recTpl: Template;
   recList: ResolvedSlot[];
   ringMetrics: RingMetric[];
+  muscleVolumes: MuscleVolume[];
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
@@ -195,18 +202,23 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return log.filter((s) => new Date(s.date) >= mon).length;
   }, [log]);
 
-  // Apple-Fitness activity rings. Coverage is stubbed to sessions until the
-  // muscle-volume feature lands (Phase 3).
+  const muscleVolumes = useMemo(
+    () => weeklyMuscleVolume(log, allLib),
+    [log, allLib],
+  );
+
+  // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
   const ringMetrics = useMemo<RingMetric[]>(() => {
     const wv = weeklyVolume(log);
     const baseline = rollingWeeklyBaseline(log);
     const volTarget = baseline > 0 ? baseline : Math.max(Math.round(wv), 1);
+    const cov = coverageCount(muscleVolumes);
     return [
       { id: "move", value: weekCount, target: 3, label: "Einheiten", color: RING.move },
       { id: "exercise", value: Math.round(wv), target: volTarget, label: "Volumen", color: RING.exercise },
-      { id: "stand", value: weekCount, target: 3, label: "Abdeckung", color: RING.stand },
+      { id: "stand", value: cov.hit, target: cov.total, label: "Abdeckung", color: RING.stand },
     ];
-  }, [log, weekCount]);
+  }, [log, weekCount, muscleVolumes]);
 
   const initEntryFor = (ex: Exercise): SetEntry[] => {
     const p = presc(ex, lastPerf(ex.id), {
@@ -418,6 +430,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     recTpl,
     recList,
     ringMetrics,
+    muscleVolumes,
     weekCount,
     daysAgo,
     lastLabel,
