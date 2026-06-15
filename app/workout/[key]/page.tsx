@@ -89,7 +89,7 @@ export default function WorkoutPage() {
   }
 
   const done = list.filter(({ ex }) =>
-    (entries[ex.id] || []).some((s) => s.reps !== "" && s.reps != null),
+    (entries[ex.id] || []).some((s) => !s.warmup && s.reps !== "" && s.reps != null),
   ).length;
   const total = list.length || 1;
 
@@ -130,6 +130,7 @@ export default function WorkoutPage() {
           const p = presc(ex, lp);
           const ps = lp
             ? lp.sets
+                .filter((s) => !s.warmup)
                 .map((s) =>
                   ex.unit === "Sek"
                     ? `${s.reps}s`
@@ -140,7 +141,7 @@ export default function WorkoutPage() {
                 .join("   ")
             : null;
           const isDone = (entries[ex.id] || []).some(
-            (s) => s.reps !== "" && s.reps != null,
+            (s) => !s.warmup && s.reps !== "" && s.reps != null,
           );
           return (
             <div
@@ -202,18 +203,25 @@ export default function WorkoutPage() {
               </div>
 
               <div className="mt-3 space-y-2">
-                {(entries[ex.id] || []).map((s, i) => (
-                  <SetRow
-                    key={i}
-                    index={i}
-                    unit={ex.unit}
-                    set={s}
-                    onWeight={(val) => setEntry(ex.id, i, "weight", val)}
-                    onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
-                    onRir={(val) => setEntry(ex.id, i, "rir", val)}
-                    onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
-                  />
-                ))}
+                {(() => {
+                  let workIdx = 0;
+                  return (entries[ex.id] || []).map((s, i) => {
+                    const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
+                    return (
+                      <SetRow
+                        key={i}
+                        label={label}
+                        isWarmup={!!s.warmup}
+                        unit={ex.unit}
+                        set={s}
+                        onWeight={(val) => setEntry(ex.id, i, "weight", val)}
+                        onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
+                        onRir={(val) => setEntry(ex.id, i, "rir", val)}
+                        onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
+                      />
+                    );
+                  });
+                })()}
               </div>
             </div>
           );

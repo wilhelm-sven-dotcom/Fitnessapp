@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
-import { presc, resolveSession } from "@/lib/progression";
+import { presc, resolveSession, warmupSets } from "@/lib/progression";
 import { KEYS, storage } from "@/lib/storage";
 import type {
   BodyMetric,
@@ -185,7 +185,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const initEntryFor = (ex: Exercise): SetEntry[] => {
     const p = presc(ex, lastPerf(ex.id));
-    return Array.from({ length: ex.sets }, () => ({ weight: p.w, reps: "" }));
+    const working: SetEntry[] = Array.from({ length: ex.sets }, () => ({
+      weight: p.w,
+      reps: "",
+    }));
+    const warm =
+      ex.weighted && p.w && Number(p.w) > 0 ? warmupSets(Number(p.w)) : [];
+    return [...warm, ...working];
   };
 
   const startSession = (key: string) => {

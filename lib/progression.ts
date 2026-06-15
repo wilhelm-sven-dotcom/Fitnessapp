@@ -11,6 +11,19 @@ import type {
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
 
+/**
+ * Two warm-up sets at 40 % and 65 % of the working weight, 5 reps each.
+ * Flagged `warmup` so they never count toward progression, volume or PRs.
+ * Empty for bodyweight / unknown working weight.
+ */
+export function warmupSets(workingWeight: number): SetEntry[] {
+  if (!workingWeight || workingWeight <= 0) return [];
+  return [
+    { weight: String(round25(workingWeight * 0.4)), reps: "5", warmup: true },
+    { weight: String(round25(workingWeight * 0.65)), reps: "5", warmup: true },
+  ];
+}
+
 export function reqOk(ex: Exercise, has: (k: string) => boolean): boolean {
   return (ex.req || ["none"]).every((tok) => {
     if (tok === "none") return true;

@@ -110,6 +110,7 @@ export default function HistoryPage() {
                       <span className="text-sm text-neutral-300">{ex.name}</span>
                       <span className="text-right font-mono text-xs tabular-nums text-neutral-400">
                         {ex.sets
+                          .filter((st) => !st.warmup)
                           .map((st) =>
                             ex.unit === "Sek"
                               ? `${st.reps}s`

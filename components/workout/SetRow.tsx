@@ -48,7 +48,8 @@ function Scale({
 }
 
 export function SetRow({
-  index,
+  label,
+  isWarmup,
   unit,
   set,
   onWeight,
@@ -56,7 +57,8 @@ export function SetRow({
   onRir,
   onIntensity,
 }: {
-  index: number;
+  label: string;
+  isWarmup: boolean;
   unit: Unit;
   set: SetEntry;
   onWeight: (val: string) => void;
@@ -69,8 +71,13 @@ export function SetRow({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <span className="w-12 shrink-0 font-mono text-xs text-neutral-500">
-          Satz {index + 1}
+        <span
+          className={cn(
+            "w-12 shrink-0 font-mono text-xs",
+            isWarmup ? "text-neutral-600" : "text-neutral-500",
+          )}
+        >
+          {label}
         </span>
         {timed ? (
           <TimedSet value={set.reps} onChange={(val) => onReps(set.reps, val)} />
@@ -83,7 +90,7 @@ export function SetRow({
               value={set.weight}
               onChange={(e) => onWeight(e.target.value)}
               placeholder="kg"
-              className={inputClass}
+              className={cn(inputClass, isWarmup && "text-neutral-400")}
             />
             <input
               type="number"
@@ -91,24 +98,29 @@ export function SetRow({
               value={set.reps}
               onChange={(e) => onReps(set.reps, e.target.value)}
               placeholder="Wdh"
-              className={inputClass}
+              className={cn(inputClass, isWarmup && "text-neutral-400")}
             />
           </>
         )}
         <span
           className={cn(
             "flex w-6 shrink-0 justify-center",
-            filled ? "text-emerald-400" : "text-neutral-700",
+            isWarmup
+              ? "text-neutral-700"
+              : filled
+                ? "text-emerald-400"
+                : "text-neutral-700",
           )}
         >
           <Check size={18} strokeWidth={2.5} />
         </span>
       </div>
-      {timed ? (
-        <Scale label="Int." options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
-      ) : (
-        <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
-      )}
+      {!isWarmup &&
+        (timed ? (
+          <Scale label="Int." options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
+        ) : (
+          <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
+        ))}
     </div>
   );
 }
