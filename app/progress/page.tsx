@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { BackTraffic } from "@/components/progress/BackTraffic";
+import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { TrendChart } from "@/components/progress/TrendChart";
@@ -143,6 +144,8 @@ export default function ProgressPage() {
       </p>
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
+
+      <MuscleBalanceCard muscleVolumes={muscleVolumes} />
 
       <BackTraffic log={log} />
 
