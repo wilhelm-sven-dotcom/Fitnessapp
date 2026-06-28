@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Camera,
   ChevronRight,
+  Flame,
   Mic,
   Repeat,
   Save,
@@ -25,6 +26,7 @@ import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
 import { isPoseSupported } from "@/lib/pose/landmarker";
+import { warmupFor, warmupTotalMin } from "@/lib/warmup";
 import {
   createRecognizer,
   isVoiceInputSupported,
@@ -276,6 +278,13 @@ export default function WorkoutPage() {
         estMin={estimateSessionMin(list, { superset: settings.superset })}
         budgetMin={settings.timeBudgetMin}
       />
+
+      <Pressable
+        onClick={() => router.push(`/warmup/${key}`)}
+        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-900 py-3 text-sm font-medium text-accent-sessions focus:outline-none"
+      >
+        <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl))} Min
+      </Pressable>
 
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
