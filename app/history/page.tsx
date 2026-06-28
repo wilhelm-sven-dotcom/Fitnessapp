@@ -24,14 +24,14 @@ export default function HistoryPage() {
   return (
     <div>
       <h2 className="mb-1 text-2xl font-semibold tracking-tight">Verlauf</h2>
-      <p className="mb-5 text-sm text-neutral-500">
+      <p className="mb-5 text-sm text-muted">
         {log.length} {log.length === 1 ? "Einheit" : "Einheiten"} aufgezeichnet.
       </p>
 
       {items.length === 0 && (
         <div className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-8 text-center">
-          <p className="text-neutral-400">Noch nichts aufgezeichnet.</p>
-          <p className="mt-1 text-sm text-neutral-600">
+          <p className="text-muted">Noch nichts aufgezeichnet.</p>
+          <p className="mt-1 text-sm text-faint">
             Starte deine erste Einheit, dann steht sie hier.
           </p>
         </div>
@@ -52,7 +52,7 @@ export default function HistoryPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-neutral-500">{s.dayKey}</span>
+                      <span className="font-mono text-xs text-muted">{s.dayKey}</span>
                       <span className="truncate font-medium">{s.dayName}</span>
                       {s.backTraffic && (
                         <span
@@ -61,7 +61,7 @@ export default function HistoryPage() {
                         />
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-neutral-500">
+                    <p className="mt-0.5 text-xs text-muted">
                       {fmtDate(s.date)} · {s.focus}
                     </p>
                   </div>
@@ -71,12 +71,12 @@ export default function HistoryPage() {
                         {v.toLocaleString("de-DE")} kg
                       </p>
                     )}
-                    <p className="text-xs uppercase tracking-wider text-neutral-600">Volumen</p>
+                    <p className="text-xs uppercase tracking-wider text-faint">Volumen</p>
                   </div>
                 </button>
                 <Pressable
                   onClick={() => setConfirmDel(isDel ? null : realIdx)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 focus:outline-none"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
                 >
                   <Trash2 size={16} />
                 </Pressable>
@@ -96,7 +96,7 @@ export default function HistoryPage() {
                   </Pressable>
                   <Pressable
                     onClick={() => setConfirmDel(null)}
-                    className="rounded-lg px-3 py-2 text-sm text-neutral-400 focus:outline-none"
+                    className="rounded-lg px-3 py-2 text-sm text-muted focus:outline-none"
                   >
                     Abbrechen
                   </Pressable>
@@ -107,8 +107,8 @@ export default function HistoryPage() {
                 <div className="space-y-2 px-4 pb-4 pt-1">
                   {s.exercises.map((ex) => (
                     <div key={ex.id} className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm text-neutral-300">{ex.name}</span>
-                      <span className="text-right font-mono text-xs tabular-nums text-neutral-400">
+                      <span className="text-sm text-muted">{ex.name}</span>
+                      <span className="text-right font-mono text-xs tabular-nums text-muted">
                         {ex.sets
                           .filter((st) => !st.warmup)
                           .map((st) =>
@@ -123,7 +123,7 @@ export default function HistoryPage() {
                     </div>
                   ))}
                   {s.note && (
-                    <p className="mt-2 rounded-lg bg-neutral-950 px-3 py-2 text-sm italic text-neutral-300">
+                    <p className="mt-2 rounded-lg bg-base px-3 py-2 text-sm italic text-muted">
                       „{s.note}“
                     </p>
                   )}

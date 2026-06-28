@@ -23,7 +23,7 @@ export function BackTraffic({ log }: { log: LoggedSession[] }) {
     <Card className="mb-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-semibold leading-tight">Rücken</h3>
-        <span className="text-xs text-neutral-500">Ampel nach jeder Einheit</span>
+        <span className="text-xs text-muted">Ampel nach jeder Einheit</span>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         {points.map((s, i) => {

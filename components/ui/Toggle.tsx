@@ -18,8 +18,8 @@ export function Toggle({
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-neutral-100">{label}</p>
-        {hint && <p className="mt-0.5 text-xs leading-relaxed text-neutral-500">{hint}</p>}
+        <p className="text-sm font-medium text-fg">{label}</p>
+        {hint && <p className="mt-0.5 text-xs leading-relaxed text-muted">{hint}</p>}
       </div>
       <Pressable
         role="switch"
@@ -28,7 +28,7 @@ export function Toggle({
         onClick={() => onChange(!checked)}
         className={cn(
           "relative h-7 w-12 shrink-0 rounded-full transition-colors focus:outline-none",
-          checked ? "bg-accent-volume" : "bg-neutral-700",
+          checked ? "bg-accent-volume" : "bg-surface-2",
         )}
       >
         <span

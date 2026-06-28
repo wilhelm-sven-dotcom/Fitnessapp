@@ -35,8 +35,8 @@ export default function PlanPage() {
       <h2 className="mb-5 text-2xl font-semibold tracking-tight">Plan</h2>
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">Geräte</p>
-        <p className="mb-3 text-xs leading-relaxed text-neutral-500">
+        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Geräte</p>
+        <p className="mb-3 text-xs leading-relaxed text-muted">
           Abwählen, was du nicht (mehr) nutzt — die Übungsauswahl passt sich sofort an.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -49,8 +49,8 @@ export default function PlanPage() {
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-sm focus:outline-none",
                   on
-                    ? "bg-accent-sessions font-medium text-neutral-950"
-                    : "bg-neutral-800 text-neutral-400",
+                    ? "bg-accent-sessions font-medium text-on-strong"
+                    : "bg-surface-2 text-muted",
                 )}
               >
                 {on ? "✓ " : ""}
@@ -62,19 +62,19 @@ export default function PlanPage() {
       </section>
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Eigene Übung
         </p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name der Übung"
-          className="mb-2 w-full rounded-xl bg-neutral-800 px-3 py-2.5 text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="mb-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         />
         <select
           value={pattern}
           onChange={(e) => setPattern(e.target.value as Pattern)}
-          className="mb-2 w-full rounded-xl bg-neutral-800 px-3 py-2.5 text-neutral-100 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="mb-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         >
           {(Object.keys(PATTERN_LABEL) as Pattern[]).map((k) => (
             <option key={k} value={k}>
@@ -89,7 +89,7 @@ export default function PlanPage() {
               onClick={() => setUnit(u)}
               className={cn(
                 "flex-1 rounded-xl py-2 text-sm focus:outline-none",
-                unit === u ? "bg-neutral-700 text-neutral-100" : "bg-neutral-800 text-neutral-500",
+                unit === u ? "bg-surface-2 text-fg" : "bg-surface-2 text-muted",
               )}
             >
               {u === "Wdh" ? "Wiederholungen" : "Zeit (Timer)"}
@@ -99,15 +99,15 @@ export default function PlanPage() {
         {unit === "Wdh" && (
           <Pressable
             onClick={() => setWeighted((w) => !w)}
-            className="mb-3 flex items-center gap-2 rounded px-1 py-1 text-sm text-neutral-300 focus:outline-none"
+            className="mb-3 flex items-center gap-2 rounded px-1 py-1 text-sm text-muted focus:outline-none"
           >
             <span
               className={cn(
                 "flex h-5 w-5 items-center justify-center rounded",
-                weighted ? "bg-accent-sessions" : "bg-neutral-700",
+                weighted ? "bg-accent-sessions" : "bg-surface-2",
               )}
             >
-              {weighted && <Check size={13} className="text-neutral-950" strokeWidth={3} />}
+              {weighted && <Check size={13} className="text-on-strong" strokeWidth={3} />}
             </span>
             mit Gewicht (kg)
           </Pressable>
@@ -115,7 +115,7 @@ export default function PlanPage() {
         <Pressable
           onClick={submit}
           disabled={!name.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-100 py-2.5 text-sm font-medium text-neutral-950 focus:outline-none disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
         >
           <Plus size={16} strokeWidth={2.5} /> Hinzufügen
         </Pressable>
@@ -124,14 +124,14 @@ export default function PlanPage() {
             {custom.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center justify-between gap-2 rounded-lg bg-neutral-950 px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-lg bg-base px-3 py-2"
               >
-                <span className="truncate text-sm text-neutral-300">
-                  {c.name} <span className="text-neutral-600">· {PATTERN_LABEL[c.pattern]}</span>
+                <span className="truncate text-sm text-muted">
+                  {c.name} <span className="text-faint">· {PATTERN_LABEL[c.pattern]}</span>
                 </span>
                 <Pressable
                   onClick={() => removeCustom(c.id)}
-                  className="shrink-0 rounded p-1 text-neutral-500 focus:outline-none"
+                  className="shrink-0 rounded p-1 text-muted focus:outline-none"
                 >
                   <Trash2 size={14} />
                 </Pressable>
@@ -141,7 +141,7 @@ export default function PlanPage() {
         )}
       </section>
 
-      <p className="mb-3 px-1 text-xs text-neutral-500">
+      <p className="mb-3 px-1 text-xs text-muted">
         Übung antippen für Animation und Ausführung. Die grüne Linie ist deine
         Wirbelsäule, halte sie gerade.
       </p>
@@ -151,9 +151,9 @@ export default function PlanPage() {
         return (
           <section key={t.key} className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
             <div className="mb-3 flex items-baseline gap-2">
-              <span className="font-mono text-sm text-neutral-500">{t.key}</span>
+              <span className="font-mono text-sm text-muted">{t.key}</span>
               <h3 className="font-semibold">{t.name}</h3>
-              <span className="text-xs text-neutral-500">· {t.focus}</span>
+              <span className="text-xs text-muted">· {t.focus}</span>
             </div>
             <div className="space-y-1">
               {list.map(({ ex, slotKey }) => (
@@ -162,11 +162,11 @@ export default function PlanPage() {
                   onClick={() => setGuideEx(ex)}
                   className="flex w-full items-baseline justify-between gap-3 py-1.5 text-left transition focus:outline-none"
                 >
-                  <span className="flex min-w-0 items-center gap-2 text-sm text-neutral-300">
-                    <ChevronRight size={13} className="shrink-0 text-neutral-600" />
+                  <span className="flex min-w-0 items-center gap-2 text-sm text-muted">
+                    <ChevronRight size={13} className="shrink-0 text-faint" />
                     <span className="truncate">{ex.name}</span>
                   </span>
-                  <span className="shrink-0 font-mono text-xs tabular-nums text-neutral-500">
+                  <span className="shrink-0 font-mono text-xs tabular-nums text-muted">
                     {ex.sets}×{ex.repLow}–{ex.repHigh}
                   </span>
                 </button>

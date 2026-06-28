@@ -50,7 +50,7 @@ export function Sheet({
             aria-modal="true"
           >
             <div className="flex justify-center pt-3">
-              <span className="h-1 w-10 rounded-full bg-neutral-700" />
+              <span className="h-1 w-10 rounded-full bg-surface-2" />
             </div>
             {title && (
               <div className="px-5 pb-1 pt-3">

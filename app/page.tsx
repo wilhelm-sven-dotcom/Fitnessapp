@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Play, Sparkles } from "lucide-react";
+import { ChevronRight, Flame, Play, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ActivityRings } from "@/components/rings/ActivityRings";
 import { RingLegend } from "@/components/rings/RingLegend";
@@ -15,9 +15,33 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
 import { tap } from "@/lib/haptics";
+import { weeklyStreak } from "@/lib/stats";
+import { coverageCount, weeklyVolume } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 
 const BUDGETS = [20, 25, 30];
+
+function Stat({
+  label,
+  value,
+  suffix,
+  decimals = 0,
+}: {
+  label: string;
+  value: number;
+  suffix?: string;
+  decimals?: number;
+}) {
+  return (
+    <Card className="p-3 text-center">
+      <p className="font-display text-xl font-semibold leading-none tabular-nums text-fg">
+        <CountUp value={value} decimals={decimals} />
+        {suffix && <span className="text-sm font-medium text-muted">{suffix}</span>}
+      </p>
+      <p className="mt-1 text-xs text-muted">{label}</p>
+    </Card>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -30,6 +54,7 @@ export default function HomePage() {
     daysAgo,
     weekCount,
     ringMetrics,
+    muscleVolumes,
     estimatedMin,
     settings,
     setBudget,
@@ -40,23 +65,50 @@ export default function HomePage() {
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
   const chips = homeChips({ daysAgo, weekCount });
+  const today = new Date().toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const streak = weeklyStreak(log);
+  const volT = Math.round(weeklyVolume(log) / 100) / 10;
+  const cov = coverageCount(muscleVolumes);
 
   const start = (key: string) => router.push(`/workout/${key}`);
 
   return (
     <div>
-      <div className="mb-6">
-        <p className="font-display text-2xl font-semibold tracking-tight">{greeting(daysAgo)}</p>
-        <p className="mt-1 text-sm text-neutral-500">{lastLabel}.</p>
-        {chips.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {chips.map((c, i) => (
-              <Chip key={i} tone={c.tone}>
-                {c.text}
-              </Chip>
-            ))}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-widest text-faint">{today}</p>
+          <p className="font-display text-2xl font-semibold tracking-tight text-fg">
+            {greeting(daysAgo)}
+          </p>
+          <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
+        </div>
+        {streak > 0 && (
+          <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-surface-3 bg-surface-1 px-3 py-1.5 shadow-card">
+            <Flame size={16} style={{ color: "var(--accent)" }} />
+            <span className="font-display text-sm font-semibold tabular-nums text-fg">{streak}</span>
+            <span className="text-xs text-muted">Wo</span>
           </div>
         )}
+      </div>
+
+      {chips.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {chips.map((c, i) => (
+            <Chip key={i} tone={c.tone}>
+              {c.text}
+            </Chip>
+          ))}
+        </div>
+      )}
+
+      <div className="mb-5 grid grid-cols-3 gap-2">
+        <Stat label="Diese Woche" value={weekCount} suffix="/3" />
+        <Stat label="Volumen" value={volT} suffix=" t" decimals={1} />
+        <Stat label="Abdeckung" value={cov.hit} suffix={`/${cov.total}`} />
       </div>
 
       <Card className="mb-5 flex items-center gap-5 rounded-3xl p-5">
@@ -68,7 +120,7 @@ export default function HomePage() {
           center={
             <p className="font-display text-2xl font-semibold leading-none tabular-nums">
               <CountUp value={weekCount} />
-              <span className="text-base text-neutral-500">/3</span>
+              <span className="text-base text-muted">/3</span>
             </p>
           }
         />
@@ -94,10 +146,10 @@ export default function HomePage() {
         onClick={() => router.push("/coach")}
         className="mb-4 flex w-full items-center justify-between rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left focus:outline-none"
       >
-        <span className="flex items-center gap-2 text-sm font-medium text-neutral-100">
+        <span className="flex items-center gap-2 text-sm font-medium text-fg">
           <Sparkles size={17} className="text-accent-coverage" /> Frag den Coach
         </span>
-        <ChevronRight size={16} className="text-neutral-500" />
+        <ChevronRight size={16} className="text-muted" />
       </Pressable>
 
       {activeKey && (
@@ -120,11 +172,11 @@ export default function HomePage() {
             "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,0) 42%)",
         }}
       >
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
           Empfohlen heute
         </p>
         <h2 className="font-display text-3xl font-semibold tracking-tight">{recTpl.name}</h2>
-        <p className="mb-3 text-neutral-400">{recTpl.focus}</p>
+        <p className="mb-3 text-muted">{recTpl.focus}</p>
         <div className="mb-4 flex items-center gap-2">
           <DurationBadge min={estimatedMin} />
           <div className="ml-auto flex gap-1">
@@ -135,8 +187,8 @@ export default function HomePage() {
                 className={cn(
                   "rounded-lg px-2.5 py-1 text-xs font-medium tabular-nums focus:outline-none",
                   settings.timeBudgetMin === b
-                    ? "bg-accent-coverage text-neutral-950"
-                    : "bg-neutral-800 text-neutral-400",
+                    ? "bg-accent-coverage text-on-strong"
+                    : "bg-surface-2 text-muted",
                 )}
               >
                 {b}
@@ -148,7 +200,7 @@ export default function HomePage() {
           {tags.map((t) => (
             <span
               key={t}
-              className="rounded-lg bg-neutral-800 px-2 py-1 text-xs text-neutral-300"
+              className="rounded-lg bg-surface-2 px-2 py-1 text-xs text-muted"
             >
               {t}
             </span>
@@ -159,13 +211,13 @@ export default function HomePage() {
             tap();
             start(recTpl.key);
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 shadow-card-lg focus:outline-none"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none"
         >
           <Play size={18} strokeWidth={2.5} /> Training starten
         </Pressable>
       </Card>
 
-      <p className="mb-2 px-1 text-xs text-neutral-500">Oder andere Einheit</p>
+      <p className="mb-2 px-1 text-xs text-muted">Oder andere Einheit</p>
       <div className="grid grid-cols-3 gap-2">
         {TEMPLATE.map((t) => (
           <Pressable
@@ -177,7 +229,7 @@ export default function HomePage() {
               className={
                 t.key === recTpl.key
                   ? "font-mono text-xs text-accent-sessions"
-                  : "font-mono text-xs text-neutral-500"
+                  : "font-mono text-xs text-muted"
               }
             >
               {t.key}

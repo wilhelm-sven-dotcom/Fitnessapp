@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Dumbbell } from "lucide-react";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { ActivityRings } from "@/components/rings/ActivityRings";
 import { EASE_OUT } from "@/lib/motion";
 import { RING, type RingMetric } from "@/lib/ring-colors";
@@ -17,7 +17,7 @@ export function Splash() {
   const reduce = useReducedMotion();
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-neutral-950"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-base"
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
@@ -33,12 +33,11 @@ export function Splash() {
         gap={8}
         center={
           <motion.span
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-sessions"
             initial={reduce ? false : { scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.45, delay: 0.5, ease: EASE_OUT }}
           >
-            <Dumbbell size={30} className="text-neutral-950" strokeWidth={2.5} />
+            <BrandMark size={56} className="rounded-2xl" />
           </motion.span>
         }
       />
@@ -48,8 +47,8 @@ export function Splash() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.7, ease: EASE_OUT }}
       >
-        <p className="font-display text-2xl font-semibold tracking-tight text-neutral-100">Training</p>
-        <p className="mt-1 text-sm text-neutral-500">Bereit, wenn du es bist.</p>
+        <p className="font-display text-2xl font-semibold tracking-tight text-fg">Training</p>
+        <p className="mt-1 text-sm text-muted">Bereit, wenn du es bist.</p>
       </motion.div>
     </motion.div>
   );

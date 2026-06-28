@@ -104,7 +104,7 @@ export function FigurePanel({
       <svg viewBox={fig.vb || "0 0 200 165"} style={{ display: "block", width: "100%", height: "auto" }}>
         {flip ? <g transform="translate(200,0) scale(-1,1)">{inner}</g> : inner}
       </svg>
-      <p className="text-center font-mono text-xs text-neutral-500 mt-1">{label}</p>
+      <p className="text-center font-mono text-xs text-muted mt-1">{label}</p>
     </div>
   );
 }

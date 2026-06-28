@@ -16,7 +16,7 @@ export default function FormPage() {
   if (!ex) {
     return (
       <div>
-        <p className="text-neutral-400">Übung nicht gefunden.</p>
+        <p className="text-muted">Übung nicht gefunden.</p>
         <Pressable
           onClick={() => router.push("/")}
           className="mt-3 flex items-center gap-1 text-sm text-accent-sessions focus:outline-none"

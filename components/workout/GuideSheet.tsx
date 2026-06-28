@@ -20,7 +20,7 @@ export function GuideSheet({
       {ex && (
         <>
           {fig ? (
-            <div className="mb-4 flex items-end gap-1 rounded-2xl bg-neutral-950 p-2">
+            <div className="mb-4 flex items-end gap-1 rounded-2xl bg-base p-2">
               <FigurePanel label="Seitlich" fig={fig} viewKey="side" />
               {fig.front ? (
                 <FigurePanel label="Frontal" fig={fig} viewKey="front" />
@@ -29,8 +29,8 @@ export function GuideSheet({
               )}
             </div>
           ) : (
-            <div className="mb-4 rounded-2xl bg-neutral-950 px-3 py-2">
-              <p className="font-mono text-xs text-neutral-600">
+            <div className="mb-4 rounded-2xl bg-base px-3 py-2">
+              <p className="font-mono text-xs text-faint">
                 Animation folgt — Schritte unten.
               </p>
             </div>
@@ -38,7 +38,7 @@ export function GuideSheet({
           {ex.steps.length > 0 && (
             <ol className="mb-3 list-decimal space-y-1 pl-5">
               {ex.steps.map((s, i) => (
-                <li key={i} className="text-sm text-neutral-200">
+                <li key={i} className="text-sm text-fg">
                   {s}
                 </li>
               ))}
@@ -53,8 +53,8 @@ export function GuideSheet({
             </div>
           )}
           {ex.easier && (
-            <p className="text-xs text-neutral-400">
-              <span className="font-medium text-neutral-200">Wenn&apos;s zwickt:</span>{" "}
+            <p className="text-xs text-muted">
+              <span className="font-medium text-fg">Wenn&apos;s zwickt:</span>{" "}
               {ex.easier}
             </p>
           )}

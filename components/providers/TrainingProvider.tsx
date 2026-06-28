@@ -29,6 +29,7 @@ import {
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
+import { applyTheme, DEFAULT_ACCENT, type ThemePref } from "@/lib/theme";
 import type {
   AppSettings,
   BodyMetric,
@@ -68,6 +69,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoregOn: true,
   voiceCues: false,
   superset: false,
+  theme: "dark",
+  accentColor: DEFAULT_ACCENT,
 };
 
 /** A deload overrides readiness with a clearly lighter week. */
@@ -138,6 +141,8 @@ interface TrainingContextValue {
   setBudget: (min: number) => void;
   setVoiceCues: (on: boolean) => void;
   setSuperset: (on: boolean) => void;
+  setTheme: (t: ThemePref) => void;
+  setAccent: (id: string) => void;
   setReadiness: (r: Readiness) => void;
   acceptDeload: () => void;
   dismissCard: (card: CoachCard) => void;
@@ -204,6 +209,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  // Apply theme + accent to <html>; follow system changes when set to "system".
+  useEffect(() => {
+    applyTheme(settings.theme, settings.accentColor);
+    if (settings.theme !== "system" || typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const onChange = () => applyTheme(settings.theme, settings.accentColor);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [settings.theme, settings.accentColor]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -497,6 +512,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, voiceCues: on });
   const setSuperset = (on: boolean) =>
     void saveSettings({ ...settings, superset: on });
+  const setTheme = (t: ThemePref) =>
+    void saveSettings({ ...settings, theme: t });
+  const setAccent = (id: string) =>
+    void saveSettings({ ...settings, accentColor: id });
   const acceptDeload = () =>
     void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
   const dismissCard = (card: CoachCard) =>
@@ -705,6 +724,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBudget,
     setVoiceCues,
     setSuperset,
+    setTheme,
+    setAccent,
     setReadiness: (r) => setTodayReadiness(r),
     acceptDeload,
     dismissCard,

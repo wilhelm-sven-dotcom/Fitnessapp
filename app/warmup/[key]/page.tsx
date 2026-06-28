@@ -18,7 +18,7 @@ export default function WarmupPage() {
   if (!tpl) {
     return (
       <div>
-        <p className="text-neutral-400">Einheit nicht gefunden.</p>
+        <p className="text-muted">Einheit nicht gefunden.</p>
         <Pressable
           onClick={() => router.push("/")}
           className="mt-3 flex items-center gap-1 text-sm text-accent-sessions focus:outline-none"
