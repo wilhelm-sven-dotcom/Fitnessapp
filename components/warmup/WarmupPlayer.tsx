@@ -1,8 +1,10 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, Pause, Play, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
+import { EASE_OUT } from "@/lib/motion";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 import type { WarmupDrill } from "@/lib/warmup";
@@ -27,6 +29,7 @@ export function WarmupPlayer({
   const [done, setDone] = useState(false);
 
   const current = drills[index];
+  const reduce = useReducedMotion();
 
   // Announce + (re)start the timer whenever the drill changes.
   useEffect(() => {
@@ -131,17 +134,27 @@ export function WarmupPlayer({
 
       {/* drill */}
       <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-        <span
-          className={cn(
-            "mb-4 rounded-full px-3 py-1 text-xs font-medium",
-            isMobility ? "bg-accent-coverage text-on-strong" : "bg-accent-volume text-on-strong",
-          )}
+        <motion.div
+          key={index}
+          className="flex flex-col items-center"
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
         >
-          {isMobility ? "Mobilität" : "Aktivierung"}
-        </span>
-        <h2 className="text-4xl font-semibold tracking-tight text-fg">{current.name}</h2>
-        <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">{current.cue}</p>
-        <p className="mt-8 font-mono text-7xl font-semibold tabular-nums text-neutral-50">{left}</p>
+          <span
+            className={cn(
+              "mb-4 rounded-full px-3 py-1 text-xs font-medium",
+              isMobility ? "bg-accent-coverage text-on-strong" : "bg-accent-volume text-on-strong",
+            )}
+          >
+            {isMobility ? "Mobilität" : "Aktivierung"}
+          </span>
+          <h2 className="font-display text-4xl font-semibold tracking-tight text-fg">
+            {current.name}
+          </h2>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">{current.cue}</p>
+        </motion.div>
+        <p className="mt-8 font-display text-7xl font-semibold tabular-nums text-neutral-50">{left}</p>
         <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
           <div
             className="h-full rounded-full bg-accent-sessions transition-all"

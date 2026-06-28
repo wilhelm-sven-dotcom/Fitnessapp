@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { buildCoachContext } from "@/lib/coach-context";
 import { cn } from "@/lib/utils";
@@ -116,7 +117,7 @@ export default function CoachPage() {
       </div>
 
       {messages.length === 0 ? (
-        <div>
+        <Reveal>
           <Pressable
             onClick={() => send(RECAP_PROMPT)}
             className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none"
@@ -136,7 +137,7 @@ export default function CoachPage() {
               </Pressable>
             ))}
           </div>
-        </div>
+        </Reveal>
       ) : (
         <div className="space-y-3">
           {messages.map((m, i) => (

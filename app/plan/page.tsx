@@ -3,7 +3,9 @@
 import { Check, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
+import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EQUIP_LIST, PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
@@ -32,7 +34,7 @@ export default function PlanPage() {
 
   return (
     <div>
-      <h2 className="mb-5 text-2xl font-semibold tracking-tight">Plan</h2>
+      <PageHeader eyebrow="Dein Setup" title="Plan" />
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Geräte</p>
@@ -46,6 +48,7 @@ export default function PlanPage() {
               <Pressable
                 key={e.key}
                 onClick={() => toggleEquip(e.key)}
+                style={on ? { boxShadow: "0 0 12px -3px var(--accent)" } : undefined}
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-sm focus:outline-none",
                   on
@@ -146,10 +149,11 @@ export default function PlanPage() {
         Wirbelsäule, halte sie gerade.
       </p>
 
-      {TEMPLATE.map((t) => {
+      {TEMPLATE.map((t, ti) => {
         const list = sessionOf(t.key);
         return (
-          <section key={t.key} className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+          <Reveal key={t.key} delay={0.08 + ti * 0.05}>
+            <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
             <div className="mb-3 flex items-baseline gap-2">
               <span className="font-mono text-sm text-muted">{t.key}</span>
               <h3 className="font-semibold">{t.name}</h3>
@@ -172,7 +176,8 @@ export default function PlanPage() {
                 </button>
               ))}
             </div>
-          </section>
+            </section>
+          </Reveal>
         );
       })}
 
