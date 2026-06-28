@@ -180,6 +180,7 @@ export default function HomePage() {
                 <Pressable
                   key={b}
                   onClick={() => setBudget(b)}
+                  aria-label={`Zeitbudget ${b} Minuten`}
                   className={cn(
                     "rounded-lg px-2.5 py-1 text-xs font-medium tabular-nums focus:outline-none",
                     settings.timeBudgetMin === b
