@@ -31,11 +31,13 @@ export function CloudSyncSection() {
 
   const sendLink = async () => {
     setMsg("");
-    const ok = await cloud.signIn(email);
+    const res = await cloud.signIn(email);
     setMsg(
-      ok
+      res.ok
         ? "Magic-Link gesendet — schau in deine Mails."
-        : "Hat nicht geklappt. Prüf die E-Mail-Adresse.",
+        : res.error
+          ? `Fehler: ${res.error}`
+          : "Hat nicht geklappt.",
     );
   };
 
