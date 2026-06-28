@@ -66,3 +66,28 @@ html {
   -webkit-backdrop-filter: saturate(160%) blur(20px);
   backdrop-filter: saturate(160%) blur(20px);
 }
+
+/* The one bold accent moment — depth + a charged glow in the selectable accent.
+   Use INSTEAD of shadow-card (it carries its own elevation). */
+.glow-accent {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 18px 48px -24px rgba(0, 0, 0, 0.85),
+    0 0 30px -8px var(--accent);
+}
+
+/* Material top-edge highlight for hero / elevated cards. Composes with any
+   box-shadow (it draws a hairline via ::before, not a shadow). */
+.edge-top {
+  position: relative;
+}
+.edge-top::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  pointer-events: none;
+}

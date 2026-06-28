@@ -265,12 +265,12 @@ export default function WorkoutPage() {
         </div>
       </div>
 
-      <h2 className="text-2xl font-semibold tracking-tight">{tpl.name}</h2>
+      <h2 className="font-display text-2xl font-semibold tracking-tight">{tpl.name}</h2>
       <p className="mb-1 text-sm text-muted">{tpl.focus}</p>
       <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
         <div
           className="h-full rounded-full bg-accent-sessions transition-all"
-          style={{ width: `${(done / total) * 100}%` }}
+          style={{ width: `${(done / total) * 100}%`, boxShadow: "0 0 10px -1px var(--accent)" }}
         />
       </div>
 
@@ -388,7 +388,7 @@ export default function WorkoutPage() {
                 )}
               </div>
 
-              <div className="mt-3 rounded-xl bg-surface-2 px-3 py-2">
+              <div className="mt-3 rounded-xl border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
                 <p className="text-xs uppercase tracking-widest text-muted">
                   Letztes Mal
                 </p>

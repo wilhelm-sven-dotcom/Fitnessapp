@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { SetEntry, Unit } from "@/lib/types";
 
 const inputClass =
-  "min-w-0 flex-1 rounded-xl bg-surface-2 py-2.5 text-center font-mono text-lg tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
+  "min-w-0 flex-1 rounded-xl bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
 
 const RIR_OPTIONS = [0, 1, 2, 3, 4];
 const INTENSITY_OPTIONS = [1, 2, 3, 4, 5];

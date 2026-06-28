@@ -27,7 +27,7 @@ export function ActivityRings({
               color={m.color}
               size={ringSize}
               stroke={stroke}
-              delay={i * 0.12}
+              delay={i * 0.15}
             />
           </div>
         );
