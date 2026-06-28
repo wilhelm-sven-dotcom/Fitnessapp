@@ -8,9 +8,14 @@ import type { CardioSession } from "@/lib/types";
 // Needs the Node runtime to talk to the (unofficial) Peloton API server-side.
 export const runtime = "nodejs";
 
-const HEADERS = {
-  "Content-Type": "application/json",
-  "User-Agent": "fitnessapp/1.0",
+// Browser-like headers — Peloton sits behind bot protection that 403s minimal/bot clients.
+const BROWSER = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+  Accept: "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9",
+  Origin: "https://members.onepeloton.com",
+  Referer: "https://members.onepeloton.com/",
   "Peloton-Platform": "web",
 };
 
@@ -37,7 +42,7 @@ export async function POST(req: Request) {
       }
       const res = await fetch(`${PELOTON_BASE}/auth/login`, {
         method: "POST",
-        headers: HEADERS,
+        headers: { ...BROWSER, "Content-Type": "application/json" },
         body: JSON.stringify({
           username_or_email: body.username,
           password: body.password,
@@ -49,7 +54,9 @@ export async function POST(req: Request) {
           error:
             res.status === 401
               ? "Login fehlgeschlagen — E-Mail/Passwort prüfen."
-              : `Peloton-Fehler (${res.status}).`,
+              : res.status === 403
+                ? "Peloton blockt die Anfrage (Bot-Schutz). Bleibt das, nutzen wir den Strava-Weg."
+                : `Peloton-Fehler (${res.status}).`,
         });
       }
       const data = (await res.json()) as { user_id?: string; session_id?: string };
@@ -71,7 +78,7 @@ export async function POST(req: Request) {
       }
       const res = await fetch(
         `${PELOTON_BASE}/api/user/${body.userId}/workouts?joins=ride&limit=25&page=0`,
-        { headers: { ...HEADERS, Cookie: `peloton_session_id=${body.sessionId}` } },
+        { headers: { ...BROWSER, Cookie: `peloton_session_id=${body.sessionId}` } },
       );
       if (res.status === 401) {
         return Response.json({
@@ -81,7 +88,13 @@ export async function POST(req: Request) {
         });
       }
       if (!res.ok) {
-        return Response.json({ ok: false, error: `Peloton-Fehler (${res.status}).` });
+        return Response.json({
+          ok: false,
+          error:
+            res.status === 403
+              ? "Peloton blockt die Anfrage (Bot-Schutz). Bleibt das, nutzen wir den Strava-Weg."
+              : `Peloton-Fehler (${res.status}).`,
+        });
       }
       const data = (await res.json()) as { data?: RawPelotonWorkout[] };
       const raw = Array.isArray(data.data) ? data.data : [];
