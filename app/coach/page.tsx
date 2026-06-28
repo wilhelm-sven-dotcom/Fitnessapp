@@ -23,10 +23,10 @@ const RECAP_PROMPT =
 
 export default function CoachPage() {
   const router = useRouter();
-  const { log, allLib, body } = useTraining();
+  const { log, allLib, body, cardio } = useTraining();
   const context = useMemo(
-    () => buildCoachContext({ log, allLib, body }),
-    [log, allLib, body],
+    () => buildCoachContext({ log, allLib, body, cardio }),
+    [log, allLib, body, cardio],
   );
 
   const [messages, setMessages] = useState<Msg[]>([]);

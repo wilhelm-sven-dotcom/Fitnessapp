@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Bike, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -16,7 +16,7 @@ const trafficDot: Record<TrafficLight, string> = {
 };
 
 export default function HistoryPage() {
-  const { log, deleteSession } = useTraining();
+  const { log, cardio, deleteSession } = useTraining();
   const [expanded, setExpanded] = useState<number | null>(null);
   const [confirmDel, setConfirmDel] = useState<number | null>(null);
   const items = [...log].reverse();
@@ -28,7 +28,29 @@ export default function HistoryPage() {
         {log.length} {log.length === 1 ? "Einheit" : "Einheiten"} aufgezeichnet.
       </p>
 
-      {items.length === 0 && (
+      {cardio.length > 0 && (
+        <div className="mb-3 rounded-2xl border border-surface-3 bg-surface-1 p-4 shadow-card">
+          <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
+            <Bike size={13} /> Kardio (Peloton)
+          </p>
+          <div className="space-y-1.5">
+            {[...cardio]
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 8)
+              .map((c) => (
+                <div key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 truncate text-fg">{c.title ?? "Fahrt"}</span>
+                  <span className="shrink-0 font-mono text-xs tabular-nums text-muted">
+                    {fmtDate(c.date)} · {Math.round(c.durationSec / 60)} Min
+                    {c.kj != null ? ` · ${c.kj} kJ` : ""}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {items.length === 0 && cardio.length === 0 && (
         <div className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-8 text-center">
           <p className="text-muted">Noch nichts aufgezeichnet.</p>
           <p className="mt-1 text-sm text-faint">
