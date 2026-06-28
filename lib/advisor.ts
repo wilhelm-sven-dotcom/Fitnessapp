@@ -1,4 +1,4 @@
-import { hoursSince, lastRide } from "@/lib/peloton";
+import { hoursSince, lastRide } from "@/lib/cardio";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { MUSCLE_LABEL, type MuscleVolume } from "@/lib/volume";
 import type { AppSettings, CardioSession, Exercise, LoggedSession } from "@/lib/types";
@@ -116,7 +116,7 @@ export function coachCards(opts: {
       kind: "cardio",
       severity: "info",
       title: "Gestern hart gefahren",
-      body: "Harte Peloton-Einheit in den letzten 24 h — nimm die Beine heute bewusst etwas leichter und halt die Technik sauber.",
+      body: "Harte Cardio-Einheit in den letzten 24 h — nimm die Beine heute bewusst etwas leichter und halt die Technik sauber.",
     });
 
   if (opts.seeDoctor)

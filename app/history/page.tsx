@@ -1,8 +1,11 @@
 "use client";
 
-import { Bike, Trash2 } from "lucide-react";
+import { Bike, Dumbbell, Play, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDate } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
@@ -17,21 +20,23 @@ const trafficDot: Record<TrafficLight, string> = {
 
 export default function HistoryPage() {
   const { log, cardio, deleteSession } = useTraining();
+  const router = useRouter();
   const [expanded, setExpanded] = useState<number | null>(null);
   const [confirmDel, setConfirmDel] = useState<number | null>(null);
   const items = [...log].reverse();
 
   return (
     <div>
-      <h2 className="mb-1 text-2xl font-semibold tracking-tight">Verlauf</h2>
-      <p className="mb-5 text-sm text-muted">
-        {log.length} {log.length === 1 ? "Einheit" : "Einheiten"} aufgezeichnet.
-      </p>
+      <PageHeader
+        eyebrow="Logbuch"
+        title="Verlauf"
+        subtitle={`${log.length} ${log.length === 1 ? "Einheit" : "Einheiten"} aufgezeichnet.`}
+      />
 
       {cardio.length > 0 && (
         <div className="mb-3 rounded-2xl border border-surface-3 bg-surface-1 p-4 shadow-card">
           <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
-            <Bike size={13} /> Kardio (Peloton)
+            <Bike size={13} /> Kardio
           </p>
           <div className="space-y-1.5">
             {[...cardio]
@@ -51,12 +56,19 @@ export default function HistoryPage() {
       )}
 
       {items.length === 0 && cardio.length === 0 && (
-        <div className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-8 text-center">
-          <p className="text-muted">Noch nichts aufgezeichnet.</p>
-          <p className="mt-1 text-sm text-faint">
-            Starte deine erste Einheit, dann steht sie hier.
-          </p>
-        </div>
+        <EmptyState
+          icon={Dumbbell}
+          title="Noch nichts aufgezeichnet"
+          description="Starte deine erste Einheit — danach findest du hier deinen ganzen Verlauf."
+          action={
+            <Pressable
+              onClick={() => router.push("/")}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
+            >
+              <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
+            </Pressable>
+          }
+        />
       )}
 
       <div className="space-y-2">

@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { LineChart, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { BackTraffic } from "@/components/progress/BackTraffic";
 import { GoalCard } from "@/components/progress/GoalCard";
@@ -9,6 +11,9 @@ import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { TrendChart } from "@/components/progress/TrendChart";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
@@ -69,6 +74,7 @@ function BodyCard({
 
 export default function ProgressPage() {
   const { log, body, muscleVolumes } = useTraining();
+  const router = useRouter();
   const weightSeries = body
     .filter((m) => m.weightKg != null)
     .map((m) => m.weightKg as number);
@@ -137,13 +143,15 @@ export default function ProgressPage() {
 
   return (
     <div>
-      <h2 className="mb-1 font-display text-2xl font-semibold tracking-tight">Fortschritt</h2>
-      <p className="mb-5 text-sm text-muted">
-        {list.length
-          ? `${list.length} ${list.length === 1 ? "Übung" : "Übungen"} mit Verlauf`
-          : "Noch keine Daten"}
-        .
-      </p>
+      <PageHeader
+        eyebrow="Deine Entwicklung"
+        title="Fortschritt"
+        subtitle={`${
+          list.length
+            ? `${list.length} ${list.length === 1 ? "Übung" : "Übungen"} mit Verlauf`
+            : "Noch keine Daten"
+        }.`}
+      />
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 
@@ -171,12 +179,19 @@ export default function ProgressPage() {
         waistSeries.length === 0 &&
         !body.some((b) => b.photoId) &&
         !log.some((s) => s.backTraffic) && (
-          <Card className="p-8 text-center">
-            <p className="text-muted">Noch nichts zu zeigen.</p>
-            <p className="mt-1 text-sm text-faint">
-              Trainiere ein paar Einheiten, dann erscheinen hier deine Kurven und Rekorde.
-            </p>
-          </Card>
+          <EmptyState
+            icon={LineChart}
+            title="Noch nichts zu zeigen"
+            description="Trainiere ein paar Einheiten — dann erscheinen hier deine Kurven, Rekorde und deine Muskel-Balance."
+            action={
+              <Pressable
+                onClick={() => router.push("/")}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
+              >
+                <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
+              </Pressable>
+            }
+          />
         )}
 
       <div className="space-y-3">

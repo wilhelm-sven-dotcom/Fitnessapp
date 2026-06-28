@@ -1,41 +1,9 @@
 import type { CardioSession } from "@/lib/types";
 
-/** Unofficial Peloton API base. All access is best-effort + server-side. */
-export const PELOTON_BASE = "https://api.onepeloton.com";
-
-export interface RawPelotonWorkout {
-  id?: string;
-  created_at?: number;
-  start_time?: number;
-  end_time?: number;
-  fitness_discipline?: string;
-  total_work?: number;
-  ride?: { title?: string } | null;
-}
-
-/** Map a raw Peloton workout to a CardioSession. Defensive — fields may be missing. */
-export function normalizeRide(raw: RawPelotonWorkout): CardioSession | null {
-  if (!raw || !raw.id) return null;
-  const start = raw.start_time ?? raw.created_at ?? 0;
-  const end = raw.end_time ?? 0;
-  const durationSec = end > start ? end - start : 0;
-  const kj = typeof raw.total_work === "number" ? Math.round(raw.total_work / 1000) : undefined;
-  const epoch = start || raw.created_at || 0;
-  const date = new Date(epoch * 1000).toISOString();
-  const mins = durationSec / 60;
-  const kjPerMin = kj && mins > 0 ? kj / mins : 0;
-  const intensity: CardioSession["intensity"] =
-    kjPerMin >= 9 ? "hard" : kjPerMin >= 5.5 ? "moderate" : "easy";
-  return {
-    id: String(raw.id),
-    source: "peloton",
-    date,
-    durationSec,
-    kj,
-    title: raw.ride?.title ?? undefined,
-    intensity,
-  };
-}
+/**
+ * Source-agnostic cardio helpers. A `CardioSession` can come from Strava
+ * (current) or older Peloton syncs — everything below treats them the same.
+ */
 
 export interface CardioWeek {
   count: number;
@@ -80,7 +48,7 @@ export function hoursSince(dateIso: string, ref: Date = new Date()): number {
   return (ref.getTime() - new Date(dateIso).getTime()) / 3600000;
 }
 
-/** Merge new rides into existing by id (dedupe), newest first. */
+/** Merge new sessions into existing by id (dedupe), newest first. */
 export function mergeCardio(
   existing: CardioSession[],
   incoming: CardioSession[],

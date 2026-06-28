@@ -149,14 +149,25 @@ export interface AppSettings {
   theme?: "dark" | "light" | "system";
   /** Appearance: selectable brand accent (id from lib/theme ACCENTS). */
   accentColor?: string;
-  /** Peloton connection (unofficial API). Session token only — never the password. */
-  peloton?: { userId: string; sessionId: string; username?: string };
+  /** Display name for the personalized greeting ("Guten Abend, Sven"). */
+  userName?: string;
+  /** Set once the first-run welcome screen has been completed. */
+  onboarded?: boolean;
+  /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
+  strava?: {
+    accessToken: string;
+    refreshToken: string;
+    /** Unix seconds when the access token expires. */
+    expiresAt: number;
+    athleteName?: string;
+  };
 }
 
-/** A cardio session (e.g. a Peloton ride) — separate from strength `LoggedSession`. */
+/** A cardio session (e.g. a Strava ride) — separate from strength `LoggedSession`. */
 export interface CardioSession {
   id: string;
-  source: "peloton" | "manual";
+  /** "peloton" kept for any data synced before the switch to Strava. */
+  source: "peloton" | "strava" | "manual";
   date: string; // ISO
   durationSec: number;
   kj?: number;

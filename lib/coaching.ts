@@ -72,9 +72,19 @@ export function exerciseChips(opts: {
   return chips;
 }
 
-export function greeting(daysAgo: number | null): string {
-  if (daysAgo != null && daysAgo > 5) return "Willkommen zurück.";
-  return "Servus.";
+/** Time-of-day greeting, optionally personalized with the user's name. */
+export function greeting(opts: { name?: string; now?: Date } = {}): string {
+  const h = (opts.now ?? new Date()).getHours();
+  const part =
+    h >= 5 && h < 11
+      ? "Guten Morgen"
+      : h >= 11 && h < 17
+        ? "Guten Tag"
+        : h >= 17 && h < 23
+          ? "Guten Abend"
+          : "Gute Nacht";
+  const name = opts.name?.trim();
+  return name ? `${part}, ${name}.` : `${part}.`;
 }
 
 /** Cues shown on the home screen. */
