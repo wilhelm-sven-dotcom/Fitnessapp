@@ -44,7 +44,7 @@ export function TimedSet({
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="min-w-0 flex-1 rounded-xl bg-surface-2 py-2.5 text-center font-mono text-lg tabular-nums text-fg">
+      <div className="min-w-0 flex-1 rounded-xl bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg">
         {fmtClock(el)}
       </div>
       <Pressable

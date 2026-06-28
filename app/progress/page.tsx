@@ -13,10 +13,12 @@ import { TrendChart } from "@/components/progress/TrendChart";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Readout } from "@/components/ui/Readout";
+import { Reveal } from "@/components/ui/Reveal";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
-import { isFilled, oneRm, workSets } from "@/lib/stats";
+import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
 
 type Kind = "weight" | "reps" | "time";
 interface Point {
@@ -52,10 +54,13 @@ function BodyCard({
     <Card>
       <div className="flex items-end justify-between">
         <div>
-          <p className="font-display text-3xl font-semibold tabular-nums text-fg">
-            {latest}
-            <span className="text-base text-muted"> {unit}</span>
-          </p>
+          <Readout
+            value={latest}
+            unit={unit}
+            decimals={unit === "kg" ? 1 : 0}
+            count={false}
+            size="md"
+          />
           <p className="mt-0.5 text-xs text-muted">{label}</p>
         </div>
         {values.length > 1 && (
@@ -81,6 +86,7 @@ export default function ProgressPage() {
   const waistSeries = body
     .filter((m) => m.waistCm != null)
     .map((m) => m.waistCm as number);
+  const totalT = Math.round(log.reduce((a, s) => a + sessionVolume(s), 0) / 100) / 10;
 
   const byEx = useMemo(() => {
     const m: Record<string, ExSeries> = {};
@@ -152,6 +158,21 @@ export default function ProgressPage() {
             : "Noch keine Daten"
         }.`}
       />
+
+      {log.length > 0 && (
+        <Reveal>
+          <Card variant="elevated" className="edge-top mb-4 rounded-3xl p-5">
+            <Readout
+              eyebrow="Gesamt gestemmt"
+              value={totalT}
+              unit="t"
+              decimals={1}
+              size="lg"
+              hint={`über ${log.length} ${log.length === 1 ? "Einheit" : "Einheiten"}`}
+            />
+          </Card>
+        </Reveal>
+      )}
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 

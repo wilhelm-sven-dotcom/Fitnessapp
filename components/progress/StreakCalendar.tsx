@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Flame } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import type { LoggedSession } from "@/lib/types";
 
@@ -68,11 +69,14 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
               <span
                 className={
                   w.current
-                    ? "text-xs font-medium tabular-nums text-fg"
+                    ? "flex items-center gap-1 text-xs font-medium tabular-nums text-fg"
                     : "text-xs tabular-nums text-faint"
                 }
               >
                 {w.current ? "jetzt" : `−${4 - wi}`}
+                {w.current && goalMet && (
+                  <Flame size={12} style={{ color: "var(--accent)" }} />
+                )}
               </span>
             </div>
           );

@@ -43,7 +43,8 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
         </radialGradient>
       </defs>
       <path d={gridOuter} fill="none" stroke={GRID} strokeWidth={1} />
-      <path d={gridMid} fill="none" stroke={GRID} strokeWidth={1} />
+      {/* Dashed ring marks the minimum target (10 sets). */}
+      <path d={gridMid} fill="none" stroke="#3a3a44" strokeWidth={1} strokeDasharray="2 3" />
       {axes.map((a, i) => {
         const [ex, ey] = pt(i, R);
         const [lx, ly] = pt(i, R + 16);
@@ -53,8 +54,8 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
             <text
               x={lx}
               y={ly}
-              fill="#9ca3af"
-              fontSize={8}
+              fill="#a1a1aa"
+              fontSize={9}
               textAnchor="middle"
               dominantBaseline="middle"
             >
@@ -76,7 +77,7 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
       />
       {axes.map((a, i) => {
         const [x, y] = pt(i, R * Math.max(0, Math.min(1, a.value)));
-        return <circle key={a.muscle} cx={x} cy={y} r={2.5} fill={GREEN} />;
+        return <circle key={a.muscle} cx={x} cy={y} r={3} fill={GREEN} />;
       })}
     </svg>
   );

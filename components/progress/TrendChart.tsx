@@ -6,6 +6,8 @@ import { useId } from "react";
 const W = 300;
 const H = 56;
 const pad = 6;
+const GRID = "#2a2a30";
+const GREEN = "#30d158";
 
 export function TrendChart({ values }: { values: number[] }) {
   const uid = useId().replace(/:/g, "");
@@ -14,7 +16,7 @@ export function TrendChart({ values }: { values: number[] }) {
   if (values.length === 1) {
     return (
       <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}>
-        <circle cx={W / 2} cy={H / 2} r="3.5" fill="#30d158" />
+        <circle cx={W / 2} cy={H / 2} r="3.5" fill={GREEN} />
       </svg>
     );
   }
@@ -31,15 +33,21 @@ export function TrendChart({ values }: { values: number[] }) {
   const area = `${line} L${x(n - 1).toFixed(1)} ${H - pad} L${x(0).toFixed(1)} ${H - pad} Z`;
   const maxIdx = values.indexOf(max);
   const gradId = `trend-${uid}`;
+  const rows = [pad, H / 2, H - pad];
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}>
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#30d158" stopOpacity={0.35} />
-          <stop offset="100%" stopColor="#30d158" stopOpacity={0} />
+          <stop offset="0%" stopColor={GREEN} stopOpacity={0.38} />
+          <stop offset="55%" stopColor={GREEN} stopOpacity={0.12} />
+          <stop offset="100%" stopColor={GREEN} stopOpacity={0} />
         </linearGradient>
       </defs>
+      {/* Faint reference gridlines. */}
+      {rows.map((ry) => (
+        <line key={ry} x1={pad} y1={ry} x2={W - pad} y2={ry} stroke={GRID} strokeWidth={1} />
+      ))}
       <motion.path
         d={area}
         fill={`url(#${gradId})`}
@@ -50,7 +58,7 @@ export function TrendChart({ values }: { values: number[] }) {
       <motion.path
         d={line}
         fill="none"
-        stroke="#30d158"
+        stroke={GREEN}
         strokeWidth={2}
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -60,7 +68,11 @@ export function TrendChart({ values }: { values: number[] }) {
         animate={{ pathLength: 1 }}
         transition={{ duration: 0.9, ease: "easeOut" }}
       />
-      <circle cx={x(maxIdx)} cy={y(max)} r="3.5" fill="#30d158" />
+      {/* Small dot at every sample point. */}
+      {values.map((v, i) => (
+        <circle key={i} cx={x(i)} cy={y(v)} r="1.6" fill={GREEN} opacity={0.85} />
+      ))}
+      <circle cx={x(maxIdx)} cy={y(max)} r="3.5" fill={GREEN} />
       <circle cx={x(n - 1)} cy={y(values[n - 1])} r="3" fill="#e5e5e5" />
     </svg>
   );
