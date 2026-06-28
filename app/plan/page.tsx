@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronRight, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -12,8 +13,18 @@ import { cn } from "@/lib/utils";
 import type { Exercise, Pattern, Unit } from "@/lib/types";
 
 export default function PlanPage() {
-  const { equip, toggleEquip, custom, addCustom, removeCustom, sessionOf } =
-    useTraining();
+  const {
+    equip,
+    toggleEquip,
+    custom,
+    addCustom,
+    removeCustom,
+    sessionOf,
+    days,
+    addDay,
+    removeDay,
+  } = useTraining();
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [pattern, setPattern] = useState<Pattern>("squat");
@@ -35,6 +46,73 @@ export default function PlanPage() {
   return (
     <div>
       <PageHeader eyebrow="Dein Setup" title="Plan" />
+
+      <Reveal>
+        <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
+            Eigene Tage
+          </p>
+          {days.length === 0 ? (
+            <p className="mb-3 text-xs leading-relaxed text-muted">
+              Bau dir eigene Trainingstage — Übungen, Reihenfolge und Schema ganz nach dir.
+              Tipp: unten bei A/B/C auf „Anpassen“ tippen und als eigenen Tag speichern.
+            </p>
+          ) : (
+            <div className="mb-3 space-y-2">
+              {days.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex items-center gap-1 rounded-xl bg-surface-2 px-3 py-2"
+                >
+                  <button
+                    onClick={() => router.push(`/workout/${d.id}`)}
+                    className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                  >
+                    <p className="truncate text-sm font-medium text-fg">{d.name}</p>
+                    <p className="text-xs text-muted">
+                      {d.focus} · {d.items.length} Übungen
+                    </p>
+                  </button>
+                  <Pressable
+                    onClick={() => router.push(`/day/${d.id}`)}
+                    aria-label="Bearbeiten"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                  >
+                    <Pencil size={14} />
+                  </Pressable>
+                  <Pressable
+                    onClick={() =>
+                      addDay({
+                        ...d,
+                        id: "day_" + Date.now(),
+                        name: `${d.name} (Kopie)`,
+                        createdAt: new Date().toISOString(),
+                      })
+                    }
+                    aria-label="Duplizieren"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                  >
+                    <Copy size={14} />
+                  </Pressable>
+                  <Pressable
+                    onClick={() => removeDay(d.id)}
+                    aria-label="Löschen"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                  >
+                    <Trash2 size={14} />
+                  </Pressable>
+                </div>
+              ))}
+            </div>
+          )}
+          <Pressable
+            onClick={() => router.push("/day/neu")}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
+          >
+            <Plus size={16} strokeWidth={2.5} /> Eigener Tag
+          </Pressable>
+        </section>
+      </Reveal>
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Geräte</p>
@@ -154,10 +232,18 @@ export default function PlanPage() {
         return (
           <Reveal key={t.key} delay={0.08 + ti * 0.05}>
             <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-            <div className="mb-3 flex items-baseline gap-2">
-              <span className="font-mono text-sm text-muted">{t.key}</span>
-              <h3 className="font-semibold">{t.name}</h3>
-              <span className="text-xs text-muted">· {t.focus}</span>
+            <div className="mb-3 flex items-baseline justify-between gap-2">
+              <div className="flex min-w-0 items-baseline gap-2">
+                <span className="font-mono text-sm text-muted">{t.key}</span>
+                <h3 className="truncate font-semibold">{t.name}</h3>
+                <span className="shrink-0 text-xs text-muted">· {t.focus}</span>
+              </div>
+              <Pressable
+                onClick={() => router.push(`/day/neu?from=${t.key}`)}
+                className="shrink-0 rounded-md px-1 py-1 text-xs text-accent-sessions focus:outline-none"
+              >
+                Anpassen
+              </Pressable>
             </div>
             <div className="space-y-1">
               {list.map(({ ex, slotKey }) => (

@@ -56,6 +56,7 @@ export const KEYS = {
   body: "wilhelm-training-body",
   settings: "wilhelm-training-settings",
   cardio: "wilhelm-training-cardio",
+  days: "wilhelm-training-days",
 } as const;
 
 export type StorageKey = (typeof KEYS)[keyof typeof KEYS];

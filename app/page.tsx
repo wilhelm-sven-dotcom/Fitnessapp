@@ -31,6 +31,7 @@ export default function HomePage() {
     activeKey,
     lastLabel,
     log,
+    days,
     daysAgo,
     weekCount,
     ringMetrics,
@@ -231,6 +232,16 @@ export default function HomePage() {
                 {t.key}
               </span>
               <p className="mt-1 text-sm font-medium leading-tight">{t.focus}</p>
+            </Pressable>
+          ))}
+          {days.map((d) => (
+            <Pressable
+              key={d.id}
+              onClick={() => start(d.id)}
+              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left focus:outline-none"
+            >
+              <span className="font-mono text-xs text-accent-coverage">Eigen</span>
+              <p className="mt-1 truncate text-sm font-medium leading-tight">{d.name}</p>
             </Pressable>
           ))}
         </div>
