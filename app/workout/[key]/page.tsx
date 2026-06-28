@@ -22,7 +22,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { exerciseChips } from "@/lib/coaching";
-import { PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
+import { PATTERN_LABEL } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
 import { isPoseSupported } from "@/lib/pose/landmarker";
@@ -51,6 +51,7 @@ export default function WorkoutPage() {
   const router = useRouter();
   const {
     activeKey,
+    sessionTemplate,
     entries,
     startSession,
     setEntry,
@@ -147,7 +148,7 @@ export default function WorkoutPage() {
     if ((oldVal === "" || oldVal == null) && val !== "" && val != null) startRest();
   };
 
-  const tpl = TEMPLATE.find((t) => t.key === key);
+  const tpl = sessionTemplate(key ?? "");
   const list = activeList;
   const ssPair = settings.superset ? supersetPair(list) : null;
 

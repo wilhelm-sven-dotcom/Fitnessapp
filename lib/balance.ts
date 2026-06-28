@@ -33,6 +33,19 @@ export function radarAxes(vols: MuscleVolume[]): RadarAxis[] {
   }));
 }
 
+/** Radar axes scaled to the session's own peak — shows the shape (DNA) of a
+ *  single session rather than progress toward the weekly target. */
+export function sessionRadarAxes(vols: MuscleVolume[]): RadarAxis[] {
+  const max = Math.max(1, ...vols.map((v) => v.sets));
+  return vols.map((v) => ({
+    muscle: v.muscle,
+    label: MUSCLE_LABEL[v.muscle],
+    short: SHORT_LABEL[v.muscle],
+    sets: v.sets,
+    value: v.sets / max,
+  }));
+}
+
 export interface BalanceRatio {
   key: string;
   label: string;

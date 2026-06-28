@@ -153,3 +153,34 @@ export function coverageCount(vols: MuscleVolume[]): { hit: number; total: numbe
   return { hit: vols.filter((v) => v.sets > 0).length, total: vols.length };
 }
 
+/**
+ * Muscle breakdown for a single set of planned/chosen exercises (each with a set
+ * count) — the basis of a session's "DNA" radar. Primary 1.0, secondary 0.5.
+ */
+export function exerciseMuscleVolume(
+  items: {
+    ex: {
+      id: string;
+      pattern: Pattern;
+      tag?: string;
+      muscle?: Muscle;
+      muscleSecondary?: Muscle;
+    };
+    sets: number;
+  }[],
+): MuscleVolume[] {
+  const acc: Partial<Record<Muscle, number>> = {};
+  for (const { ex, sets } of items) {
+    if (!sets) continue;
+    const m = muscleOf(ex);
+    acc[m.primary] = (acc[m.primary] ?? 0) + sets;
+    if (m.secondary) acc[m.secondary] = (acc[m.secondary] ?? 0) + sets * 0.5;
+  }
+  return MUSCLE_ORDER.map((muscle) => {
+    const sets = Math.round((acc[muscle] ?? 0) * 10) / 10;
+    const status: VolumeStatus =
+      sets < VOLUME_TARGET.min ? "under" : sets > VOLUME_TARGET.max ? "over" : "in";
+    return { muscle, sets, status };
+  });
+}
+

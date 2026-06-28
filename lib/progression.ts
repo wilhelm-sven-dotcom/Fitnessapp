@@ -6,6 +6,7 @@ import type {
   ResolvedSlot,
   SetEntry,
   Template,
+  WorkoutDay,
 } from "@/lib/types";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
@@ -79,6 +80,37 @@ export function resolveSession(
         }
       }
       return { ex, slotKey, pool };
+    })
+    .filter((s): s is ResolvedSlot => s !== null);
+}
+
+/**
+ * Resolve a user-built day into ResolvedSlot[]. A per-exercise scheme override
+ * becomes a cloned Exercise (so presc / estimateSessionMin read it automatically);
+ * items whose exercise no longer exists are skipped. `pool` is the same-pattern,
+ * equipment-filtered swap pool for in-workout swaps.
+ */
+export function resolveDay(
+  day: WorkoutDay,
+  allLib: Exercise[],
+  has: (k: string) => boolean,
+): ResolvedSlot[] {
+  const byId = new Map(allLib.map((e) => [e.id, e]));
+  return day.items
+    .map((it, i): ResolvedSlot | null => {
+      const base = byId.get(it.exerciseId);
+      if (!base) return null;
+      const ex: Exercise = {
+        ...base,
+        sets: it.sets ?? base.sets,
+        repLow: it.repLow ?? base.repLow,
+        repHigh: it.repHigh ?? base.repHigh,
+      };
+      return {
+        ex,
+        slotKey: "day:" + day.id + ":" + i,
+        pool: poolFor(base.pattern, has, allLib),
+      };
     })
     .filter((s): s is ResolvedSlot => s !== null);
 }

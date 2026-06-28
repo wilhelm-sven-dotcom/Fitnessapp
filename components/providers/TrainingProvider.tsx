@@ -10,7 +10,7 @@ import {
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
-import { presc, resolveSession, warmupSets } from "@/lib/progression";
+import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import {
   NEUTRAL_SCALE,
   band,
@@ -46,6 +46,7 @@ import type {
   Template,
   TrafficLight,
   Unit,
+  WorkoutDay,
 } from "@/lib/types";
 
 export interface AddCustomData {
@@ -64,6 +65,7 @@ export interface ExportEnvelope {
   custom: Exercise[];
   body: BodyMetric[];
   cardio: CardioSession[];
+  days: WorkoutDay[];
   settings?: AppSettings;
 }
 
@@ -125,6 +127,7 @@ interface TrainingContextValue {
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
   sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
+  sessionTemplate: (key: string) => Template | null;
   startSession: (key: string, readiness?: Readiness) => void;
   setEntry: (
     exId: string,
@@ -136,6 +139,10 @@ interface TrainingContextValue {
   toggleEquip: (k: EquipKey) => void;
   addCustom: (data: AddCustomData) => void;
   removeCustom: (id: string) => void;
+  days: WorkoutDay[];
+  addDay: (day: WorkoutDay) => void;
+  updateDay: (day: WorkoutDay) => void;
+  removeDay: (id: string) => void;
   saveSession: () => Promise<void>;
   deleteSession: (realIdx: number) => Promise<void>;
   resetAll: () => Promise<void>;
@@ -166,6 +173,8 @@ export interface CloudApi {
   busy: boolean;
   signIn: (email: string) => Promise<{ ok: boolean; error?: string }>;
   verifyCode: (email: string, token: string) => Promise<{ ok: boolean; error?: string }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  setPassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
 }
@@ -195,6 +204,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
   const [cardio, setCardio] = useState<CardioSession[]>([]);
+  const [days, setDays] = useState<WorkoutDay[]>([]);
   const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -209,7 +219,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   // Read every key from the local cache into state. Reused after a cloud pull.
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, da] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -217,6 +227,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<BodyMetric[]>(KEYS.body, []),
       storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
       storage.getJSON<CardioSession[]>(KEYS.cardio, []),
+      storage.getJSON<WorkoutDay[]>(KEYS.days, []),
     ]);
     if (Array.isArray(l)) setLog(l);
     if (Array.isArray(e)) setEquip(e);
@@ -225,6 +236,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (Array.isArray(b)) setBody(b);
     if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
     if (Array.isArray(ca)) setCardio(ca);
+    if (Array.isArray(da)) setDays(da);
     setLoading(false);
   }, []);
 
@@ -333,6 +345,38 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         setCloudBusy(false);
       }
     },
+    signInWithPassword: async (email, password) => {
+      const sb = getSupabase();
+      if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
+      if (!email.trim() || !password)
+        return { ok: false, error: "Bitte E-Mail und Passwort eingeben." };
+      setCloudBusy(true);
+      try {
+        const { error } = await sb.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        return error ? { ok: false, error: error.message } : { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    setPassword: async (password) => {
+      const sb = getSupabase();
+      if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
+      if (password.length < 6) return { ok: false, error: "Mindestens 6 Zeichen." };
+      setCloudBusy(true);
+      try {
+        const { error } = await sb.auth.updateUser({ password });
+        return error ? { ok: false, error: error.message } : { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setCloudBusy(false);
+      }
+    },
     signOut: async () => {
       const sb = getSupabase();
       if (!sb) return;
@@ -370,10 +414,26 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 2].backTraffic === "red";
 
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
+    const day = days.find((d) => d.id === key);
+    if (day) return resolveDay(day, allLib, has);
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
     return resolveSession(tpl, idx, choices, has, allLib, backSafe);
+  };
+
+  // Real template, or a synthesized one for a custom day (slots = its patterns),
+  // so workout / warmup / saveSession treat days exactly like A/B/C.
+  const sessionTemplate = (key: string): Template | null => {
+    const day = days.find((d) => d.id === key);
+    if (day) {
+      const byId = new Map(allLib.map((e) => [e.id, e]));
+      const slots = day.items
+        .map((it) => byId.get(it.exerciseId)?.pattern)
+        .filter((p): p is Pattern => !!p);
+      return { key: day.id, name: day.name, focus: day.focus, slots };
+    }
+    return TEMPLATE.find((t) => t.key === key) ?? null;
   };
 
   const nextIndex = useMemo(() => {
@@ -416,20 +476,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   // The session actually being trained — budget-trimmed, back-safe, readiness-scaled.
   // Both the workout screen and saveSession read this so shown == saved.
-  const activeList = useMemo(
-    () =>
-      activeKey
-        ? applyReadiness(
-            fitToBudget(sessionOf(activeKey, lastBackRed), settings.timeBudgetMin, {
-              protectCore: lastBackRed,
-              superset: settings.superset,
-            }).list,
-            readinessScale,
-          )
-        : [],
+  const activeList = useMemo(() => {
+    if (!activeKey) return [];
+    const isDay = days.some((d) => d.id === activeKey);
+    const base = sessionOf(activeKey, lastBackRed);
+    // Custom days are trained exactly as built (no budget auto-trim); A/B/C trim.
+    const fitted = isDay
+      ? base
+      : fitToBudget(base, settings.timeBudgetMin, {
+          protectCore: lastBackRed,
+          superset: settings.superset,
+        }).list;
+    return applyReadiness(fitted, readinessScale);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeKey, choices, equip, custom, lastBackRed, settings.timeBudgetMin, settings.superset, readinessScale],
-  );
+  }, [activeKey, choices, equip, custom, days, lastBackRed, settings.timeBudgetMin, settings.superset, readinessScale]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
@@ -504,13 +564,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       deloadActive,
     );
     if (readiness) setTodayReadiness(readiness);
-    const list = applyReadiness(
-      fitToBudget(sessionOf(key, lastBackRed), settings.timeBudgetMin, {
-        protectCore: lastBackRed,
-        superset: settings.superset,
-      }).list,
-      scale,
-    );
+    const isDay = days.some((d) => d.id === key);
+    const base = sessionOf(key, lastBackRed);
+    const fitted = isDay
+      ? base
+      : fitToBudget(base, settings.timeBudgetMin, {
+          protectCore: lastBackRed,
+          superset: settings.superset,
+        }).list;
+    const list = applyReadiness(fitted, scale);
     const init: Record<string, SetEntry[]> = {};
     list.forEach(({ ex }) => {
       init[ex.id] = initEntryFor(ex, scale);
@@ -684,8 +746,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const removeCustom = (id: string) =>
     void saveCustom(custom.filter((e) => e.id !== id));
 
+  const saveDays = async (next: WorkoutDay[]) => {
+    setDays(next);
+    await storage.setJSON(KEYS.days, next);
+  };
+  const addDay = (day: WorkoutDay) => void saveDays([...days, day]);
+  const updateDay = (day: WorkoutDay) =>
+    void saveDays(days.map((d) => (d.id === day.id ? day : d)));
+  const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
+
   const saveSession = async () => {
-    const tpl = TEMPLATE.find((t) => t.key === activeKey);
+    const tpl = activeKey ? sessionTemplate(activeKey) : null;
     if (!tpl) return;
     const list = activeList;
     const exercises = list.map(({ ex }) => ({
@@ -767,6 +838,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     custom,
     body,
     cardio,
+    days,
     settings,
   });
 
@@ -783,6 +855,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const nextCustom = Array.isArray(d.custom) ? (d.custom as Exercise[]) : custom;
     const nextBody = Array.isArray(d.body) ? (d.body as BodyMetric[]) : body;
     const nextCardio = Array.isArray(d.cardio) ? (d.cardio as CardioSession[]) : cardio;
+    const nextDays = Array.isArray(d.days) ? (d.days as WorkoutDay[]) : days;
     const nextSettings =
       d.settings && typeof d.settings === "object"
         ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
@@ -793,6 +866,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCustom(nextCustom);
     setBody(nextBody);
     setCardio(nextCardio);
+    setDays(nextDays);
     setSettings(nextSettings);
     await Promise.all([
       storage.setJSON(KEYS.log, nextLog),
@@ -801,6 +875,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.setJSON(KEYS.custom, nextCustom),
       storage.setJSON(KEYS.body, nextBody),
       storage.setJSON(KEYS.cardio, nextCardio),
+      storage.setJSON(KEYS.days, nextDays),
       storage.setJSON(KEYS.settings, nextSettings),
     ]);
     return true;
@@ -838,12 +913,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     seeDoctor,
     lastPerf,
     sessionOf,
+    sessionTemplate,
     startSession,
     setEntry,
     swapExercise,
     toggleEquip,
     addCustom,
     removeCustom,
+    days,
+    addDay,
+    updateDay,
+    removeDay,
     saveSession,
     deleteSession,
     resetAll,

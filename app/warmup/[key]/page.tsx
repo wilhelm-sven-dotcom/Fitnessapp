@@ -5,15 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { TEMPLATE } from "@/lib/exercises";
 import { warmupFor } from "@/lib/warmup";
 
 export default function WarmupPage() {
   const params = useParams();
   const key = Array.isArray(params.key) ? params.key[0] : params.key;
   const router = useRouter();
-  const { settings } = useTraining();
-  const tpl = TEMPLATE.find((t) => t.key === key);
+  const { settings, sessionTemplate } = useTraining();
+  const tpl = sessionTemplate(key ?? "");
 
   if (!tpl) {
     return (
