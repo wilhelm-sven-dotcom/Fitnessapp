@@ -1,4 +1,4 @@
-import { hoursSince, lastRide, weeklyCardio } from "@/lib/peloton";
+import { hoursSince, lastRide, weeklyCardio } from "@/lib/cardio";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
 import { MUSCLE_LABEL, weeklyMuscleVolume } from "@/lib/volume";
 import type {
@@ -99,7 +99,7 @@ export function buildCoachContext(opts: {
 
   if (cardio.length) {
     const wk = weeklyCardio(cardio);
-    lines.push("", "Kardio (Peloton):");
+    lines.push("", "Kardio:");
     lines.push(`Diese Woche: ${wk.count} Fahrten · ${wk.minutes} Min · ${wk.kj} kJ.`);
     const lr = lastRide(cardio);
     if (lr) {

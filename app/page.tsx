@@ -82,7 +82,7 @@ export default function HomePage() {
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest text-faint">{today}</p>
           <p className="font-display text-2xl font-semibold tracking-tight text-fg">
-            {greeting(daysAgo)}
+            {greeting({ name: settings.userName })}
           </p>
           <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
         </div>

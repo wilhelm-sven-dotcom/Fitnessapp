@@ -30,7 +30,7 @@ import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import { applyTheme, DEFAULT_ACCENT, type ThemePref } from "@/lib/theme";
-import { mergeCardio } from "@/lib/peloton";
+import { mergeCardio } from "@/lib/cardio";
 import type {
   AppSettings,
   BodyMetric,
@@ -146,6 +146,8 @@ interface TrainingContextValue {
   setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
   setAccent: (id: string) => void;
+  setUserName: (name: string) => void;
+  completeOnboarding: (name?: string) => void;
   setReadiness: (r: Readiness) => void;
   acceptDeload: () => void;
   dismissCard: (card: CoachCard) => void;
@@ -154,7 +156,7 @@ interface TrainingContextValue {
   exportData: () => ExportEnvelope;
   importData: (raw: unknown) => Promise<boolean>;
   cardio: CardioSession[];
-  peloton: PelotonApi;
+  strava: StravaApi;
   cloud: CloudApi;
 }
 
@@ -167,11 +169,12 @@ export interface CloudApi {
   syncNow: () => Promise<void>;
 }
 
-export interface PelotonApi {
+export interface StravaApi {
   connected: boolean;
-  username: string | null;
+  athlete: string | null;
   busy: boolean;
-  connect: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Exchange the OAuth authorization code, store tokens, pull activities. */
+  connect: (code: string) => Promise<{ ok: boolean; error?: string }>;
   syncNow: () => Promise<{ ok: boolean; error?: string }>;
   disconnect: () => void;
 }
@@ -191,7 +194,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
   const [cardio, setCardio] = useState<CardioSession[]>([]);
-  const [pelotonBusy, setPelotonBusy] = useState(false);
+  const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -534,13 +537,22 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, theme: t });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
+  const setUserName = (name: string) =>
+    void saveSettings({ ...settings, userName: name.trim() || undefined });
+  const completeOnboarding = (name?: string) =>
+    void saveSettings({
+      ...settings,
+      onboarded: true,
+      userName: name?.trim() ? name.trim() : settings.userName,
+    });
 
   const saveCardio = async (next: CardioSession[]) => {
     setCardio(next);
     await storage.setJSON(KEYS.cardio, next);
   };
-  const pelotonPost = async (payload: Record<string, unknown>) => {
-    const res = await fetch("/api/peloton", {
+  type StravaTokens = NonNullable<AppSettings["strava"]>;
+  const stravaPost = async (payload: Record<string, unknown>) => {
+    const res = await fetch("/api/strava", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -549,50 +561,63 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       ok: boolean;
       error?: string;
       reauth?: boolean;
-      userId?: string;
-      sessionId?: string;
-      username?: string;
+      tokens?: StravaTokens;
       rides?: CardioSession[];
     };
   };
-  const peloton: PelotonApi = {
-    connected: !!settings.peloton?.sessionId,
-    username: settings.peloton?.username ?? null,
-    busy: pelotonBusy,
-    connect: async (username, password) => {
-      setPelotonBusy(true);
+  const strava: StravaApi = {
+    connected: !!settings.strava?.refreshToken,
+    athlete: settings.strava?.athleteName ?? null,
+    busy: stravaBusy,
+    connect: async (code) => {
+      setStravaBusy(true);
       try {
-        const j = await pelotonPost({ action: "login", username, password });
-        if (!j.ok || !j.userId || !j.sessionId) return { ok: false, error: j.error };
-        await saveSettings({
-          ...settings,
-          peloton: { userId: j.userId, sessionId: j.sessionId, username: j.username },
+        const j = await stravaPost({ action: "exchange", code });
+        if (!j.ok || !j.tokens) return { ok: false, error: j.error };
+        const tokens = j.tokens;
+        await saveSettings({ ...settings, strava: tokens });
+        // Pull activities right away so the rides show up immediately.
+        const s = await stravaPost({
+          action: "sync",
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
         });
-        const s = await pelotonPost({ action: "sync", userId: j.userId, sessionId: j.sessionId });
         if (s.ok && s.rides) await saveCardio(mergeCardio(cardio, s.rides));
         return { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {
-        setPelotonBusy(false);
+        setStravaBusy(false);
       }
     },
     syncNow: async () => {
-      const p = settings.peloton;
-      if (!p?.sessionId) return { ok: false, error: "Nicht verbunden." };
-      setPelotonBusy(true);
+      const t = settings.strava;
+      if (!t?.refreshToken) return { ok: false, error: "Nicht verbunden." };
+      setStravaBusy(true);
       try {
-        const j = await pelotonPost({ action: "sync", userId: p.userId, sessionId: p.sessionId });
+        const j = await stravaPost({
+          action: "sync",
+          accessToken: t.accessToken,
+          refreshToken: t.refreshToken,
+          expiresAt: t.expiresAt,
+        });
         if (!j.ok) return { ok: false, error: j.error };
         if (j.rides) await saveCardio(mergeCardio(cardio, j.rides));
+        // Persist rotated tokens (keep the athlete name we already have).
+        if (j.tokens)
+          await saveSettings({
+            ...settings,
+            strava: { ...j.tokens, athleteName: t.athleteName },
+          });
         return { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {
-        setPelotonBusy(false);
+        setStravaBusy(false);
       }
     },
-    disconnect: () => void saveSettings({ ...settings, peloton: undefined }),
+    disconnect: () => void saveSettings({ ...settings, strava: undefined }),
   };
 
   const acceptDeload = () =>
@@ -809,6 +834,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setSuperset,
     setTheme,
     setAccent,
+    setUserName,
+    completeOnboarding,
     setReadiness: (r) => setTodayReadiness(r),
     acceptDeload,
     dismissCard,
@@ -817,7 +844,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     exportData,
     importData,
     cardio,
-    peloton,
+    strava,
     cloud,
   };
 

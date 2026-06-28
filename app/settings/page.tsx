@@ -4,8 +4,9 @@ import { Camera, Download, Plus, RotateCcw, Trash2, Upload, X } from "lucide-rea
 import { useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
-import { PelotonSection } from "@/components/settings/PelotonSection";
+import { StravaSection } from "@/components/settings/StravaSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
@@ -99,7 +100,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h2 className="mb-5 text-2xl font-semibold tracking-tight">Einstellungen</h2>
+      <PageHeader title="Einstellungen" eyebrow="App" />
 
       <AppearanceSection />
 
@@ -237,7 +238,7 @@ export default function SettingsPage() {
 
       <CloudSyncSection />
 
-      <PelotonSection />
+      <StravaSection />
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">

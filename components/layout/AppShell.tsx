@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
-import { Settings, Sparkles } from "lucide-react";
+import { Cloud, CloudOff, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,11 +10,12 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
 import { Splash } from "./Splash";
+import { Welcome } from "@/components/onboarding/Welcome";
 
 const SPLASH_MIN_MS = 1500;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { loading } = useTraining();
+  const { loading, cloud, settings, log, body } = useTraining();
   const pathname = usePathname();
   const [minElapsed, setMinElapsed] = useState(false);
 
@@ -29,11 +30,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/warmup") ||
     false;
   const showSplash = loading || !minElapsed;
+  const firstRun =
+    !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
   return (
     <>
       <AnimatePresence>{showSplash && <Splash key="splash" />}</AnimatePresence>
-      {!loading && (
+      {!loading && firstRun && <Welcome />}
+      {!loading && !firstRun && (
         <div className="min-h-screen overflow-x-hidden">
           {!hideChrome && (
             <header
@@ -46,6 +50,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="font-display text-base font-semibold tracking-tight">Training</span>
                 </div>
                 <div className="flex items-center gap-1">
+                  {cloud.configured &&
+                    (cloud.email ? (
+                      <Link
+                        href="/settings"
+                        aria-label="Cloud-Sync aktiv"
+                        className="rounded-full p-1.5 focus:outline-none"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        <Cloud size={20} />
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/settings"
+                        aria-label="Anmelden für Cloud-Sync"
+                        className="rounded-full p-1.5 text-faint focus:outline-none"
+                      >
+                        <CloudOff size={20} />
+                      </Link>
+                    ))}
                   <Link
                     href="/coach"
                     aria-label="KI-Coach"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -13,14 +14,28 @@ const THEMES: { id: ThemePref; label: string }[] = [
 ];
 
 export function AppearanceSection() {
-  const { settings, setTheme, setAccent } = useTraining();
+  const { settings, setTheme, setAccent, setUserName } = useTraining();
   const theme = settings.theme ?? "dark";
   const accent = settings.accentColor ?? "red";
+  const [name, setName] = useState(settings.userName ?? "");
 
   return (
     <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 p-5 shadow-card">
       <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
         Darstellung
+      </p>
+
+      <p className="mb-2 text-sm font-medium text-fg">Name</p>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => setUserName(name)}
+        placeholder="Wie sollen wir dich begrüßen?"
+        className="w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+      />
+      <p className="mb-5 mt-1.5 text-xs text-muted">
+        Für die persönliche Begrüßung auf der Startseite.
       </p>
 
       <p className="mb-2 text-sm font-medium text-fg">Modus</p>

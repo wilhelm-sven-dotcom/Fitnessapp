@@ -4,6 +4,7 @@ import { ArrowLeft, KeyRound, Send, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { buildCoachContext } from "@/lib/coach-context";
 import { cn } from "@/lib/utils";
@@ -90,18 +91,18 @@ export default function CoachPage() {
     return (
       <div>
         <BackRow onBack={() => router.push("/")} />
-        <div className="mt-10 flex flex-col items-center text-center">
-          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2">
-            <KeyRound size={26} className="text-muted" />
-          </span>
-          <h2 className="text-xl font-semibold tracking-tight">Coach noch nicht eingerichtet</h2>
-          <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
-            Damit der KI-Coach antwortet, muss in Vercel der Schlüssel
-            <span className="font-mono text-muted"> ANTHROPIC_API_KEY </span>
-            hinterlegt sein. Danach läuft alles serverseitig — dein Schlüssel
-            bleibt geheim.
-          </p>
-        </div>
+        <EmptyState
+          icon={KeyRound}
+          title="Coach noch nicht eingerichtet"
+          description={
+            <>
+              Damit der KI-Coach antwortet, muss in Vercel der Schlüssel
+              <span className="font-mono"> ANTHROPIC_API_KEY </span>
+              hinterlegt sein. Danach läuft alles serverseitig — dein Schlüssel
+              bleibt geheim.
+            </>
+          }
+        />
       </div>
     );
   }
