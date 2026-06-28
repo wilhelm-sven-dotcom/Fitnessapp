@@ -12,16 +12,22 @@ import type {
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
 
+/** Round to the user's smallest available weight increment (default 2.5 kg). */
+export const roundStep = (x: number, step = 2.5) => {
+  const s = step && step > 0 ? step : 2.5;
+  return Math.round(x / s) * s;
+};
+
 /**
  * Two warm-up sets at 40 % and 65 % of the working weight, 5 reps each.
  * Flagged `warmup` so they never count toward progression, volume or PRs.
  * Empty for bodyweight / unknown working weight.
  */
-export function warmupSets(workingWeight: number): SetEntry[] {
+export function warmupSets(workingWeight: number, step = 2.5): SetEntry[] {
   if (!workingWeight || workingWeight <= 0) return [];
   return [
-    { weight: String(round25(workingWeight * 0.4)), reps: "5", warmup: true },
-    { weight: String(round25(workingWeight * 0.65)), reps: "5", warmup: true },
+    { weight: String(roundStep(workingWeight * 0.4, step)), reps: "5", warmup: true },
+    { weight: String(roundStep(workingWeight * 0.65, step)), reps: "5", warmup: true },
   ];
 }
 
@@ -188,12 +194,12 @@ export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
 export function presc(
   ex: Exercise,
   lp: LastPerf | null,
-  opts: { lighter?: boolean; loadMult?: number; cap?: boolean } = {},
+  opts: { lighter?: boolean; loadMult?: number; cap?: boolean; step?: number } = {},
 ): Prescription {
   const weighted = !!ex.weighted;
   const timed = ex.unit === "Sek";
   const lm = opts.loadMult ?? 1;
-  const scaleW = (w: number) => round25(w * lm);
+  const scaleW = (w: number) => roundStep(w * lm, opts.step);
   const repOf = (r: number) => (opts.cap ? ex.repLow : r);
 
   if (!lp) {

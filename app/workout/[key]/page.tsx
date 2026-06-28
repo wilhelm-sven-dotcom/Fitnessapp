@@ -295,6 +295,7 @@ export default function WorkoutPage() {
             lighter,
             loadMult: readinessScale.loadMult,
             cap: readinessScale.cap,
+            step: settings.weightStep,
           });
           const chips = exerciseChips({
             ex,

@@ -91,6 +91,13 @@ export interface WorkoutDay {
   createdAt: string;
 }
 
+/** A named equipment preset (gym profile) — e.g. Studio, Zuhause, Reise. */
+export interface GymProfile {
+  id: string;
+  name: string;
+  equip: EquipKey[];
+}
+
 export interface EquipItem {
   key: EquipKey;
   label: string;
@@ -172,6 +179,10 @@ export interface AppSettings {
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */
   onboarded?: boolean;
+  /** Active gym profile id (equipment preset). */
+  activeGymId?: string;
+  /** Smallest available weight increment — suggestions snap to it (default 2.5). */
+  weightStep?: number;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;
