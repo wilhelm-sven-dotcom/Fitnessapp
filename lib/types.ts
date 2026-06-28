@@ -149,6 +149,22 @@ export interface AppSettings {
   theme?: "dark" | "light" | "system";
   /** Appearance: selectable brand accent (id from lib/theme ACCENTS). */
   accentColor?: string;
+  /** Peloton connection (unofficial API). Session token only — never the password. */
+  peloton?: { userId: string; sessionId: string; username?: string };
+}
+
+/** A cardio session (e.g. a Peloton ride) — separate from strength `LoggedSession`. */
+export interface CardioSession {
+  id: string;
+  source: "peloton" | "manual";
+  date: string; // ISO
+  durationSec: number;
+  kj?: number;
+  calories?: number;
+  distance?: number;
+  avgHr?: number;
+  title?: string;
+  intensity?: "easy" | "moderate" | "hard";
 }
 
 /** Most recent performance of one exercise, used to derive the next prescription. */

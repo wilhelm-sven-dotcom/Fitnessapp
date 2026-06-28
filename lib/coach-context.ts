@@ -1,6 +1,13 @@
+import { hoursSince, lastRide, weeklyCardio } from "@/lib/peloton";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
 import { MUSCLE_LABEL, weeklyMuscleVolume } from "@/lib/volume";
-import type { BodyMetric, Exercise, LoggedSession, TrafficLight } from "@/lib/types";
+import type {
+  BodyMetric,
+  CardioSession,
+  Exercise,
+  LoggedSession,
+  TrafficLight,
+} from "@/lib/types";
 
 const BACK_DE: Record<TrafficLight, string> = {
   green: "grün",
@@ -25,9 +32,10 @@ export function buildCoachContext(opts: {
   log: LoggedSession[];
   allLib: Exercise[];
   body: BodyMetric[];
+  cardio: CardioSession[];
 }): string {
-  const { log, allLib, body } = opts;
-  if (!log.length) return "Noch keine Einheiten protokolliert.";
+  const { log, allLib, body, cardio } = opts;
+  if (!log.length && !cardio.length) return "Noch keine Einheiten protokolliert.";
 
   const lines: string[] = [];
 
@@ -87,6 +95,21 @@ export function buildCoachContext(opts: {
     const last = bw[bw.length - 1].weightKg as number;
     const d = Math.round((last - first) * 10) / 10;
     lines.push("", `Körpergewicht: aktuell ${last} kg (${d >= 0 ? "+" : ""}${d} kg seit Start).`);
+  }
+
+  if (cardio.length) {
+    const wk = weeklyCardio(cardio);
+    lines.push("", "Kardio (Peloton):");
+    lines.push(`Diese Woche: ${wk.count} Fahrten · ${wk.minutes} Min · ${wk.kj} kJ.`);
+    const lr = lastRide(cardio);
+    if (lr) {
+      const h = Math.round(hoursSince(lr.date));
+      const intDE =
+        lr.intensity === "hard" ? "hart" : lr.intensity === "moderate" ? "moderat" : "locker";
+      lines.push(
+        `Letzte Fahrt: vor ${h} h · ${Math.round(lr.durationSec / 60)} Min · ${lr.kj ?? "?"} kJ (${intDE})${lr.title ? ` — ${lr.title}` : ""}.`,
+      );
+    }
   }
 
   return lines.join("\n");

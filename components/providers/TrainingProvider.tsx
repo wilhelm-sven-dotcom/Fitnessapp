@@ -30,9 +30,11 @@ import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import { applyTheme, DEFAULT_ACCENT, type ThemePref } from "@/lib/theme";
+import { mergeCardio } from "@/lib/peloton";
 import type {
   AppSettings,
   BodyMetric,
+  CardioSession,
   EquipKey,
   Readiness,
   Exercise,
@@ -61,6 +63,7 @@ export interface ExportEnvelope {
   choices: Record<string, string>;
   custom: Exercise[];
   body: BodyMetric[];
+  cardio: CardioSession[];
   settings?: AppSettings;
 }
 
@@ -150,6 +153,8 @@ interface TrainingContextValue {
   deleteBodyMetric: (idx: number) => Promise<void>;
   exportData: () => ExportEnvelope;
   importData: (raw: unknown) => Promise<boolean>;
+  cardio: CardioSession[];
+  peloton: PelotonApi;
   cloud: CloudApi;
 }
 
@@ -160,6 +165,15 @@ export interface CloudApi {
   signIn: (email: string) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
+}
+
+export interface PelotonApi {
+  connected: boolean;
+  username: string | null;
+  busy: boolean;
+  connect: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  syncNow: () => Promise<{ ok: boolean; error?: string }>;
+  disconnect: () => void;
 }
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
@@ -176,6 +190,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
+  const [cardio, setCardio] = useState<CardioSession[]>([]);
+  const [pelotonBusy, setPelotonBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -189,13 +205,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   // Read every key from the local cache into state. Reused after a cloud pull.
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s] = await Promise.all([
+    const [l, e, c, cu, b, s, ca] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
       storage.getJSON<Exercise[]>(KEYS.custom, []),
       storage.getJSON<BodyMetric[]>(KEYS.body, []),
       storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
+      storage.getJSON<CardioSession[]>(KEYS.cardio, []),
     ]);
     if (Array.isArray(l)) setLog(l);
     if (Array.isArray(e)) setEquip(e);
@@ -203,6 +220,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (Array.isArray(cu)) setCustom(cu);
     if (Array.isArray(b)) setBody(b);
     if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
+    if (Array.isArray(ca)) setCardio(ca);
     setLoading(false);
   }, []);
 
@@ -419,10 +437,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const coach = useMemo(
     () =>
-      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes }).filter(
+      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes, cardio }).filter(
         (c) => !dismissed.includes(c.kind + (c.exId ?? "")),
       ),
-    [log, allLib, settings, seeDoctor, muscleVolumes, dismissed],
+    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, dismissed],
   );
 
   // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
@@ -516,6 +534,67 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, theme: t });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
+
+  const saveCardio = async (next: CardioSession[]) => {
+    setCardio(next);
+    await storage.setJSON(KEYS.cardio, next);
+  };
+  const pelotonPost = async (payload: Record<string, unknown>) => {
+    const res = await fetch("/api/peloton", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return (await res.json()) as {
+      ok: boolean;
+      error?: string;
+      reauth?: boolean;
+      userId?: string;
+      sessionId?: string;
+      username?: string;
+      rides?: CardioSession[];
+    };
+  };
+  const peloton: PelotonApi = {
+    connected: !!settings.peloton?.sessionId,
+    username: settings.peloton?.username ?? null,
+    busy: pelotonBusy,
+    connect: async (username, password) => {
+      setPelotonBusy(true);
+      try {
+        const j = await pelotonPost({ action: "login", username, password });
+        if (!j.ok || !j.userId || !j.sessionId) return { ok: false, error: j.error };
+        await saveSettings({
+          ...settings,
+          peloton: { userId: j.userId, sessionId: j.sessionId, username: j.username },
+        });
+        const s = await pelotonPost({ action: "sync", userId: j.userId, sessionId: j.sessionId });
+        if (s.ok && s.rides) await saveCardio(mergeCardio(cardio, s.rides));
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setPelotonBusy(false);
+      }
+    },
+    syncNow: async () => {
+      const p = settings.peloton;
+      if (!p?.sessionId) return { ok: false, error: "Nicht verbunden." };
+      setPelotonBusy(true);
+      try {
+        const j = await pelotonPost({ action: "sync", userId: p.userId, sessionId: p.sessionId });
+        if (!j.ok) return { ok: false, error: j.error };
+        if (j.rides) await saveCardio(mergeCardio(cardio, j.rides));
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setPelotonBusy(false);
+      }
+    },
+    disconnect: () => void saveSettings({ ...settings, peloton: undefined }),
+  };
+
   const acceptDeload = () =>
     void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
   const dismissCard = (card: CoachCard) =>
@@ -642,6 +721,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     choices,
     custom,
     body,
+    cardio,
     settings,
   });
 
@@ -657,6 +737,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         : choices;
     const nextCustom = Array.isArray(d.custom) ? (d.custom as Exercise[]) : custom;
     const nextBody = Array.isArray(d.body) ? (d.body as BodyMetric[]) : body;
+    const nextCardio = Array.isArray(d.cardio) ? (d.cardio as CardioSession[]) : cardio;
     const nextSettings =
       d.settings && typeof d.settings === "object"
         ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
@@ -666,6 +747,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setChoices(nextChoices);
     setCustom(nextCustom);
     setBody(nextBody);
+    setCardio(nextCardio);
     setSettings(nextSettings);
     await Promise.all([
       storage.setJSON(KEYS.log, nextLog),
@@ -673,6 +755,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.setJSON(KEYS.choices, nextChoices),
       storage.setJSON(KEYS.custom, nextCustom),
       storage.setJSON(KEYS.body, nextBody),
+      storage.setJSON(KEYS.cardio, nextCardio),
       storage.setJSON(KEYS.settings, nextSettings),
     ]);
     return true;
@@ -733,6 +816,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     deleteBodyMetric,
     exportData,
     importData,
+    cardio,
+    peloton,
     cloud,
   };
 

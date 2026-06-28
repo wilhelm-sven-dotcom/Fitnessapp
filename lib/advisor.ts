@@ -1,12 +1,14 @@
+import { hoursSince, lastRide } from "@/lib/peloton";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { MUSCLE_LABEL, type MuscleVolume } from "@/lib/volume";
-import type { AppSettings, Exercise, LoggedSession } from "@/lib/types";
+import type { AppSettings, CardioSession, Exercise, LoggedSession } from "@/lib/types";
 
 export type CoachKind =
   | "deload"
   | "plateau"
   | "volume-over"
-  | "back-doctor";
+  | "back-doctor"
+  | "cardio";
 export type CoachSeverity = "info" | "warn" | "urgent";
 
 export interface CoachCard {
@@ -104,8 +106,18 @@ export function coachCards(opts: {
   settings: AppSettings;
   seeDoctor: boolean;
   muscleVolumes: MuscleVolume[];
+  cardio: CardioSession[];
 }): CoachCard[] {
   const cards: CoachCard[] = [];
+
+  const lr = lastRide(opts.cardio);
+  if (lr && lr.intensity === "hard" && hoursSince(lr.date) <= 24)
+    cards.push({
+      kind: "cardio",
+      severity: "info",
+      title: "Gestern hart gefahren",
+      body: "Harte Peloton-Einheit in den letzten 24 h — nimm die Beine heute bewusst etwas leichter und halt die Technik sauber.",
+    });
 
   if (opts.seeDoctor)
     cards.push({
