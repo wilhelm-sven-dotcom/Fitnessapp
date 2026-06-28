@@ -173,6 +173,8 @@ export interface CloudApi {
   busy: boolean;
   signIn: (email: string) => Promise<{ ok: boolean; error?: string }>;
   verifyCode: (email: string, token: string) => Promise<{ ok: boolean; error?: string }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  setPassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
 }
@@ -336,6 +338,38 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           token: token.trim(),
           type: "email",
         });
+        return error ? { ok: false, error: error.message } : { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    signInWithPassword: async (email, password) => {
+      const sb = getSupabase();
+      if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
+      if (!email.trim() || !password)
+        return { ok: false, error: "Bitte E-Mail und Passwort eingeben." };
+      setCloudBusy(true);
+      try {
+        const { error } = await sb.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        return error ? { ok: false, error: error.message } : { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    setPassword: async (password) => {
+      const sb = getSupabase();
+      if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
+      if (password.length < 6) return { ok: false, error: "Mindestens 6 Zeichen." };
+      setCloudBusy(true);
+      try {
+        const { error } = await sb.auth.updateUser({ password });
         return error ? { ok: false, error: error.message } : { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
