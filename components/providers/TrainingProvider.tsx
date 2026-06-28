@@ -152,7 +152,7 @@ export interface CloudApi {
   configured: boolean;
   email: string | null;
   busy: boolean;
-  signIn: (email: string) => Promise<boolean>;
+  signIn: (email: string) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
 }
@@ -259,7 +259,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     busy: cloudBusy,
     signIn: async (email) => {
       const sb = getSupabase();
-      if (!sb || !email.trim()) return false;
+      if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
+      if (!email.trim()) return { ok: false, error: "Bitte eine E-Mail-Adresse eingeben." };
       setCloudBusy(true);
       try {
         const { error } = await sb.auth.signInWithOtp({
@@ -269,9 +270,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
               typeof window !== "undefined" ? window.location.origin + "/settings" : undefined,
           },
         });
-        return !error;
-      } catch {
-        return false;
+        return error ? { ok: false, error: error.message } : { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {
         setCloudBusy(false);
       }
