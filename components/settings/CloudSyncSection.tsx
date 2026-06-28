@@ -8,6 +8,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 export function CloudSyncSection() {
   const { cloud } = useTraining();
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [msg, setMsg] = useState("");
 
   if (!cloud.configured) {
@@ -38,6 +39,18 @@ export function CloudSyncSection() {
         : res.error
           ? `Fehler: ${res.error}`
           : "Hat nicht geklappt.",
+    );
+  };
+
+  const confirmCode = async () => {
+    setMsg("");
+    const res = await cloud.verifyCode(email, code);
+    setMsg(
+      res.ok
+        ? "Angemeldet — Daten werden synchronisiert."
+        : res.error
+          ? `Fehler: ${res.error}`
+          : "Code ungültig.",
     );
   };
 
@@ -74,8 +87,9 @@ export function CloudSyncSection() {
       ) : (
         <div className="space-y-2">
           <p className="text-xs leading-relaxed text-muted">
-            Melde dich per E-Mail an (Magic-Link, kein Passwort). Danach werden
-            deine Einheiten automatisch über deine Geräte synchronisiert.
+            Melde dich per E-Mail an (kein Passwort). Klick den Link in der Mail —
+            oder gib den 6-stelligen Code unten ein, falls der Link in einem anderen
+            Browser landet.
           </p>
           <input
             type="email"
@@ -92,6 +106,24 @@ export function CloudSyncSection() {
           >
             {cloud.busy ? "Sendet…" : "Magic-Link senden"}
           </Pressable>
+          <div className="flex gap-2 pt-1">
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="6-stelliger Code"
+              className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums tracking-widest text-fg placeholder:tracking-normal placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-volume"
+            />
+            <Pressable
+              onClick={() => void confirmCode()}
+              disabled={cloud.busy || !email.trim() || code.trim().length < 6}
+              className="shrink-0 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+            >
+              Anmelden
+            </Pressable>
+          </div>
           {msg && <p className="text-xs text-muted">{msg}</p>}
         </div>
       )}
