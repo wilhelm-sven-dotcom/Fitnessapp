@@ -2,6 +2,7 @@
 
 import { Camera } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/Card";
 import { fetchPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,7 @@ export function ProgressPhotos({ body }: { body: BodyMetric[] }) {
     `${fmtDateShort(m.date)}${m.weightKg != null ? ` · ${m.weightKg} kg` : ""}`;
 
   return (
-    <div className="mb-3 rounded-2xl bg-neutral-900 p-4">
+    <Card className="mb-3">
       <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
         Fortschritts-Fotos
       </p>
@@ -76,6 +77,6 @@ export function ProgressPhotos({ body }: { body: BodyMetric[] }) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

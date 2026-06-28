@@ -128,7 +128,7 @@ export default function CoachPage() {
               <Pressable
                 key={s}
                 onClick={() => send(s)}
-                className="flex w-full items-center justify-between gap-2 rounded-2xl bg-neutral-900 px-4 py-3 text-left text-sm text-neutral-200 focus:outline-none"
+                className="flex w-full items-center justify-between gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-neutral-200 focus:outline-none"
               >
                 {s}
                 <Send size={15} className="shrink-0 text-neutral-600" />
@@ -145,7 +145,7 @@ export default function CoachPage() {
                 "rounded-2xl px-4 py-3 text-sm leading-relaxed",
                 m.role === "user"
                   ? "ml-8 bg-accent-coverage text-neutral-950"
-                  : "mr-4 whitespace-pre-wrap bg-neutral-900 text-neutral-100",
+                  : "mr-4 whitespace-pre-wrap border border-surface-3 bg-surface-1 shadow-card text-neutral-100",
               )}
             >
               {m.content || (busy ? "…" : "")}

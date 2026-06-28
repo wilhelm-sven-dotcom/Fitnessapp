@@ -1,14 +1,15 @@
 "use client";
 
 import { X } from "lucide-react";
+import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
-import type { CoachCard as Card, CoachSeverity } from "@/lib/advisor";
+import type { CoachCard as CoachCardData, CoachSeverity } from "@/lib/advisor";
 
 const sevSurface: Record<CoachSeverity, string> = {
-  urgent: "bg-rose-950",
-  warn: "bg-neutral-900",
-  info: "bg-neutral-900",
+  urgent: "border-rose-900 bg-rose-950",
+  warn: "",
+  info: "",
 };
 const sevTitle: Record<CoachSeverity, string> = {
   urgent: "text-rose-200",
@@ -21,12 +22,12 @@ export function CoachCard({
   onAccept,
   onDismiss,
 }: {
-  card: Card;
+  card: CoachCardData;
   onAccept?: () => void;
   onDismiss?: () => void;
 }) {
   return (
-    <div className={cn("rounded-2xl p-4", sevSurface[card.severity])}>
+    <Card className={cn(sevSurface[card.severity])}>
       <div className="flex items-start justify-between gap-3">
         <p className={cn("text-sm font-semibold", sevTitle[card.severity])}>
           {card.title}
@@ -50,6 +51,6 @@ export function CoachCard({
           Entlastungswoche starten
         </Pressable>
       )}
-    </div>
+    </Card>
   );
 }
