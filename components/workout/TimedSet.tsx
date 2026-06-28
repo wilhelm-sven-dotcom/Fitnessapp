@@ -44,21 +44,21 @@ export function TimedSet({
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="min-w-0 flex-1 rounded-xl bg-neutral-800 py-2.5 text-center font-mono text-lg tabular-nums text-neutral-100">
+      <div className="min-w-0 flex-1 rounded-xl bg-surface-2 py-2.5 text-center font-mono text-lg tabular-nums text-fg">
         {fmtClock(el)}
       </div>
       <Pressable
         onClick={toggle}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none",
-          run ? "bg-accent-sessions text-neutral-950" : "bg-neutral-800 text-accent-sessions",
+          run ? "bg-accent-sessions text-on-strong" : "bg-surface-2 text-accent-sessions",
         )}
       >
         {run ? <Pause size={18} strokeWidth={2.5} /> : <Play size={18} strokeWidth={2.5} />}
       </Pressable>
       <Pressable
         onClick={reset}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-neutral-800 text-neutral-400 focus:outline-none"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-muted focus:outline-none"
       >
         <RotateCcw size={16} />
       </Pressable>

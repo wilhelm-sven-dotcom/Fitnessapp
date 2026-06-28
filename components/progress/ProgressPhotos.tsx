@@ -26,8 +26,8 @@ function PhotoImg({ id, className }: { id: string; className?: string }) {
 
   if (!url) {
     return (
-      <div className={cn("flex items-center justify-center bg-neutral-800", className)}>
-        <Camera size={18} className="text-neutral-600" />
+      <div className={cn("flex items-center justify-center bg-surface-2", className)}>
+        <Camera size={18} className="text-faint" />
       </div>
     );
   }
@@ -41,7 +41,7 @@ function Figure({ id, label }: { id: string; label: string }) {
   return (
     <div>
       <PhotoImg id={id} className="h-48 w-full rounded-xl" />
-      <p className="mt-1 text-xs text-neutral-400">{label}</p>
+      <p className="mt-1 text-xs text-muted">{label}</p>
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function ProgressPhotos({ body }: { body: BodyMetric[] }) {
 
   return (
     <Card className="mb-3">
-      <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
+      <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
         Fortschritts-Fotos
       </p>
 
@@ -71,7 +71,7 @@ export function ProgressPhotos({ body }: { body: BodyMetric[] }) {
         {[...photos].reverse().map((p) => (
           <div key={p.photoId} className="shrink-0">
             <PhotoImg id={p.photoId as string} className="h-20 w-20 rounded-lg" />
-            <p className="mt-1 text-center text-xs text-neutral-500">
+            <p className="mt-1 text-center text-xs text-muted">
               {fmtDateShort(p.date)}
             </p>
           </div>

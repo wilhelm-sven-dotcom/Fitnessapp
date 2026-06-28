@@ -63,14 +63,14 @@ export function WarmupPlayer({
 
   if (done) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-neutral-950 px-8 text-center">
-        <p className="text-4xl font-semibold tracking-tight text-neutral-100">Aufgewärmt 💪</p>
-        <p className="max-w-xs text-sm text-neutral-400">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-base px-8 text-center">
+        <p className="text-4xl font-semibold tracking-tight text-fg">Aufgewärmt 💪</p>
+        <p className="max-w-xs text-sm text-muted">
           Gelenke warm, Rücken aktiviert. Jetzt sauber und kontrolliert trainieren.
         </p>
         <Pressable
           onClick={onClose}
-          className="mt-2 rounded-2xl bg-neutral-100 px-6 py-3 text-base font-semibold text-neutral-950 focus:outline-none"
+          className="mt-2 rounded-2xl bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
         >
           Los geht&apos;s
         </Pressable>
@@ -80,10 +80,10 @@ export function WarmupPlayer({
 
   if (!current) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-base">
         <Pressable
           onClick={onClose}
-          className="rounded-2xl bg-neutral-100 px-6 py-3 text-base font-semibold text-neutral-950 focus:outline-none"
+          className="rounded-2xl bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
         >
           Zurück
         </Pressable>
@@ -96,7 +96,7 @@ export function WarmupPlayer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-neutral-950"
+      className="fixed inset-0 z-50 flex flex-col bg-base"
       style={{
         paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)",
         paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
@@ -107,11 +107,11 @@ export function WarmupPlayer({
         <Pressable
           onClick={onClose}
           aria-label="Aufwärmen beenden"
-          className="flex items-center gap-1 rounded-md px-1 py-1 text-sm text-neutral-400 focus:outline-none"
+          className="flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
         >
           <X size={18} /> Beenden
         </Pressable>
-        <span className="font-mono text-xs tabular-nums text-neutral-500">
+        <span className="font-mono text-xs tabular-nums text-muted">
           {index + 1}/{total} · Aufwärmen
         </span>
       </div>
@@ -123,7 +123,7 @@ export function WarmupPlayer({
             key={d.id}
             className={cn(
               "h-1.5 rounded-full transition-all",
-              i < index ? "w-4 bg-neutral-500" : i === index ? "w-8 bg-accent-sessions" : "w-4 bg-neutral-800",
+              i < index ? "w-4 bg-faint" : i === index ? "w-8 bg-accent-sessions" : "w-4 bg-surface-2",
             )}
           />
         ))}
@@ -134,15 +134,15 @@ export function WarmupPlayer({
         <span
           className={cn(
             "mb-4 rounded-full px-3 py-1 text-xs font-medium",
-            isMobility ? "bg-accent-coverage text-neutral-950" : "bg-accent-volume text-neutral-950",
+            isMobility ? "bg-accent-coverage text-on-strong" : "bg-accent-volume text-on-strong",
           )}
         >
           {isMobility ? "Mobilität" : "Aktivierung"}
         </span>
-        <h2 className="text-4xl font-semibold tracking-tight text-neutral-100">{current.name}</h2>
-        <p className="mt-3 max-w-sm text-sm leading-relaxed text-neutral-400">{current.cue}</p>
+        <h2 className="text-4xl font-semibold tracking-tight text-fg">{current.name}</h2>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">{current.cue}</p>
         <p className="mt-8 font-mono text-7xl font-semibold tabular-nums text-neutral-50">{left}</p>
-        <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-neutral-800">
+        <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
           <div
             className="h-full rounded-full bg-accent-sessions transition-all"
             style={{ width: `${pct}%` }}
@@ -154,13 +154,13 @@ export function WarmupPlayer({
       <div className="flex items-center gap-2 px-5">
         <Pressable
           onClick={() => setPaused((p) => !p)}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-neutral-800 py-3.5 text-sm font-medium text-neutral-100 focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-surface-2 py-3.5 text-sm font-medium text-fg focus:outline-none"
         >
           {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Weiter" : "Pause"}
         </Pressable>
         <Pressable
           onClick={skip}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-3.5 text-sm font-semibold text-neutral-950 focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-strong py-3.5 text-sm font-semibold text-on-strong focus:outline-none"
         >
           Nächste <ChevronRight size={16} strokeWidth={2.5} />
         </Pressable>

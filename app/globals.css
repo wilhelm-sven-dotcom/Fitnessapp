@@ -2,18 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark theme = default. Light theme overrides via [data-theme="light"].
+   "system" is resolved to dark/light in JS, so only these two sets are needed.
+   --accent is user-selectable (default Apple red). */
 :root {
   color-scheme: dark;
+  --base: #0a0a0a;
+  --card: #161618;
+  --surface-2: #1f1f23;
+  --line: #2a2a30;
+  --fg: #f5f5f5;
+  --muted: #a1a1aa;
+  --faint: #6b7280;
+  --strong: #f5f5f5; /* primary CTA surface */
+  --on-strong: #0a0a0a; /* text on strong / accent surfaces */
+  --glass: rgba(22, 22, 24, 0.72);
+  --accent: #ff375f;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --base: #f4f4f6;
+  --card: #ffffff;
+  --surface-2: #ececef;
+  --line: #e2e2e7;
+  --fg: #18181b;
+  --muted: #52525b;
+  --faint: #9ca3af;
+  --strong: #18181b;
+  --on-strong: #ffffff;
+  --glass: rgba(255, 255, 255, 0.72);
 }
 
 html {
   -webkit-text-size-adjust: 100%;
-  background-color: #0a0a0a;
+  background-color: var(--base);
 }
 
 @layer base {
   body {
-    @apply bg-neutral-950 text-neutral-100 font-sans antialiased;
+    @apply font-sans antialiased;
+    background-color: var(--base);
+    color: var(--fg);
     text-rendering: optimizeLegibility;
   }
 }
@@ -32,7 +62,7 @@ html {
 
 /* Frosted material for floating chrome (nav, sheet header, top bar) */
 .glass {
-  background-color: rgba(22, 22, 24, 0.72);
+  background-color: var(--glass);
   -webkit-backdrop-filter: saturate(160%) blur(20px);
   backdrop-filter: saturate(160%) blur(20px);
 }

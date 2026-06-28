@@ -30,11 +30,11 @@ export function RestTimer({
           <span className="font-mono text-xs uppercase tracking-widest text-accent-sessions">
             Satzpause
           </span>
-          <span className="font-mono text-2xl tabular-nums text-neutral-100">
+          <span className="font-mono text-2xl tabular-nums text-fg">
             {fmtClock(left)}
           </span>
         </div>
-        <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-neutral-800">
+        <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-surface-2">
           <div
             className="h-full rounded-full bg-accent-sessions transition-all"
             style={{ width: `${pct}%` }}
@@ -43,13 +43,13 @@ export function RestTimer({
         <div className="flex items-center gap-2">
           <Pressable
             onClick={onAdd}
-            className="shrink-0 rounded-xl bg-neutral-800 px-3 py-2 text-sm text-neutral-200 focus:outline-none"
+            className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-sm text-fg focus:outline-none"
           >
             +15 s
           </Pressable>
           <Pressable
             onClick={onSkip}
-            className="flex-1 rounded-xl bg-accent-sessions px-3 py-2 text-sm font-medium text-neutral-950 focus:outline-none"
+            className="flex-1 rounded-xl bg-accent-sessions px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
           >
             Überspringen
           </Pressable>

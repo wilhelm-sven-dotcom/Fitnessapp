@@ -91,13 +91,13 @@ export default function CoachPage() {
       <div>
         <BackRow onBack={() => router.push("/")} />
         <div className="mt-10 flex flex-col items-center text-center">
-          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-800">
-            <KeyRound size={26} className="text-neutral-400" />
+          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-2">
+            <KeyRound size={26} className="text-muted" />
           </span>
           <h2 className="text-xl font-semibold tracking-tight">Coach noch nicht eingerichtet</h2>
-          <p className="mt-2 max-w-xs text-sm leading-relaxed text-neutral-400">
+          <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
             Damit der KI-Coach antwortet, muss in Vercel der Schlüssel
-            <span className="font-mono text-neutral-300"> ANTHROPIC_API_KEY </span>
+            <span className="font-mono text-muted"> ANTHROPIC_API_KEY </span>
             hinterlegt sein. Danach läuft alles serverseitig — dein Schlüssel
             bleibt geheim.
           </p>
@@ -118,20 +118,20 @@ export default function CoachPage() {
         <div>
           <Pressable
             onClick={() => send(RECAP_PROMPT)}
-            className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-neutral-950 focus:outline-none"
+            className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none"
           >
             <Sparkles size={18} strokeWidth={2.5} /> Wochen-Recap
           </Pressable>
-          <p className="mb-2 px-1 text-xs text-neutral-500">Oder frag direkt:</p>
+          <p className="mb-2 px-1 text-xs text-muted">Oder frag direkt:</p>
           <div className="space-y-2">
             {SUGGESTIONS.map((s) => (
               <Pressable
                 key={s}
                 onClick={() => send(s)}
-                className="flex w-full items-center justify-between gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-neutral-200 focus:outline-none"
+                className="flex w-full items-center justify-between gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-fg focus:outline-none"
               >
                 {s}
-                <Send size={15} className="shrink-0 text-neutral-600" />
+                <Send size={15} className="shrink-0 text-faint" />
               </Pressable>
             ))}
           </div>
@@ -144,8 +144,8 @@ export default function CoachPage() {
               className={cn(
                 "rounded-2xl px-4 py-3 text-sm leading-relaxed",
                 m.role === "user"
-                  ? "ml-8 bg-accent-coverage text-neutral-950"
-                  : "mr-4 whitespace-pre-wrap border border-surface-3 bg-surface-1 shadow-card text-neutral-100",
+                  ? "ml-8 bg-accent-coverage text-on-strong"
+                  : "mr-4 whitespace-pre-wrap border border-surface-3 bg-surface-1 shadow-card text-fg",
               )}
             >
               {m.content || (busy ? "…" : "")}
@@ -167,13 +167,13 @@ export default function CoachPage() {
           }}
           rows={1}
           placeholder="Frag deinen Coach…"
-          className="flex-1 resize-none rounded-2xl bg-neutral-800 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+          className="flex-1 resize-none rounded-2xl bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
         />
         <Pressable
           onClick={() => void send(input)}
           disabled={busy || !input.trim()}
           aria-label="Senden"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-950 focus:outline-none disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-strong text-on-strong focus:outline-none disabled:opacity-40"
         >
           <Send size={18} strokeWidth={2.5} />
         </Pressable>
@@ -186,7 +186,7 @@ function BackRow({ onBack }: { onBack: () => void }) {
   return (
     <Pressable
       onClick={onBack}
-      className="mb-4 flex items-center gap-1 rounded-md px-1 py-1 text-sm text-neutral-400 focus:outline-none"
+      className="mb-4 flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
     >
       <ArrowLeft size={18} /> Zurück
     </Pressable>

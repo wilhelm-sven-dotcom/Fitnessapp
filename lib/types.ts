@@ -145,6 +145,10 @@ export interface AppSettings {
   voiceCues?: boolean;
   /** Pair the last two accessory slots as a superset — saves rest time. */
   superset?: boolean;
+  /** Appearance: color theme preference (default 'dark'). */
+  theme?: "dark" | "light" | "system";
+  /** Appearance: selectable brand accent (id from lib/theme ACCENTS). */
+  accentColor?: string;
 }
 
 /** Most recent performance of one exercise, used to derive the next prescription. */

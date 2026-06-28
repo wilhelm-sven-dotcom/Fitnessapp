@@ -181,7 +181,7 @@ export function CameraView({
             onClick={onClose}
             aria-label="Schließen"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-            className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-neutral-100 focus:outline-none"
+            className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-fg focus:outline-none"
           >
             <ArrowLeft size={16} /> {exerciseName}
           </Pressable>
@@ -189,7 +189,7 @@ export function CameraView({
             onClick={() => setFacing((f) => (f === "environment" ? "user" : "environment"))}
             aria-label="Kamera wechseln"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-            className="rounded-full p-2 text-neutral-100 focus:outline-none"
+            className="rounded-full p-2 text-fg focus:outline-none"
           >
             <SwitchCamera size={18} />
           </Pressable>
@@ -202,7 +202,7 @@ export function CameraView({
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           >
             <p className="font-mono text-5xl font-semibold tabular-nums text-neutral-50">{reps}</p>
-            <p className="text-xs uppercase tracking-widest text-neutral-300">Wdh</p>
+            <p className="text-xs uppercase tracking-widest text-muted">Wdh</p>
           </div>
         )}
 
@@ -216,13 +216,13 @@ export function CameraView({
         {/* status overlays */}
         {status !== "running" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
-            <p className="text-lg font-medium text-neutral-100">
+            <p className="text-lg font-medium text-fg">
               {status === "loading" && "Kamera & Modell laden…"}
               {status === "denied" && "Kamerazugriff nötig"}
               {status === "unsupported" && "Kamera nicht verfügbar"}
               {status === "error" && "Modell konnte nicht laden"}
             </p>
-            <p className="max-w-xs text-sm text-neutral-400">
+            <p className="max-w-xs text-sm text-muted">
               {status === "loading" && "Stell dich so hin, dass dich die Kamera ganz sieht."}
               {status === "denied" && "Erlaube den Kamerazugriff im Browser und lade neu."}
               {status === "unsupported" && "Dieses Gerät unterstützt den Kamera-Check nicht."}
@@ -231,7 +231,7 @@ export function CameraView({
             {status !== "loading" && (
               <Pressable
                 onClick={onClose}
-                className="mt-2 rounded-xl bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-950 focus:outline-none"
+                className="mt-2 rounded-xl bg-strong px-4 py-2 text-sm font-medium text-on-strong focus:outline-none"
               >
                 Zurück
               </Pressable>
@@ -246,10 +246,10 @@ export function CameraView({
           className="bg-black px-5 py-3 text-center"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
         >
-          <p className="text-sm text-neutral-300">
+          <p className="text-sm text-muted">
             {cfg ? cfg.hint : "Für diese Übung gibt es keine automatische Zählung — nutz die Skelett-Ansicht als Technik-Check."}
           </p>
-          <p className="mt-0.5 text-xs text-neutral-600">Beta · alles läuft on-device, kein Upload.</p>
+          <p className="mt-0.5 text-xs text-faint">Beta · alles läuft on-device, kein Upload.</p>
         </div>
       )}
     </div>

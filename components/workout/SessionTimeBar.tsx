@@ -14,12 +14,12 @@ export function SessionTimeBar({
   return (
     <Card className="mb-4 px-4 py-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1.5 text-neutral-300">
+        <span className="flex items-center gap-1.5 text-muted">
           <Clock size={15} /> ca. {estMin} Min
         </span>
-        <span className="text-xs text-neutral-500">Ziel {budgetMin} Min</span>
+        <span className="text-xs text-muted">Ziel {budgetMin} Min</span>
       </div>
-      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-neutral-800">
+      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-surface-2">
         <div
           className="h-full rounded-full bg-accent-coverage transition-all"
           style={{ width: `${pct}%` }}

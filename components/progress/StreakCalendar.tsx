@@ -33,10 +33,10 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   return (
     <Card className="rounded-3xl p-5">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="font-mono text-xs uppercase tracking-widest text-muted">
           Diese & letzte Wochen
         </p>
-        <span className="text-xs text-neutral-500">Ziel 3× / Woche</span>
+        <span className="text-xs text-muted">Ziel 3× / Woche</span>
       </div>
       <div className="flex items-end justify-between gap-2">
         {weeks.map((w, wi) => {
@@ -59,7 +59,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
                         stiffness: 500,
                         damping: 30,
                       }}
-                      className={c ? "h-3 w-3 rounded-full" : "h-3 w-3 rounded-full bg-neutral-800"}
+                      className={c ? "h-3 w-3 rounded-full" : "h-3 w-3 rounded-full bg-surface-2"}
                       style={c ? { backgroundColor: c, boxShadow: `0 0 8px -1px ${c}` } : undefined}
                     />
                   );
@@ -68,8 +68,8 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
               <span
                 className={
                   w.current
-                    ? "text-xs font-medium tabular-nums text-neutral-200"
-                    : "text-xs tabular-nums text-neutral-600"
+                    ? "text-xs font-medium tabular-nums text-fg"
+                    : "text-xs tabular-nums text-faint"
                 }
               >
                 {w.current ? "jetzt" : `−${4 - wi}`}

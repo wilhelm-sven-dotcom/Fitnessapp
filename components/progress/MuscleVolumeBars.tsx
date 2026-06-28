@@ -19,7 +19,7 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
     <Card className="mb-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-semibold leading-tight">Wochen-Volumen</h3>
-        <span className="text-xs text-neutral-500">
+        <span className="text-xs text-muted">
           Sätze · Ziel {VOLUME_TARGET.min}–{VOLUME_TARGET.max}
         </span>
       </div>
@@ -29,10 +29,10 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
           const pct = Math.min(100, (m.sets / SCALE_MAX) * 100);
           return (
             <div key={m.muscle} className="flex items-center gap-3">
-              <span className="w-24 shrink-0 text-xs text-neutral-400">
+              <span className="w-24 shrink-0 text-xs text-muted">
                 {MUSCLE_LABEL[m.muscle]}
               </span>
-              <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-neutral-800">
+              <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                 <div
                   className="absolute inset-y-0"
                   style={{
@@ -53,7 +53,7 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
                   transition={{ duration: 0.6, delay: i * 0.05, ease: EASE_OUT }}
                 />
               </div>
-              <span className="w-7 shrink-0 text-right font-mono text-xs tabular-nums text-neutral-300">
+              <span className="w-7 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
                 {m.sets}
               </span>
             </div>

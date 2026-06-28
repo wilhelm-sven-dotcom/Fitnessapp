@@ -36,12 +36,25 @@ const config: Config = {
         ],
       },
       colors: {
-        // Apple-Fitness multicolor accents (domain metrics)
-        accent: { sessions: "#ff375f", volume: "#30d158", coverage: "#0a84ff" },
+        // Apple-Fitness multicolor accents. `sessions` is the user-selectable
+        // brand accent (CSS var); volume/coverage stay fixed = ring semantics.
+        accent: { sessions: "var(--accent)", volume: "#30d158", coverage: "#0a84ff" },
         // Semantic status (volume bars, coach banners, readiness)
         status: { under: "#0a84ff", in: "#30d158", over: "#ff9f0a", danger: "#ff375f" },
-        // Material/elevation surfaces
-        surface: { 0: "#0a0a0a", 1: "#161618", 2: "#1f1f23", 3: "#2a2a30" },
+        // Material/elevation surfaces — theme-driven via CSS variables.
+        surface: {
+          0: "var(--base)",
+          1: "var(--card)",
+          2: "var(--surface-2)",
+          3: "var(--line)",
+        },
+        // Semantic foreground/line tokens (flip with theme).
+        fg: "var(--fg)",
+        muted: "var(--muted)",
+        faint: "var(--faint)",
+        line: "var(--line)",
+        strong: "var(--strong)",
+        "on-strong": "var(--on-strong)",
       },
       // Soft elevation + subtle accent glows (restrained, "edel & dezent").
       boxShadow: {

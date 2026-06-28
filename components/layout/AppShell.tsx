@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
-import { Dumbbell, Settings, Sparkles } from "lucide-react";
+import { Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
@@ -41,9 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-sessions">
-                    <Dumbbell size={14} className="text-neutral-950" strokeWidth={2.5} />
-                  </span>
+                  <BrandMark size={24} className="rounded-md" />
                   <span className="font-display text-base font-semibold tracking-tight">Training</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -57,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link
                     href="/settings"
                     aria-label="Einstellungen"
-                    className="rounded-full p-1.5 text-neutral-400 transition-colors focus:outline-none"
+                    className="rounded-full p-1.5 text-muted transition-colors focus:outline-none"
                   >
                     <Settings size={20} />
                   </Link>

@@ -119,7 +119,7 @@ export function GoalCard() {
 
   return (
     <Card className="mb-3">
-      <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
+      <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
         <Target size={13} /> Ziel-Rechner
       </p>
 
@@ -134,8 +134,8 @@ export function GoalCard() {
             className={cn(
               "rounded-lg px-2.5 py-1 text-xs font-medium focus:outline-none",
               it.id === sel.id
-                ? "bg-accent-coverage text-neutral-950"
-                : "bg-neutral-800 text-neutral-400",
+                ? "bg-accent-coverage text-on-strong"
+                : "bg-surface-2 text-muted",
             )}
           >
             {it.name}
@@ -147,13 +147,13 @@ export function GoalCard() {
         <>
           <ProjChart series={sel.series} weeksAhead={WEEKS_AHEAD} projected={proj.projected} />
           <div className="mt-2 flex items-center justify-between text-sm">
-            <span className="text-neutral-400">
+            <span className="text-muted">
               Aktuell{" "}
-              <span className="font-mono text-neutral-200">
+              <span className="font-mono text-fg">
                 {fmt(proj.current)} {sel.unit}
               </span>
             </span>
-            <span className="text-neutral-400">
+            <span className="text-muted">
               Trend{" "}
               <span
                 className={cn(
@@ -166,7 +166,7 @@ export function GoalCard() {
               </span>
             </span>
           </div>
-          <p className="mt-1 text-sm text-neutral-300">
+          <p className="mt-1 text-sm text-muted">
             In {WEEKS_AHEAD} Wochen bei diesem Tempo:{" "}
             <span className="font-mono text-accent-coverage">
               ~{fmt(proj.projected)} {sel.unit}
@@ -180,9 +180,9 @@ export function GoalCard() {
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder={`Ziel ${sel.unit}`}
-              className="w-28 rounded-xl bg-neutral-800 px-3 py-2 text-center font-mono tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+              className="w-28 rounded-xl bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
             />
-            <span className="text-sm text-neutral-400">
+            <span className="text-sm text-muted">
               {tNum == null || Number.isNaN(tNum)
                 ? "Ziel eintragen"
                 : weeks == null
@@ -192,7 +192,7 @@ export function GoalCard() {
                     : `in ~${weeks} ${weeks === 1 ? "Woche" : "Wochen"}`}
             </span>
           </div>
-          <p className="mt-2 text-xs text-neutral-600">
+          <p className="mt-2 text-xs text-faint">
             Lineare Schätzung aus deinem Verlauf — keine Garantie.
           </p>
         </>

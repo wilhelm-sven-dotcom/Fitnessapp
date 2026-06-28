@@ -40,8 +40,8 @@ import type { TrafficLight } from "@/lib/types";
 const REST_SECONDS = 90;
 
 const BACK_OPTIONS: { v: TrafficLight; label: string; on: string }[] = [
-  { v: "green", label: "Gut", on: "bg-emerald-500 text-neutral-950" },
-  { v: "yellow", label: "Mittel", on: "bg-amber-400 text-neutral-950" },
+  { v: "green", label: "Gut", on: "bg-emerald-500 text-on-strong" },
+  { v: "yellow", label: "Mittel", on: "bg-amber-400 text-on-strong" },
   { v: "red", label: "Gereizt", on: "bg-rose-500 text-neutral-50" },
 ];
 
@@ -190,7 +190,7 @@ export default function WorkoutPage() {
   if (!tpl) {
     return (
       <div>
-        <p className="text-neutral-400">Einheit nicht gefunden.</p>
+        <p className="text-muted">Einheit nicht gefunden.</p>
         <Pressable
           onClick={() => router.push("/")}
           className="mt-3 flex items-center gap-1 text-sm text-accent-sessions focus:outline-none"
@@ -204,7 +204,7 @@ export default function WorkoutPage() {
   if (activeKey !== key) {
     return (
       <>
-        <div className="py-10 text-center font-mono text-sm text-neutral-600">
+        <div className="py-10 text-center font-mono text-sm text-faint">
           bereite vor…
         </div>
         <ReadinessGate
@@ -240,7 +240,7 @@ export default function WorkoutPage() {
       <div className="mb-4 flex items-center justify-between">
         <Pressable
           onClick={() => router.push("/")}
-          className="flex items-center gap-1 rounded-md px-1 py-1 text-sm text-neutral-400 focus:outline-none"
+          className="flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
         >
           <ArrowLeft size={18} /> Zurück
         </Pressable>
@@ -252,22 +252,22 @@ export default function WorkoutPage() {
               className={cn(
                 "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium focus:outline-none",
                 listening
-                  ? "bg-accent-sessions text-neutral-950"
-                  : "bg-neutral-800 text-neutral-300",
+                  ? "bg-accent-sessions text-on-strong"
+                  : "bg-surface-2 text-muted",
               )}
             >
               <Mic size={14} /> {listening ? "Hört zu…" : "Sprechen"}
             </Pressable>
           )}
-          <span className="font-mono text-xs tabular-nums text-neutral-500">
+          <span className="font-mono text-xs tabular-nums text-muted">
             {done}/{list.length} erledigt
           </span>
         </div>
       </div>
 
       <h2 className="text-2xl font-semibold tracking-tight">{tpl.name}</h2>
-      <p className="mb-1 text-sm text-neutral-500">{tpl.focus}</p>
-      <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-neutral-800">
+      <p className="mb-1 text-sm text-muted">{tpl.focus}</p>
+      <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
         <div
           className="h-full rounded-full bg-accent-sessions transition-all"
           style={{ width: `${(done / total) * 100}%` }}
@@ -327,16 +327,16 @@ export default function WorkoutPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-neutral-600">
+                    <span className="font-mono text-xs text-faint">
                       {String(idx + 1).padStart(2, "0")}
                     </span>
                     <h3 className="font-semibold leading-tight">{ex.name}</h3>
                   </div>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+                  <p className="mt-0.5 text-xs text-muted">
                     {ex.tag} · {PATTERN_LABEL[ex.pattern]}
                   </p>
                   {isSuperset && (
-                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-accent-coverage px-1.5 py-0.5 text-xs font-medium text-neutral-950">
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-accent-coverage px-1.5 py-0.5 text-xs font-medium text-on-strong">
                       <Repeat size={11} /> im Wechsel
                     </span>
                   )}
@@ -345,13 +345,13 @@ export default function WorkoutPage() {
                   <p className="font-mono text-sm tabular-nums text-accent-sessions">
                     {ex.sets} × {ex.repLow}–{ex.repHigh}
                   </p>
-                  <p className="text-xs uppercase tracking-wider text-neutral-600">
+                  <p className="text-xs uppercase tracking-wider text-faint">
                     {ex.unit === "Sek" ? "Sekunden" : "Wdh"}
                   </p>
                 </div>
               </div>
 
-              <p className="mt-2 text-xs leading-relaxed text-neutral-400">{ex.cue}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted">{ex.cue}</p>
 
               {chips.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -373,7 +373,7 @@ export default function WorkoutPage() {
                 {pool.length > 1 && (
                   <Pressable
                     onClick={() => setPickSlot(slotKey)}
-                    className="flex items-center gap-1 rounded px-1 py-1 text-xs text-neutral-400 focus:outline-none"
+                    className="flex items-center gap-1 rounded px-1 py-1 text-xs text-muted focus:outline-none"
                   >
                     <Repeat size={13} /> Übung ändern
                   </Pressable>
@@ -388,11 +388,11 @@ export default function WorkoutPage() {
                 )}
               </div>
 
-              <div className="mt-3 rounded-xl bg-neutral-800 px-3 py-2">
-                <p className="text-xs uppercase tracking-widest text-neutral-500">
+              <div className="mt-3 rounded-xl bg-surface-2 px-3 py-2">
+                <p className="text-xs uppercase tracking-widest text-muted">
                   Letztes Mal
                 </p>
-                <p className="font-mono text-sm tabular-nums text-neutral-200">
+                <p className="font-mono text-sm tabular-nums text-fg">
                   {ps || "—"}
                 </p>
                 <p className="mt-1 text-xs text-accent-sessions">{p.line}</p>
@@ -427,7 +427,7 @@ export default function WorkoutPage() {
 
       <div className="mt-6 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4">
         <p className="text-sm font-medium">Wie fühlt sich dein unterer Rücken an?</p>
-        <p className="mb-3 mt-0.5 text-xs text-neutral-500">
+        <p className="mb-3 mt-0.5 text-xs text-muted">
           Kurz einschätzen — steuert die nächste Einheit.
         </p>
         <div className="flex gap-2">
@@ -437,7 +437,7 @@ export default function WorkoutPage() {
               onClick={() => setBackTraffic(backTraffic === o.v ? null : o.v)}
               className={cn(
                 "flex-1 rounded-xl py-3 text-sm font-medium focus:outline-none",
-                backTraffic === o.v ? o.on : "bg-neutral-800 text-neutral-400",
+                backTraffic === o.v ? o.on : "bg-surface-2 text-muted",
               )}
             >
               {o.label}
@@ -449,14 +449,14 @@ export default function WorkoutPage() {
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz zur Einheit — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-xl bg-neutral-800 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="mt-4 w-full resize-none rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         />
       </div>
 
       <Pressable
         onClick={onSave}
         disabled={saving}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 focus:outline-none disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
       >
         <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training speichern"}
       </Pressable>

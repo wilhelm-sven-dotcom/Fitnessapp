@@ -41,7 +41,7 @@ export function BottomNav() {
                 strokeWidth={active ? 2.5 : 2}
                 className={cn(
                   "transition-colors",
-                  active ? "text-neutral-50" : "text-neutral-500",
+                  active ? "text-neutral-50" : "text-muted",
                 )}
               />
               <span className="relative flex h-1 w-6 items-center justify-center">
@@ -49,7 +49,7 @@ export function BottomNav() {
                   <motion.span
                     layoutId="navPill"
                     className="absolute inset-0 rounded-full bg-accent-sessions"
-                    style={{ boxShadow: "0 0 10px -1px #ff375f" }}
+                    style={{ boxShadow: "0 0 10px -1px var(--accent)" }}
                     transition={SPRING.press}
                   />
                 )}
@@ -57,7 +57,7 @@ export function BottomNav() {
               <span
                 className={cn(
                   "text-xs font-medium transition-colors",
-                  active ? "text-neutral-50" : "text-neutral-500",
+                  active ? "text-neutral-50" : "text-muted",
                 )}
               >
                 {label}

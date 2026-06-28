@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
+import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
@@ -99,19 +100,21 @@ export default function SettingsPage() {
     <div>
       <h2 className="mb-5 text-2xl font-semibold tracking-tight">Einstellungen</h2>
 
+      <AppearanceSection />
+
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Dein Plan
         </p>
         <div className="space-y-2">
           {PROFILE.map(([k, v]) => (
             <div key={k} className="flex justify-between text-sm">
-              <span className="text-neutral-500">{k}</span>
-              <span className="font-medium text-neutral-200">{v}</span>
+              <span className="text-muted">{k}</span>
+              <span className="font-medium text-fg">{v}</span>
             </div>
           ))}
         </div>
-        <p className="mt-4 text-xs leading-relaxed text-neutral-500">
+        <p className="mt-4 text-xs leading-relaxed text-muted">
           3× pro Woche Ganzkörper, A → B → C rotieren. Gewicht steigt
           autoreguliert über RIR und Tagesform; bei Reizungen schützt die App den
           unteren Rücken automatisch.
@@ -119,7 +122,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Körperdaten
         </p>
         <div className="flex gap-2">
@@ -130,7 +133,7 @@ export default function SettingsPage() {
             value={bw}
             onChange={(e) => setBw(e.target.value)}
             placeholder="Gewicht kg"
-            className="min-w-0 flex-1 rounded-xl bg-neutral-800 px-3 py-2.5 text-center font-mono tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
           <input
             type="number"
@@ -139,7 +142,7 @@ export default function SettingsPage() {
             value={waist}
             onChange={(e) => setWaist(e.target.value)}
             placeholder="Bauch cm"
-            className="min-w-0 flex-1 rounded-xl bg-neutral-800 px-3 py-2.5 text-center font-mono tabular-nums text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
         </div>
         <input
@@ -151,18 +154,18 @@ export default function SettingsPage() {
           className="hidden"
         />
         {photoUrl ? (
-          <div className="mt-2 flex items-center gap-3 rounded-xl bg-neutral-800 p-2">
+          <div className="mt-2 flex items-center gap-3 rounded-xl bg-surface-2 p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photoUrl}
               alt="Vorschau"
               className="h-14 w-14 rounded-lg object-cover"
             />
-            <span className="flex-1 text-sm text-neutral-300">Foto angehängt</span>
+            <span className="flex-1 text-sm text-muted">Foto angehängt</span>
             <Pressable
               onClick={clearPhoto}
               aria-label="Foto entfernen"
-              className="rounded-lg p-1.5 text-neutral-400 focus:outline-none"
+              className="rounded-lg p-1.5 text-muted focus:outline-none"
             >
               <X size={16} />
             </Pressable>
@@ -171,7 +174,7 @@ export default function SettingsPage() {
           <Pressable
             onClick={() => photoRef.current?.click()}
             disabled={photoBusy}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-800 py-2.5 text-sm font-medium text-neutral-200 focus:outline-none disabled:opacity-50"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
           >
             <Camera size={16} /> {photoBusy ? "Lädt…" : "Fortschritts-Foto"}
           </Pressable>
@@ -179,7 +182,7 @@ export default function SettingsPage() {
         <Pressable
           onClick={addBody}
           disabled={!bw.trim() && !waist.trim() && !photoId}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-100 py-2.5 text-sm font-medium text-neutral-950 focus:outline-none disabled:opacity-40"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
         >
           <Plus size={16} strokeWidth={2.5} /> Eintragen
         </Pressable>
@@ -191,17 +194,17 @@ export default function SettingsPage() {
               .map(({ m, i }) => (
                 <div
                   key={m.date + i}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-neutral-950 px-3 py-2"
+                  className="flex items-center justify-between gap-2 rounded-lg bg-base px-3 py-2"
                 >
-                  <span className="flex items-center gap-1.5 text-sm text-neutral-300">
+                  <span className="flex items-center gap-1.5 text-sm text-muted">
                     {fmtDateShort(m.date)}
                     {m.weightKg != null ? ` · ${m.weightKg} kg` : ""}
                     {m.waistCm != null ? ` · ${m.waistCm} cm` : ""}
-                    {m.photoId && <Camera size={13} className="text-neutral-500" />}
+                    {m.photoId && <Camera size={13} className="text-muted" />}
                   </span>
                   <Pressable
                     onClick={() => deleteBodyMetric(i)}
-                    className="shrink-0 rounded p-1 text-neutral-500 focus:outline-none"
+                    className="shrink-0 rounded p-1 text-muted focus:outline-none"
                   >
                     <Trash2 size={14} />
                   </Pressable>
@@ -212,7 +215,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-4 font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
           Gym-Modus
         </p>
         <div className="space-y-5">
@@ -234,10 +237,10 @@ export default function SettingsPage() {
       <CloudSyncSection />
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
           Als App installieren
         </p>
-        <p className="text-xs leading-relaxed text-neutral-500">
+        <p className="text-xs leading-relaxed text-muted">
           iPhone: in Safari unten auf „Teilen“ tippen → „Zum Home-Bildschirm“.
           Android: im Chrome-Menü „App installieren“. Danach startet Training im
           Vollbild mit eigenem Icon — und läuft auch offline.
@@ -245,15 +248,15 @@ export default function SettingsPage() {
       </section>
 
       <section className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">Daten</p>
-        <p className="mb-3 text-xs leading-relaxed text-neutral-500">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">Daten</p>
+        <p className="mb-3 text-xs leading-relaxed text-muted">
           Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als
           Datei oder spiele ein Backup zurück.
         </p>
         <div className="mb-4 flex flex-col gap-2">
           <Pressable
             onClick={exportFile}
-            className="flex items-center justify-center gap-2 rounded-xl bg-neutral-800 py-2.5 text-sm font-medium text-neutral-100 focus:outline-none"
+            className="flex items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
           >
             <Download size={16} /> Export (JSON)
           </Pressable>
@@ -266,16 +269,16 @@ export default function SettingsPage() {
           />
           <Pressable
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 rounded-xl bg-neutral-800 py-2.5 text-sm font-medium text-neutral-100 focus:outline-none"
+            className="flex items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
           >
             <Upload size={16} /> Import (JSON)
           </Pressable>
-          {importMsg && <p className="text-xs text-neutral-400">{importMsg}</p>}
+          {importMsg && <p className="text-xs text-muted">{importMsg}</p>}
         </div>
         {!confirmReset ? (
           <Pressable
             onClick={() => setConfirmReset(true)}
-            className="flex items-center gap-2 rounded-md px-1 py-1 text-sm text-neutral-400 focus:outline-none"
+            className="flex items-center gap-2 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
           >
             <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
           </Pressable>
@@ -292,7 +295,7 @@ export default function SettingsPage() {
             </Pressable>
             <Pressable
               onClick={() => setConfirmReset(false)}
-              className="rounded-lg px-3 py-2 text-sm text-neutral-400 focus:outline-none"
+              className="rounded-lg px-3 py-2 text-sm text-muted focus:outline-none"
             >
               Abbrechen
             </Pressable>

@@ -38,13 +38,13 @@ export function ReadinessGate({
 
   return (
     <Sheet open={open} onClose={onClose} title="Tagesform">
-      <p className="mb-4 text-sm text-neutral-400">
+      <p className="mb-4 text-sm text-muted">
         Kurz einschätzen — die Einheit passt sich an.
       </p>
       <div className="space-y-3">
         {ROWS.map((row) => (
           <div key={row.key}>
-            <p className="mb-1.5 text-sm text-neutral-300">{row.label}</p>
+            <p className="mb-1.5 text-sm text-muted">{row.label}</p>
             <div className="flex gap-2">
               {OPTS.map((o) => (
                 <Pressable
@@ -53,8 +53,8 @@ export function ReadinessGate({
                   className={cn(
                     "flex-1 rounded-xl py-2.5 text-sm focus:outline-none",
                     vals[row.key] === o.v
-                      ? "bg-accent-sessions text-neutral-950"
-                      : "bg-neutral-800 text-neutral-400",
+                      ? "bg-accent-sessions text-on-strong"
+                      : "bg-surface-2 text-muted",
                   )}
                 >
                   {o.label}
@@ -67,13 +67,13 @@ export function ReadinessGate({
       <Pressable
         onClick={submit}
         disabled={!complete}
-        className="mt-5 w-full rounded-2xl bg-neutral-100 py-3.5 text-base font-semibold text-neutral-950 focus:outline-none disabled:opacity-40"
+        className="mt-5 w-full rounded-2xl bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
       >
         Los geht&apos;s
       </Pressable>
       <Pressable
         onClick={onClose}
-        className="mt-2 w-full rounded-xl py-2.5 text-sm text-neutral-400 focus:outline-none"
+        className="mt-2 w-full rounded-xl py-2.5 text-sm text-muted focus:outline-none"
       >
         Überspringen
       </Pressable>
