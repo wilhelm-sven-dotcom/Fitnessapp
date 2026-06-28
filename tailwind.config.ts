@@ -26,6 +26,14 @@ const config: Config = {
           "Monaco",
           "monospace",
         ],
+        // Display face for big numbers / headings / wordmark (self-hosted, see layout.tsx)
+        display: [
+          "var(--font-display)",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       colors: {
         // Apple-Fitness multicolor accents (domain metrics)
@@ -34,6 +42,21 @@ const config: Config = {
         status: { under: "#0a84ff", in: "#30d158", over: "#ff9f0a", danger: "#ff375f" },
         // Material/elevation surfaces
         surface: { 0: "#0a0a0a", 1: "#161618", 2: "#1f1f23", 3: "#2a2a30" },
+      },
+      // Soft elevation + subtle accent glows (restrained, "edel & dezent").
+      boxShadow: {
+        card: "0 1px 2px rgba(0,0,0,.35), 0 10px 28px -16px rgba(0,0,0,.75)",
+        "card-lg": "0 2px 6px rgba(0,0,0,.45), 0 22px 48px -22px rgba(0,0,0,.85)",
+        "glow-sessions": "0 0 18px -3px rgba(255,55,95,.5)",
+        "glow-volume": "0 0 18px -3px rgba(48,209,88,.5)",
+        "glow-coverage": "0 0 18px -3px rgba(10,132,255,.5)",
+      },
+      // Reusable gradients exposed as real utilities (no arbitrary values at call sites).
+      backgroundImage: {
+        "hero-sheen":
+          "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,0) 42%)",
+        "hero-accent":
+          "radial-gradient(125% 90% at 100% 0%, rgba(255,55,95,.12), rgba(255,55,95,0) 60%)",
       },
     },
   },
