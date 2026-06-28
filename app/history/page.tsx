@@ -3,9 +3,12 @@
 import { Bike, Dumbbell, Play, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Readout } from "@/components/ui/Readout";
+import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDate } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
@@ -24,14 +27,25 @@ export default function HistoryPage() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [confirmDel, setConfirmDel] = useState<number | null>(null);
   const items = [...log].reverse();
+  const totalT = Math.round(log.reduce((a, s) => a + sessionVolume(s), 0) / 100) / 10;
 
   return (
     <div>
-      <PageHeader
-        eyebrow="Logbuch"
-        title="Verlauf"
-        subtitle={`${log.length} ${log.length === 1 ? "Einheit" : "Einheiten"} aufgezeichnet.`}
-      />
+      <PageHeader eyebrow="Logbuch" title="Verlauf" />
+
+      {log.length > 0 && (
+        <Reveal>
+          <Card variant="elevated" className="edge-top mb-4 rounded-3xl p-5">
+            <Readout
+              eyebrow="Aufgezeichnet"
+              value={log.length}
+              unit={log.length === 1 ? "Einheit" : "Einheiten"}
+              size="lg"
+              hint={`${totalT} t insgesamt bewegt`}
+            />
+          </Card>
+        </Reveal>
+      )}
 
       {cardio.length > 0 && (
         <div className="mb-3 rounded-2xl border border-surface-3 bg-surface-1 p-4 shadow-card">

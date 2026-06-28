@@ -201,7 +201,7 @@ export function CameraView({
             className="absolute left-4 top-28 rounded-2xl px-4 py-2"
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           >
-            <p className="font-mono text-5xl font-semibold tabular-nums text-neutral-50">{reps}</p>
+            <p className="font-display text-5xl font-semibold tabular-nums text-neutral-50">{reps}</p>
             <p className="text-xs uppercase tracking-widest text-muted">Wdh</p>
           </div>
         )}
