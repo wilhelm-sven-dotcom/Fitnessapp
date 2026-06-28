@@ -41,7 +41,7 @@ export function Sheet({
             onClick={onClose}
           />
           <motion.div
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-3xl bg-neutral-900"
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-3xl border border-surface-3 bg-surface-1 shadow-card"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

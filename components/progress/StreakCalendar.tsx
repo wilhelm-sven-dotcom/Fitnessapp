@@ -1,9 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Card } from "@/components/ui/Card";
 import type { LoggedSession } from "@/lib/types";
 
 const GOAL = 3;
+const VOLUME = "#30d158";
+const SESSIONS = "#ff375f";
 
 function weekStart(d: Date) {
   const off = (d.getDay() + 6) % 7;
@@ -28,7 +31,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   });
 
   return (
-    <div className="rounded-3xl bg-neutral-900 p-5">
+    <Card className="rounded-3xl p-5">
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono text-xs uppercase tracking-widest text-neutral-400">
           Diese & letzte Wochen
@@ -44,6 +47,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
               <div className="flex flex-col-reverse gap-1.5">
                 {Array.from({ length: dots }, (_, di) => {
                   const done = di < w.count;
+                  const c = done ? (goalMet ? VOLUME : SESSIONS) : null;
                   return (
                     <motion.span
                       key={di}
@@ -55,13 +59,8 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
                         stiffness: 500,
                         damping: 30,
                       }}
-                      className={
-                        done
-                          ? goalMet
-                            ? "h-3 w-3 rounded-full bg-accent-volume"
-                            : "h-3 w-3 rounded-full bg-accent-sessions"
-                          : "h-3 w-3 rounded-full bg-neutral-800"
-                      }
+                      className={c ? "h-3 w-3 rounded-full" : "h-3 w-3 rounded-full bg-neutral-800"}
+                      style={c ? { backgroundColor: c, boxShadow: `0 0 8px -1px ${c}` } : undefined}
                     />
                   );
                 })}
@@ -79,6 +78,6 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }

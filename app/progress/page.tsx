@@ -8,6 +8,7 @@ import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { TrendChart } from "@/components/progress/TrendChart";
+import { Card } from "@/components/ui/Card";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
@@ -43,10 +44,10 @@ function BodyCard({
   const latest = values[values.length - 1];
   const delta = values.length > 1 ? latest - values[0] : 0;
   return (
-    <div className="rounded-2xl bg-neutral-900 p-4">
+    <Card>
       <div className="flex items-end justify-between">
         <div>
-          <p className="font-mono text-3xl tabular-nums text-neutral-100">
+          <p className="font-display text-3xl font-semibold tabular-nums text-neutral-100">
             {latest}
             <span className="text-base text-neutral-500"> {unit}</span>
           </p>
@@ -62,7 +63,7 @@ function BodyCard({
       <div className="mt-2">
         <TrendChart values={values} />
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -136,7 +137,7 @@ export default function ProgressPage() {
 
   return (
     <div>
-      <h2 className="mb-1 text-2xl font-semibold tracking-tight">Fortschritt</h2>
+      <h2 className="mb-1 font-display text-2xl font-semibold tracking-tight">Fortschritt</h2>
       <p className="mb-5 text-sm text-neutral-500">
         {list.length
           ? `${list.length} ${list.length === 1 ? "Übung" : "Übungen"} mit Verlauf`
@@ -170,17 +171,17 @@ export default function ProgressPage() {
         waistSeries.length === 0 &&
         !body.some((b) => b.photoId) &&
         !log.some((s) => s.backTraffic) && (
-          <div className="rounded-2xl bg-neutral-900 p-8 text-center">
+          <Card className="p-8 text-center">
             <p className="text-neutral-400">Noch nichts zu zeigen.</p>
             <p className="mt-1 text-sm text-neutral-600">
               Trainiere ein paar Einheiten, dann erscheinen hier deine Kurven und Rekorde.
             </p>
-          </div>
+          </Card>
         )}
 
       <div className="space-y-3">
         {list.map((e) => (
-          <div key={e.id} className="rounded-2xl bg-neutral-900 p-4">
+          <Card key={e.id}>
             <div className="mb-2 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="truncate font-semibold leading-tight">{e.name}</h3>
@@ -193,12 +194,13 @@ export default function ProgressPage() {
                       initial={{ scale: 0.7, opacity: 0 }}
                       animate={{ scale: [0.7, 1.2, 1], opacity: 1 }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
+                      style={{ boxShadow: "0 0 12px -2px #30d158" }}
                       className="rounded bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-neutral-950"
                     >
                       Rekord
                     </motion.span>
                   )}
-                  <p className="font-mono text-lg leading-none tabular-nums text-accent-volume">
+                  <p className="font-display text-lg font-semibold leading-none tabular-nums text-accent-volume">
                     {e.top}
                   </p>
                 </div>
@@ -215,7 +217,7 @@ export default function ProgressPage() {
                 zuletzt <span className="text-neutral-300">{e.latest.label}</span>
               </span>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

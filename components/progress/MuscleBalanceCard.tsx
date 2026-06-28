@@ -1,6 +1,7 @@
 "use client";
 
 import { BalanceRadar } from "./BalanceRadar";
+import { Card } from "@/components/ui/Card";
 import { balanceRatios, radarAxes } from "@/lib/balance";
 import { cn } from "@/lib/utils";
 import type { MuscleVolume } from "@/lib/volume";
@@ -11,7 +12,7 @@ export function MuscleBalanceCard({ muscleVolumes }: { muscleVolumes: MuscleVolu
   const ratios = balanceRatios(muscleVolumes);
 
   return (
-    <div className="mb-3 rounded-2xl bg-neutral-900 p-4">
+    <Card className="mb-3">
       <p className="mb-1 font-mono text-xs uppercase tracking-widest text-neutral-400">
         Muskel-Balance
       </p>
@@ -41,6 +42,6 @@ export function MuscleBalanceCard({ muscleVolumes }: { muscleVolumes: MuscleVolu
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

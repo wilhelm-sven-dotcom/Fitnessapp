@@ -48,7 +48,7 @@ export function Splash() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.7, ease: EASE_OUT }}
       >
-        <p className="text-2xl font-semibold tracking-tight text-neutral-100">Training</p>
+        <p className="font-display text-2xl font-semibold tracking-tight text-neutral-100">Training</p>
         <p className="mt-1 text-sm text-neutral-500">Bereit, wenn du es bist.</p>
       </motion.div>
     </motion.div>

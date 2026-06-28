@@ -29,7 +29,7 @@ export default function HistoryPage() {
       </p>
 
       {items.length === 0 && (
-        <div className="rounded-2xl bg-neutral-900 p-8 text-center">
+        <div className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-8 text-center">
           <p className="text-neutral-400">Noch nichts aufgezeichnet.</p>
           <p className="mt-1 text-sm text-neutral-600">
             Starte deine erste Einheit, dann steht sie hier.
@@ -44,7 +44,7 @@ export default function HistoryPage() {
           const isDel = confirmDel === realIdx;
           const v = sessionVolume(s);
           return (
-            <div key={s.date + i} className="overflow-hidden rounded-2xl bg-neutral-900">
+            <div key={s.date + i} className="overflow-hidden rounded-2xl border border-surface-3 bg-surface-1 shadow-card">
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <button
                   onClick={() => setExpanded(isOpen ? null : realIdx)}

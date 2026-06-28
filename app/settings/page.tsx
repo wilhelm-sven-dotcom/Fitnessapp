@@ -99,7 +99,7 @@ export default function SettingsPage() {
     <div>
       <h2 className="mb-5 text-2xl font-semibold tracking-tight">Einstellungen</h2>
 
-      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
           Dein Plan
         </p>
@@ -118,7 +118,7 @@ export default function SettingsPage() {
         </p>
       </section>
 
-      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-neutral-400">
           Körperdaten
         </p>
@@ -211,7 +211,7 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-4 font-mono text-xs uppercase tracking-widest text-neutral-400">
           Gym-Modus
         </p>
@@ -233,7 +233,7 @@ export default function SettingsPage() {
 
       <CloudSyncSection />
 
-      <section className="mb-4 rounded-2xl bg-neutral-900 p-5">
+      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
           Als App installieren
         </p>
@@ -244,7 +244,7 @@ export default function SettingsPage() {
         </p>
       </section>
 
-      <section className="rounded-2xl bg-neutral-900 p-5">
+      <section className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">Daten</p>
         <p className="mb-3 text-xs leading-relaxed text-neutral-500">
           Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als

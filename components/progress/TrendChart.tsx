@@ -1,12 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useId } from "react";
 
 const W = 300;
 const H = 56;
 const pad = 6;
 
 export function TrendChart({ values }: { values: number[] }) {
+  const uid = useId().replace(/:/g, "");
   if (!values || values.length === 0) return null;
 
   if (values.length === 1) {
@@ -28,13 +30,19 @@ export function TrendChart({ values }: { values: number[] }) {
     .join(" ");
   const area = `${line} L${x(n - 1).toFixed(1)} ${H - pad} L${x(0).toFixed(1)} ${H - pad} Z`;
   const maxIdx = values.indexOf(max);
+  const gradId = `trend-${uid}`;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#30d158" stopOpacity={0.35} />
+          <stop offset="100%" stopColor="#30d158" stopOpacity={0} />
+        </linearGradient>
+      </defs>
       <motion.path
         d={area}
-        fill="#14532d"
-        fillOpacity={0.3}
+        fill={`url(#${gradId})`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -47,6 +55,7 @@ export function TrendChart({ values }: { values: number[] }) {
         strokeLinejoin="round"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
+        style={{ filter: "drop-shadow(0 1px 3px rgba(48,209,88,.45))" }}
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={{ duration: 0.9, ease: "easeOut" }}

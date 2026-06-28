@@ -281,7 +281,7 @@ export default function WorkoutPage() {
 
       <Pressable
         onClick={() => router.push(`/warmup/${key}`)}
-        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-900 py-3 text-sm font-medium text-accent-sessions focus:outline-none"
+        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-sessions focus:outline-none"
       >
         <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl))} Min
       </Pressable>
@@ -320,7 +320,7 @@ export default function WorkoutPage() {
             <div
               key={slotKey}
               className={cn(
-                "rounded-2xl bg-neutral-900 p-4",
+                "rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4",
                 isDone && "ring-1 ring-emerald-700",
               )}
             >
@@ -425,7 +425,7 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      <div className="mt-6 rounded-2xl bg-neutral-900 p-4">
+      <div className="mt-6 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4">
         <p className="text-sm font-medium">Wie fühlt sich dein unterer Rücken an?</p>
         <p className="mb-3 mt-0.5 text-xs text-neutral-500">
           Kurz einschätzen — steuert die nächste Einheit.

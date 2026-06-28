@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock } from "lucide-react";
+import { Card } from "@/components/ui/Card";
 
 export function SessionTimeBar({
   estMin,
@@ -11,7 +12,7 @@ export function SessionTimeBar({
 }) {
   const pct = Math.min(100, (estMin / Math.max(budgetMin, 1)) * 100);
   return (
-    <div className="mb-4 rounded-2xl bg-neutral-900 px-4 py-3">
+    <Card className="mb-4 px-4 py-3">
       <div className="flex items-center justify-between text-sm">
         <span className="flex items-center gap-1.5 text-neutral-300">
           <Clock size={15} /> ca. {estMin} Min
@@ -24,6 +25,6 @@ export function SessionTimeBar({
           style={{ width: `${pct}%` }}
         />
       </div>
-    </div>
+    </Card>
   );
 }

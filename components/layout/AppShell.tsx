@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-sessions">
                     <Dumbbell size={14} className="text-neutral-950" strokeWidth={2.5} />
                   </span>
-                  <span className="text-base font-semibold tracking-tight">Training</span>
+                  <span className="font-display text-base font-semibold tracking-tight">Training</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Link

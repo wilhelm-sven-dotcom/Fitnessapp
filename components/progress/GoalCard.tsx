@@ -2,6 +2,7 @@
 
 import { Target } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import {
@@ -117,7 +118,7 @@ export function GoalCard() {
     tNum != null && !Number.isNaN(tNum) ? weeksToTarget(sel.series, tNum) : null;
 
   return (
-    <div className="mb-3 rounded-2xl bg-neutral-900 p-4">
+    <Card className="mb-3">
       <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
         <Target size={13} /> Ziel-Rechner
       </p>
@@ -196,6 +197,6 @@ export function GoalCard() {
           </p>
         </>
       )}
-    </div>
+    </Card>
   );
 }

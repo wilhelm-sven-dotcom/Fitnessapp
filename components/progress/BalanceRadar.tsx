@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useId } from "react";
 import type { RadarAxis } from "@/lib/balance";
 
 const SIZE = 220;
@@ -11,6 +12,8 @@ const GREEN = "#30d158";
 
 export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
   const reduce = useReducedMotion();
+  const uid = useId().replace(/:/g, "");
+  const fillId = `radar-${uid}`;
   const n = axes.length;
   if (n < 3) return null;
 
@@ -33,6 +36,12 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
 
   return (
     <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="mx-auto w-full max-w-xs">
+      <defs>
+        <radialGradient id={fillId} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#30d158" stopOpacity={0.4} />
+          <stop offset="100%" stopColor="#30d158" stopOpacity={0.08} />
+        </radialGradient>
+      </defs>
       <path d={gridOuter} fill="none" stroke={GRID} strokeWidth={1} />
       <path d={gridMid} fill="none" stroke={GRID} strokeWidth={1} />
       {axes.map((a, i) => {
@@ -56,11 +65,11 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
       })}
       <motion.path
         d={data}
-        fill={GREEN}
-        fillOpacity={0.18}
+        fill={`url(#${fillId})`}
         stroke={GREEN}
         strokeWidth={2}
         strokeLinejoin="round"
+        style={{ filter: "drop-shadow(0 0 6px rgba(48,209,88,.4))" }}
         initial={reduce ? false : { pathLength: 0, opacity: 0 }}
         animate={{ pathLength: 1, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}

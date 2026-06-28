@@ -7,11 +7,14 @@ import { RingLegend } from "@/components/rings/RingLegend";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
+import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { CountUp } from "@/components/ui/CountUp";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
+import { tap } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
 const BUDGETS = [20, 25, 30];
@@ -43,7 +46,7 @@ export default function HomePage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-2xl font-semibold tracking-tight">{greeting(daysAgo)}</p>
+        <p className="font-display text-2xl font-semibold tracking-tight">{greeting(daysAgo)}</p>
         <p className="mt-1 text-sm text-neutral-500">{lastLabel}.</p>
         {chips.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -56,15 +59,15 @@ export default function HomePage() {
         )}
       </div>
 
-      <div className="mb-5 flex items-center gap-5 rounded-3xl bg-neutral-900 p-5">
+      <Card className="mb-5 flex items-center gap-5 rounded-3xl p-5">
         <ActivityRings
           metrics={ringMetrics}
           size={132}
           stroke={12}
           gap={5}
           center={
-            <p className="font-mono text-2xl font-semibold leading-none tabular-nums">
-              {weekCount}
+            <p className="font-display text-2xl font-semibold leading-none tabular-nums">
+              <CountUp value={weekCount} />
               <span className="text-base text-neutral-500">/3</span>
             </p>
           }
@@ -72,7 +75,7 @@ export default function HomePage() {
         <div className="min-w-0 flex-1">
           <RingLegend metrics={ringMetrics} />
         </div>
-      </div>
+      </Card>
 
       {coach.length > 0 && (
         <div className="mb-4 space-y-2">
@@ -89,7 +92,7 @@ export default function HomePage() {
 
       <Pressable
         onClick={() => router.push("/coach")}
-        className="mb-4 flex w-full items-center justify-between rounded-2xl bg-neutral-900 px-4 py-3 text-left focus:outline-none"
+        className="mb-4 flex w-full items-center justify-between rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left focus:outline-none"
       >
         <span className="flex items-center gap-2 text-sm font-medium text-neutral-100">
           <Sparkles size={17} className="text-accent-coverage" /> Frag den Coach
@@ -100,7 +103,7 @@ export default function HomePage() {
       {activeKey && (
         <Pressable
           onClick={() => router.push(`/workout/${activeKey}`)}
-          className="mb-4 flex w-full items-center justify-between rounded-2xl bg-neutral-900 px-4 py-3 text-left focus:outline-none"
+          className="mb-4 flex w-full items-center justify-between rounded-2xl border border-surface-3 bg-surface-1 px-4 py-3 text-left shadow-card focus:outline-none"
         >
           <span className="text-sm text-accent-sessions">Einheit läuft · {activeName}</span>
           <span className="flex items-center gap-1 text-sm font-medium text-accent-sessions">
@@ -109,11 +112,18 @@ export default function HomePage() {
         </Pressable>
       )}
 
-      <div className="mb-5 rounded-3xl bg-neutral-900 p-5">
+      <Card
+        variant="elevated"
+        className="mb-5 overflow-hidden rounded-3xl p-5"
+        style={{
+          backgroundImage:
+            "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,0) 42%)",
+        }}
+      >
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-neutral-400">
           Empfohlen heute
         </p>
-        <h2 className="text-3xl font-semibold tracking-tight">{recTpl.name}</h2>
+        <h2 className="font-display text-3xl font-semibold tracking-tight">{recTpl.name}</h2>
         <p className="mb-3 text-neutral-400">{recTpl.focus}</p>
         <div className="mb-4 flex items-center gap-2">
           <DurationBadge min={estimatedMin} />
@@ -145,12 +155,15 @@ export default function HomePage() {
           ))}
         </div>
         <Pressable
-          onClick={() => start(recTpl.key)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 focus:outline-none"
+          onClick={() => {
+            tap();
+            start(recTpl.key);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neutral-100 py-4 text-lg font-semibold text-neutral-950 shadow-card-lg focus:outline-none"
         >
           <Play size={18} strokeWidth={2.5} /> Training starten
         </Pressable>
-      </div>
+      </Card>
 
       <p className="mb-2 px-1 text-xs text-neutral-500">Oder andere Einheit</p>
       <div className="grid grid-cols-3 gap-2">
@@ -158,7 +171,7 @@ export default function HomePage() {
           <Pressable
             key={t.key}
             onClick={() => start(t.key)}
-            className="rounded-2xl bg-neutral-900 px-3 py-3 text-left focus:outline-none"
+            className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left focus:outline-none"
           >
             <span
               className={
