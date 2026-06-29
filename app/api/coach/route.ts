@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { TRAINING_PRINCIPLES } from "@/lib/training-science";
 
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
@@ -38,7 +39,11 @@ export async function POST(req: Request) {
   }
 
   const system =
-    SYSTEM_BASE + "\n\nAktuelle Trainingsdaten:\n" + (body.context?.trim() || "keine");
+    SYSTEM_BASE +
+    "\n\n" +
+    TRAINING_PRINCIPLES +
+    "\n\nAktuelle Trainingsdaten:\n" +
+    (body.context?.trim() || "keine");
 
   const client = new Anthropic({ apiKey });
   const stream = client.messages.stream({

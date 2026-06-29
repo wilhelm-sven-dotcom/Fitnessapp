@@ -1,6 +1,8 @@
+import { cardioAdvice } from "@/lib/cardio-advice";
 import { hoursSince, lastRide, weeklyCardio } from "@/lib/cardio";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
-import { MUSCLE_LABEL, weeklyMuscleVolume } from "@/lib/volume";
+import { VOLUME_LANDMARKS } from "@/lib/training-science";
+import { MUSCLE_LABEL, underservedMuscles, weeklyMuscleVolume } from "@/lib/volume";
 import type {
   BodyMetric,
   CardioSession,
@@ -60,12 +62,20 @@ export function buildCoachContext(opts: {
   });
 
   const vols = weeklyMuscleVolume(log, allLib);
-  lines.push("", "Wochenvolumen je Muskel (Arbeitssätze):");
+  lines.push(
+    "",
+    `Wochenvolumen je Muskel (Arbeitssätze; Wachstumsziel ${VOLUME_LANDMARKS.target}–${VOLUME_LANDMARKS.mav}):`,
+  );
   lines.push(
     vols
       .map((v) => `${MUSCLE_LABEL[v.muscle]} ${v.sets} (${STATUS_DE[v.status]})`)
       .join(", "),
   );
+  const under = underservedMuscles(vols);
+  if (under.length)
+    lines.push(
+      `Unter Ziel, beim Planen bevorzugen: ${under.map((v) => MUSCLE_LABEL[v.muscle]).join(", ")}.`,
+    );
 
   // Strongest estimated 1RMs across all history.
   const best: Record<string, { name: string; e1rm: number }> = {};
@@ -111,6 +121,10 @@ export function buildCoachContext(opts: {
       );
     }
   }
+
+  const ca = cardioAdvice(cardio);
+  if (ca.level !== "none")
+    lines.push("", `Trainings-Hinweis (Cardio-Interferenz): ${ca.title}.`);
 
   return lines.join("\n");
 }

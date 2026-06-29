@@ -1,4 +1,5 @@
 import { isFilled, sessionVolume, workSets } from "@/lib/stats";
+import { VOLUME_LANDMARKS } from "@/lib/training-science";
 import type { Exercise, LoggedSession, Muscle, Pattern } from "@/lib/types";
 
 /** Monday-based week start (same algorithm as the provider's weekCount). */
@@ -82,7 +83,11 @@ export function muscleOf(ex: {
   return PATTERN_MUSCLE[ex.pattern] ?? { primary: "core" };
 }
 
-export const VOLUME_TARGET = { min: 10, max: 20 } as const;
+/** Weekly per-muscle set target, derived from the evidence-based landmarks. */
+export const VOLUME_TARGET = {
+  min: VOLUME_LANDMARKS.target,
+  max: VOLUME_LANDMARKS.mav,
+} as const;
 
 export const MUSCLE_ORDER: Muscle[] = [
   "chest",
@@ -151,6 +156,11 @@ export function weeklyMuscleVolume(
 /** Coverage = how many muscle groups were touched this week (blue ring). */
 export function coverageCount(vols: MuscleVolume[]): { hit: number; total: number } {
   return { hit: vols.filter((v) => v.sets > 0).length, total: vols.length };
+}
+
+/** Muscles below the weekly growth target ("under"), most-deficient first. */
+export function underservedMuscles(vols: MuscleVolume[]): MuscleVolume[] {
+  return vols.filter((v) => v.status === "under").sort((a, b) => a.sets - b.sets);
 }
 
 /**

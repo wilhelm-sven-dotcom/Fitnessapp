@@ -1,12 +1,14 @@
-import { hoursSince, lastRide } from "@/lib/cardio";
+import { cardioAdvice } from "@/lib/cardio-advice";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
-import { MUSCLE_LABEL, type MuscleVolume } from "@/lib/volume";
+import { VOLUME_LANDMARKS, volumeBucket } from "@/lib/training-science";
+import { MUSCLE_LABEL, type MuscleVolume, weekStartMon } from "@/lib/volume";
 import type { AppSettings, CardioSession, Exercise, LoggedSession } from "@/lib/types";
 
 export type CoachKind =
   | "deload"
   | "plateau"
   | "volume-over"
+  | "volume-under"
   | "back-doctor"
   | "cardio";
 export type CoachSeverity = "info" | "warn" | "urgent";
@@ -110,13 +112,13 @@ export function coachCards(opts: {
 }): CoachCard[] {
   const cards: CoachCard[] = [];
 
-  const lr = lastRide(opts.cardio);
-  if (lr && lr.intensity === "hard" && hoursSince(lr.date) <= 24)
+  const ca = cardioAdvice(opts.cardio);
+  if (ca.level !== "none")
     cards.push({
       kind: "cardio",
-      severity: "info",
-      title: "Gestern hart gefahren",
-      body: "Harte Cardio-Einheit in den letzten 24 h — nimm die Beine heute bewusst etwas leichter und halt die Technik sauber.",
+      severity: ca.level === "spare" ? "warn" : "info",
+      title: ca.title,
+      body: ca.body,
     });
 
   if (opts.seeDoctor)
@@ -139,9 +141,27 @@ export function coachCards(opts: {
         kind: "volume-over",
         severity: "info",
         title: `${MUSCLE_LABEL[v.muscle]} über Ziel`,
-        body: `${v.sets} Sätze diese Woche — etwas zurücknehmen, damit die Erholung reicht.`,
+        body: `${v.sets} Sätze diese Woche, über dem produktiven Maximum (~${VOLUME_LANDMARKS.mav}) — etwas zurücknehmen, damit die Erholung reicht.`,
       }),
     );
+
+  // Mid/late-week volume gap: muscles still below the minimum effective volume
+  // after real training this week. Gated so it never fires on an empty Monday,
+  // and only when it's a focused gap (≤ 4 muscles), not a generally light week.
+  const weekStart = weekStartMon();
+  const sessionsThisWeek = opts.log.filter((s) => new Date(s.date) >= weekStart).length;
+  if (sessionsThisWeek >= 2) {
+    const low = opts.muscleVolumes
+      .filter((v) => volumeBucket(v.sets) === "low")
+      .sort((a, b) => a.sets - b.sets);
+    if (low.length >= 1 && low.length <= 4)
+      cards.push({
+        kind: "volume-under",
+        severity: "info",
+        title: "Muskeln hängen zurück",
+        body: `${low.map((v) => MUSCLE_LABEL[v.muscle]).join(", ")} unter ~${VOLUME_LANDMARKS.mev} Sätzen diese Woche — in die nächste Einheit einbauen, um den Wachstumsbereich (${VOLUME_LANDMARKS.target}–${VOLUME_LANDMARKS.mav}) zu treffen.`,
+      });
+  }
 
   return cards.sort((a, b) => SEV_RANK[a.severity] - SEV_RANK[b.severity]);
 }

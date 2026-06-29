@@ -10,6 +10,7 @@ import {
 } from "react";
 import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
+import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import {
   NEUTRAL_SCALE,
@@ -122,6 +123,7 @@ interface TrainingContextValue {
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
   coach: CoachCard[];
+  cardioAdvice: CardioAdvice;
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
@@ -535,6 +537,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       ),
     [log, allLib, settings, seeDoctor, muscleVolumes, cardio, dismissed],
   );
+
+  const cardioTip = useMemo(() => cardioAdvice(cardio), [cardio]);
 
   // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
   const ringMetrics = useMemo<RingMetric[]>(() => {
@@ -965,6 +969,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ringMetrics,
     muscleVolumes,
     coach,
+    cardioAdvice: cardioTip,
     weekCount,
     daysAgo,
     lastLabel,

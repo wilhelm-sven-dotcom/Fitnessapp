@@ -1,8 +1,10 @@
 "use client";
 
+import { Bike } from "lucide-react";
 import { useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
+import { useTraining } from "@/components/providers/TrainingProvider";
 import { readinessScore } from "@/lib/readiness";
 import { cn } from "@/lib/utils";
 import type { Readiness } from "@/lib/types";
@@ -27,6 +29,7 @@ export function ReadinessGate({
   onClose: () => void;
   onSubmit: (r: Readiness) => void;
 }) {
+  const { cardioAdvice } = useTraining();
   const [vals, setVals] = useState<{ sleep?: number; energy?: number; back?: number }>({});
   const complete = !!vals.sleep && !!vals.energy && !!vals.back;
 
@@ -41,6 +44,12 @@ export function ReadinessGate({
       <p className="mb-4 text-sm text-muted">
         Kurz einschätzen — die Einheit passt sich an.
       </p>
+      {cardioAdvice.level !== "none" && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-surface-2 p-3">
+          <Bike size={15} className="mt-0.5 shrink-0 text-accent-coverage" />
+          <p className="text-xs leading-relaxed text-muted">{cardioAdvice.body}</p>
+        </div>
+      )}
       <div className="space-y-3">
         {ROWS.map((row) => (
           <div key={row.key}>
