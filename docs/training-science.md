@@ -131,3 +131,17 @@ Sequenz Kraft-vor-Ausdauer hilft.
 **In der App.** `lib/cardio-advice.ts`: harte Peloton-Fahrt < 24 h → Empfehlung „Beine
 schonen / Oberkörper vorziehen"; 24–48 h oder moderat < 24 h → „leicht antasten". Sichtbar
 als Home-Card, Workout-Banner und Tagesform-Kontext — Vorschlag, keine automatische Änderung.
+
+---
+
+## 9. Cardio-Integration in der App (Peloton)
+
+Peloton ist als **Trainingsgerät** „bike" in der Geräte-Wand führbar und liefert **Cardio-Übungen**
+(`pattern: "cardio"`, `req: ["bike"]`): Zone 2, Intervalle, Sprint-Finisher, Recovery Spin. Diese sind
+**Anleitung + „Erledigt"-Haken** — die Ist-Aufzeichnung kommt aus Strava (kein Doppelzählen), und
+Cardio zählt nicht ins Kraftvolumen/Muskel-Radar (eigene Domäne).
+
+Platzierungen: frei im Builder, als **Bike-Warm-up** (lockeres Einrollen), optionaler **Cardio-Finisher**
+an A/B/C und ein eigener **Peloton-Tag** (bewusst nicht in der A/B/C-Auto-Rotation). Sequenz beachten
+(Kraft vor Ausdauer; Interferenz, Abschnitt 8): Intervalle/Finisher nach dem Krafttraining, den
+Peloton-Tag mit etwas Abstand zu bein-lastigen Einheiten.

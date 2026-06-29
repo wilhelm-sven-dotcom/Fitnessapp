@@ -36,6 +36,8 @@ const TRIM_ORDER: Pattern[] = [
 const MIN_SLOTS = 3;
 
 export function estimateSlotMin(ex: Exercise): number {
+  // Cardio blocks carry their planned duration (minutes) directly.
+  if (ex.pattern === "cardio") return ex.repHigh;
   const workSec = ex.unit === "Sek" ? TIME.timedSetSec : TIME.repSetSec;
   const warm = ex.weighted ? 2 : 0;
   const sec =

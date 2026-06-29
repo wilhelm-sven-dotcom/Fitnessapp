@@ -70,13 +70,24 @@ const D = {
     durationSec: 30,
     kind: "activation",
   },
+  bike_easy: {
+    id: "bike_easy",
+    name: "Locker einrollen (Bike)",
+    cue: "3 Minuten locker auf dem Peloton, niedriger Widerstand — Kreislauf und Beine wach machen.",
+    durationSec: 180,
+    kind: "activation",
+  },
 } satisfies Record<string, WarmupDrill>;
 
 const LOWER: Pattern[] = ["squat", "lunge", "hinge"];
 const UPPER: Pattern[] = ["hpush", "vpush", "hpull", "vpull", "lateral", "arm"];
 
-/** Build a ~3-minute, back-friendly warm-up tailored to the session's patterns. */
-export function warmupFor(tpl: Template): WarmupDrill[] {
+/**
+ * Build a ~3-minute, back-friendly warm-up tailored to the session's patterns.
+ * Prepends an easy bike spin when the session is cardio or `opts.bike` is set
+ * (the "auf dem Bike aufwärmen" preference).
+ */
+export function warmupFor(tpl: Template, opts: { bike?: boolean } = {}): WarmupDrill[] {
   const slots = new Set(tpl.slots);
   const has = (ps: Pattern[]) => ps.some((p) => slots.has(p));
 
@@ -84,6 +95,8 @@ export function warmupFor(tpl: Template): WarmupDrill[] {
   if (has(LOWER)) out.push(D.hip_circles, D.glute_bridge, D.ankle_rocks);
   if (has(UPPER)) out.push(D.shoulder_circles, D.thoracic_open);
   if (!out.includes(D.glute_bridge)) out.push(D.bird_dog); // ensure a posterior-chain activation
+
+  if (opts.bike || slots.has("cardio")) out.unshift(D.bike_easy);
 
   return out.slice(0, 6);
 }
