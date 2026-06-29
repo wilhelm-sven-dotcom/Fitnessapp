@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { FIG, muscleBones } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
@@ -25,6 +26,18 @@ export function GuideSheet({
   useEffect(() => {
     setMode(ex?.videoUrl ? "video" : "figure");
   }, [ex?.id, ex?.videoUrl]);
+
+  // Step ↔ pose sync: walk the active step in the figure's rhythm (half period).
+  const reduce = useReducedMotion();
+  const stepCount = ex?.steps.length ?? 0;
+  const syncing = mode === "figure" && !!fig && !reduce && stepCount >= 2;
+  const [activeStep, setActiveStep] = useState(0);
+  useEffect(() => {
+    setActiveStep(0);
+    if (!syncing) return;
+    const id = setInterval(() => setActiveStep((s) => (s + 1) % stepCount), 1300);
+    return () => clearInterval(id);
+  }, [ex?.id, syncing, stepCount]);
 
   return (
     <Sheet open={open} onClose={onClose} title={ex?.name}>
@@ -97,7 +110,13 @@ export function GuideSheet({
           {ex.steps.length > 0 && (
             <ol className="mb-3 list-decimal space-y-1.5 pl-5 marker:font-mono marker:text-faint">
               {ex.steps.map((s, i) => (
-                <li key={i} className="text-sm text-fg">
+                <li
+                  key={i}
+                  className={cn(
+                    "text-sm transition-colors",
+                    syncing ? (i === activeStep ? "font-medium text-fg" : "text-muted") : "text-fg",
+                  )}
+                >
                   {s}
                 </li>
               ))}
