@@ -38,6 +38,8 @@ export interface ViewDef {
   equip?: EquipDef;
   static?: StaticShape[];
   head?: string;
+  /** Optional multi-pose sequence (full range of motion). Falls back to [A, B]. */
+  frames?: Frame[];
   A: Frame;
   B: Frame;
 }
@@ -55,6 +57,27 @@ export const SBR: Bone[] = [...SB, ["sh", "elbow2"], ["elbow2", "hand2"]];
 export const FB: Bone[] = [["sh", "hip"], ["sh", "elbowL"], ["elbowL", "handL"], ["sh", "elbowR"], ["elbowR", "handR"], ["hip", "kneeL"], ["kneeL", "footL"], ["hip", "kneeR"], ["kneeR", "footR"]];
 export const SP: Bone[] = [["sh", "hip"]];
 export const SPL: Bone[] = [["sh", "hip"], ["hip", "knee"], ["knee", "foot"]];
+
+/** A view's pose sequence — the authored `frames`, or [A, B] for legacy 2-pose figures. */
+export function framesOf(v: ViewDef): Frame[] {
+  return v.frames && v.frames.length >= 2 ? v.frames : [v.A, v.B];
+}
+
+/**
+ * Interpolation indices for phase `f` (0..1) across `n` poses: `f` maps linearly
+ * over the sequence so the figure travels pose 0 → … → pose N-1. The caller's
+ * cosine phase ping-pongs `f`, giving a natural down-and-up rep. For n=2 this is
+ * identical to the old A→B lerp (backward compatible).
+ */
+export function frameAt(n: number, f: number): { i: number; next: number; t: number } {
+  if (n <= 1) return { i: 0, next: 0, t: 0 };
+  const cf = f < 0 ? 0 : f > 1 ? 1 : f;
+  const pos = cf * (n - 1);
+  let i = Math.floor(pos);
+  if (i > n - 2) i = n - 2;
+  if (i < 0) i = 0;
+  return { i, next: i + 1, t: pos - i };
+}
 
 export const FIG: Record<string, FigureDef> = {
   goblet: { ground: 150,
@@ -258,6 +281,56 @@ export const FIG: Record<string, FigureDef> = {
     front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handR"] },
       A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 72], handL: [84, 92], elbowR: [114, 72], handR: [116, 92], kneeL: [94, 121], footL: [92, 148], kneeR: [106, 121], footR: [108, 148] },
       B: { head: [100, 30], sh: [100, 50], hip: [100, 92], elbowL: [86, 72], handL: [84, 92], elbowR: [114, 72], handR: [116, 93], kneeL: [94, 121], footL: [92, 148], kneeR: [106, 121], footR: [108, 148] } } },
+
+  // ===== Aufwärm-Drills (mehrere Posen) =====
+  cat_cow: { ground: 150, vb: "0 90 200 75",
+    side: { bones: [["sh", "mid"], ["mid", "hip"], ["sh", "hand"], ["hip", "knee"]], spine: [["sh", "mid"], ["mid", "hip"]],
+      frames: [
+        { head: [84, 124], sh: [96, 116], mid: [113, 106], hip: [130, 116], hand: [96, 150], knee: [130, 150] },
+        { head: [84, 116], sh: [96, 116], mid: [113, 115], hip: [130, 116], hand: [96, 150], knee: [130, 150] },
+        { head: [84, 108], sh: [96, 116], mid: [113, 124], hip: [130, 116], hand: [96, 150], knee: [130, 150] },
+      ],
+      A: { head: [84, 124], sh: [96, 116], mid: [113, 106], hip: [130, 116], hand: [96, 150], knee: [130, 150] },
+      B: { head: [84, 108], sh: [96, 116], mid: [113, 124], hip: [130, 116], hand: [96, 150], knee: [130, 150] } } },
+
+  hip_circles: { ground: 150,
+    side: { bones: SB, spine: SP,
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [110, 92], knee: [104, 121], foot: [100, 148], elbow: [100, 72], hand: [100, 92] },
+        { head: [100, 28], sh: [100, 50], hip: [100, 86], knee: [100, 121], foot: [100, 148], elbow: [100, 72], hand: [100, 92] },
+        { head: [100, 30], sh: [100, 50], hip: [90, 92], knee: [96, 121], foot: [100, 148], elbow: [100, 72], hand: [100, 92] },
+      ],
+      A: { head: [100, 30], sh: [100, 50], hip: [110, 92], knee: [104, 121], foot: [100, 148], elbow: [100, 72], hand: [100, 92] },
+      B: { head: [100, 30], sh: [100, 50], hip: [90, 92], knee: [96, 121], foot: [100, 148], elbow: [100, 72], hand: [100, 92] } } },
+
+  ankle_rocks: { ground: 150,
+    side: { bones: SB, spine: SP,
+      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [100, 72], hand: [100, 92] },
+      B: { head: [104, 32], sh: [103, 52], hip: [104, 96], knee: [120, 120], foot: [100, 148], elbow: [103, 74], hand: [103, 94] } } },
+
+  shoulder_circles: { ground: 150,
+    side: { bones: SB, spine: SP,
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 66], hand: [120, 82] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [104, 40], hand: [108, 24] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [88, 60], hand: [80, 78] },
+      ],
+      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 66], hand: [120, 82] },
+      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [88, 60], hand: [80, 78] } } },
+
+  thoracic_open: { ground: 150, vb: "0 90 200 75",
+    side: { bones: [["sh", "hip"], ["sh", "hand"], ["sh", "handR"], ["hip", "knee"]], spine: SP,
+      A: { head: [86, 118], sh: [96, 116], hip: [130, 118], hand: [92, 150], handR: [104, 138], knee: [130, 150] },
+      B: { head: [88, 110], sh: [96, 116], hip: [130, 118], hand: [92, 150], handR: [98, 100], knee: [130, 150] } } },
+
+  bike_easy: { ground: 150,
+    side: { bones: SB2, spine: SP, static: [{ t: "line", x1: 122, y1: 126, x2: 122, y2: 150, c: "#737373", w: 4 }],
+      frames: [
+        { head: [86, 42], sh: [92, 62], hip: [102, 100], elbow: [108, 78], hand: [122, 84], knee: [114, 110], foot: [124, 116], knee2: [118, 118], foot2: [112, 136] },
+        { head: [86, 42], sh: [92, 62], hip: [102, 100], elbow: [108, 78], hand: [122, 84], knee: [118, 118], foot: [124, 138], knee2: [114, 110], foot2: [130, 116] },
+      ],
+      A: { head: [86, 42], sh: [92, 62], hip: [102, 100], elbow: [108, 78], hand: [122, 84], knee: [114, 110], foot: [124, 116], knee2: [118, 118], foot2: [112, 136] },
+      B: { head: [86, 42], sh: [92, 62], hip: [102, 100], elbow: [108, 78], hand: [122, 84], knee: [118, 118], foot: [124, 138], knee2: [114, 110], foot2: [130, 116] } } },
 };
 
 export function lerp(a: number, b: number, f: number) {
