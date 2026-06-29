@@ -169,6 +169,15 @@ html {
   }
 }
 
+/* Skin page background (grid / radial / near-black) — same as <body>, reusable
+   for full-screen overlays (splash) so they carry the skin's atmosphere. */
+.app-bg {
+  background-color: var(--base);
+  background-image: var(--page-bg);
+  background-size: var(--page-bg-size);
+  background-repeat: var(--page-bg-repeat);
+}
+
 /* Frosted material for floating chrome (nav, sheet header, top bar) */
 .glass {
   background-color: var(--glass);

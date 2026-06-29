@@ -89,9 +89,9 @@ export function Welcome() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE_OUT }}
-              className="flex items-start gap-3 rounded-card border border-surface-3 bg-surface-1 p-4 shadow-card"
+              className="flex items-start gap-3 rounded-card border border-line bg-panel p-4 shadow-card"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-2">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-2">
                 <f.icon size={20} style={{ color: "var(--accent)" }} />
               </span>
               <div className="min-w-0">
@@ -114,17 +114,17 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Dein Name (optional)"
-            className="mb-4 w-full rounded-xl bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="mb-4 w-full rounded-pill bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
 
           <p className="mb-1.5 px-1 text-sm font-medium text-fg">Dein Level</p>
-          <div className="mb-4 flex gap-1 rounded-xl bg-surface-2 p-1">
+          <div className="mb-4 flex gap-1 rounded-pill bg-surface-2 p-1">
             {EXP.map((x) => (
               <Pressable
                 key={x.v}
                 onClick={() => setExp(x.v)}
                 className={
-                  "flex-1 rounded-lg py-2 text-sm font-medium focus:outline-none " +
+                  "flex-1 rounded-pill py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions " +
                   (exp === x.v ? "bg-strong text-on-strong" : "text-muted")
                 }
               >
@@ -140,7 +140,7 @@ export function Welcome() {
                 key={g.v}
                 onClick={() => toggleGoal(g.v)}
                 className={
-                  "rounded-full px-3 py-1.5 text-sm font-medium focus:outline-none " +
+                  "rounded-pill px-3 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions " +
                   (goals.includes(g.v) ? "bg-strong text-on-strong" : "bg-surface-2 text-muted")
                 }
               >
@@ -151,7 +151,7 @@ export function Welcome() {
 
           <Pressable
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
-            className="flex w-full items-center justify-center rounded-card bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none"
+            className="flex w-full items-center justify-center rounded-card bg-accent-sessions py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           >
             Los geht&rsquo;s
           </Pressable>
