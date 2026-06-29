@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { CameraView, type FormResult } from "@/components/form-check/CameraView";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { LiveDemo } from "@/components/workout/LiveDemo";
@@ -28,6 +29,7 @@ import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import { presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
+import { configForPattern } from "@/lib/pose/exercise-pose-config";
 import { isPoseSupported } from "@/lib/pose/landmarker";
 import { warmupFor, warmupTotalMin } from "@/lib/warmup";
 import {
@@ -38,7 +40,7 @@ import {
   type ParsedSet,
 } from "@/lib/voice";
 import { cn } from "@/lib/utils";
-import type { TrafficLight } from "@/lib/types";
+import type { Pattern, TrafficLight } from "@/lib/types";
 
 const REST_SECONDS = 90;
 
@@ -110,6 +112,7 @@ export default function WorkoutPage() {
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [poseSupported, setPoseSupported] = useState(false);
+  const [camFor, setCamFor] = useState<{ exId: string; i: number; pattern: Pattern; name: string; ghost?: string } | null>(null);
   const announcedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -206,6 +209,22 @@ export default function WorkoutPage() {
   const onReps = (exId: string, i: number, oldVal: string, val: string) => {
     setEntry(exId, i, "reps", val);
     if ((oldVal === "" || oldVal == null) && val !== "" && val != null) startRest();
+  };
+
+  // Camera hand-off: counted reps fill the set (via onReps → starts the rest timer
+  // like manual entry); the ghost/last weight prefills an empty weight cell. The
+  // form grade is shown via voice but not persisted (SetEntry stays unchanged).
+  const applyFormResult = (r: FormResult) => {
+    if (!camFor) return;
+    const { exId, i, ghost } = camFor;
+    const cur = entries[exId]?.[i];
+    if (r.reps > 0) onReps(exId, i, cur?.reps ?? "", String(r.reps));
+    if (ghost && (cur?.weight === "" || cur?.weight == null)) setEntry(exId, i, "weight", ghost);
+    setCamFor(null);
+    if (r.reps > 0) {
+      say(`${r.reps} ${r.reps === 1 ? "Wiederholung" : "Wiederholungen"} übernommen.`);
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([40, 40, 60]);
+    }
   };
 
   const tpl = sessionTemplate(key ?? "");
@@ -551,6 +570,7 @@ export default function WorkoutPage() {
                           (p.suggestedWeight != null ? String(p.suggestedWeight) : undefined))
                         : undefined;
                       const ghostReps = p.r || String(ex.repHigh);
+                      const canCamera = poseSupported && configForPattern(ex.pattern) != null;
                       return (entries[ex.id] || []).map((s, i) => {
                         const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
                         const filled = s.reps !== "" && s.reps != null;
@@ -572,6 +592,18 @@ export default function WorkoutPage() {
                             onRir={(val) => setEntry(ex.id, i, "rir", val)}
                             onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
                             onActivate={() => setEditKey(`${ex.id}:${i}`)}
+                            onCamera={
+                              canCamera && !s.warmup
+                                ? () =>
+                                    setCamFor({
+                                      exId: ex.id,
+                                      i,
+                                      pattern: ex.pattern,
+                                      name: ex.name,
+                                      ghost: ex.weighted ? ghostWeight : undefined,
+                                    })
+                                : undefined
+                            }
                           />
                         );
                       });
@@ -621,6 +653,15 @@ export default function WorkoutPage() {
       </Pressable>
 
       <GuideSheet open={!!guideSlot} onClose={() => setGuideSlot(null)} ex={guideEx} />
+      {camFor && (
+        <CameraView
+          exerciseName={camFor.name}
+          pattern={camFor.pattern}
+          voiceOn={!!settings.voiceCues}
+          onClose={() => setCamFor(null)}
+          onComplete={applyFormResult}
+        />
+      )}
       <ExercisePicker
         open={!!pickSlot}
         onClose={() => setPickSlot(null)}

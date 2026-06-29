@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, SwitchCamera, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, SwitchCamera, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { poseMetrics, type Landmark } from "@/lib/pose/angles";
@@ -24,16 +24,28 @@ function vibrate(pattern: number | number[]) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern);
 }
 
+export interface FormResult {
+  reps: number;
+  formScore: number; // 0..100, share of tracked frames without a form warning
+  flags: string[]; // distinct technique warnings seen
+}
+
 export function CameraView({
   exerciseName,
   pattern,
   voiceOn,
   onClose,
+  onComplete,
+  ctaLabel,
 }: {
   exerciseName: string;
   pattern: Pattern;
   voiceOn: boolean;
   onClose: () => void;
+  /** When provided, a "Übernehmen" action returns the counted reps + form grade
+   *  to the caller (the workout logger). Omitted on the standalone /form route. */
+  onComplete?: (r: FormResult) => void;
+  ctaLabel?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,8 +57,19 @@ export function CameraView({
   const cfg = configForPattern(pattern);
   const repRef = useRef<RepState>(initRepState());
   const warnRef = useRef(false);
+  // Form grade: tracked frames split into clean vs. warned, plus the warnings seen.
+  const goodFramesRef = useRef(0);
+  const warnFramesRef = useRef(0);
+  const flagsRef = useRef<Set<string>>(new Set());
   const voiceRef = useRef(voiceOn);
   voiceRef.current = voiceOn;
+
+  const finish = () => {
+    const total = goodFramesRef.current + warnFramesRef.current;
+    const formScore = total ? Math.round((100 * goodFramesRef.current) / total) : 100;
+    onComplete?.({ reps, formScore, flags: [...flagsRef.current] });
+    onClose();
+  };
 
   useEffect(() => {
     if (!isPoseSupported()) {
@@ -58,6 +81,9 @@ export function CameraView({
     let stream: MediaStream | null = null;
     repRef.current = initRepState();
     warnRef.current = false;
+    goodFramesRef.current = 0;
+    warnFramesRef.current = 0;
+    flagsRef.current = new Set();
     setReps(0);
     setWarning(null);
     setStatus("loading");
@@ -131,6 +157,12 @@ export function CameraView({
               repRef.current = next;
             }
             const finding = checkForm(m, cfg);
+            if (finding) {
+              warnFramesRef.current++;
+              flagsRef.current.add(finding.message);
+            } else {
+              goodFramesRef.current++;
+            }
             const warnNow = !!finding;
             if (warnNow !== warnRef.current) {
               warnRef.current = warnNow;
@@ -240,12 +272,21 @@ export function CameraView({
         )}
       </div>
 
-      {/* footer hint */}
+      {/* footer hint + (optional) hand-off to the logger */}
       {status === "running" && (
         <div
           className="bg-black px-5 py-3 text-center"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
         >
+          {onComplete && (
+            <Pressable
+              onClick={finish}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-3 text-base font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              <Check size={18} strokeWidth={2.5} />
+              {ctaLabel ?? `${reps} ${reps === 1 ? "Wiederholung" : "Wiederholungen"} übernehmen`}
+            </Pressable>
+          )}
           <p className="text-sm text-muted">
             {cfg ? cfg.hint : "Für diese Übung gibt es keine automatische Zählung — nutz die Skelett-Ansicht als Technik-Check."}
           </p>
