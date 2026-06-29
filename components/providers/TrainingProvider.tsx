@@ -174,6 +174,7 @@ interface TrainingContextValue {
   setTheme: (t: ThemePref) => void;
   setSkin: (skin: SkinId) => void;
   setIcon: (icon: IconConfig | undefined) => void;
+  setAccentOverride: (hex: string | undefined) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
@@ -279,17 +280,25 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // first-paint flash would show the wrong skin.
   useEffect(() => {
     if (loading) return;
+    // Optional accent override wins over the skin's --accent (inline > CSS).
+    const applyAccent = () => {
+      const root = document.documentElement;
+      if (settings.accentOverride) root.style.setProperty("--accent", settings.accentOverride);
+      else root.style.removeProperty("--accent");
+    };
     applyTheme(settings.theme);
     applySkin(settings.skin);
+    applyAccent();
     if (settings.theme !== "system" || typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
     const onChange = () => {
       applyTheme(settings.theme);
       applySkin(settings.skin);
+      applyAccent();
     };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [loading, settings.theme, settings.skin]);
+  }, [loading, settings.theme, settings.skin, settings.accentOverride]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -732,6 +741,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, skin });
   const setIcon = (icon: IconConfig | undefined) =>
     void saveSettings({ ...settings, icon });
+  const setAccentOverride = (hex: string | undefined) =>
+    void saveSettings({ ...settings, accentOverride: hex });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
@@ -1069,6 +1080,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setTheme,
     setSkin,
     setIcon,
+    setAccentOverride,
     setAccent,
     setWeightStep,
     setBikeWarmup,

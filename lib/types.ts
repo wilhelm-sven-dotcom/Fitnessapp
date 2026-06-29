@@ -190,6 +190,8 @@ export interface IconConfig {
   /** Background hex (preset). */
   bg: string;
   glyph: IconGlyph;
+  /** Glyph/symbol color; undefined = auto (contrast with bg). */
+  ink?: string;
   /** 1–2 chars when glyph = "letter". */
   letter?: string;
   /** photo-store id of the uploaded image when kind = "image". */
@@ -215,6 +217,8 @@ export interface AppSettings {
   accentColor?: string;
   /** App-icon design (custom home-screen icon). Unset = generated default. */
   icon?: IconConfig;
+  /** Optional accent override (hex) — replaces the skin's accent app-wide. */
+  accentOverride?: string;
   /** Display name for the personalized greeting ("Guten Abend, Sven"). */
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */
