@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, Copy, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, Copy, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
@@ -125,12 +125,20 @@ export default function PlanPage() {
               ))}
             </div>
           )}
-          <Pressable
-            onClick={() => router.push("/day/neu")}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
-          >
-            <Plus size={16} strokeWidth={2.5} /> Eigener Tag
-          </Pressable>
+          <div className="flex gap-2">
+            <Pressable
+              onClick={() => router.push("/day/neu")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
+            >
+              <Plus size={16} strokeWidth={2.5} /> Eigener Tag
+            </Pressable>
+            <Pressable
+              onClick={() => router.push("/day/neu?coach=1")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+            >
+              <Sparkles size={16} strokeWidth={2.5} /> Coach-Tag
+            </Pressable>
+          </div>
         </section>
       </Reveal>
 

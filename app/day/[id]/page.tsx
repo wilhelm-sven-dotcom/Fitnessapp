@@ -8,6 +8,7 @@ import {
   Minus,
   Plus,
   Repeat,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -17,13 +18,19 @@ import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { Readout } from "@/components/ui/Readout";
+import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { sessionRadarAxes } from "@/lib/balance";
+import { buildCoachContext } from "@/lib/coach-context";
 import { PATTERN_LABEL } from "@/lib/exercises";
+import { reqOk } from "@/lib/progression";
 import { estimateSessionMin } from "@/lib/session-time";
 import { exerciseMuscleVolume } from "@/lib/volume";
 import { tap } from "@/lib/haptics";
-import type { Exercise, ResolvedSlot, WorkoutDay } from "@/lib/types";
+import type { DayItem, Exercise, ResolvedSlot, WorkoutDay } from "@/lib/types";
+
+const COACH_TIMES = [15, 20, 25, 30, 45];
+const COACH_FOCI = ["Ganzkörper", "Oberkörper", "Unterkörper", "Push", "Pull"];
 
 interface Draft {
   key: string;
@@ -162,8 +169,19 @@ function ItemRow({
 export default function DayBuilderPage() {
   const params = useParams();
   const router = useRouter();
-  const { loading, days, allLib, sessionOf, sessionTemplate, addDay, updateDay } =
-    useTraining();
+  const {
+    loading,
+    days,
+    allLib,
+    sessionOf,
+    sessionTemplate,
+    addDay,
+    updateDay,
+    log,
+    body,
+    cardio,
+    equip,
+  } = useTraining();
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
@@ -175,6 +193,14 @@ export default function DayBuilderPage() {
   const [ready, setReady] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
+
+  // KI-Coach: builds a whole session from time + focus + available equipment.
+  const [coachOpen, setCoachOpen] = useState(false);
+  const [coachBusy, setCoachBusy] = useState(false);
+  const [coachErr, setCoachErr] = useState("");
+  const [coachNotConfigured, setCoachNotConfigured] = useState(false);
+  const [coachMin, setCoachMin] = useState(25);
+  const [coachFocus, setCoachFocus] = useState("Ganzkörper");
 
   const draftFrom = (exId: string, sets?: number, repLow?: number, repHigh?: number): Draft => {
     const base = byId.get(exId);
@@ -201,10 +227,11 @@ export default function DayBuilderPage() {
         return;
       }
     }
-    const from =
+    const qp =
       typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("from")
+        ? new URLSearchParams(window.location.search)
         : null;
+    const from = qp?.get("from") ?? null;
     if (from) {
       const meta = sessionTemplate(from);
       if (meta) {
@@ -213,6 +240,7 @@ export default function DayBuilderPage() {
       }
       setItems(sessionOf(from).map((s) => draftFrom(s.ex.id, s.ex.sets, s.ex.repLow, s.ex.repHigh)));
     }
+    if (qp?.get("coach") === "1") setCoachOpen(true);
     setReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, loading, id, days]);
@@ -265,6 +293,56 @@ export default function DayBuilderPage() {
     router.push("/plan");
   };
 
+  const runCoach = async () => {
+    if (coachBusy) return;
+    setCoachErr("");
+    setCoachBusy(true);
+    try {
+      const has = (k: string) => (equip as string[]).includes(k);
+      const exercises = allLib
+        .filter((e) => reqOk(e, has))
+        .map((e) => ({ id: e.id, name: e.name, pattern: PATTERN_LABEL[e.pattern] }));
+      const res = await fetch("/api/coach/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          minutes: coachMin,
+          focus: coachFocus,
+          exercises,
+          context: buildCoachContext({ log, allLib, body, cardio }),
+        }),
+      });
+      const j = (await res.json()) as
+        | { configured?: boolean }
+        | { ok: true; day: { name: string; focus: string; items: DayItem[] } }
+        | { ok: false; error?: string };
+      if ("configured" in j && j.configured === false) {
+        setCoachNotConfigured(true);
+        return;
+      }
+      if ("ok" in j && j.ok) {
+        setName(j.day.name);
+        setFocus(j.day.focus);
+        setItems(
+          j.day.items.map((it) =>
+            draftFrom(it.exerciseId, it.sets, it.repLow, it.repHigh),
+          ),
+        );
+        tap();
+        setCoachOpen(false);
+        return;
+      }
+      setCoachErr(
+        ("ok" in j && !j.ok && j.error) ||
+          "Hat nicht geklappt. Versuch es nochmal.",
+      );
+    } catch {
+      setCoachErr("Coach nicht erreichbar. Versuch es gleich nochmal.");
+    } finally {
+      setCoachBusy(false);
+    }
+  };
+
   const swapItem = items.find((it) => it.key === swapKey);
   const swapEx = swapItem ? byId.get(swapItem.exerciseId) : undefined;
   const swapPool = swapEx ? allLib.filter((e) => e.pattern === swapEx.pattern) : [];
@@ -290,6 +368,16 @@ export default function DayBuilderPage() {
         placeholder="Fokus (z. B. Oberkörper, Push)"
         className="mt-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
       />
+
+      <Pressable
+        onClick={() => {
+          setCoachErr("");
+          setCoachOpen(true);
+        }}
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+      >
+        <Sparkles size={16} strokeWidth={2.5} /> Coach-Vorschlag
+      </Pressable>
 
       {/* Live instrument readouts */}
       <Card variant="elevated" className="edge-top mt-4 rounded-3xl p-5">
@@ -369,6 +457,96 @@ export default function DayBuilderPage() {
           setSwapKey(null);
         }}
       />
+
+      {/* KI-Coach: build a session by time + focus, prefilled into the builder */}
+      <Sheet open={coachOpen} onClose={() => setCoachOpen(false)} title="Coach-Vorschlag">
+        {coachNotConfigured ? (
+          <div className="space-y-4 pb-2">
+            <p className="text-sm leading-relaxed text-muted">
+              Damit der Coach Einheiten baut, muss in Vercel der Schlüssel
+              <span className="font-mono text-fg"> ANTHROPIC_API_KEY </span>
+              hinterlegt sein. Danach läuft alles serverseitig — dein Schlüssel
+              bleibt geheim.
+            </p>
+            <Pressable
+              onClick={() => setCoachOpen(false)}
+              className="flex w-full items-center justify-center rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
+            >
+              Verstanden
+            </Pressable>
+          </div>
+        ) : (
+          <div className="space-y-5 pb-2">
+            <p className="text-sm leading-relaxed text-muted">
+              Sag dem Coach Zeit und Fokus — er baut eine rückenschonende Einheit
+              aus deinem aktiven Gym, die du danach hier anpassen kannst.
+            </p>
+
+            <div>
+              <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+                Zeit
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {COACH_TIMES.map((m) => {
+                  const active = coachMin === m;
+                  return (
+                    <Pressable
+                      key={m}
+                      onClick={() => setCoachMin(m)}
+                      className={
+                        "rounded-full px-4 py-2 text-sm font-medium tabular-nums focus:outline-none " +
+                        (active ? "bg-strong text-on-strong" : "bg-surface-2 text-muted")
+                      }
+                    >
+                      {m} Min
+                    </Pressable>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+                Fokus
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {COACH_FOCI.map((f) => {
+                  const active = coachFocus === f;
+                  return (
+                    <Pressable
+                      key={f}
+                      onClick={() => setCoachFocus(f)}
+                      className={
+                        "rounded-full px-4 py-2 text-sm font-medium focus:outline-none " +
+                        (active ? "bg-strong text-on-strong" : "bg-surface-2 text-muted")
+                      }
+                    >
+                      {f}
+                    </Pressable>
+                  );
+                })}
+              </div>
+              <input
+                value={coachFocus}
+                onChange={(e) => setCoachFocus(e.target.value)}
+                placeholder="… oder eigenen Fokus eintippen"
+                className="mt-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+              />
+            </div>
+
+            {coachErr && <p className="text-sm text-rose-300">{coachErr}</p>}
+
+            <Pressable
+              onClick={runCoach}
+              disabled={coachBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-50"
+            >
+              <Sparkles size={18} strokeWidth={2.5} />
+              {coachBusy ? "Baut deine Einheit…" : "Einheit bauen"}
+            </Pressable>
+          </div>
+        )}
+      </Sheet>
     </div>
   );
 }
