@@ -168,6 +168,9 @@ export default function WorkoutPage() {
 
   // Sticky live-demo follows the exercise card currently in view.
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  // Focus-logbook: the manually-opened set ("exId:index"); else the first empty
+  // working set (activeSetIdx) is the active one.
+  const [editKey, setEditKey] = useState<string | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const ratios = useRef<Record<string, number>>({});
   const slotKeys = activeList.map((s) => s.slotKey).join(",");
@@ -195,13 +198,6 @@ export default function WorkoutPage() {
     els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, [slotKeys, activeKey]);
-
-  /** Fill every still-empty working set with the autoregulation suggestion. */
-  const fillSuggestion = (exId: string, w: number) => {
-    (entries[exId] || []).forEach((s, i) => {
-      if (!s.warmup && (s.weight === "" || s.weight == null)) setEntry(exId, i, "weight", String(w));
-    });
-  };
 
   const startRest = () => {
     setRestLeft(REST_SECONDS);
@@ -403,9 +399,6 @@ export default function WorkoutPage() {
                 )
                 .join("   ")
             : null;
-          const isDone = (entries[ex.id] || []).some(
-            (s) => !s.warmup && s.reps !== "" && s.reps != null,
-          );
           const exDone = (entries[ex.id] || []).filter(
             (s) => !s.warmup && s.reps !== "" && s.reps != null,
           ).length;
@@ -420,10 +413,7 @@ export default function WorkoutPage() {
                 else cardRefs.current.delete(slotKey);
               }}
               data-slot={slotKey}
-              className={cn(
-                "rounded-card border border-surface-3 bg-surface-1 shadow-card p-4",
-                isDone && "ring-1 ring-emerald-700",
-              )}
+              className="rounded-card border border-surface-3 bg-surface-1 shadow-card p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -437,8 +427,8 @@ export default function WorkoutPage() {
                     {ex.tag} · {PATTERN_LABEL[ex.pattern]}
                   </p>
                   {isSuperset && (
-                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-accent-coverage px-1.5 py-0.5 text-xs font-medium text-on-strong">
-                      <Repeat size={11} /> im Wechsel
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-pill border border-line px-2 py-0.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+                      <Repeat size={11} /> Wechsel
                     </span>
                   )}
                 </div>
@@ -491,7 +481,7 @@ export default function WorkoutPage() {
                 {poseSupported && (
                   <Pressable
                     onClick={() => router.push(`/form/${ex.id}`)}
-                    className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-coverage focus:outline-none"
+                    className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-2 focus:outline-none"
                   >
                     <Camera size={13} /> Kamera-Check
                   </Pressable>
@@ -521,7 +511,7 @@ export default function WorkoutPage() {
                         onClick={() => setEntry(ex.id, 0, "reps", isDone ? "" : "1")}
                         className={cn(
                           "flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium focus:outline-none",
-                          isDone ? "bg-emerald-600 text-on-strong" : "bg-surface-2 text-fg",
+                          isDone ? "bg-surface-2 text-accent-2" : "bg-surface-2 text-fg",
                         )}
                       >
                         <Check size={16} strokeWidth={2.5} />
@@ -543,21 +533,29 @@ export default function WorkoutPage() {
                       {ps || "—"}
                     </p>
                     <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
-                    {ex.weighted && p.suggestedWeight != null && (
-                      <Pressable
-                        onClick={() => fillSuggestion(ex.id, p.suggestedWeight!)}
-                        className="mt-1.5 inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-                      >
-                        {p.suggestedWeight} kg übernehmen
-                      </Pressable>
-                    )}
                   </div>
 
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-1">
                     {(() => {
                       let workIdx = 0;
+                      const exEdit =
+                        editKey && editKey.startsWith(ex.id + ":")
+                          ? Number(editKey.slice(ex.id.length + 1))
+                          : null;
+                      const effActive = exEdit != null ? exEdit : activeSetIdx;
+                      const lastW = [...(entries[ex.id] || [])]
+                        .reverse()
+                        .find((s) => !s.warmup && s.weight !== "" && s.weight != null)?.weight;
+                      const ghostWeight = ex.weighted
+                        ? ((lastW as string | undefined) ??
+                          (p.suggestedWeight != null ? String(p.suggestedWeight) : undefined))
+                        : undefined;
+                      const ghostReps = p.r || String(ex.repHigh);
                       return (entries[ex.id] || []).map((s, i) => {
                         const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
+                        const filled = s.reps !== "" && s.reps != null;
+                        const setState: "active" | "done" | "upcoming" =
+                          i === effActive ? "active" : filled ? "done" : "upcoming";
                         return (
                           <SetRow
                             key={i}
@@ -566,11 +564,14 @@ export default function WorkoutPage() {
                             unit={ex.unit}
                             set={s}
                             isDumbbell={ex.req.includes("dumbbell")}
-                            active={i === activeSetIdx}
+                            state={setState}
+                            ghostWeight={s.warmup ? undefined : ghostWeight}
+                            ghostReps={s.warmup ? undefined : ghostReps}
                             onWeight={(val) => setEntry(ex.id, i, "weight", val)}
                             onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
                             onRir={(val) => setEntry(ex.id, i, "rir", val)}
                             onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
+                            onActivate={() => setEditKey(`${ex.id}:${i}`)}
                           />
                         );
                       });

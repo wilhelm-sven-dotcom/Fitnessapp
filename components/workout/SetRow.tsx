@@ -1,18 +1,23 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
 import { TimedSet } from "./TimedSet";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
+import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { SetEntry, Unit } from "@/lib/types";
 
+export type SetState = "done" | "active" | "upcoming";
+
 const inputClass =
-  "min-w-0 flex-1 rounded-xl bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
+  "min-w-0 flex-1 rounded-pill bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
 
 const RIR_OPTIONS = [0, 1, 2, 3, 4];
 const INTENSITY_OPTIONS = [1, 2, 3, 4, 5];
 
+/** Slim effort selector — RIR (0–4) or felt intensity (1–5). Rated after the set. */
 function Scale({
   label,
   options,
@@ -25,68 +30,126 @@ function Scale({
   onPick: (v: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-12 shrink-0 font-mono text-xs text-faint">{label}</span>
-      <div className="flex flex-1 gap-1.5">
+    <div className="mt-1.5 flex items-center gap-2 pl-12">
+      <span className="shrink-0 font-mono text-xs uppercase tracking-widest text-faint">{label}</span>
+      <div className="flex flex-1 gap-1">
         {options.map((o) => (
           <Pressable
             key={o}
             onClick={() => onPick(o)}
             className={cn(
-              "flex-1 rounded-lg py-1.5 text-sm font-medium tabular-nums focus:outline-none",
-              value === o
-                ? "bg-accent-sessions text-on-accent"
-                : "bg-surface-2 text-muted",
+              "flex-1 rounded-pill py-1 text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+              value === o ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
             )}
           >
             {o}
           </Pressable>
         ))}
       </div>
-      <span className="w-6 shrink-0" />
     </div>
   );
 }
 
+/** One logged set in three states — the focus-logbook: a done set is a compact
+ *  ledger line (effort still editable), the active set is the big instrument
+ *  with the suggestion ghosted in, an upcoming set is a quiet ghost line. */
 export function SetRow({
   label,
   isWarmup,
   unit,
   set,
   isDumbbell,
-  active,
+  state,
+  ghostWeight,
+  ghostReps,
   onWeight,
   onReps,
   onRir,
   onIntensity,
+  onActivate,
 }: {
   label: string;
   isWarmup: boolean;
   unit: Unit;
   set: SetEntry;
-  /** Per-dumbbell exercise — show the "× 2 / total" hint under the weight. */
   isDumbbell?: boolean;
-  /** The next set to fill — gets a focus ring so the eye lands on it. */
-  active?: boolean;
+  state: SetState;
+  /** Suggested weight (autoregulation / carried from the last set) — ghosted in. */
+  ghostWeight?: string;
+  /** Target reps / hold — ghosted in. */
+  ghostReps?: string;
   onWeight: (val: string) => void;
   onReps: (oldVal: string, val: string) => void;
   onRir: (val: number) => void;
   onIntensity: (val: number) => void;
+  /** Focus this set (tap a collapsed line, or focus the active inputs). */
+  onActivate: () => void;
 }) {
-  const filled = set.reps !== "" && set.reps != null;
+  const reduce = useReducedMotion();
   const timed = unit === "Sek";
-  const dbHint = isDumbbell && !timed ? dumbbellHint(Number(set.weight) || 0) : null;
-  return (
-    <div className={cn("space-y-1.5 rounded-xl", active && "p-2 ring-1 ring-accent-sessions")}>
-      <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "w-12 shrink-0 font-mono text-xs",
-            isWarmup ? "text-faint" : "text-muted",
-          )}
+
+  // ── DONE — compact ledger line; effort stays editable. ──
+  if (state === "done") {
+    const summary = timed
+      ? `${set.reps} s`
+      : set.weight !== "" && set.weight != null
+        ? `${set.weight} kg × ${set.reps}`
+        : `${set.reps} Wdh`;
+    return (
+      <div className="set-row">
+        <Pressable
+          onClick={onActivate}
+          aria-label={`${label} bearbeiten`}
+          className="flex w-full items-center gap-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         >
-          {label}
-        </span>
+          <Check size={15} strokeWidth={2.5} className="shrink-0 text-accent-2" />
+          <span className="w-12 shrink-0 font-mono text-xs text-faint">{label}</span>
+          <span className="flex-1 truncate font-mono text-sm tabular-nums text-fg">{summary}</span>
+        </Pressable>
+        {!isWarmup &&
+          (timed ? (
+            <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
+          ) : (
+            <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
+          ))}
+      </div>
+    );
+  }
+
+  // ── UPCOMING — quiet ghost line; tap to jump here. ──
+  if (state === "upcoming") {
+    const ghost = timed
+      ? ghostReps
+        ? `${ghostReps} s`
+        : "—"
+      : ghostWeight
+        ? `${ghostWeight} × ${ghostReps ?? ""}`.trim()
+        : (ghostReps ?? "—");
+    return (
+      <Pressable
+        onClick={onActivate}
+        aria-label={`${label} starten`}
+        className="set-row flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+      >
+        <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-full border border-line" />
+        <span className="w-12 shrink-0 font-mono text-xs">{label}</span>
+        <span className="flex-1 truncate font-mono text-sm tabular-nums">{ghost}</span>
+      </Pressable>
+    );
+  }
+
+  // ── ACTIVE — the instrument. ──
+  const dbHint = isDumbbell && !timed ? dumbbellHint(Number(set.weight) || 0) : null;
+  const showGhostFill = !timed && !!ghostWeight && (set.weight === "" || set.weight == null);
+  return (
+    <motion.div
+      className="set-row set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
+      initial={reduce ? false : { opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={SPRING.panel}
+    >
+      <div className="flex items-center gap-2">
+        <span className="w-12 shrink-0 font-mono text-xs text-muted">{label}</span>
         {timed ? (
           <TimedSet value={set.reps} onChange={(val) => onReps(set.reps, val)} />
         ) : (
@@ -96,40 +159,38 @@ export function SetRow({
               inputMode="decimal"
               step="0.5"
               value={set.weight}
+              onFocus={onActivate}
               onChange={(e) => onWeight(e.target.value)}
-              placeholder="kg"
-              className={cn(inputClass, isWarmup && "text-muted")}
+              placeholder={ghostWeight ?? "kg"}
+              className={inputClass}
             />
             <input
               type="number"
               inputMode="numeric"
               value={set.reps}
+              onFocus={onActivate}
               onChange={(e) => onReps(set.reps, e.target.value)}
-              placeholder="Wdh"
-              className={cn(inputClass, isWarmup && "text-muted")}
+              placeholder={ghostReps ?? "Wdh"}
+              className={inputClass}
             />
           </>
         )}
-        <span
-          className={cn(
-            "flex w-6 shrink-0 justify-center",
-            isWarmup
-              ? "text-faint"
-              : filled
-                ? "text-emerald-400"
-                : "text-faint",
-          )}
-        >
-          <Check size={18} strokeWidth={2.5} />
-        </span>
       </div>
-      {dbHint && <p className="pl-14 font-mono text-xs text-muted">{dbHint}</p>}
+      {dbHint && <p className="pl-12 font-mono text-xs text-muted">{dbHint}</p>}
+      {showGhostFill && (
+        <Pressable
+          onClick={() => onWeight(ghostWeight!)}
+          className="ml-12 inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        >
+          Vorschlag {ghostWeight} kg
+        </Pressable>
+      )}
       {!isWarmup &&
         (timed ? (
-          <Scale label="Int." options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
+          <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
         ) : (
           <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
         ))}
-    </div>
+    </motion.div>
   );
 }
