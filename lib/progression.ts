@@ -236,6 +236,16 @@ export function presc(
   lp: LastPerf | null,
   opts: { lighter?: boolean; loadMult?: number; cap?: boolean; step?: number } = {},
 ): Prescription {
+  // Cardio blocks (Peloton/Bike) are guidance, not load — the actual ride is
+  // recorded by Strava. Return the planned-minute range + the how-to cue.
+  if (ex.pattern === "cardio")
+    return {
+      w: "",
+      r: "",
+      reason: "hold",
+      line: `${ex.repLow}–${ex.repHigh} Min · ${ex.cue}`,
+    };
+
   const weighted = !!ex.weighted;
   const timed = ex.unit === "Sek";
   const lm = opts.loadMult ?? 1;

@@ -83,6 +83,15 @@ export const LIB: Exercise[] = [
     steps: ["In die Brücke, Hüfte hoch.", "Ein Knie zur Brust heben, Becken stabil.", "Wechseln, Hüfte bleibt oben."], back: "Becken nicht kippen, Po fest.", easier: "Ohne Marsch, nur Brücke halten." },
   { id: "suitcase", name: "Koffertragen (Suitcase Carry)", pattern: "core", tag: "Rücken-Stabi", req: ["weight"], weighted: false, sets: 3, repLow: 20, repHigh: 40, unit: "Sek", cue: "Schwere Hantel einseitig, aufrecht gehen.", backStabilizer: true,
     steps: ["Eine schwere Hantel in einer Hand.", "Aufrecht gehen, nicht zur Seite kippen.", "Zeit pro Seite."], back: "Rumpf gegen das seitliche Ziehen stabil halten.", easier: "Leichter, kürzere Zeit." },
+  // CARDIO (Peloton / Bike) — geplant; die Ist-Aufzeichnung kommt aus Strava.
+  { id: "bike_zone2", name: "Peloton · Zone 2", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 20, repHigh: 30, unit: "Min", cue: "Locker im Grundlagenbereich — du kannst dabei noch reden (Zone 2).",
+    steps: ["Niedriger bis mittlerer Widerstand.", "Gleichmäßig treten, ~85–95 rpm.", "20–30 Min ruhig durchfahren."], back: "Aufrecht sitzen, Schultern locker.", easier: "Kürzer fahren, weniger Widerstand." },
+  { id: "bike_intervals", name: "Peloton · Intervalle", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 18, repHigh: 22, unit: "Min", cue: "Nach dem Einrollen 5×(1 Min hart / 1 Min locker), dann ausrollen.",
+    steps: ["3 Min locker einrollen.", "5 Runden: 1 Min hart (hoch atmen), 1 Min locker.", "3 Min ausrollen."], back: "Im Sitzen fahren, Rumpf ruhig.", easier: "4 Runden statt 5, kürzere harte Phasen." },
+  { id: "bike_finisher", name: "Peloton · Sprint-Finisher", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 6, repHigh: 10, unit: "Min", cue: "Kurzer, knackiger Abschluss: 5×(20 s All-out / 40 s locker).",
+    steps: ["1–2 Min locker antreten.", "5 Runden: 20 s Vollgas, 40 s locker.", "1 Min ausrollen."], back: "Sauber sitzen, nicht verkrampfen.", easier: "3 Runden, kürzere Sprints." },
+  { id: "bike_recovery", name: "Peloton · Recovery Spin", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 10, repHigh: 15, unit: "Min", cue: "Ganz locker drehen — fördert die Erholung, kein Ehrgeiz.",
+    steps: ["Sehr niedriger Widerstand.", "Locker kurbeln, ruhig atmen.", "10–15 Min."], back: "Entspannt aufrecht.", easier: "Kürzer." },
 ];
 
 export const TEMPLATE: Template[] = [
@@ -95,12 +104,13 @@ export const EQUIP_LIST: EquipItem[] = [
   { key: "db", label: "Kurzhanteln" }, { key: "kb", label: "Kettlebell" }, { key: "bar", label: "Langhantel" },
   { key: "pullup", label: "Klimmzugstange" }, { key: "rings", label: "Turnringe" }, { key: "bands", label: "Bänder" },
   { key: "box", label: "Erhöhung / Box" }, { key: "bench", label: "Hantelbank" },
+  { key: "bike", label: "Peloton / Bike" },
 ];
 
-export const DEFAULT_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "rings", "bands", "box"];
+export const DEFAULT_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "rings", "bands", "box", "bike"];
 
 export const PATTERN_LABEL: Record<Pattern, string> = {
-  squat: "Kniebeuge", lunge: "Ausfallschritt/Bein", hinge: "Hüfte/Gesäß", hpush: "Druck horizontal", vpush: "Druck über Kopf", hpull: "Zug horizontal", vpull: "Zug vertikal", arm: "Arme", lateral: "Schultern", core: "Core / Rücken-Stabi",
+  squat: "Kniebeuge", lunge: "Ausfallschritt/Bein", hinge: "Hüfte/Gesäß", hpush: "Druck horizontal", vpush: "Druck über Kopf", hpull: "Zug horizontal", vpull: "Zug vertikal", arm: "Arme", lateral: "Schultern", core: "Core / Rücken-Stabi", cardio: "Cardio / Bike",
 };
 
 export const PROFILE: [string, string][] = [

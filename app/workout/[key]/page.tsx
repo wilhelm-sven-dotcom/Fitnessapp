@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Bike,
   Camera,
+  Check,
   ChevronRight,
   Flame,
   Mic,
@@ -364,17 +365,23 @@ export default function WorkoutPage() {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="font-mono text-sm tabular-nums text-accent-sessions">
-                    {ex.sets} × {ex.repLow}–{ex.repHigh}
+                    {ex.pattern === "cardio"
+                      ? `${ex.repLow}–${ex.repHigh}`
+                      : `${ex.sets} × ${ex.repLow}–${ex.repHigh}`}
                   </p>
                   <p className="text-xs uppercase tracking-wider text-faint">
-                    {ex.unit === "Sek" ? "Sekunden" : "Wdh"}
+                    {ex.pattern === "cardio"
+                      ? "Min"
+                      : ex.unit === "Sek"
+                        ? "Sekunden"
+                        : "Wdh"}
                   </p>
                 </div>
               </div>
 
               <p className="mt-2 text-xs leading-relaxed text-muted">{ex.cue}</p>
 
-              {chips.length > 0 && (
+              {ex.pattern !== "cardio" && chips.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {chips.map((c, i) => (
                     <Chip key={i} tone={c.tone}>
@@ -409,38 +416,77 @@ export default function WorkoutPage() {
                 )}
               </div>
 
-              <div className="mt-3 rounded-xl border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
-                <p className="text-xs uppercase tracking-widest text-muted">
-                  Letztes Mal
-                </p>
-                <p className="font-mono text-sm tabular-nums text-fg">
-                  {ps || "—"}
-                </p>
-                <p className="mt-1 text-xs text-accent-sessions">{p.line}</p>
-              </div>
-
-              <div className="mt-3 space-y-2">
-                {(() => {
-                  let workIdx = 0;
-                  return (entries[ex.id] || []).map((s, i) => {
-                    const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
+              {ex.pattern === "cardio" ? (
+                <div className="mt-3">
+                  {ex.steps.length > 0 && (
+                    <ul className="mb-3 space-y-1">
+                      {ex.steps.map((st, i) => (
+                        <li
+                          key={i}
+                          className="flex gap-2 text-xs leading-relaxed text-muted"
+                        >
+                          <span className="font-mono text-faint">{i + 1}</span>
+                          <span>{st}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {(() => {
+                    const cur = (entries[ex.id] || [])[0];
+                    const isDone = !!cur && cur.reps !== "" && cur.reps != null;
                     return (
-                      <SetRow
-                        key={i}
-                        label={label}
-                        isWarmup={!!s.warmup}
-                        unit={ex.unit}
-                        set={s}
-                        isDumbbell={ex.req.includes("dumbbell")}
-                        onWeight={(val) => setEntry(ex.id, i, "weight", val)}
-                        onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
-                        onRir={(val) => setEntry(ex.id, i, "rir", val)}
-                        onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
-                      />
+                      <Pressable
+                        onClick={() => setEntry(ex.id, 0, "reps", isDone ? "" : "1")}
+                        className={cn(
+                          "flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium focus:outline-none",
+                          isDone ? "bg-emerald-600 text-on-strong" : "bg-surface-2 text-fg",
+                        )}
+                      >
+                        <Check size={16} strokeWidth={2.5} />
+                        {isDone ? "Erledigt" : "Als erledigt markieren"}
+                      </Pressable>
                     );
-                  });
-                })()}
-              </div>
+                  })()}
+                  <p className="mt-2 text-center text-xs text-faint">
+                    Ist-Aufzeichnung kommt aus Strava.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-3 rounded-xl border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
+                    <p className="text-xs uppercase tracking-widest text-muted">
+                      Letztes Mal
+                    </p>
+                    <p className="font-mono text-sm tabular-nums text-fg">
+                      {ps || "—"}
+                    </p>
+                    <p className="mt-1 text-xs text-accent-sessions">{p.line}</p>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {(() => {
+                      let workIdx = 0;
+                      return (entries[ex.id] || []).map((s, i) => {
+                        const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
+                        return (
+                          <SetRow
+                            key={i}
+                            label={label}
+                            isWarmup={!!s.warmup}
+                            unit={ex.unit}
+                            set={s}
+                            isDumbbell={ex.req.includes("dumbbell")}
+                            onWeight={(val) => setEntry(ex.id, i, "weight", val)}
+                            onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
+                            onRir={(val) => setEntry(ex.id, i, "rir", val)}
+                            onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
+                          />
+                        );
+                      });
+                    })()}
+                  </div>
+                </>
+              )}
             </div>
           );
         })}

@@ -100,6 +100,7 @@ function ItemRow({
   const controls = useDragControls();
   const timed = ex?.unit === "Sek";
   const repUnit = timed ? "Sek" : "Wdh";
+  const cardio = ex?.pattern === "cardio";
   const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
   return (
@@ -141,28 +142,39 @@ function ItemRow({
           <Trash2 size={15} />
         </Pressable>
       </div>
-      <div className="space-y-2 border-t border-surface-3 px-3 py-3">
-        <Stepper
-          label="Sätze"
-          value={String(item.sets)}
-          onDec={() => onChange({ ...item, sets: clamp(item.sets - 1, 1, 6) })}
-          onInc={() => onChange({ ...item, sets: clamp(item.sets + 1, 1, 6) })}
-        />
-        <Stepper
-          label="von"
-          value={String(item.repLow)}
-          suffix={repUnit}
-          onDec={() => onChange({ ...item, repLow: clamp(item.repLow - 1, 1, item.repHigh) })}
-          onInc={() => onChange({ ...item, repLow: clamp(item.repLow + 1, 1, item.repHigh) })}
-        />
-        <Stepper
-          label="bis"
-          value={String(item.repHigh)}
-          suffix={repUnit}
-          onDec={() => onChange({ ...item, repHigh: clamp(item.repHigh - 1, item.repLow, 90) })}
-          onInc={() => onChange({ ...item, repHigh: clamp(item.repHigh + 1, item.repLow, 90) })}
-        />
-      </div>
+      {cardio ? (
+        <div className="border-t border-surface-3 px-3 py-3">
+          <p className="text-xs leading-relaxed text-muted">
+            <span className="font-mono tabular-nums text-fg">
+              {item.repLow}–{item.repHigh} Min
+            </span>
+            {ex ? ` · ${ex.cue}` : ""}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2 border-t border-surface-3 px-3 py-3">
+          <Stepper
+            label="Sätze"
+            value={String(item.sets)}
+            onDec={() => onChange({ ...item, sets: clamp(item.sets - 1, 1, 6) })}
+            onInc={() => onChange({ ...item, sets: clamp(item.sets + 1, 1, 6) })}
+          />
+          <Stepper
+            label="von"
+            value={String(item.repLow)}
+            suffix={repUnit}
+            onDec={() => onChange({ ...item, repLow: clamp(item.repLow - 1, 1, item.repHigh) })}
+            onInc={() => onChange({ ...item, repLow: clamp(item.repLow + 1, 1, item.repHigh) })}
+          />
+          <Stepper
+            label="bis"
+            value={String(item.repHigh)}
+            suffix={repUnit}
+            onDec={() => onChange({ ...item, repHigh: clamp(item.repHigh - 1, item.repLow, 90) })}
+            onInc={() => onChange({ ...item, repHigh: clamp(item.repHigh + 1, item.repLow, 90) })}
+          />
+        </div>
+      )}
     </Reorder.Item>
   );
 }

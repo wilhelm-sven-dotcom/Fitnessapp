@@ -1,6 +1,6 @@
 /* Central domain types for the training app. */
 
-export type Unit = "Wdh" | "Sek";
+export type Unit = "Wdh" | "Sek" | "Min";
 
 export type Pattern =
   | "squat"
@@ -12,7 +12,8 @@ export type Pattern =
   | "vpull"
   | "arm"
   | "lateral"
-  | "core";
+  | "core"
+  | "cardio";
 
 export type EquipKey =
   | "db"
@@ -22,7 +23,8 @@ export type EquipKey =
   | "rings"
   | "bands"
   | "box"
-  | "bench";
+  | "bench"
+  | "bike";
 
 export type TrafficLight = "green" | "yellow" | "red";
 

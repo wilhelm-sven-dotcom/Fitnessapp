@@ -60,6 +60,7 @@ const PATTERN_MUSCLE: Record<Pattern, { primary: Muscle; secondary?: Muscle }> =
   arm: { primary: "biceps" },
   lateral: { primary: "shoulders" },
   core: { primary: "core" },
+  cardio: { primary: "core" },
 };
 
 const ID_OVERRIDE: Record<string, { primary: Muscle; secondary?: Muscle }> = {
@@ -138,9 +139,11 @@ export function weeklyMuscleVolume(
     })
     .forEach((s) =>
       s.exercises.forEach((se) => {
+        const ex = byId.get(se.id);
+        if (ex?.pattern === "cardio") return; // cardio is its own domain, not strength volume
         const n = workSets(se.sets).filter(isFilled).length;
         if (!n) return;
-        const m = muscleOf(byId.get(se.id) ?? { id: se.id, pattern: "core" });
+        const m = muscleOf(ex ?? { id: se.id, pattern: "core" });
         acc[m.primary] = (acc[m.primary] ?? 0) + n;
         if (m.secondary) acc[m.secondary] = (acc[m.secondary] ?? 0) + n * 0.5;
       }),
@@ -181,7 +184,7 @@ export function exerciseMuscleVolume(
 ): MuscleVolume[] {
   const acc: Partial<Record<Muscle, number>> = {};
   for (const { ex, sets } of items) {
-    if (!sets) continue;
+    if (!sets || ex.pattern === "cardio") continue;
     const m = muscleOf(ex);
     acc[m.primary] = (acc[m.primary] ?? 0) + sets;
     if (m.secondary) acc[m.secondary] = (acc[m.secondary] ?? 0) + sets * 0.5;
