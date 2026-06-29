@@ -253,3 +253,24 @@ html {
 [data-skin="editorial"] .only-editorial {
   display: revert;
 }
+
+/* Set-logger ("Fokus-Logbuch") — one signature per skin on the ledger rows.
+   Editorial = ruled scorecard, Blueprint = dashed measurement baselines,
+   Tactile = the active set lifts as a machined chip. The active set keeps its
+   accent ring in every skin, so it's excluded from the divider rules. */
+[data-skin="editorial"] .set-row:not(.set-active) {
+  border-top: 1px solid var(--line);
+  padding-top: 0.375rem;
+}
+[data-skin="editorial"] .set-row:not(.set-active):first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+[data-skin="blueprint"] .set-row:not(.set-active) {
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 0.375rem;
+}
+[data-skin="tactile"] .set-active {
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+}

@@ -21,7 +21,7 @@ export function SessionTimeBar({
       </div>
       <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-surface-2">
         <div
-          className="h-full rounded-full bg-accent-coverage transition-all"
+          className="h-full rounded-full bg-accent-2 transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
