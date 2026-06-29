@@ -54,6 +54,7 @@ export function SetRow({
   unit,
   set,
   isDumbbell,
+  active,
   onWeight,
   onReps,
   onRir,
@@ -65,6 +66,8 @@ export function SetRow({
   set: SetEntry;
   /** Per-dumbbell exercise — show the "× 2 / total" hint under the weight. */
   isDumbbell?: boolean;
+  /** The next set to fill — gets a focus ring so the eye lands on it. */
+  active?: boolean;
   onWeight: (val: string) => void;
   onReps: (oldVal: string, val: string) => void;
   onRir: (val: number) => void;
@@ -74,7 +77,7 @@ export function SetRow({
   const timed = unit === "Sek";
   const dbHint = isDumbbell && !timed ? dumbbellHint(Number(set.weight) || 0) : null;
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5 rounded-xl", active && "p-2 ring-1 ring-accent-sessions")}>
       <div className="flex items-center gap-2">
         <span
           className={cn(

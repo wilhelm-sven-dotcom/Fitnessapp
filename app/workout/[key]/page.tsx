@@ -16,6 +16,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
+import { LiveDemo } from "@/components/workout/LiveDemo";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
@@ -46,6 +47,29 @@ const BACK_OPTIONS: { v: TrafficLight; label: string; on: string }[] = [
   { v: "yellow", label: "Mittel", on: "bg-amber-400 text-on-strong" },
   { v: "red", label: "Gereizt", on: "bg-rose-500 text-neutral-50" },
 ];
+
+/** Per-exercise completion ring (done work-sets / planned). */
+function ProgressRing({ done, total }: { done: number; total: number }) {
+  const r = 9;
+  const circ = 2 * Math.PI * r;
+  const pct = total > 0 ? Math.min(1, done / total) : 0;
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6 -rotate-90" aria-hidden>
+      <circle cx="12" cy="12" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="3" />
+      <circle
+        cx="12"
+        cy="12"
+        r={r}
+        fill="none"
+        stroke="var(--accent-ink)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={circ * (1 - pct)}
+      />
+    </svg>
+  );
+}
 
 export default function WorkoutPage() {
   const params = useParams();
@@ -141,6 +165,43 @@ export default function WorkoutPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, settings.voiceCues]);
+
+  // Sticky live-demo follows the exercise card currently in view.
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const ratios = useRef<Record<string, number>>({});
+  const slotKeys = activeList.map((s) => s.slotKey).join(",");
+  useEffect(() => {
+    const els = [...cardRefs.current.values()];
+    if (!els.length) return;
+    const obs = new IntersectionObserver(
+      (ents) => {
+        for (const e of ents) {
+          const slot = (e.target as HTMLElement).dataset.slot;
+          if (slot) ratios.current[slot] = e.isIntersecting ? e.intersectionRatio : 0;
+        }
+        let best: string | null = null;
+        let bestR = 0;
+        for (const [slot, r] of Object.entries(ratios.current)) {
+          if (r > bestR) {
+            bestR = r;
+            best = slot;
+          }
+        }
+        if (best) setActiveSlot(best);
+      },
+      { threshold: [0.15, 0.4, 0.7, 1] },
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [slotKeys, activeKey]);
+
+  /** Fill every still-empty working set with the autoregulation suggestion. */
+  const fillSuggestion = (exId: string, w: number) => {
+    (entries[exId] || []).forEach((s, i) => {
+      if (!s.warmup && (s.weight === "" || s.weight == null)) setEntry(exId, i, "weight", String(w));
+    });
+  };
 
   const startRest = () => {
     setRestLeft(REST_SECONDS);
@@ -307,6 +368,13 @@ export default function WorkoutPage() {
         </div>
       )}
 
+      {list.length > 0 && (
+        <LiveDemo
+          ex={list.find((s) => s.slotKey === activeSlot)?.ex ?? list[0]?.ex ?? null}
+          onOpen={() => setGuideSlot(activeSlot ?? list[0]?.slotKey ?? null)}
+        />
+      )}
+
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
           const isSuperset = !!ssPair && (idx === ssPair[0] || idx === ssPair[1]);
@@ -338,9 +406,20 @@ export default function WorkoutPage() {
           const isDone = (entries[ex.id] || []).some(
             (s) => !s.warmup && s.reps !== "" && s.reps != null,
           );
+          const exDone = (entries[ex.id] || []).filter(
+            (s) => !s.warmup && s.reps !== "" && s.reps != null,
+          ).length;
+          const activeSetIdx = (entries[ex.id] || []).findIndex(
+            (s) => !s.warmup && (s.reps === "" || s.reps == null),
+          );
           return (
             <div
               key={slotKey}
+              ref={(el) => {
+                if (el) cardRefs.current.set(slotKey, el);
+                else cardRefs.current.delete(slotKey);
+              }}
+              data-slot={slotKey}
               className={cn(
                 "rounded-card border border-surface-3 bg-surface-1 shadow-card p-4",
                 isDone && "ring-1 ring-emerald-700",
@@ -363,19 +442,22 @@ export default function WorkoutPage() {
                     </span>
                   )}
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-mono text-sm tabular-nums text-accent-ink">
-                    {ex.pattern === "cardio"
-                      ? `${ex.repLow}–${ex.repHigh}`
-                      : `${ex.sets} × ${ex.repLow}–${ex.repHigh}`}
-                  </p>
-                  <p className="text-xs uppercase tracking-wider text-faint">
-                    {ex.pattern === "cardio"
-                      ? "Min"
-                      : ex.unit === "Sek"
-                        ? "Sekunden"
-                        : "Wdh"}
-                  </p>
+                <div className="flex shrink-0 items-center gap-2">
+                  {ex.pattern !== "cardio" && <ProgressRing done={exDone} total={ex.sets} />}
+                  <div className="text-right">
+                    <p className="font-mono text-sm tabular-nums text-accent-ink">
+                      {ex.pattern === "cardio"
+                        ? `${ex.repLow}–${ex.repHigh}`
+                        : `${ex.sets} × ${ex.repLow}–${ex.repHigh}`}
+                    </p>
+                    <p className="text-xs uppercase tracking-wider text-faint">
+                      {ex.pattern === "cardio"
+                        ? "Min"
+                        : ex.unit === "Sek"
+                          ? "Sekunden"
+                          : "Wdh"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -461,6 +543,14 @@ export default function WorkoutPage() {
                       {ps || "—"}
                     </p>
                     <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
+                    {ex.weighted && p.suggestedWeight != null && (
+                      <Pressable
+                        onClick={() => fillSuggestion(ex.id, p.suggestedWeight!)}
+                        className="mt-1.5 inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                      >
+                        {p.suggestedWeight} kg übernehmen
+                      </Pressable>
+                    )}
                   </div>
 
                   <div className="mt-3 space-y-2">
@@ -476,6 +566,7 @@ export default function WorkoutPage() {
                             unit={ex.unit}
                             set={s}
                             isDumbbell={ex.req.includes("dumbbell")}
+                            active={i === activeSetIdx}
                             onWeight={(val) => setEntry(ex.id, i, "weight", val)}
                             onReps={(oldVal, val) => onReps(ex.id, i, oldVal, val)}
                             onRir={(val) => setEntry(ex.id, i, "rir", val)}
