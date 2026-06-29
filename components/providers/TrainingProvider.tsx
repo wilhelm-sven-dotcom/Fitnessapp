@@ -37,6 +37,7 @@ import {
   applyTheme,
   DEFAULT_ACCENT,
   DEFAULT_SKIN,
+  onAccent,
   type SkinId,
   type ThemePref,
 } from "@/lib/theme";
@@ -283,8 +284,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     // Optional accent override wins over the skin's --accent (inline > CSS).
     const applyAccent = () => {
       const root = document.documentElement;
-      if (settings.accentOverride) root.style.setProperty("--accent", settings.accentOverride);
-      else root.style.removeProperty("--accent");
+      if (settings.accentOverride) {
+        root.style.setProperty("--accent", settings.accentOverride);
+        root.style.setProperty("--on-accent", onAccent(settings.accentOverride));
+      } else {
+        root.style.removeProperty("--accent");
+        root.style.removeProperty("--on-accent");
+      }
     };
     applyTheme(settings.theme);
     applySkin(settings.skin);

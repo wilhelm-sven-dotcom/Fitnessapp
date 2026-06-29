@@ -22,9 +22,14 @@ export function AppIconInstaller() {
     (async () => {
       const img = await loadIconImage(icon);
       if (cancelled) return;
-      const apple = iconToDataUrl(icon, 180, img);
-      const i192 = iconToDataUrl(icon, 192, img);
-      const i512 = iconToDataUrl(icon, 512, img);
+      let apple: string, i192: string, i512: string;
+      try {
+        apple = iconToDataUrl(icon, 180, img);
+        i192 = iconToDataUrl(icon, 192, img);
+        i512 = iconToDataUrl(icon, 512, img);
+      } catch {
+        return; /* canvas draw failed — keep the generated default icons */
+      }
       if (!apple) return;
 
       document.querySelectorAll('link[rel="apple-touch-icon"]').forEach((l) => l.remove());

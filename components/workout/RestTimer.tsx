@@ -49,7 +49,7 @@ export function RestTimer({
           </Pressable>
           <Pressable
             onClick={onSkip}
-            className="flex-1 rounded-xl bg-accent-sessions px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+            className="flex-1 rounded-xl bg-accent-sessions px-3 py-2 text-sm font-medium text-on-accent focus:outline-none"
           >
             Überspringen
           </Pressable>

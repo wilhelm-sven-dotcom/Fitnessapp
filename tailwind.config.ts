@@ -63,6 +63,9 @@ const config: Config = {
         line: "var(--line)",
         strong: "var(--strong)",
         "on-strong": "var(--on-strong)",
+        // Contrast ink for accent-filled surfaces — follows the active accent
+        // (skin default or accentOverride), so CTAs stay readable on any accent.
+        "on-accent": "var(--on-accent)",
       },
       // Corner radius is a skin token (blueprint = sharp, tactile = rounded).
       borderRadius: {
