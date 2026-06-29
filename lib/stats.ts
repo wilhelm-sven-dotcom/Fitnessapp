@@ -53,3 +53,25 @@ export function weeklyStreak(log: LoggedSession[], ref: Date = new Date()): numb
   }
   return streak;
 }
+
+/**
+ * Mean RIR across this week's working, filled sets (Monday-based) — the
+ * editorial "Anstrengung Ø". null when nothing logged with an RIR this week.
+ */
+export function weeklyAvgRir(log: LoggedSession[], ref: Date = new Date()): number | null {
+  const start = weekStartMon(ref);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+  const rirs: number[] = [];
+  for (const s of log) {
+    const t = new Date(s.date);
+    if (t < start || t >= end) continue;
+    for (const ex of s.exercises) {
+      for (const set of workSets(ex.sets)) {
+        if (set.rir != null && isFilled(set)) rirs.push(set.rir);
+      }
+    }
+  }
+  if (!rirs.length) return null;
+  return rirs.reduce((a, b) => a + b, 0) / rirs.length;
+}

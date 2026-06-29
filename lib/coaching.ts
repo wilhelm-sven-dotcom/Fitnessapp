@@ -114,6 +114,57 @@ export function greeting(opts: { name?: string; now?: Date; seed?: number } = {}
   return pool[((opts.seed % pool.length) + pool.length) % pool.length];
 }
 
+/** Cardio-interference level (mirrors lib/cardio-advice CardioAdvice.level). */
+export type CardioLevel = "none" | "ease" | "spare";
+
+/**
+ * Magazine "deck" (standfirst) for the editorial home: exercise count + planned
+ * minutes, plus a context-aware coaching tail (cardio interference, else a
+ * rotating cue). Rendered in Newsreader italic.
+ */
+export function editorialDeck(opts: {
+  exCount: number;
+  minutes: number;
+  cardioLevel?: CardioLevel;
+  seed?: number;
+}): string {
+  const { exCount, minutes, cardioLevel, seed = 0 } = opts;
+  const head = `${exCount} ${exCount === 1 ? "Übung" : "Übungen"}, rund ${minutes} Minuten.`;
+  if (cardioLevel === "spare")
+    return `${head} Nach harter Fahrt heute bewusst leichter — sauber statt schwer.`;
+  if (cardioLevel === "ease")
+    return `${head} Heute kontrolliert einsteigen, Qualität vor Last.`;
+  const tails = [
+    "Sauber starten, kontrolliert steigern.",
+    "Jede Wiederholung mit Absicht.",
+    "Technik führt, das Gewicht folgt.",
+    "Erst die Form, dann die Last.",
+  ];
+  return `${head} ${tails[((seed % tails.length) + tails.length) % tails.length]}`;
+}
+
+/**
+ * A coach-voiced pull-quote — the editorial "Spruch". Context-aware after hard
+ * cardio, else a rotating line. Render with a quote mark + "— Dein Coach".
+ */
+export function coachQuote(opts: { cardioLevel?: CardioLevel; seed?: number } = {}): string {
+  const { cardioLevel, seed = 0 } = opts;
+  if (cardioLevel === "spare")
+    return "Gestern hart gefahren — heute die Beine zehn Prozent leichter. Technik vor Last.";
+  if (cardioLevel === "ease")
+    return "Nach der Fahrt sauber einsteigen. Qualität schlägt Quantität.";
+  const pool = [
+    "Zwei harte, saubere Sätze schlagen fünf halbe.",
+    "Lass ein, zwei Wiederholungen im Tank — Wachstum braucht Erholung.",
+    "Spann den Bauch, atme, dann zieh durch.",
+    "Konstanz ist die Abkürzung. Zeig heute auf.",
+    "Der letzte saubere Satz entscheidet.",
+    "Volle Spannung über den ganzen Weg — oben wie unten.",
+    "Heute ein Prozent. Das summiert sich zu allem.",
+  ];
+  return pool[((seed % pool.length) + pool.length) % pool.length];
+}
+
 /** Cues shown on the home screen. */
 export function homeChips(opts: { daysAgo: number | null; weekCount: number }): Chip[] {
   const chips: Chip[] = [];
