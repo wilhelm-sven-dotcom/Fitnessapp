@@ -24,6 +24,7 @@ export default function SettingsPage() {
     settings,
     setVoiceCues,
     setSuperset,
+    setWeightStep,
   } = useTraining();
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -233,6 +234,29 @@ export default function SettingsPage() {
             label="Supersätze"
             hint="Die letzten zwei Übungen im Wechsel — spart Pausenzeit, mehr passt ins Zeitfenster."
           />
+          <div>
+            <p className="text-sm font-medium text-fg">Gewichtsstufe</p>
+            <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
+              Kleinste Hantelstufe, die du laden kannst — die Vorschläge runden darauf.
+            </p>
+            <div className="flex gap-1 rounded-xl bg-surface-2 p-1">
+              {[1.25, 2.5, 5].map((s) => {
+                const active = (settings.weightStep ?? 2.5) === s;
+                return (
+                  <Pressable
+                    key={s}
+                    onClick={() => setWeightStep(s)}
+                    className={
+                      "flex-1 rounded-lg py-2 text-sm font-medium tabular-nums focus:outline-none " +
+                      (active ? "bg-strong text-on-strong" : "text-muted")
+                    }
+                  >
+                    {`${s}`.replace(".", ",")} kg
+                  </Pressable>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 

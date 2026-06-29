@@ -1,14 +1,16 @@
 "use client";
 
-import { Check, ChevronRight, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronRight, Copy, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
 import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EQUIP_LIST, PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
+import { reqOk } from "@/lib/progression";
+import { muscleOf } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 import type { Exercise, Pattern, Unit } from "@/lib/types";
 
@@ -20,13 +22,31 @@ export default function PlanPage() {
     addCustom,
     removeCustom,
     sessionOf,
+    allLib,
     days,
     addDay,
     removeDay,
+    gyms,
+    switchGym,
+    addGym,
+    removeGym,
+    settings,
   } = useTraining();
   const router = useRouter();
 
   const [name, setName] = useState("");
+  const [newGym, setNewGym] = useState("");
+  const equipStats = useMemo(() => {
+    const has = (k: string) => (equip as string[]).includes(k);
+    const available = allLib.filter((e) => reqOk(e, has));
+    const muscles = new Set<string>();
+    available.forEach((e) => {
+      const m = muscleOf(e);
+      muscles.add(m.primary);
+      if (m.secondary) muscles.add(m.secondary);
+    });
+    return { count: available.length, cov: muscles.size };
+  }, [equip, allLib]);
   const [pattern, setPattern] = useState<Pattern>("squat");
   const [unit, setUnit] = useState<Unit>("Wdh");
   const [weighted, setWeighted] = useState(true);
@@ -105,40 +125,113 @@ export default function PlanPage() {
               ))}
             </div>
           )}
-          <Pressable
-            onClick={() => router.push("/day/neu")}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
-          >
-            <Plus size={16} strokeWidth={2.5} /> Eigener Tag
-          </Pressable>
+          <div className="flex gap-2">
+            <Pressable
+              onClick={() => router.push("/day/neu")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
+            >
+              <Plus size={16} strokeWidth={2.5} /> Eigener Tag
+            </Pressable>
+            <Pressable
+              onClick={() => router.push("/day/neu?coach=1")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+            >
+              <Sparkles size={16} strokeWidth={2.5} /> Coach-Tag
+            </Pressable>
+          </div>
         </section>
       </Reveal>
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Geräte</p>
-        <p className="mb-3 text-xs leading-relaxed text-muted">
-          Abwählen, was du nicht (mehr) nutzt — die Übungsauswahl passt sich sofort an.
+        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
+          Geräte & Profile
         </p>
-        <div className="flex flex-wrap gap-2">
+
+        <div className="mb-3 flex flex-wrap gap-2">
+          {gyms.map((g) => {
+            const active = settings.activeGymId === g.id;
+            return (
+              <Pressable
+                key={g.id}
+                onClick={() => switchGym(g.id)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium focus:outline-none",
+                  active ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
+                )}
+              >
+                {g.name}
+                {active && gyms.length > 1 && (
+                  <span
+                    role="button"
+                    aria-label="Profil löschen"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      removeGym(g.id);
+                    }}
+                    className="-mr-1 rounded-full p-0.5"
+                  >
+                    <X size={12} />
+                  </span>
+                )}
+              </Pressable>
+            );
+          })}
+        </div>
+        <div className="mb-4 flex gap-2">
+          <input
+            value={newGym}
+            onChange={(e) => setNewGym(e.target.value)}
+            placeholder="Neues Profil (z. B. Zuhause)"
+            className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          />
+          <Pressable
+            onClick={() => {
+              if (!newGym.trim()) return;
+              addGym(newGym);
+              setNewGym("");
+            }}
+            disabled={!newGym.trim()}
+            className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+          >
+            Anlegen
+          </Pressable>
+        </div>
+
+        <p className="mb-2 text-xs leading-relaxed text-muted">
+          Tippe an, was im aktiven Profil verfügbar ist — die Übungsauswahl passt sich
+          sofort an.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
           {EQUIP_LIST.map((e) => {
             const on = equip.includes(e.key);
             return (
               <Pressable
                 key={e.key}
                 onClick={() => toggleEquip(e.key)}
-                style={on ? { boxShadow: "0 0 12px -3px var(--accent)" } : undefined}
+                style={on ? { boxShadow: "0 0 14px -4px var(--accent)" } : undefined}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm focus:outline-none",
+                  "flex items-center justify-between gap-2 rounded-xl px-3 py-3 text-sm focus:outline-none",
                   on
                     ? "bg-accent-sessions font-medium text-on-strong"
                     : "bg-surface-2 text-muted",
                 )}
               >
-                {on ? "✓ " : ""}
-                {e.label}
+                <span className="min-w-0 truncate">{e.label}</span>
+                {on && <Check size={15} strokeWidth={3} className="shrink-0" />}
               </Pressable>
             );
           })}
+        </div>
+
+        <div className="mt-3 flex items-center justify-between rounded-xl bg-base px-3 py-2 text-xs text-muted">
+          <span>
+            <span className="font-mono tabular-nums text-fg">{equipStats.count}</span>{" "}
+            Übungen verfügbar
+          </span>
+          <span>
+            <span className="font-mono tabular-nums text-fg">{equipStats.cov}</span>/9
+            Muskelgruppen
+          </span>
         </div>
       </section>
 

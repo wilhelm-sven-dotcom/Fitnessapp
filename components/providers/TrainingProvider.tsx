@@ -38,6 +38,7 @@ import type {
   EquipKey,
   Readiness,
   Exercise,
+  GymProfile,
   LastPerf,
   LoggedSession,
   Pattern,
@@ -66,6 +67,7 @@ export interface ExportEnvelope {
   body: BodyMetric[];
   cardio: CardioSession[];
   days: WorkoutDay[];
+  gyms: GymProfile[];
   settings?: AppSettings;
 }
 
@@ -143,6 +145,10 @@ interface TrainingContextValue {
   addDay: (day: WorkoutDay) => void;
   updateDay: (day: WorkoutDay) => void;
   removeDay: (id: string) => void;
+  gyms: GymProfile[];
+  switchGym: (id: string) => void;
+  addGym: (name: string) => void;
+  removeGym: (id: string) => void;
   saveSession: () => Promise<void>;
   deleteSession: (realIdx: number) => Promise<void>;
   resetAll: () => Promise<void>;
@@ -153,6 +159,7 @@ interface TrainingContextValue {
   setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
   setAccent: (id: string) => void;
+  setWeightStep: (step: number) => void;
   setUserName: (name: string) => void;
   completeOnboarding: (name?: string) => void;
   setReadiness: (r: Readiness) => void;
@@ -205,6 +212,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [body, setBody] = useState<BodyMetric[]>([]);
   const [cardio, setCardio] = useState<CardioSession[]>([]);
   const [days, setDays] = useState<WorkoutDay[]>([]);
+  const [gyms, setGyms] = useState<GymProfile[]>([]);
   const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -219,7 +227,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   // Read every key from the local cache into state. Reused after a cloud pull.
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, da] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, da, gy] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -228,6 +236,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
       storage.getJSON<CardioSession[]>(KEYS.cardio, []),
       storage.getJSON<WorkoutDay[]>(KEYS.days, []),
+      storage.getJSON<GymProfile[]>(KEYS.gyms, []),
     ]);
     if (Array.isArray(l)) setLog(l);
     if (Array.isArray(e)) setEquip(e);
@@ -237,6 +246,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
     if (Array.isArray(ca)) setCardio(ca);
     if (Array.isArray(da)) setDays(da);
+    if (Array.isArray(gy)) setGyms(gy);
     setLoading(false);
   }, []);
 
@@ -547,13 +557,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       lighter: daysAgo != null && daysAgo > 5,
       loadMult: scale.loadMult,
       cap: scale.cap,
+      step: settings.weightStep,
     });
     const working: SetEntry[] = Array.from({ length: ex.sets }, () => ({
       weight: p.w,
       reps: "",
     }));
     const warm =
-      ex.weighted && p.w && Number(p.w) > 0 ? warmupSets(Number(p.w)) : [];
+      ex.weighted && p.w && Number(p.w) > 0
+        ? warmupSets(Number(p.w), settings.weightStep)
+        : [];
     return [...warm, ...working];
   };
 
@@ -609,6 +622,46 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setSettings(next);
     await storage.setJSON(KEYS.settings, next);
   };
+
+  const saveGyms = async (next: GymProfile[]) => {
+    setGyms(next);
+    await storage.setJSON(KEYS.gyms, next);
+  };
+  const switchGym = (id: string) => {
+    const g = gyms.find((x) => x.id === id);
+    if (!g) return;
+    void saveEquip(g.equip);
+    void saveSettings({ ...settings, activeGymId: id });
+  };
+  const addGym = (name: string) => {
+    const g: GymProfile = {
+      id: "gym_" + Date.now(),
+      name: name.trim() || "Neues Gym",
+      equip: [...equip],
+    };
+    void saveGyms([...gyms, g]);
+    void saveSettings({ ...settings, activeGymId: g.id });
+  };
+  const removeGym = (id: string) => {
+    if (gyms.length <= 1) return;
+    const next = gyms.filter((g) => g.id !== id);
+    void saveGyms(next);
+    if (settings.activeGymId === id) {
+      void saveEquip(next[0].equip);
+      void saveSettings({ ...settings, activeGymId: next[0].id });
+    }
+  };
+  const setWeightStep = (step: number) =>
+    void saveSettings({ ...settings, weightStep: step });
+
+  // Ensure one gym profile exists — migrate from the flat equipment list.
+  useEffect(() => {
+    if (loading || gyms.length > 0) return;
+    const g: GymProfile = { id: "gym_" + Date.now(), name: "Mein Gym", equip };
+    void saveGyms([g]);
+    void saveSettings({ ...settings, activeGymId: g.id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, gyms.length]);
   const setBudget = (min: number) =>
     void saveSettings({ ...settings, timeBudgetMin: min });
   const setVoiceCues = (on: boolean) =>
@@ -720,6 +773,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const toggleEquip = (k: EquipKey) => {
     const next = equip.includes(k) ? equip.filter((x) => x !== k) : [...equip, k];
     void saveEquip(next);
+    const aid = settings.activeGymId;
+    if (aid) void saveGyms(gyms.map((g) => (g.id === aid ? { ...g, equip: next } : g)));
   };
 
   const addCustom = (data: AddCustomData) => {
@@ -839,6 +894,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     body,
     cardio,
     days,
+    gyms,
     settings,
   });
 
@@ -856,6 +912,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const nextBody = Array.isArray(d.body) ? (d.body as BodyMetric[]) : body;
     const nextCardio = Array.isArray(d.cardio) ? (d.cardio as CardioSession[]) : cardio;
     const nextDays = Array.isArray(d.days) ? (d.days as WorkoutDay[]) : days;
+    const nextGyms = Array.isArray(d.gyms) ? (d.gyms as GymProfile[]) : gyms;
     const nextSettings =
       d.settings && typeof d.settings === "object"
         ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
@@ -867,6 +924,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBody(nextBody);
     setCardio(nextCardio);
     setDays(nextDays);
+    setGyms(nextGyms);
     setSettings(nextSettings);
     await Promise.all([
       storage.setJSON(KEYS.log, nextLog),
@@ -876,6 +934,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.setJSON(KEYS.body, nextBody),
       storage.setJSON(KEYS.cardio, nextCardio),
       storage.setJSON(KEYS.days, nextDays),
+      storage.setJSON(KEYS.gyms, nextGyms),
       storage.setJSON(KEYS.settings, nextSettings),
     ]);
     return true;
@@ -924,6 +983,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     addDay,
     updateDay,
     removeDay,
+    gyms,
+    switchGym,
+    addGym,
+    removeGym,
     saveSession,
     deleteSession,
     resetAll,
@@ -934,6 +997,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setSuperset,
     setTheme,
     setAccent,
+    setWeightStep,
     setUserName,
     completeOnboarding,
     setReadiness: (r) => setTodayReadiness(r),
