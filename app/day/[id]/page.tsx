@@ -381,12 +381,10 @@ export default function DayBuilderPage() {
 
       {/* Live instrument readouts */}
       <Card variant="elevated" className="edge-top mt-4 rounded-3xl p-5">
-        <div className="flex items-center gap-5">
-          <BalanceRadar axes={dnaAxes} />
-          <div className="min-w-0 flex-1 space-y-3">
-            <Readout eyebrow="Dauer" value={duration} unit="Min" size="md" />
-            <Readout eyebrow="Übungen" value={items.length} size="md" count={false} />
-          </div>
+        <BalanceRadar axes={dnaAxes} />
+        <div className="mt-4 flex items-center justify-center gap-10 border-t border-surface-3 pt-4">
+          <Readout eyebrow="Dauer" value={duration} unit="Min" size="md" />
+          <Readout eyebrow="Übungen" value={items.length} size="md" count={false} />
         </div>
       </Card>
 
