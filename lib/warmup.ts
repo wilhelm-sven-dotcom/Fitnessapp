@@ -11,6 +11,8 @@ export interface WarmupDrill {
   cue: string;
   durationSec: number;
   kind: "mobility" | "activation";
+  /** Figure key in `FIG` to animate. Defaults to the drill `id` when omitted. */
+  figure?: string;
 }
 
 const D = {
@@ -23,6 +25,7 @@ const D = {
   },
   dead_bug: {
     id: "dead_bug",
+    figure: "deadbug",
     name: "Dead Bug",
     cue: "Auf dem Rücken, unterer Rücken bleibt am Boden, Arm und Bein gegengleich absenken.",
     durationSec: 30,
@@ -37,6 +40,7 @@ const D = {
   },
   glute_bridge: {
     id: "glute_bridge",
+    figure: "glutebridge",
     name: "Glute Bridge",
     cue: "Auf dem Rücken, Füße auf, Hüfte hoch, oben den Po fest anspannen.",
     durationSec: 30,
@@ -65,6 +69,7 @@ const D = {
   },
   bird_dog: {
     id: "bird_dog",
+    figure: "birddog",
     name: "Bird Dog",
     cue: "Gegenüberliegende Hand und Bein strecken, Rumpf ruhig, Becken stabil.",
     durationSec: 30,

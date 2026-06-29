@@ -3,6 +3,8 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, Pause, Play, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { FigurePanel } from "@/components/figures/FigurePanel";
+import { FIG } from "@/components/figures/figureData";
 import { Pressable } from "@/components/ui/pressable";
 import { EASE_OUT } from "@/lib/motion";
 import { speak } from "@/lib/voice";
@@ -96,6 +98,7 @@ export function WarmupPlayer({
 
   const pct = current.durationSec > 0 ? (left / current.durationSec) * 100 : 0;
   const isMobility = current.kind === "mobility";
+  const fig = FIG[current.figure ?? current.id];
 
   return (
     <div
@@ -149,6 +152,11 @@ export function WarmupPlayer({
           >
             {isMobility ? "Mobilität" : "Aktivierung"}
           </span>
+          {fig && (
+            <div className="mb-3 w-44 rounded-2xl border border-surface-3 bg-surface-1 p-2 shadow-card">
+              <FigurePanel label="" fig={fig} viewKey="side" />
+            </div>
+          )}
           <h2 className="font-display text-4xl font-semibold tracking-tight text-fg">
             {current.name}
           </h2>

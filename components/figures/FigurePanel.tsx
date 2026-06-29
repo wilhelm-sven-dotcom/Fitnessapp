@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
+  frameAt,
+  framesOf,
   lerpPts,
   SB,
   SP,
@@ -74,7 +76,9 @@ export function FigurePanel({
   }, []);
 
   if (!v) return null;
-  const P = lerpPts(v.A, v.B, f);
+  const frames = framesOf(v);
+  const { i, next, t } = frameAt(frames.length, f);
+  const P = lerpPts(frames[i], frames[next], t);
   const spset = new Set((v.spine || SP).map((s) => s.join(">")));
   const ln = (p: string, q: string) => {
     const a = P[p];
