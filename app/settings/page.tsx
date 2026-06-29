@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { StravaSection } from "@/components/settings/StravaSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
+import { AppIconSection } from "@/components/settings/AppIconSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
@@ -106,6 +107,8 @@ export default function SettingsPage() {
       <PageHeader title="Einstellungen" eyebrow="App" />
 
       <AppearanceSection />
+
+      <AppIconSection />
 
       <ProfileSection />
 
