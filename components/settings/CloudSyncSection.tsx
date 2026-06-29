@@ -18,7 +18,7 @@ export function CloudSyncSection() {
 
   if (!cloud.configured) {
     return (
-      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
           Cloud-Sync
         </p>
@@ -76,7 +76,7 @@ export function CloudSyncSection() {
   };
 
   return (
-    <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+    <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
       <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Cloud-Sync</p>
 
       {cloud.email ? (

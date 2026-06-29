@@ -25,7 +25,7 @@ export function RestTimer({
       exit={{ y: 90, opacity: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 34 }}
     >
-      <div className="mx-auto m-3 max-w-md rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4 backdrop-blur">
+      <div className="mx-auto m-3 max-w-md rounded-card border border-surface-3 bg-surface-1 shadow-card p-4 backdrop-blur">
         <div className="mb-2 flex items-end justify-between">
           <span className="font-mono text-xs uppercase tracking-widest text-accent-sessions">
             Satzpause

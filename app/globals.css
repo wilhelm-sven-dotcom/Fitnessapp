@@ -2,36 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme = default. Light theme overrides via [data-theme="light"].
-   "system" is resolved to dark/light in JS, so only these two sets are needed.
-   --accent is user-selectable (default Apple red). */
+/* ───────────────────────────────────────────────────────────────────────────
+   Two design skins as a token axis on <html data-skin>:
+     · blueprint — engineering schematic: measurement grid, hairlines, steel +
+       red, Archivo display, sharp corners. (default)
+     · tactile   — machined instrument: raised panels, amber, soft depth,
+       Sora display, rounded corners.
+   Orthogonal to data-theme (dark default / light). Skins set the full token
+   contract; the [data-theme="light"] block (placed AFTER skins) overrides the
+   neutral palette so light mode works under either skin.
+   Fonts come from layout.tsx (next/font → --font-archivo/--font-sora/--font-jbmono).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* :root = blueprint values as the JS-off fallback. The active skin is set on
+   <html data-skin> (SSR default "tactile" + pre-paint script), so a [data-skin]
+   block always wins in practice — these :root values are rarely seen. */
 :root {
   color-scheme: dark;
-  --base: #0a0a0a;
-  --card: #161618;
-  --surface-2: #1f1f23;
-  --line: #2a2a30;
-  --fg: #f5f5f5;
-  --muted: #a1a1aa;
-  --faint: #6b7280;
-  --strong: #f5f5f5; /* primary CTA surface */
-  --on-strong: #0a0a0a; /* text on strong / accent surfaces */
-  --glass: rgba(22, 22, 24, 0.72);
-  --accent: #ff375f;
+  --base: #0c0e12;
+  --card: #11141a;
+  --surface-2: #171b22;
+  --line: #222b38;
+  --fg: #e8ecf2;
+  --muted: #8a93a3;
+  --faint: #566173;
+  --strong: #e8ecf2;
+  --on-strong: #0c0e12;
+  --glass: rgba(12, 14, 18, 0.72);
+
+  --accent: #ff375f; /* primary / CTA / signature */
+  --accent-2: #6e90be; /* steel — labels, structure, schematic ink */
+  --live: #ff375f; /* "today / recommended" highlight */
+
+  --font-display: var(--font-archivo);
+  --font-body: var(--font-archivo);
+  --font-mono: var(--font-jbmono);
+
+  --radius-card: 4px;
+  --radius-pill: 5px;
+  --panel-bg: linear-gradient(0deg, #11141a, #11141a);
+  --panel-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --panel-shadow-lg: 0 1px 0 rgba(0, 0, 0, 0.5);
+  --hero-sheen: linear-gradient(135deg, rgba(110, 144, 190, 0.07), transparent 42%);
+  --page-bg: linear-gradient(rgba(110, 144, 190, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 144, 190, 0.06) 1px, transparent 1px);
+  --page-bg-size: 28px 28px;
+  --page-bg-repeat: repeat;
 }
 
+[data-skin="tactile"] {
+  --base: #0e0f12;
+  --card: #16181d;
+  --surface-2: #1b1e24;
+  --line: #262a33;
+  --fg: #eceef2;
+  --muted: #9aa1ac;
+  --faint: #5e626b;
+  --strong: #eceef2;
+  --on-strong: #0e0f12;
+  --glass: rgba(14, 15, 18, 0.72);
+
+  --accent: #ff9f0a; /* amber instrument */
+  --accent-2: #9aa1ac; /* neutral — labels stay quiet */
+  --live: #ff375f;
+
+  --font-display: var(--font-sora);
+  --font-body: var(--font-sora);
+  --font-mono: var(--font-jbmono);
+
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --panel-bg: linear-gradient(180deg, #181b21, #121419);
+  --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 22px rgba(0, 0, 0, 0.45);
+  --panel-shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.55);
+  --hero-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 42%);
+  --page-bg: radial-gradient(120% 80% at 50% -10%, #15171c, #0e0f12 60%);
+  --page-bg-size: 100% 100%;
+  --page-bg-repeat: no-repeat;
+}
+
+/* Light theme overrides the neutral palette under either skin (identity tokens
+   — accent, fonts, radius, panel treatment — persist from the skin). */
 [data-theme="light"] {
   color-scheme: light;
-  --base: #f4f4f6;
+  --base: #f2f3f5;
   --card: #ffffff;
-  --surface-2: #ececef;
-  --line: #e2e2e7;
-  --fg: #18181b;
-  --muted: #52525b;
-  --faint: #9ca3af;
-  --strong: #18181b;
+  --surface-2: #e9ebef;
+  --line: #d8dce3;
+  --fg: #14171c;
+  --muted: #54606e;
+  --faint: #9aa3af;
+  --strong: #14171c;
   --on-strong: #ffffff;
   --glass: rgba(255, 255, 255, 0.72);
+  --panel-bg: linear-gradient(0deg, #ffffff, #ffffff);
+  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 24px -16px rgba(0, 0, 0, 0.25);
+  --panel-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.08), 0 22px 48px -22px rgba(0, 0, 0, 0.3);
+  --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.04), transparent 42%);
+}
+[data-theme="light"][data-skin="blueprint"] {
+  --page-bg: linear-gradient(rgba(110, 144, 190, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 144, 190, 0.16) 1px, transparent 1px);
+}
+[data-theme="light"][data-skin="tactile"] {
+  --page-bg: radial-gradient(120% 80% at 50% -10%, #ffffff, #eef0f3 60%);
 }
 
 html {
@@ -43,6 +117,10 @@ html {
   body {
     @apply font-sans antialiased;
     background-color: var(--base);
+    background-image: var(--page-bg);
+    background-size: var(--page-bg-size);
+    background-repeat: var(--page-bg-repeat);
+    background-attachment: fixed;
     color: var(--fg);
     text-rendering: optimizeLegibility;
   }
@@ -67,7 +145,7 @@ html {
   backdrop-filter: saturate(160%) blur(20px);
 }
 
-/* The one bold accent moment — depth + a charged glow in the selectable accent.
+/* The one bold accent moment — depth + a charged glow in the skin accent.
    Use INSTEAD of shadow-card (it carries its own elevation). */
 .glow-accent {
   box-shadow:
@@ -90,4 +168,17 @@ html {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   pointer-events: none;
+}
+
+/* Skin-scoped visibility — lets one component ship both signature variants and
+   reveal the right one with zero JS / no hydration flash (data-skin is set
+   pre-paint). Default (blueprint) hides the tactile variant. */
+.only-tactile {
+  display: none;
+}
+[data-skin="tactile"] .only-tactile {
+  display: revert;
+}
+[data-skin="tactile"] .only-blueprint {
+  display: none;
 }

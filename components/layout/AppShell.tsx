@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen overflow-x-hidden">
           {!hideChrome && (
             <header
-              className="glass sticky top-0 z-30 border-b border-surface-3"
+              className="glass sticky top-0 z-30 border-b border-line"
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">

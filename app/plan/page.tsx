@@ -68,7 +68,7 @@ export default function PlanPage() {
       <PageHeader eyebrow="Dein Setup" title="Plan" />
 
       <Reveal>
-        <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+        <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
           <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
             Eigene Tage
           </p>
@@ -150,7 +150,7 @@ export default function PlanPage() {
         </section>
       </Reveal>
 
-      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Geräte & Profile
         </p>
@@ -243,7 +243,7 @@ export default function PlanPage() {
         </div>
       </section>
 
-      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Eigene Übung
         </p>
@@ -332,7 +332,7 @@ export default function PlanPage() {
         const list = sessionOf(t.key);
         return (
           <Reveal key={t.key} delay={0.08 + ti * 0.05}>
-            <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+            <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
             <div className="mb-3 flex items-baseline justify-between gap-2">
               <div className="flex min-w-0 items-baseline gap-2">
                 <span className="font-mono text-sm text-muted">{t.key}</span>

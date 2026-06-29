@@ -75,7 +75,7 @@ export function WarmupPlayer({
         </p>
         <Pressable
           onClick={onClose}
-          className="mt-2 rounded-2xl bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
+          className="mt-2 rounded-card bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
         >
           Los geht&apos;s
         </Pressable>
@@ -88,7 +88,7 @@ export function WarmupPlayer({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-base">
         <Pressable
           onClick={onClose}
-          className="rounded-2xl bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
+          className="rounded-card bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
         >
           Zurück
         </Pressable>
@@ -153,7 +153,7 @@ export function WarmupPlayer({
             {isMobility ? "Mobilität" : "Aktivierung"}
           </span>
           {fig && (
-            <div className="mb-3 w-44 rounded-2xl border border-surface-3 bg-surface-1 p-2 shadow-card">
+            <div className="mb-3 w-44 rounded-card border border-surface-3 bg-surface-1 p-2 shadow-card">
               <FigurePanel label="" fig={fig} viewKey="side" />
             </div>
           )}
@@ -175,13 +175,13 @@ export function WarmupPlayer({
       <div className="flex items-center gap-2 px-5">
         <Pressable
           onClick={() => setPaused((p) => !p)}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-surface-2 py-3.5 text-sm font-medium text-fg focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-3.5 text-sm font-medium text-fg focus:outline-none"
         >
           {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Weiter" : "Pause"}
         </Pressable>
         <Pressable
           onClick={skip}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-strong py-3.5 text-sm font-semibold text-on-strong focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-card bg-strong py-3.5 text-sm font-semibold text-on-strong focus:outline-none"
         >
           Nächste <ChevronRight size={16} strokeWidth={2.5} />
         </Pressable>

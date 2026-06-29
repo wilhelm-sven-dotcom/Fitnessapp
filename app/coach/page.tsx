@@ -125,7 +125,7 @@ export default function CoachPage() {
         <Reveal>
           <Pressable
             onClick={() => send(RECAP_PROMPT)}
-            className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none"
+            className="mb-5 flex w-full items-center justify-center gap-2 rounded-card bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none"
           >
             <Sparkles size={18} strokeWidth={2.5} /> Wochen-Recap
           </Pressable>
@@ -135,7 +135,7 @@ export default function CoachPage() {
               <Pressable
                 key={s}
                 onClick={() => send(s)}
-                className="flex w-full items-center justify-between gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-fg focus:outline-none"
+                className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-fg focus:outline-none"
               >
                 {s}
                 <Send size={15} className="shrink-0 text-faint" />
@@ -149,7 +149,7 @@ export default function CoachPage() {
             <div
               key={i}
               className={cn(
-                "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                "rounded-card px-4 py-3 text-sm leading-relaxed",
                 m.role === "user"
                   ? "ml-8 bg-accent-coverage text-on-strong"
                   : "mr-4 whitespace-pre-wrap border border-surface-3 bg-surface-1 shadow-card text-fg",
@@ -174,13 +174,13 @@ export default function CoachPage() {
           }}
           rows={1}
           placeholder="Frag deinen Coach…"
-          className="flex-1 resize-none rounded-2xl bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
         />
         <Pressable
           onClick={() => void send(input)}
           disabled={busy || !input.trim()}
           aria-label="Senden"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-strong text-on-strong focus:outline-none disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-strong text-on-strong focus:outline-none disabled:opacity-40"
         >
           <Send size={18} strokeWidth={2.5} />
         </Pressable>

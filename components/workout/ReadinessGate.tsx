@@ -76,7 +76,7 @@ export function ReadinessGate({
       <Pressable
         onClick={submit}
         disabled={!complete}
-        className="mt-5 w-full rounded-2xl bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
+        className="mt-5 w-full rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
       >
         Los geht&apos;s
       </Pressable>
