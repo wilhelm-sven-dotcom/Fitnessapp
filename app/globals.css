@@ -258,7 +258,9 @@ html {
    Editorial = ruled scorecard, Blueprint = dashed measurement baselines,
    Tactile = the active set lifts as a machined chip. The active set keeps its
    accent ring in every skin, so it's excluded from the divider rules. */
-[data-skin="editorial"] .set-row:not(.set-active) {
+/* `.log-row` shares the same signature on Verlauf/Plan ledgers. */
+[data-skin="editorial"] .set-row:not(.set-active),
+[data-skin="editorial"] .log-row + .log-row {
   border-top: 1px solid var(--line);
   padding-top: 0.375rem;
 }
@@ -266,7 +268,8 @@ html {
   border-top: 0;
   padding-top: 0;
 }
-[data-skin="blueprint"] .set-row:not(.set-active) {
+[data-skin="blueprint"] .set-row:not(.set-active),
+[data-skin="blueprint"] .log-row:not(:last-child) {
   border-bottom: 1px dashed var(--line);
   padding-bottom: 0.375rem;
 }
