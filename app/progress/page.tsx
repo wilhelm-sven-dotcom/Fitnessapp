@@ -11,6 +11,7 @@ import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { RecordsBoard } from "@/components/progress/RecordsBoard";
 import { FatigueCard } from "@/components/progress/FatigueCard";
+import { PhaseCard } from "@/components/progress/PhaseCard";
 import { TrendChart } from "@/components/progress/TrendChart";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -80,7 +81,7 @@ function BodyCard({
 }
 
 export default function ProgressPage() {
-  const { log, body, muscleVolumes, cardio } = useTraining();
+  const { log, body, muscleVolumes, cardio, settings } = useTraining();
   const router = useRouter();
   const weightSeries = body
     .filter((m) => m.weightKg != null)
@@ -177,6 +178,8 @@ export default function ProgressPage() {
       )}
 
       <FatigueCard log={log} cardio={cardio} />
+
+      <PhaseCard log={log} cardio={cardio} settings={settings} />
 
       <RecordsBoard log={log} />
 

@@ -1,4 +1,5 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
+import type { FatigueBand } from "@/lib/fatigue";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS, volumeBucket } from "@/lib/training-science";
 import { MUSCLE_LABEL, muscleOf, type MuscleVolume, weekStartMon } from "@/lib/volume";
@@ -37,12 +38,18 @@ function weeksSince(dateIso?: string): number {
   return (Date.now() - new Date(dateIso).getTime()) / (7 * DAY);
 }
 
-/** Multi-week fatigue → suggest a deload week (fires on ≥ 2 concurrent signals). */
+/**
+ * Multi-week fatigue → suggest a deload week. Fires on ≥ 2 concurrent signals,
+ * when the Belastungs-Index is "hoch", or on the 6-week cadence (overdue) — but
+ * never within 2 weeks of the last deload.
+ */
 export function deloadSignal(
   log: LoggedSession[],
   settings: AppSettings,
+  fatigueBand?: FatigueBand,
 ): CoachCard | null {
-  if (weeksSince(settings.lastDeloadDate) < 2) return null;
+  const wks = weeksSince(settings.lastDeloadDate);
+  if (wks < 2) return null;
   const now = Date.now();
   const recent = log.filter((s) => now - new Date(s.date).getTime() < 14 * DAY);
   let signals = 0;
@@ -59,14 +66,18 @@ export function deloadSignal(
   if (rirs.length >= 4 && rirs.reduce((a, b) => a + b, 0) / rirs.length >= 3)
     signals++;
 
-  if (weeksSince(settings.lastDeloadDate) >= 6 && log.length >= 9) signals++;
+  if (wks >= 6 && log.length >= 9) signals++;
+  if (fatigueBand === "hoch") signals++;
 
-  if (signals < 2) return null;
+  const overdue = wks >= 6 && log.length >= 9;
+  if (signals < 2 && !overdue) return null;
   return {
     kind: "deload",
     severity: "warn",
     title: "Zeit für eine Entlastungswoche",
-    body: "Mehrere Zeichen für Ermüdung. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück.",
+    body: overdue
+      ? "Über sechs Wochen ohne Deload. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück."
+      : "Mehrere Zeichen für Ermüdung. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück.",
     action: "deload",
   };
 }
@@ -189,6 +200,7 @@ export function coachCards(opts: {
   muscleVolumes: MuscleVolume[];
   cardio: CardioSession[];
   body: BodyMetric[];
+  fatigueBand?: FatigueBand;
 }): CoachCard[] {
   const cards: CoachCard[] = [];
 
@@ -212,7 +224,7 @@ export function coachCards(opts: {
       body: "Nimm das ernst — sprich mit Arzt oder Physio, bevor du wieder schwer trainierst. Heute lieber nur Stabis und Mobilität.",
     });
 
-  const d = deloadSignal(opts.log, opts.settings);
+  const d = deloadSignal(opts.log, opts.settings, opts.fatigueBand);
   if (d) cards.push(d);
 
   const plateaus = plateauSignals(opts.log, opts.allLib);
