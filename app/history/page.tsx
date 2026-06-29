@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils";
 import type { TrafficLight } from "@/lib/types";
 
 const trafficDot: Record<TrafficLight, string> = {
-  green: "bg-emerald-400",
-  yellow: "bg-amber-400",
-  red: "bg-rose-500",
+  green: "bg-status-in",
+  yellow: "bg-status-over",
+  red: "bg-status-danger",
 };
 
 export default function HistoryPage() {
@@ -57,7 +57,7 @@ export default function HistoryPage() {
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
               .slice(0, 8)
               .map((c) => (
-                <div key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                <div key={c.id} className="log-row flex items-center justify-between gap-2 text-sm">
                   <span className="min-w-0 truncate text-fg">{c.title ?? "Fahrt"}</span>
                   <span className="shrink-0 font-mono text-xs tabular-nums text-muted">
                     {fmtDate(c.date)} · {Math.round(c.durationSec / 60)} Min
@@ -115,7 +115,7 @@ export default function HistoryPage() {
                   </div>
                   <div className="ml-2 shrink-0 text-right">
                     {v > 0 && (
-                      <p className="font-mono text-sm tabular-nums text-accent-volume">
+                      <p className="font-mono text-sm tabular-nums text-accent-ink">
                         {v.toLocaleString("de-DE")} kg
                       </p>
                     )}
@@ -138,7 +138,7 @@ export default function HistoryPage() {
                       setConfirmDel(null);
                       if (isOpen) setExpanded(null);
                     }}
-                    className="rounded-lg bg-rose-950 px-3 py-2 text-sm text-rose-300 focus:outline-none"
+                    className="rounded-lg bg-surface-2 px-3 py-2 text-sm font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                   >
                     Einheit löschen
                   </Pressable>
@@ -152,9 +152,9 @@ export default function HistoryPage() {
               )}
 
               {isOpen && (
-                <div className="space-y-2 px-4 pb-4 pt-1">
+                <div className="space-y-1 px-4 pb-4 pt-1">
                   {(s.exercises ?? []).map((ex) => (
-                    <div key={ex.id} className="flex items-baseline justify-between gap-3">
+                    <div key={ex.id} className="log-row flex items-baseline justify-between gap-3">
                       <span className="text-sm text-muted">{ex.name}</span>
                       <span className="text-right font-mono text-xs tabular-nums text-muted">
                         {(ex.sets ?? [])

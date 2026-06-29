@@ -134,7 +134,7 @@ export default function PlanPage() {
             </Pressable>
             <Pressable
               onClick={() => router.push("/day/neu?coach=1")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
             >
               <Sparkles size={16} strokeWidth={2.5} /> Coach-Tag
             </Pressable>
@@ -142,7 +142,7 @@ export default function PlanPage() {
           {(equip as string[]).includes("bike") && (
             <Pressable
               onClick={() => router.push("/workout/peloton")}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
             >
               <Bike size={16} strokeWidth={2.5} /> Peloton-Tag starten
             </Pressable>
@@ -351,7 +351,7 @@ export default function PlanPage() {
                 <button
                   key={slotKey}
                   onClick={() => setGuideEx(ex)}
-                  className="flex w-full items-baseline justify-between gap-3 py-1.5 text-left transition focus:outline-none"
+                  className="log-row flex w-full items-baseline justify-between gap-3 py-1.5 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                 >
                   <span className="flex min-w-0 items-center gap-2 text-sm text-muted">
                     <ChevronRight size={13} className="shrink-0 text-faint" />
