@@ -153,11 +153,11 @@ export default function HistoryPage() {
 
               {isOpen && (
                 <div className="space-y-2 px-4 pb-4 pt-1">
-                  {s.exercises.map((ex) => (
+                  {(s.exercises ?? []).map((ex) => (
                     <div key={ex.id} className="flex items-baseline justify-between gap-3">
                       <span className="text-sm text-muted">{ex.name}</span>
                       <span className="text-right font-mono text-xs tabular-nums text-muted">
-                        {ex.sets
+                        {(ex.sets ?? [])
                           .filter((st) => !st.warmup)
                           .map((st) =>
                             ex.unit === "Sek"

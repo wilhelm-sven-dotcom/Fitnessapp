@@ -15,7 +15,7 @@ export function exerciseAffinity(
   // Explicit slot choices (swaps) — the clearest "I want this" signal.
   for (const id of Object.values(choices)) add(id, 2);
   // Actually-trained exercises over the recent past — revealed preference.
-  for (const s of log.slice(-20)) for (const e of s.exercises) add(e.id, 1);
+  for (const s of log.slice(-20)) for (const e of s.exercises ?? []) add(e.id, 1);
   return score;
 }
 

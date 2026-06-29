@@ -57,7 +57,7 @@ export function deloadSignal(
   if (recent.filter((s) => s.backTraffic === "red").length >= 2) signals++;
 
   const rirs = recent.flatMap((s) =>
-    s.exercises.flatMap((e) =>
+    (s.exercises ?? []).flatMap((e) =>
       workSets(e.sets)
         .map((st) => st.rir)
         .filter((x): x is number => x != null),
@@ -90,7 +90,7 @@ export function plateauSignals(
   const byId = new Map(allLib.map((e) => [e.id, e]));
   const hist: Record<string, number[]> = {};
   log.forEach((s) =>
-    s.exercises.forEach((e) => {
+    (s.exercises ?? []).forEach((e) => {
       const ex = byId.get(e.id);
       if (!ex || !ex.weighted) return;
       const sets = workSets(e.sets).filter(isFilled);

@@ -80,7 +80,7 @@ export function buildCoachContext(opts: {
   // Strongest estimated 1RMs across all history.
   const best: Record<string, { name: string; e1rm: number }> = {};
   log.forEach((s) =>
-    s.exercises.forEach((e) =>
+    (s.exercises ?? []).forEach((e) =>
       workSets(e.sets)
         .filter(isFilled)
         .forEach((st) => {

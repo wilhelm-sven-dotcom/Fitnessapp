@@ -138,7 +138,7 @@ export function weeklyMuscleVolume(
       return d >= start && d < end;
     })
     .forEach((s) =>
-      s.exercises.forEach((se) => {
+      (s.exercises ?? []).forEach((se) => {
         const ex = byId.get(se.id);
         if (ex?.pattern === "cardio") return; // cardio is its own domain, not strength volume
         const n = workSets(se.sets).filter(isFilled).length;
