@@ -10,6 +10,7 @@ import {
 } from "react";
 import { CARDIO_DAY, DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
+import { fatigueState } from "@/lib/fatigue";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
@@ -602,9 +603,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const coach = useMemo(
     () =>
-      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes, cardio, body }).filter(
-        (c) => !dismissed.includes(c.kind + (c.exId ?? "")),
-      ),
+      coachCards({
+        log,
+        allLib,
+        settings,
+        seeDoctor,
+        muscleVolumes,
+        cardio,
+        body,
+        fatigueBand: fatigueState(log, cardio).band,
+      }).filter((c) => !dismissed.includes(c.kind + (c.exId ?? ""))),
     [log, allLib, settings, seeDoctor, muscleVolumes, cardio, body, dismissed],
   );
 
