@@ -151,7 +151,7 @@ export function Welcome() {
 
           <Pressable
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
-            className="flex w-full items-center justify-center rounded-card bg-accent-sessions py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            className="flex w-full items-center justify-center rounded-card bg-accent-sessions py-4 text-lg font-semibold text-on-accent shadow-card-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           >
             Los geht&rsquo;s
           </Pressable>

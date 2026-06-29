@@ -185,7 +185,7 @@ export default function HomePage() {
                   className={cn(
                     "rounded-pill px-3 py-2 text-xs font-medium tabular-nums",
                     settings.timeBudgetMin === b
-                      ? "bg-accent-sessions text-on-strong"
+                      ? "bg-accent-sessions text-on-accent"
                       : "bg-surface-2 text-muted",
                   )}
                 >
@@ -206,7 +206,7 @@ export default function HomePage() {
               tap();
               start(recTpl.key);
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-strong shadow-card-lg"
+            className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-accent shadow-card-lg"
           >
             <Play size={18} strokeWidth={2.5} /> Training starten
           </Pressable>

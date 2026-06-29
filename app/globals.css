@@ -33,6 +33,7 @@
   --accent: #ff375f; /* primary / CTA / signature */
   --accent-2: #6e90be; /* steel — labels, structure, schematic ink */
   --live: #ff375f; /* "today / recommended" highlight */
+  --on-accent: #0c0e12; /* ink on an accent-filled surface (dark reads best on the red, 5.5:1) */
 
   --font-display: var(--font-archivo);
   --font-body: var(--font-archivo);
@@ -65,6 +66,7 @@
   --accent: #ff9f0a; /* amber instrument */
   --accent-2: #9aa1ac; /* neutral — labels stay quiet */
   --live: #ff375f;
+  --on-accent: #0e0f12; /* dark ink reads on the bright amber */
 
   --font-display: var(--font-sora);
   --font-body: var(--font-sora);
@@ -96,6 +98,7 @@
   --accent: #ff375f; /* Rot */
   --accent-2: #b9b2a4; /* warmes Knochen-Grau — Labels */
   --live: #ff375f;
+  --on-accent: #0f0f10; /* dunkle Tinte auf Rot — höchster Kontrast (5,5:1) */
 
   --font-display: var(--font-anton); /* kondensierte Schlagzeile */
   --font-body: var(--font-newsreader); /* Serif */

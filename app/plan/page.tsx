@@ -220,7 +220,7 @@ export default function PlanPage() {
                 className={cn(
                   "flex items-center justify-between gap-2 rounded-xl px-3 py-3 text-sm focus:outline-none",
                   on
-                    ? "bg-accent-sessions font-medium text-on-strong"
+                    ? "bg-accent-sessions font-medium text-on-accent"
                     : "bg-surface-2 text-muted",
                 )}
               >

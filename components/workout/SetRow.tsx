@@ -35,7 +35,7 @@ function Scale({
             className={cn(
               "flex-1 rounded-lg py-1.5 text-sm font-medium tabular-nums focus:outline-none",
               value === o
-                ? "bg-accent-sessions text-on-strong"
+                ? "bg-accent-sessions text-on-accent"
                 : "bg-surface-2 text-muted",
             )}
           >

@@ -62,7 +62,7 @@ export function ReadinessGate({
                   className={cn(
                     "flex-1 rounded-xl py-2.5 text-sm focus:outline-none",
                     vals[row.key] === o.v
-                      ? "bg-accent-sessions text-on-strong"
+                      ? "bg-accent-sessions text-on-accent"
                       : "bg-surface-2 text-muted",
                   )}
                 >

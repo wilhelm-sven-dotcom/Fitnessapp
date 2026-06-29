@@ -26,6 +26,21 @@ export function accentHex(id: string | undefined): string {
 }
 
 /**
+ * Contrast ink for text/icons sitting on an accent-filled surface. A light
+ * accent (white, bone, yellow) gets dark ink; a dark/saturated accent gets
+ * light ink — keeps accent CTAs readable under any `accentOverride`. Mirrors
+ * the icon's luminance test (see `iconInk` in lib/app-icon.ts).
+ */
+export function onAccent(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 0.6 ? "#0c0e12" : "#ffffff";
+}
+
+/**
  * Full color palette (incl. black & white) for the icon designer (background +
  * glyph) and the optional app-accent override. Hex so it can drive SVG/canvas
  * and inline `--accent`.
