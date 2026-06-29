@@ -25,6 +25,28 @@ export function accentHex(id: string | undefined): string {
   return ACCENTS.find((a) => a.id === id)?.hex ?? "#ff375f";
 }
 
+/**
+ * Full color palette (incl. black & white) for the icon designer (background +
+ * glyph) and the optional app-accent override. Hex so it can drive SVG/canvas
+ * and inline `--accent`.
+ */
+export const PALETTE = [
+  "#ff375f", // Rot
+  "#ff2d92", // Pink
+  "#ff9f0a", // Bernstein
+  "#ffd60a", // Gelb
+  "#30d158", // Grün
+  "#64d2ff", // Cyan
+  "#0a84ff", // Blau
+  "#5e5ce6", // Indigo
+  "#bf5af2", // Violett
+  "#ac8e68", // Bronze
+  "#8a93a3", // Stahl
+  "#e8e2d6", // Knochen
+  "#ffffff", // Weiß
+  "#0c0e12", // Schwarz
+] as const;
+
 /* ── Skins ────────────────────────────────────────────────────────────────── */
 
 export type SkinId = "blueprint" | "tactile" | "editorial";

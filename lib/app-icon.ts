@@ -7,16 +7,10 @@
 
 import type { IconConfig } from "@/lib/types";
 import { getPhoto } from "@/lib/photo-store";
+import { PALETTE } from "@/lib/theme";
 
-export const ICON_BG_PRESETS = [
-  "#ff375f", // Rot
-  "#ff9f0a", // Bernstein
-  "#30d158", // Grün
-  "#0a84ff", // Blau
-  "#bf5af2", // Violett
-  "#0c0e12", // Tiefschwarz
-  "#e8e2d6", // Knochen
-] as const;
+/** Background palette = the full app palette (incl. black & white). */
+export const ICON_BG_PRESETS = PALETTE;
 
 export const DEFAULT_ICON: IconConfig = { kind: "preset", bg: "#ff375f", glyph: "chevron" };
 
@@ -64,7 +58,7 @@ export function drawIcon(
   ctx.fillStyle = config.bg;
   ctx.fillRect(0, 0, size, size);
 
-  const ink = iconInk(config.bg);
+  const ink = config.ink ?? iconInk(config.bg);
   const s = size / 100; // BrandMark/glyph design grid is 100×100
 
   if (config.glyph === "letter") {

@@ -127,6 +127,30 @@ export function AppIconSection() {
               />
             ))}
           </div>
+
+          <p className="mb-2 mt-5 text-sm font-medium text-fg">Symbol-Farbe</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Pressable
+              onClick={() => update({ ink: undefined })}
+              aria-label="Symbolfarbe automatisch"
+              className="flex h-9 items-center rounded-pill border border-line px-3 text-xs font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              style={{ boxShadow: !cfg.ink ? "0 0 0 2px var(--accent)" : undefined }}
+            >
+              Auto
+            </Pressable>
+            {ICON_BG_PRESETS.map((hex) => (
+              <Pressable
+                key={"ink" + hex}
+                onClick={() => update({ ink: hex })}
+                aria-label={`Symbolfarbe ${hex}`}
+                className="h-9 w-9 rounded-full focus:outline-none"
+                style={{
+                  backgroundColor: hex,
+                  boxShadow: cfg.ink === hex ? `0 0 0 3px var(--card), 0 0 0 5px ${hex}` : undefined,
+                }}
+              />
+            ))}
+          </div>
         </>
       )}
 
