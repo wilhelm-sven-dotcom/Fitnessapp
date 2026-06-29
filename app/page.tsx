@@ -6,6 +6,7 @@ import { ActivityRings } from "@/components/rings/ActivityRings";
 import { RingLegend } from "@/components/rings/RingLegend";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { DurationBadge } from "@/components/home/DurationBadge";
+import { AmbientGlow } from "@/components/home/AmbientGlow";
 import { CoachCard } from "@/components/coach/CoachCard";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
@@ -60,13 +61,15 @@ export default function HomePage() {
   const start = (key: string) => router.push(`/workout/${key}`);
 
   return (
-    <div>
-      <div className="mb-5 flex items-start justify-between gap-3">
+    <div className="relative">
+      <AmbientGlow />
+
+      <header className="mb-6 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-faint">{today}</p>
-          <p className="font-display text-2xl font-semibold tracking-tight text-fg">
+          <p className="font-mono text-xs uppercase tracking-widest text-faint">{today}</p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-fg">
             {greeting({ name: settings.userName })}
-          </p>
+          </h1>
           <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
         </div>
         {streak > 0 && (
@@ -76,7 +79,7 @@ export default function HomePage() {
             <span className="text-xs text-muted">Wo</span>
           </div>
         )}
-      </div>
+      </header>
 
       {chips.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
@@ -88,9 +91,13 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Instrument hero: the week's tonnage as the headline number + ring cluster. */}
+      {/* Living instrument: the week's tonnage + the rings that draw on, floating
+          on a charged top-edge over the breathing ambient glow. */}
       <Reveal>
-        <Card variant="elevated" className="edge-top mb-5 rounded-3xl p-5">
+        <Card
+          variant="elevated"
+          className="edge-top bg-hero-sheen mb-5 overflow-hidden rounded-3xl p-6"
+        >
           <Readout
             eyebrow="Volumen · diese Woche"
             value={volT}
@@ -99,14 +106,14 @@ export default function HomePage() {
             size="lg"
             hint={`${weekCount} von 3 Einheiten · ${cov.hit}/${cov.total} Muskelgruppen abgedeckt`}
           />
-          <div className="mt-5 flex items-center gap-5">
+          <div className="mt-6 flex items-center gap-5">
             <ActivityRings
               metrics={ringMetrics}
-              size={128}
-              stroke={12}
-              gap={5}
+              size={140}
+              stroke={13}
+              gap={6}
               center={
-                <p className="font-display text-2xl font-semibold leading-none tabular-nums">
+                <p className="font-display text-3xl font-semibold leading-none tabular-nums">
                   <CountUp value={weekCount} />
                   <span className="text-base text-muted">/3</span>
                 </p>
@@ -119,8 +126,24 @@ export default function HomePage() {
         </Card>
       </Reveal>
 
+      {activeKey && (
+        <Reveal delay={0.06}>
+          <Pressable
+            onClick={() => router.push(`/workout/${activeKey}`)}
+            className="mb-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-surface-3 bg-surface-1 px-4 py-3 text-left shadow-card"
+          >
+            <span className="min-w-0 truncate text-sm text-accent-sessions">
+              Einheit läuft · {activeName}
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-sessions">
+              Fortsetzen <ChevronRight size={16} />
+            </span>
+          </Pressable>
+        </Reveal>
+      )}
+
       {coach.length > 0 && (
-        <Reveal delay={0.05}>
+        <Reveal delay={0.12}>
           <div className="mb-4 space-y-2">
             {coach.map((c, i) => (
               <CoachCard
@@ -134,39 +157,11 @@ export default function HomePage() {
         </Reveal>
       )}
 
-      <Reveal delay={0.1}>
-        <Pressable
-          onClick={() => router.push("/coach")}
-          className="mb-4 flex w-full items-center justify-between rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left focus:outline-none"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium text-fg">
-            <Sparkles size={17} className="text-accent-coverage" /> Frag den Coach
-          </span>
-          <ChevronRight size={16} className="text-muted" />
-        </Pressable>
-      </Reveal>
-
-      {activeKey && (
-        <Pressable
-          onClick={() => router.push(`/workout/${activeKey}`)}
-          className="mb-4 flex w-full items-center justify-between rounded-2xl border border-surface-3 bg-surface-1 px-4 py-3 text-left shadow-card focus:outline-none"
-        >
-          <span className="text-sm text-accent-sessions">Einheit läuft · {activeName}</span>
-          <span className="flex items-center gap-1 text-sm font-medium text-accent-sessions">
-            Fortsetzen <ChevronRight size={16} />
-          </span>
-        </Pressable>
-      )}
-
-      {/* The one bold moment: today's recommended session. */}
-      <Reveal delay={0.15}>
+      {/* The one bold moment: today's recommended session, charged with the accent glow. */}
+      <Reveal delay={0.16}>
         <Card
           variant="elevated"
-          className="glow-accent edge-top mb-5 overflow-hidden rounded-3xl p-5"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,0) 42%)",
-          }}
+          className="glow-accent edge-top bg-hero-sheen mb-5 overflow-hidden rounded-3xl p-6"
         >
           <p
             className="mb-2 font-mono text-xs uppercase tracking-widest"
@@ -174,18 +169,19 @@ export default function HomePage() {
           >
             Empfohlen heute
           </p>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{recTpl.name}</h2>
+          <h2 className="font-display text-4xl font-semibold tracking-tight">{recTpl.name}</h2>
           <p className="mb-3 text-muted">{recTpl.focus}</p>
           <div className="mb-4 flex items-center gap-2">
             <DurationBadge min={estimatedMin} />
-            <div className="ml-auto flex gap-1">
+            <div className="ml-auto flex gap-2">
               {BUDGETS.map((b) => (
                 <Pressable
                   key={b}
                   onClick={() => setBudget(b)}
                   aria-label={`Zeitbudget ${b} Minuten`}
+                  aria-pressed={settings.timeBudgetMin === b}
                   className={cn(
-                    "rounded-lg px-2.5 py-1 text-xs font-medium tabular-nums focus:outline-none",
+                    "rounded-lg px-3 py-2 text-xs font-medium tabular-nums",
                     settings.timeBudgetMin === b
                       ? "bg-accent-coverage text-on-strong"
                       : "bg-surface-2 text-muted",
@@ -208,39 +204,50 @@ export default function HomePage() {
               tap();
               start(recTpl.key);
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg"
           >
             <Play size={18} strokeWidth={2.5} /> Training starten
           </Pressable>
         </Card>
       </Reveal>
 
-      <Reveal delay={0.2}>
+      <Reveal delay={0.22}>
+        <Pressable
+          onClick={() => router.push("/coach")}
+          className="mb-5 flex w-full items-center justify-between rounded-2xl border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-fg">
+            <Sparkles size={17} className="text-accent-coverage" /> Frag den Coach
+          </span>
+          <ChevronRight size={16} className="text-muted" />
+        </Pressable>
+      </Reveal>
+
+      <Reveal delay={0.28}>
         <p className="mb-2 px-1 text-xs text-muted">Oder andere Einheit</p>
         <div className="grid grid-cols-3 gap-2">
-          {TEMPLATE.map((t) => (
-            <Pressable
-              key={t.key}
-              onClick={() => start(t.key)}
-              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left focus:outline-none"
-            >
-              <span
-                className={
-                  t.key === recTpl.key
-                    ? "font-mono text-xs text-accent-sessions"
-                    : "font-mono text-xs text-muted"
-                }
+          {TEMPLATE.map((t) => {
+            const isRec = t.key === recTpl.key;
+            return (
+              <Pressable
+                key={t.key}
+                onClick={() => start(t.key)}
+                aria-label={isRec ? `${t.focus} · empfohlen` : t.focus}
+                className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left"
               >
-                {t.key}
-              </span>
-              <p className="mt-1 text-sm font-medium leading-tight">{t.focus}</p>
-            </Pressable>
-          ))}
+                <span className={cn("font-mono text-xs", isRec ? "text-accent-sessions" : "text-muted")}>
+                  {isRec && <span aria-hidden>• </span>}
+                  {t.key}
+                </span>
+                <p className="mt-1 text-sm font-medium leading-tight">{t.focus}</p>
+              </Pressable>
+            );
+          })}
           {days.map((d) => (
             <Pressable
               key={d.id}
               onClick={() => start(d.id)}
-              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left focus:outline-none"
+              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left"
             >
               <span className="font-mono text-xs text-accent-coverage">Eigen</span>
               <p className="mt-1 truncate text-sm font-medium leading-tight">{d.name}</p>
@@ -249,7 +256,7 @@ export default function HomePage() {
           {(equip as string[]).includes("bike") && (
             <Pressable
               onClick={() => start("peloton")}
-              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left focus:outline-none"
+              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left"
             >
               <span className="font-mono text-xs text-accent-coverage">Bike</span>
               <p className="mt-1 truncate text-sm font-medium leading-tight">Peloton</p>
@@ -258,8 +265,8 @@ export default function HomePage() {
         </div>
       </Reveal>
 
-      <Reveal delay={0.25}>
-        <div className="mt-6">
+      <Reveal delay={0.34}>
+        <div className="mt-5">
           <StreakCalendar log={log} />
         </div>
       </Reveal>
