@@ -58,9 +58,13 @@ export const FB: Bone[] = [["sh", "hip"], ["sh", "elbowL"], ["elbowL", "handL"],
 export const SP: Bone[] = [["sh", "hip"]];
 export const SPL: Bone[] = [["sh", "hip"], ["hip", "knee"], ["knee", "foot"]];
 
-/** A view's pose sequence — the authored `frames`, or [A, B] for legacy 2-pose figures. */
+/** A view's pose sequence — the authored `frames`, or [A, B] for legacy 2-pose figures.
+ * Drops any undefined/null entry (a hole in an authored sequence) and always returns
+ * at least one frame, so frameAt/lerpPts downstream can never index into nothing. */
 export function framesOf(v: ViewDef): Frame[] {
-  return v.frames && v.frames.length >= 2 ? v.frames : [v.A, v.B];
+  const seq = v.frames && v.frames.length >= 2 ? v.frames : [v.A, v.B];
+  const clean = seq.filter((fr): fr is Frame => !!fr);
+  return clean.length ? clean : [v.A ?? v.B ?? {}];
 }
 
 /**
@@ -390,11 +394,18 @@ export function lerp(a: number, b: number, f: number) {
   return a + (b - a) * f;
 }
 
-export function lerpPts(A: Frame, B: Frame, f: number): Frame {
+export function lerpPts(A: Frame | undefined, B: Frame | undefined, f: number): Frame {
+  // Total over partial/missing poses: a degenerate sequence (e.g. an authored
+  // `frames` with a hole, or a view missing one end) must never throw — it just
+  // renders the pose it does have. `cap()` skips any point that's still absent.
+  const a = A ?? B ?? {};
+  const b = B ?? A ?? {};
   const o: Frame = {};
-  for (const k in A) {
-    const b = B[k] || A[k];
-    o[k] = [lerp(A[k][0], b[0], f), lerp(A[k][1], b[1], f)];
+  for (const k in a) {
+    const pa = a[k];
+    const pb = b[k] || pa;
+    if (!pa || !pb) continue;
+    o[k] = [lerp(pa[0], pb[0], f), lerp(pa[1], pb[1], f)];
   }
   return o;
 }

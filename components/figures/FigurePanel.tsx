@@ -98,6 +98,7 @@ export function FigurePanel({
 
   if (!v) return null;
   const frames = framesOf(v);
+  if (!frames.length) return null;
   const { i, next, t } = frameAt(frames.length, f);
   const P = lerpPts(frames[i], frames[next], t);
   const bones = v.bones || SB;

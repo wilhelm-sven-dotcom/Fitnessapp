@@ -228,6 +228,30 @@ export function useTraining(): TrainingContextValue {
   return ctx;
 }
 
+/** Custom exercises created by older builds can miss required fields (e.g. `steps`
+ * was added to addCustom later). An undefined `ex.steps` crashed the guide. Backfill
+ * safe defaults on load so every consumer can rely on the full Exercise shape. */
+function normalizeCustom(list: Exercise[]): Exercise[] {
+  return (Array.isArray(list) ? list : [])
+    .filter((e): e is Exercise => !!e && typeof e === "object" && typeof e.id === "string")
+    .map((e) => ({
+      ...e,
+      tag: e.tag ?? "",
+      req: Array.isArray(e.req) ? e.req : ["none"],
+      cue: e.cue ?? "",
+      steps: Array.isArray(e.steps) ? e.steps : [],
+      back: e.back ?? "",
+      easier: e.easier ?? "",
+      unit: e.unit ?? "kg",
+      sets: typeof e.sets === "number" ? e.sets : 3,
+      repLow: typeof e.repLow === "number" ? e.repLow : 8,
+      repHigh: typeof e.repHigh === "number" ? e.repHigh : 12,
+      pattern: e.pattern ?? "core",
+      weighted: e.weighted ?? false,
+      custom: true,
+    }));
+}
+
 export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [log, setLog] = useState<LoggedSession[]>([]);
   const [equip, setEquip] = useState<EquipKey[]>(DEFAULT_EQUIP);
@@ -265,7 +289,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (Array.isArray(l)) setLog(l);
     if (Array.isArray(e)) setEquip(e);
     if (c && typeof c === "object") setChoices(c);
-    if (Array.isArray(cu)) setCustom(cu);
+    if (Array.isArray(cu)) setCustom(normalizeCustom(cu));
     if (Array.isArray(b)) setBody(b);
     if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
     if (Array.isArray(ca)) setCardio(ca);
