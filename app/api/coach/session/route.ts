@@ -14,6 +14,8 @@ interface SessionReqBody {
   focus?: string;
   exercises?: CoachExercise[];
   context?: string;
+  /** Profile-derived persona line (built client-side from the athlete profile). */
+  persona?: string;
 }
 
 export async function POST(req: Request) {
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
   const focus = typeof body.focus === "string" ? body.focus.slice(0, 40) : "";
 
   const system =
-    buildSessionSystem(exercises, minutes, focus) +
+    buildSessionSystem(exercises, minutes, focus, body.persona?.trim() || undefined) +
     "\n\nAktuelle Trainingsdaten:\n" +
     ((body.context ?? "").trim() || "keine");
 

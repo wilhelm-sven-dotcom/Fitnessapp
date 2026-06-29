@@ -8,10 +8,10 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { StravaSection } from "@/components/settings/StravaSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
+import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
-import { PROFILE } from "@/lib/exercises";
 
 export default function SettingsPage() {
   const {
@@ -105,24 +105,7 @@ export default function SettingsPage() {
 
       <AppearanceSection />
 
-      <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
-          Dein Plan
-        </p>
-        <div className="space-y-2">
-          {PROFILE.map(([k, v]) => (
-            <div key={k} className="flex justify-between text-sm">
-              <span className="text-muted">{k}</span>
-              <span className="font-medium text-fg">{v}</span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-xs leading-relaxed text-muted">
-          3× pro Woche Ganzkörper, A → B → C rotieren. Gewicht steigt
-          autoreguliert über RIR und Tagesform; bei Reizungen schützt die App den
-          unteren Rücken automatisch.
-        </p>
-      </section>
+      <ProfileSection />
 
       <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">

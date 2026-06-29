@@ -34,6 +34,7 @@ import { applyTheme, DEFAULT_ACCENT, type ThemePref } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
 import type {
   AppSettings,
+  AthleteProfile,
   BodyMetric,
   CardioSession,
   EquipKey,
@@ -163,7 +164,8 @@ interface TrainingContextValue {
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setUserName: (name: string) => void;
-  completeOnboarding: (name?: string) => void;
+  setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
+  completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
   setReadiness: (r: Readiness) => void;
   acceptDeload: () => void;
   dismissCard: (card: CoachCard) => void;
@@ -678,11 +680,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
     void saveSettings({ ...settings, userName: name.trim() || undefined });
-  const completeOnboarding = (name?: string) =>
+  const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
+    void saveSettings({
+      ...settings,
+      athleteProfile: { ...settings.athleteProfile, ...patch },
+    });
+  const completeOnboarding = (name?: string, profile?: Partial<AthleteProfile>) =>
     void saveSettings({
       ...settings,
       onboarded: true,
       userName: name?.trim() ? name.trim() : settings.userName,
+      athleteProfile: profile
+        ? { ...settings.athleteProfile, ...profile }
+        : settings.athleteProfile,
     });
 
   const saveCardio = async (next: CardioSession[]) => {
@@ -1004,6 +1014,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setAccent,
     setWeightStep,
     setUserName,
+    setAthleteProfile,
     completeOnboarding,
     setReadiness: (r) => setTodayReadiness(r),
     acceptDeload,
