@@ -34,13 +34,13 @@ export const SKINS: { id: SkinId; label: string; hint: string }[] = [
   { id: "tactile", label: "Tactile", hint: "Tacho & Bernstein — geschliffenes Instrument." },
 ];
 
-export const DEFAULT_SKIN: SkinId = "blueprint";
+export const DEFAULT_SKIN: SkinId = "tactile";
 
 const SKIN_BASE: Record<SkinId, string> = { blueprint: "#0c0e12", tactile: "#0e0f12" };
 const LIGHT_BG = "#f2f3f5";
 
 export function resolveSkin(skin: string | undefined): SkinId {
-  return skin === "tactile" ? "tactile" : "blueprint";
+  return skin === "blueprint" ? "blueprint" : "tactile";
 }
 
 /** Apply the skin to <html> and match the status-bar color (dark only). */

@@ -14,7 +14,9 @@
    Fonts come from layout.tsx (next/font → --font-archivo/--font-sora/--font-jbmono).
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* :root defaults = blueprint (covers SSR before the pre-paint script runs). */
+/* :root = blueprint values as the JS-off fallback. The active skin is set on
+   <html data-skin> (SSR default "tactile" + pre-paint script), so a [data-skin]
+   block always wins in practice — these :root values are rarely seen. */
 :root {
   color-scheme: dark;
   --base: #0c0e12;
