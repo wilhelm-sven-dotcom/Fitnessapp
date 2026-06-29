@@ -274,7 +274,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [loadAll]);
 
   // Apply theme + skin to <html>; follow system changes when theme is "system".
+  // Skip while loading so the default (tactile) never overrides the pre-paint
+  // data-skin before the saved settings arrive — otherwise the splash and a
+  // first-paint flash would show the wrong skin.
   useEffect(() => {
+    if (loading) return;
     applyTheme(settings.theme);
     applySkin(settings.skin);
     if (settings.theme !== "system" || typeof window === "undefined") return;
@@ -285,7 +289,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [settings.theme, settings.skin]);
+  }, [loading, settings.theme, settings.skin]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
