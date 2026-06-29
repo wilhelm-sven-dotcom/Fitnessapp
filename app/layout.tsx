@@ -4,6 +4,7 @@ import "./globals.css";
 import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { AppIconInstaller } from "@/components/pwa/AppIconInstaller";
 
 // Skin display/body faces. The active skin maps --font-display/--font-body to
 // one of these (blueprint → Archivo, tactile → Sora); JetBrains Mono is the
@@ -76,6 +77,7 @@ export default function RootLayout({
         />
         <TrainingProvider>
           <AppShell>{children}</AppShell>
+          <AppIconInstaller />
         </TrainingProvider>
         <ServiceWorkerRegister />
       </body>

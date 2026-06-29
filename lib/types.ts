@@ -181,6 +181,19 @@ export interface AthleteProfile {
   injuries?: InjuryArea[];
 }
 
+/** App-icon designer: a preset (background + glyph) or an uploaded image. */
+export type IconGlyph = "chevron" | "dumbbell" | "letter";
+export interface IconConfig {
+  kind: "preset" | "image";
+  /** Background hex (preset). */
+  bg: string;
+  glyph: IconGlyph;
+  /** 1–2 chars when glyph = "letter". */
+  letter?: string;
+  /** photo-store id of the uploaded image when kind = "image". */
+  imageId?: string;
+}
+
 export interface AppSettings {
   /** Target session length in minutes. */
   timeBudgetMin: number;
@@ -196,8 +209,10 @@ export interface AppSettings {
   theme?: "dark" | "light" | "system";
   /** Appearance: design skin — drives palette, fonts, surfaces, signature. */
   skin?: "blueprint" | "tactile" | "editorial";
-  /** Appearance: legacy brand accent (id from lib/theme ACCENTS) — app-icon only. */
+  /** Appearance: legacy brand accent (id from lib/theme ACCENTS) — fallback icon only. */
   accentColor?: string;
+  /** App-icon design (custom home-screen icon). Unset = generated default. */
+  icon?: IconConfig;
   /** Display name for the personalized greeting ("Guten Abend, Sven"). */
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */

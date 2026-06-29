@@ -50,6 +50,7 @@ import type {
   Readiness,
   Exercise,
   GymProfile,
+  IconConfig,
   LastPerf,
   LoggedSession,
   Pattern,
@@ -172,6 +173,7 @@ interface TrainingContextValue {
   setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
   setSkin: (skin: SkinId) => void;
+  setIcon: (icon: IconConfig | undefined) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
@@ -724,6 +726,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, theme: t });
   const setSkin = (skin: SkinId) =>
     void saveSettings({ ...settings, skin });
+  const setIcon = (icon: IconConfig | undefined) =>
+    void saveSettings({ ...settings, icon });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
@@ -1060,6 +1064,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setSuperset,
     setTheme,
     setSkin,
+    setIcon,
     setAccent,
     setWeightStep,
     setBikeWarmup,
