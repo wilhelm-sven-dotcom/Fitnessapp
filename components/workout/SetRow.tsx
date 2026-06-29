@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Camera, Check } from "lucide-react";
 import { TimedSet } from "./TimedSet";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
@@ -67,6 +67,7 @@ export function SetRow({
   onRir,
   onIntensity,
   onActivate,
+  onCamera,
 }: {
   label: string;
   isWarmup: boolean;
@@ -84,6 +85,8 @@ export function SetRow({
   onIntensity: (val: number) => void;
   /** Focus this set (tap a collapsed line, or focus the active inputs). */
   onActivate: () => void;
+  /** Open the camera to auto-count reps for this set (rep-countable lifts only). */
+  onCamera?: () => void;
 }) {
   const reduce = useReducedMotion();
   const timed = unit === "Sek";
@@ -177,13 +180,25 @@ export function SetRow({
         )}
       </div>
       {dbHint && <p className="pl-12 font-mono text-xs text-muted">{dbHint}</p>}
-      {showGhostFill && (
-        <Pressable
-          onClick={() => onWeight(ghostWeight!)}
-          className="ml-12 inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-        >
-          Vorschlag {ghostWeight} kg
-        </Pressable>
+      {(showGhostFill || (onCamera && !timed)) && (
+        <div className="flex flex-wrap items-center gap-2 pl-12">
+          {showGhostFill && (
+            <Pressable
+              onClick={() => onWeight(ghostWeight!)}
+              className="inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Vorschlag {ghostWeight} kg
+            </Pressable>
+          )}
+          {onCamera && !timed && (
+            <Pressable
+              onClick={onCamera}
+              className="inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              <Camera size={12} /> Mit Kamera
+            </Pressable>
+          )}
+        </div>
       )}
       {!isWarmup &&
         (timed ? (
