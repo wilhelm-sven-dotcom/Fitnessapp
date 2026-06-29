@@ -1,4 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
+import { TRAINING_PRINCIPLES } from "@/lib/training-science";
 import type { DayItem } from "@/lib/types";
 
 /**
@@ -65,10 +66,6 @@ export const BUILD_SESSION_TOOL: Anthropic.Tool = {
   strict: true,
 };
 
-/** Back-safety rules — mirrored from the chat coach's `SYSTEM_BASE`. */
-const BACK_RULES =
-  "WICHTIG — empfindlicher unterer Rücken: keine schweren Hinges unter Last, keine belastete Flexion, kein vorgebeugtes Langhantelrudern. Rücken-Stabilisatoren gehören in den Core-Slot.";
-
 /**
  * System prompt for the structured session builder. Lists the allowed exercises
  * (id · Name · Pattern) and the time/focus/volume guidance, then asks for one
@@ -84,7 +81,8 @@ export function buildSessionSystem(
   return `Du bist der persönliche Trainings-Coach von Sven und stellst EINE Trainingseinheit zusammen.
 
 Profil: Ziel Muskelaufbau (Hypertrophie), 1,93 m / ~90 kg.
-${BACK_RULES}
+
+${TRAINING_PRINCIPLES}
 
 Aufgabe: Baue eine Einheit mit Fokus „${focusText}" für etwa ${minutes} Minuten.
 - Wähle Übungen AUSSCHLIESSLICH aus der Liste unten und referenziere sie über ihre exakte id.

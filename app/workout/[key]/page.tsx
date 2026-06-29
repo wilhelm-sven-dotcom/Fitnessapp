@@ -3,6 +3,7 @@
 import { AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
+  Bike,
   Camera,
   ChevronRight,
   Flame,
@@ -69,6 +70,7 @@ export default function WorkoutPage() {
     setNote,
     log,
     daysAgo,
+    cardioAdvice,
   } = useTraining();
   const lighter = daysAgo != null && daysAgo > 5;
   const say = (text: string) => {
@@ -286,6 +288,23 @@ export default function WorkoutPage() {
       >
         <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl))} Min
       </Pressable>
+
+      {cardioAdvice.level !== "none" && (
+        <div className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4">
+          <div className="flex items-start gap-3">
+            <Bike size={18} className="mt-0.5 shrink-0 text-accent-coverage" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-fg">{cardioAdvice.title}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                {cardioAdvice.body}
+              </p>
+              <p className="mt-1 font-mono text-xs uppercase tracking-widest text-faint">
+                Empfehlung · du entscheidest
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {list.map(({ ex, slotKey, pool }, idx) => {
