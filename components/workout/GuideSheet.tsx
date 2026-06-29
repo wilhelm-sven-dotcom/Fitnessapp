@@ -45,7 +45,7 @@ export function GuideSheet({
 
   // Step ↔ pose sync: walk the active step in the figure's rhythm (half period).
   const reduce = useReducedMotion();
-  const stepCount = ex?.steps.length ?? 0;
+  const stepCount = ex?.steps?.length ?? 0;
   const syncing = mode === "figure" && !!fig && !reduce && stepCount >= 2;
   const [activeStep, setActiveStep] = useState(0);
   useEffect(() => {
@@ -148,9 +148,9 @@ export function GuideSheet({
             </p>
           )}
 
-          {ex.steps.length > 0 && (
+          {(ex.steps?.length ?? 0) > 0 && (
             <ol className="mb-3 list-decimal space-y-1.5 pl-5 marker:font-mono marker:text-faint">
-              {ex.steps.map((s, i) => (
+              {(ex.steps ?? []).map((s, i) => (
                 <li
                   key={i}
                   className={cn(
