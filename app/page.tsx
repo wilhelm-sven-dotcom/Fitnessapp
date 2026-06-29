@@ -46,11 +46,16 @@ export default function HomePage() {
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
   const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
   const chips = homeChips({ daysAgo, weekCount });
-  const today = new Date().toLocaleDateString("de-DE", {
+  const now = new Date();
+  const today = now.toLocaleDateString("de-DE", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
+  // Calendar week — the magazine masthead's "issue number" (editorial skin).
+  const kw = Math.ceil(
+    ((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7,
+  );
   const streak = weeklyStreak(log);
   // New phrase each time the home mounts (client-only, so no SSR/hydration drift).
   const greetingSeed = useMemo(() => Math.floor(Math.random() * 100000), []);
@@ -62,6 +67,21 @@ export default function HomePage() {
 
   return (
     <div className="relative">
+      {/* Editorial skin: a magazine nameplate — issue folio, big Anton masthead,
+          tagline, framed by rules. Hidden in the other skins. */}
+      <div className="only-editorial mb-6">
+        <div className="flex items-center justify-between border-b border-line pb-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+          <span>Ausgabe · KW {kw}</span>
+          <span>{today}</span>
+        </div>
+        <h2 className="my-1.5 text-center font-display text-6xl font-bold uppercase leading-none tracking-tight text-fg">
+          Training
+        </h2>
+        <div className="border-t border-line pt-1.5 text-center font-mono text-xs uppercase tracking-widest text-faint">
+          Kraft · Form · Fortschritt
+        </div>
+      </div>
+
       <header className="mb-5">
         <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
           {today} · {recTpl.focus}
