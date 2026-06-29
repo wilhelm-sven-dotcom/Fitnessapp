@@ -87,36 +87,54 @@ export function VolumeGauge({ valueT, targetT }: Props) {
 
       {/* ── Tactile: machined half-dial ────────────────────────────────── */}
       <div className="only-tactile">
-        <div className="relative mt-1">
-          <svg viewBox="0 0 264 150" className="block w-full">
-            <path d={arcPath(0, 1, R)} fill="none" stroke="var(--surface-2)" strokeWidth={10} strokeLinecap="round" />
+        <svg viewBox="0 0 264 140" className="mt-1 block w-full">
+          <path d={arcPath(0, 1, R)} fill="none" stroke="var(--surface-2)" strokeWidth={10} strokeLinecap="round" />
+          {frac > 0.005 && (
             <path d={arcPath(0, frac, R)} fill="none" stroke="var(--accent)" strokeWidth={10} strokeLinecap="round" />
-            {Array.from({ length: 11 }).map((_, i) => {
-              const f = i / 10;
-              const [ox, oy] = polar(f, R - 16);
-              const [ix, iy] = polar(f, i % 5 === 0 ? R - 30 : R - 24);
-              return (
-                <line
-                  key={i}
-                  x1={ox}
-                  y1={oy}
-                  x2={ix}
-                  y2={iy}
-                  stroke={i % 5 === 0 ? "var(--muted)" : "var(--line)"}
-                  strokeWidth={i % 5 === 0 ? 2 : 1}
-                />
-              );
-            })}
-            <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="var(--accent)" strokeWidth={3} strokeLinecap="round" />
-            <circle cx={CX} cy={CY} r={9} fill="var(--card)" stroke="var(--line)" strokeWidth={2} />
-            <circle cx={CX} cy={CY} r={3} fill="var(--accent)" />
-          </svg>
-          <div className="absolute inset-x-0 bottom-0.5 text-center">
-            <span className="font-mono text-4xl font-bold tracking-tight text-fg tabular-nums">{value}</span>
-            <span className="ml-1 text-base text-muted">t</span>
-          </div>
+          )}
+          {Array.from({ length: 11 }).map((_, i) => {
+            const f = i / 10;
+            const [ox, oy] = polar(f, R - 16);
+            const [ix, iy] = polar(f, i % 5 === 0 ? R - 30 : R - 24);
+            return (
+              <line
+                key={i}
+                x1={ox}
+                y1={oy}
+                x2={ix}
+                y2={iy}
+                stroke={i % 5 === 0 ? "var(--muted)" : "var(--line)"}
+                strokeWidth={i % 5 === 0 ? 2 : 1}
+              />
+            );
+          })}
+          <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="var(--accent)" strokeWidth={3} strokeLinecap="round" />
+          <circle cx={CX} cy={CY} r={9} fill="var(--card)" stroke="var(--line)" strokeWidth={2} />
+          <circle cx={CX} cy={CY} r={3} fill="var(--accent)" />
+        </svg>
+        {/* Readout sits BELOW the dial so the needle never crosses it (also at 0/100%). */}
+        <div className="mt-1 text-center">
+          <span className="font-mono text-4xl font-bold tracking-tight text-fg tabular-nums">{value}</span>
+          <span className="ml-1 text-base text-muted">t</span>
         </div>
         <div className="flex justify-between font-mono text-xs text-faint">
+          <span>0</span>
+          <span>{goal} t · Ziel</span>
+        </div>
+      </div>
+
+      {/* ── Editorial: typografische Statzeile (kein Dial) ──────────────── */}
+      <div className="only-editorial">
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="font-display text-7xl leading-none tracking-tight text-fg tabular-nums">
+            {value}
+          </span>
+          <span className="text-xl text-muted">t</span>
+        </div>
+        <div className="mt-4 h-0.5 w-full bg-line">
+          <div className="h-0.5 bg-accent-sessions" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-2 flex justify-between font-mono text-xs uppercase tracking-widest text-faint">
           <span>0</span>
           <span>{goal} t · Ziel</span>
         </div>

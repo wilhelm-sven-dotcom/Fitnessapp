@@ -3,9 +3,9 @@ name: ui-style
 description: >-
   Verbindliches Design-System dieser Fitness-PWA. MUSS bei JEDER UI-Arbeit geladen
   werden: React/Next.js-Komponenten, Seiten, Tailwind-Klassen, Layouts, Farben,
-  Fonts, Buttons, Cards, Inputs, Hover-/Focus-States, Animationen. Zwei umschaltbare
-  Skins (Blueprint = Stahl/Rot/Archivo/scharf · Tactile = Bernstein/Sora/rund/Tiefe)
-  über `data-skin`. Enthält die echten Tokens, Spacing-/Radius-/Shadow-Konventionen,
+  Fonts, Buttons, Cards, Inputs, Hover-/Focus-States, Animationen. Drei umschaltbare
+  Skins (Blueprint = Stahl/Rot/Archivo/scharf · Tactile = Bernstein/Sora/rund/Tiefe (Default)
+  · Editorial = Knochen/Rot/Anton+Serif/Magazin) über `data-skin`. Enthält die echten Tokens, Spacing-/Radius-/Shadow-Konventionen,
   Motion-Regeln und Don'ts gegen generische AI-Optik. Werte hier nachschlagen statt erfinden.
 ---
 
@@ -15,8 +15,8 @@ Stack: **Next.js 14 App Router · React 18 · TypeScript strict · Tailwind 3.4 
 Framer Motion 11 · lucide-react · `cn()` (clsx + tailwind-merge)**. Mobile-first
 PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 
-## Zwei Skins + Theme (zwei orthogonale Achsen auf `<html>`)
-- **`data-skin`** = `blueprint` (Default) | `tactile`. **`data-theme`** = `dark` (Default) | `light`.
+## Drei Skins + Theme (zwei orthogonale Achsen auf `<html>`)
+- **`data-skin`** = `blueprint` | `tactile` (Default) | `editorial`. **`data-theme`** = `dark` (Default) | `light`.
   Beide pre-paint im No-Flash-Script (`app/layout.tsx`) gesetzt; Laufzeit über
   `applySkin` / `applyTheme` + `SKINS` in `lib/theme.ts`; Wahl in `settings.skin`/`.theme`.
 - **Der Skin besitzt den Akzent** (kein nutzerwählbarer Farbpicker mehr). Jeder Skin
@@ -25,10 +25,15 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 - **Blueprint** — Werkstatt/Messgerät: Mess-Raster-Hintergrund, Haarlinien, **scharfe Ecken
   (`--radius-card` 4px)**, flache Panels, Stahl `--accent-2 #6e90be` + Rot `--accent #ff375f`,
   Display **Archivo**.
-- **Tactile** — geschliffenes Instrument: radialer Hintergrund, **runde Ecken (16px)**, erhabene
-  Panels (Verlauf + Schatten), Bernstein `--accent #ff9f0a`, neutrales `--accent-2`, Display **Sora**.
+- **Tactile** (Default) — geschliffenes Instrument: radialer Hintergrund, **runde Ecken (16px)**,
+  erhabene Panels (Verlauf + Schatten), Bernstein `--accent #ff9f0a`, neutrales `--accent-2`, Display **Sora**.
+- **Editorial** — Magazin: ruhiger near-black BG, **fast scharf (`--radius-card` 2px)**, flache
+  Panels (Haarlinien), Knochen `--fg #e8e2d6` + Rot `--accent #ff375f`, Display **Anton**, Body
+  **Newsreader** (Serif), Labels/Zahlen **Inter** (`--font-mono`).
 - **Immer Tokens nutzen, nie rohe Hex/feste Radien im JSX** (Ausnahme: SVG-Strokes /
-  `lib/ring-colors.ts`) — nur so folgen beide Skins automatisch.
+  `lib/ring-colors.ts`) — nur so folgen alle drei Skins automatisch.
+- **Skin-Signatur:** Komponente rendert alle Varianten, eingeblendet per `.only-blueprint`/
+  `.only-tactile`/`.only-editorial` (siehe `VolumeGauge`).
 
 ## Farben — Tokens (Werte je Skin, dark)
 | Tailwind            | CSS-Var       | Blueprint            | Tactile               | Zweck |

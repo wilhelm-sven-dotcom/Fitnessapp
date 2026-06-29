@@ -2,6 +2,7 @@
 
 import { ChevronRight, Flame, Play, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
@@ -51,6 +52,8 @@ export default function HomePage() {
     month: "long",
   });
   const streak = weeklyStreak(log);
+  // New phrase each time the home mounts (client-only, so no SSR/hydration drift).
+  const greetingSeed = useMemo(() => Math.floor(Math.random() * 100000), []);
   const volT = Math.round(weeklyVolume(log) / 100) / 10;
   const volTargetT = (ringMetrics.find((m) => m.id === "exercise")?.target ?? 1000) / 1000;
   const cov = coverageCount(muscleVolumes);
@@ -61,11 +64,11 @@ export default function HomePage() {
     <div className="relative">
       <header className="mb-5">
         <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-          {today} · Einheit {recTpl.key}
+          {today} · {recTpl.focus}
         </p>
         <div className="mt-1 flex items-start justify-between gap-3">
           <h1 className="font-display text-3xl font-bold tracking-tight text-fg">
-            {greeting({ name: settings.userName })}
+            {greeting({ name: settings.userName, seed: greetingSeed })}
           </h1>
           {streak > 0 && (
             <div className="flex shrink-0 items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">

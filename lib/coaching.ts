@@ -73,18 +73,45 @@ export function exerciseChips(opts: {
 }
 
 /** Time-of-day greeting, optionally personalized with the user's name. */
-export function greeting(opts: { name?: string; now?: Date } = {}): string {
-  const h = (opts.now ?? new Date()).getHours();
-  const part =
-    h >= 5 && h < 11
-      ? "Guten Morgen"
-      : h >= 11 && h < 17
-        ? "Guten Tag"
-        : h >= 17 && h < 23
-          ? "Guten Abend"
-          : "Gute Nacht";
+/** Time-of-day greeting word. */
+function dayPart(h: number): string {
+  if (h >= 5 && h < 11) return "Guten Morgen";
+  if (h >= 11 && h < 17) return "Guten Tag";
+  if (h >= 17 && h < 23) return "Guten Abend";
+  return "Gute Nacht";
+}
+
+/**
+ * Home headline. A rotating pool of lines — time-of-day classics plus
+ * motivational cues — so the greeting feels fresh on every open. `seed` picks
+ * one (the caller varies it per mount); without a seed it returns the plain
+ * time-of-day greeting (deterministic → unchanged for existing callers/tests).
+ */
+export function greeting(opts: { name?: string; now?: Date; seed?: number } = {}): string {
+  const now = opts.now ?? new Date();
   const name = opts.name?.trim();
-  return name ? `${part}, ${name}.` : `${part}.`;
+  const c = name ? `, ${name}` : "";
+  const part = dayPart(now.getHours());
+  if (opts.seed == null) return `${part}${c}.`;
+  const pool = [
+    `${part}${c}.`,
+    `Bereit${c}?`,
+    "Zeit, Eisen zu bewegen.",
+    "Ein Prozent besser als gestern.",
+    "Schwerkraft ist nur eine Empfehlung.",
+    "Form vor Ego.",
+    "Kraft kommt von Konstanz.",
+    "Die Hantel wartet nicht.",
+    "Letzte Wiederholung, beste Wiederholung.",
+    "Stahl formt sich nicht von selbst.",
+    `Auf geht's${c}.`,
+    "Dein zukünftiges Ich dankt dir.",
+    "Heute investierst du in morgen.",
+    "Sauber heben, klar im Kopf.",
+    "Jeder Satz zählt.",
+    "Disziplin schlägt Motivation.",
+  ];
+  return pool[((opts.seed % pool.length) + pool.length) % pool.length];
 }
 
 /** Cues shown on the home screen. */

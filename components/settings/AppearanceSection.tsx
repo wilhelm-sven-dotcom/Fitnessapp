@@ -38,7 +38,7 @@ export function AppearanceSection() {
       </p>
 
       <p className="mb-2 text-sm font-medium text-fg">Design</p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2">
         {SKINS.map((s) => {
           const active = skin === s.id;
           return (
