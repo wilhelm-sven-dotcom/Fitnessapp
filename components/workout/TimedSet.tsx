@@ -51,7 +51,7 @@ export function TimedSet({
         onClick={toggle}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none",
-          run ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-accent-sessions",
+          run ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-accent-ink",
         )}
       >
         {run ? <Pause size={18} strokeWidth={2.5} /> : <Play size={18} strokeWidth={2.5} />}

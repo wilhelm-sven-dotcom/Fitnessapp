@@ -48,8 +48,8 @@ export function BottomNav() {
                 {active && (
                   <motion.span
                     layoutId="navPill"
-                    className="absolute inset-0 rounded-full bg-accent-sessions"
-                    style={{ boxShadow: "0 0 10px -1px var(--accent)" }}
+                    className="absolute inset-0 rounded-full bg-accent-ink"
+                    style={{ boxShadow: "0 0 10px -1px var(--accent-ink)" }}
                     transition={SPRING.press}
                   />
                 )}

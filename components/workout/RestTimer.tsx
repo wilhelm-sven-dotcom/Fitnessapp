@@ -27,7 +27,7 @@ export function RestTimer({
     >
       <div className="mx-auto m-3 max-w-md rounded-card border border-surface-3 bg-surface-1 shadow-card p-4 backdrop-blur">
         <div className="mb-2 flex items-end justify-between">
-          <span className="font-mono text-xs uppercase tracking-widest text-accent-sessions">
+          <span className="font-mono text-xs uppercase tracking-widest text-accent-ink">
             Satzpause
           </span>
           <span className="font-display text-4xl font-semibold leading-none tabular-nums text-fg">

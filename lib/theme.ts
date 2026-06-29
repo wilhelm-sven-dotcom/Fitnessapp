@@ -40,6 +40,36 @@ export function onAccent(hex: string): string {
   return lum > 0.6 ? "#0c0e12" : "#ffffff";
 }
 
+/** Relative luminance 0..1 (sRGB, gamma-corrected) of a #rrggbb color. */
+function relLuminance(hex: string): number {
+  const h = hex.replace("#", "");
+  const chan = (i: number) => {
+    const v = parseInt(h.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * chan(0) + 0.7152 * chan(2) + 0.0722 * chan(4);
+}
+
+/** WCAG contrast ratio (1..21) between two #rrggbb colors. */
+function contrastRatio(a: string, b: string): number {
+  const la = relLuminance(a);
+  const lb = relLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+/**
+ * The accent rendered as a FOREGROUND mark (icon, text, small indicator) on the
+ * page. Keeps the accent when it reads on the base, else falls back to ink — so
+ * a light `accentOverride` (white/bone/yellow) never goes invisible on a light
+ * page (and a near-black override never vanishes on a dark page). Dual to
+ * `onAccent`, which colours text ON an accent-filled surface.
+ */
+export function accentInk(hex: string, baseIsLight: boolean): string {
+  const base = baseIsLight ? "#f4f1e8" : "#0f0f10";
+  if (contrastRatio(hex, base) >= 3) return hex;
+  return baseIsLight ? "#1a1813" : "#f4f1e8";
+}
+
 /**
  * Full color palette (incl. black & white) for the icon designer (background +
  * glyph) and the optional app-accent override. Hex so it can drive SVG/canvas

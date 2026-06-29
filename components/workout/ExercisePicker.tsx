@@ -38,7 +38,7 @@ export function ExercisePicker({
             >
               <span className="text-sm text-fg">{opt.name}</span>
               {active ? (
-                <Check size={16} className="shrink-0 text-accent-sessions" />
+                <Check size={16} className="shrink-0 text-accent-ink" />
               ) : (
                 <span className="shrink-0 font-mono text-xs text-muted">
                   {opt.tag}

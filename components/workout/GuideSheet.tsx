@@ -118,7 +118,7 @@ export function GuideSheet({
 
           {ex.cue && (
             <p className="mb-3 rounded-card border border-line bg-surface-1 px-3 py-2 text-sm text-fg">
-              <span className="font-medium text-accent-sessions">Technik: </span>
+              <span className="font-medium text-accent-ink">Technik: </span>
               {ex.cue}
             </p>
           )}

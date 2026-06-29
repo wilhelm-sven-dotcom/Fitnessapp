@@ -431,7 +431,7 @@ export default function DayBuilderPage() {
 
       <Pressable
         onClick={() => setAddOpen(true)}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-3 text-sm font-medium text-accent-sessions shadow-card focus:outline-none"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-3 text-sm font-medium text-accent-ink shadow-card focus:outline-none"
       >
         <Plus size={16} strokeWidth={2.5} /> Übung hinzufügen
       </Pressable>

@@ -20,7 +20,7 @@ export default function WarmupPage() {
         <p className="text-muted">Einheit nicht gefunden.</p>
         <Pressable
           onClick={() => router.push("/")}
-          className="mt-3 flex items-center gap-1 text-sm text-accent-sessions focus:outline-none"
+          className="mt-3 flex items-center gap-1 text-sm text-accent-ink focus:outline-none"
         >
           <ArrowLeft size={16} /> Zur Startseite
         </Pressable>

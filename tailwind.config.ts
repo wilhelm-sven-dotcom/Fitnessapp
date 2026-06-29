@@ -66,6 +66,9 @@ const config: Config = {
         // Contrast ink for accent-filled surfaces — follows the active accent
         // (skin default or accentOverride), so CTAs stay readable on any accent.
         "on-accent": "var(--on-accent)",
+        // Accent as a foreground mark on the page (icon/text/indicator) — stays
+        // legible under any accentOverride (falls back to ink when too low-contrast).
+        "accent-ink": "var(--accent-ink)",
       },
       // Corner radius is a skin token (blueprint = sharp, tactile = rounded).
       borderRadius: {

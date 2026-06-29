@@ -197,7 +197,7 @@ export default function WorkoutPage() {
         <p className="text-muted">Einheit nicht gefunden.</p>
         <Pressable
           onClick={() => router.push("/")}
-          className="mt-3 flex items-center gap-1 text-sm text-accent-sessions focus:outline-none"
+          className="mt-3 flex items-center gap-1 text-sm text-accent-ink focus:outline-none"
         >
           <ArrowLeft size={16} /> Zur Startseite
         </Pressable>
@@ -285,7 +285,7 @@ export default function WorkoutPage() {
 
       <Pressable
         onClick={() => router.push(`/warmup/${key}`)}
-        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-sessions focus:outline-none"
+        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-ink focus:outline-none"
       >
         <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl, { bike: settings.bikeWarmup }))} Min
       </Pressable>
@@ -364,7 +364,7 @@ export default function WorkoutPage() {
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-mono text-sm tabular-nums text-accent-sessions">
+                  <p className="font-mono text-sm tabular-nums text-accent-ink">
                     {ex.pattern === "cardio"
                       ? `${ex.repLow}–${ex.repHigh}`
                       : `${ex.sets} × ${ex.repLow}–${ex.repHigh}`}
@@ -394,7 +394,7 @@ export default function WorkoutPage() {
               <div className="mt-2 flex items-center gap-4">
                 <Pressable
                   onClick={() => setGuideSlot(slotKey)}
-                  className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-sessions focus:outline-none"
+                  className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-ink focus:outline-none"
                 >
                   <ChevronRight size={14} /> Ausführung
                 </Pressable>
@@ -460,7 +460,7 @@ export default function WorkoutPage() {
                     <p className="font-mono text-sm tabular-nums text-fg">
                       {ps || "—"}
                     </p>
-                    <p className="mt-1 text-xs text-accent-sessions">{p.line}</p>
+                    <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
                   </div>
 
                   <div className="mt-3 space-y-2">

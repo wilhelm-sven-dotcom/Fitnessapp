@@ -73,7 +73,7 @@ export function VolumeGauge({ valueT, targetT }: Props) {
           />
           <span
             aria-hidden
-            className="absolute -top-2.5 -translate-x-1/2 text-xs text-accent-sessions"
+            className="absolute -top-2.5 -translate-x-1/2 text-xs text-accent-ink"
             style={{ left: `${pct}%` }}
           >
             ▼

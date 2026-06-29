@@ -34,6 +34,7 @@
   --accent-2: #6e90be; /* steel — labels, structure, schematic ink */
   --live: #ff375f; /* "today / recommended" highlight */
   --on-accent: #0c0e12; /* ink on an accent-filled surface (dark reads best on the red, 5.5:1) */
+  --accent-ink: var(--accent); /* accent as a foreground mark (icon/text/indicator); overridden when illegible on the page */
 
   --font-display: var(--font-archivo);
   --font-body: var(--font-archivo);
@@ -67,6 +68,7 @@
   --accent-2: #9aa1ac; /* neutral — labels stay quiet */
   --live: #ff375f;
   --on-accent: #0e0f12; /* dark ink reads on the bright amber */
+  --accent-ink: var(--accent); /* amber reads as a mark on dark; light theme deepens it below */
 
   --font-display: var(--font-sora);
   --font-body: var(--font-sora);
@@ -99,6 +101,7 @@
   --accent-2: #b9b2a4; /* warmes Knochen-Grau — Labels */
   --live: #ff375f;
   --on-accent: #0f0f10; /* dunkle Tinte auf Rot — höchster Kontrast (5,5:1) */
+  --accent-ink: var(--accent); /* Rot als Vordergrund-Marke; Override-Fallback im Provider */
 
   --font-display: var(--font-anton); /* kondensierte Schlagzeile */
   --font-body: var(--font-newsreader); /* Serif */
@@ -143,6 +146,7 @@
 }
 [data-theme="light"][data-skin="tactile"] {
   /* Helles, geschliffenes Instrument (erhabene Panels bleiben). */
+  --accent-ink: #b3700a; /* Bernstein vertieft — als Marke lesbar auf Hell (~3,5:1) */
   --page-bg: radial-gradient(120% 80% at 50% -10%, #ffffff, #eef0f3 60%);
 }
 [data-theme="light"][data-skin="editorial"] {
@@ -150,7 +154,7 @@
   --base: #f4f1e8;
   --card: #faf8f1;
   --surface-2: #ece7da;
-  --line: #ddd6c5;
+  --line: #c9bfa6; /* Magazin-Haarlinie: deutlich sichtbar auf Creme (Footer-Regel, Card-Outlines) */
   --fg: #1a1813;
   --muted: #5b5547;
   --faint: #9a9384;
