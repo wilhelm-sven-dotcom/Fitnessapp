@@ -19,13 +19,29 @@ export function GuideSheet({
 }) {
   const fig = ex ? FIG[ex.id] : undefined;
   const accent = ex ? muscleBones(ex.pattern) : undefined;
-  const hasVideo = !!ex?.videoUrl;
-  const [mode, setMode] = useState<"video" | "figure">(hasVideo ? "video" : "figure");
+  // Real clip by convention: explicit videoUrl, else /exercise-media/<id>.mp4 if
+  // it exists (drop a file in → it shows, no code change). Probed per exercise.
+  const videoSrc = ex ? ex.videoUrl ?? `/exercise-media/${ex.id}.mp4` : undefined;
+  const [hasVideo, setHasVideo] = useState(false);
+  const [mode, setMode] = useState<"video" | "figure">("figure");
 
-  // Default to the real clip when one exists; reset when the exercise changes.
   useEffect(() => {
-    setMode(ex?.videoUrl ? "video" : "figure");
-  }, [ex?.id, ex?.videoUrl]);
+    setHasVideo(false);
+    setMode("figure");
+    if (!videoSrc) return;
+    let on = true;
+    fetch(videoSrc, { method: "HEAD" })
+      .then((r) => {
+        if (on && r.ok) {
+          setHasVideo(true);
+          setMode("video");
+        }
+      })
+      .catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, [ex?.id, ex?.videoUrl, videoSrc]);
 
   // Step ↔ pose sync: walk the active step in the figure's rhythm (half period).
   const reduce = useReducedMotion();
@@ -63,7 +79,7 @@ export function GuideSheet({
 
           {hasVideo && mode === "video" ? (
             <video
-              src={ex.videoUrl}
+              src={videoSrc}
               className="mb-3 w-full rounded-card border border-line bg-base"
               loop
               muted
