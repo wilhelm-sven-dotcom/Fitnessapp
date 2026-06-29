@@ -12,6 +12,7 @@ import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
+import { effectiveProfile } from "@/lib/athlete";
 import {
   NEUTRAL_SCALE,
   band,
@@ -427,13 +428,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 1].backTraffic === "red" &&
     log[log.length - 2].backTraffic === "red";
 
+  const athleteInjuries = effectiveProfile(settings, body).injuries;
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);
     if (day) return resolveDay(day, allLib, has);
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
-    return resolveSession(tpl, idx, choices, has, allLib, backSafe);
+    return resolveSession(tpl, idx, choices, has, allLib, {
+      backSafe,
+      injuries: athleteInjuries,
+    });
   };
 
   // Real template, or a synthesized one for a custom day (slots = its patterns),
@@ -534,10 +539,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const coach = useMemo(
     () =>
-      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes, cardio }).filter(
+      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes, cardio, body }).filter(
         (c) => !dismissed.includes(c.kind + (c.exId ?? "")),
       ),
-    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, dismissed],
+    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, body, dismissed],
   );
 
   const cardioTip = useMemo(() => cardioAdvice(cardio), [cardio]);

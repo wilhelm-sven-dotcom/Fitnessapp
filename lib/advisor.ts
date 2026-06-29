@@ -2,7 +2,13 @@ import { cardioAdvice } from "@/lib/cardio-advice";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS, volumeBucket } from "@/lib/training-science";
 import { MUSCLE_LABEL, type MuscleVolume, weekStartMon } from "@/lib/volume";
-import type { AppSettings, CardioSession, Exercise, LoggedSession } from "@/lib/types";
+import type {
+  AppSettings,
+  BodyMetric,
+  CardioSession,
+  Exercise,
+  LoggedSession,
+} from "@/lib/types";
 
 export type CoachKind =
   | "deload"
@@ -10,7 +16,8 @@ export type CoachKind =
   | "volume-over"
   | "volume-under"
   | "back-doctor"
-  | "cardio";
+  | "cardio"
+  | "recomp";
 export type CoachSeverity = "info" | "warn" | "urgent";
 
 export interface CoachCard {
@@ -100,6 +107,44 @@ export function plateauSignals(
   return cards.slice(0, 2);
 }
 
+/**
+ * Body recomposition read from the weight + waist trend (Optik/Definition focus).
+ * Needs ≥ 2 entries of each, spanning ≥ 2 weeks, so it reflects a real trend.
+ */
+export function recompSignal(body: BodyMetric[]): CoachCard | null {
+  const wts = body.filter((b) => b.weightKg != null);
+  const wsts = body.filter((b) => b.waistCm != null);
+  if (wts.length < 2 || wsts.length < 2) return null;
+  const spanDays =
+    (new Date(wts[wts.length - 1].date).getTime() - new Date(wts[0].date).getTime()) / DAY;
+  if (spanDays < 14) return null;
+  const dW = (wts[wts.length - 1].weightKg as number) - (wts[0].weightKg as number);
+  const dWaist = (wsts[wsts.length - 1].waistCm as number) - (wsts[0].waistCm as number);
+  const f = (n: number) => `${n >= 0 ? "+" : ""}${Math.round(n * 10) / 10}`;
+  if (dW >= 0.5 && dWaist <= -0.5)
+    return {
+      kind: "recomp",
+      severity: "info",
+      title: "Recomp läuft",
+      body: `Gewicht ${f(dW)} kg, Bauch ${f(dWaist)} cm — du baust Muskeln auf und wirst schlanker. Genau die Richtung, weiter so.`,
+    };
+  if (dW >= 1 && dWaist >= 1)
+    return {
+      kind: "recomp",
+      severity: "info",
+      title: "Überschuss im Blick",
+      body: `Gewicht ${f(dW)} kg, Bauch ${f(dWaist)} cm — der Zuwachs geht auch in die Taille. Etwas weniger Kalorienüberschuss hält den Aufbau definierter.`,
+    };
+  if (dW <= -0.5 && dWaist <= -0.5)
+    return {
+      kind: "recomp",
+      severity: "info",
+      title: "Du definierst",
+      body: `Gewicht ${f(dW)} kg, Bauch ${f(dWaist)} cm — halt das Krafttraining schwer, damit die Muskeln beim Abnehmen geschützt bleiben.`,
+    };
+  return null;
+}
+
 const SEV_RANK: Record<CoachSeverity, number> = { urgent: 0, warn: 1, info: 2 };
 
 export function coachCards(opts: {
@@ -109,8 +154,12 @@ export function coachCards(opts: {
   seeDoctor: boolean;
   muscleVolumes: MuscleVolume[];
   cardio: CardioSession[];
+  body: BodyMetric[];
 }): CoachCard[] {
   const cards: CoachCard[] = [];
+
+  const rc = recompSignal(opts.body);
+  if (rc) cards.push(rc);
 
   const ca = cardioAdvice(opts.cardio);
   if (ca.level !== "none")
