@@ -33,11 +33,13 @@ import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import {
+  accentInk,
   applySkin,
   applyTheme,
   DEFAULT_ACCENT,
   DEFAULT_SKIN,
   onAccent,
+  resolveTheme,
   type SkinId,
   type ThemePref,
 } from "@/lib/theme";
@@ -285,11 +287,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const applyAccent = () => {
       const root = document.documentElement;
       if (settings.accentOverride) {
+        const baseIsLight = resolveTheme(settings.theme) === "light";
         root.style.setProperty("--accent", settings.accentOverride);
         root.style.setProperty("--on-accent", onAccent(settings.accentOverride));
+        root.style.setProperty("--accent-ink", accentInk(settings.accentOverride, baseIsLight));
       } else {
         root.style.removeProperty("--accent");
         root.style.removeProperty("--on-accent");
+        root.style.removeProperty("--accent-ink");
       }
     };
     applyTheme(settings.theme);
