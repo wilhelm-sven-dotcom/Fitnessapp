@@ -82,6 +82,11 @@ export function frameAt(n: number, f: number): { i: number; next: number; t: num
 export const FIG: Record<string, FigureDef> = {
   goblet: { ground: 150,
     side: { bones: SB, spine: SP, equip: { kind: "goblet", hands: ["hand"] },
+      frames: [
+        { head: [101, 30], sh: [100, 50], hip: [100, 93], elbow: [114, 72], hand: [101, 84], knee: [100, 121], foot: [100, 148] },
+        { head: [108, 54], sh: [105, 73], hip: [100, 114], elbow: [118, 92], hand: [104, 103], knee: [126, 123], foot: [119, 148] },
+        { head: [112, 66], sh: [108, 84], hip: [100, 124], elbow: [120, 102], hand: [106, 113], knee: [134, 124], foot: [119, 148] },
+      ],
       A: { head: [101, 30], sh: [100, 50], hip: [100, 93], elbow: [114, 72], hand: [101, 84], knee: [100, 121], foot: [100, 148] },
       B: { head: [108, 54], sh: [105, 73], hip: [100, 114], elbow: [118, 92], hand: [104, 103], knee: [126, 123], foot: [119, 148] } },
     front: { bones: FB, spine: SP, equip: { kind: "goblet", hands: ["handL", "handR"] },
@@ -181,6 +186,11 @@ export const FIG: Record<string, FigureDef> = {
 
   squat_bw: { ground: 150,
     side: { bones: SB, spine: SP,
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 60], hand: [124, 60] },
+        { head: [108, 52], sh: [104, 70], hip: [100, 112], knee: [126, 122], foot: [120, 148], elbow: [116, 80], hand: [128, 80] },
+        { head: [114, 66], sh: [108, 84], hip: [100, 124], knee: [136, 124], foot: [120, 148], elbow: [120, 92], hand: [132, 92] },
+      ],
       A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 60], hand: [124, 60] },
       B: { head: [108, 52], sh: [104, 70], hip: [100, 112], knee: [126, 122], foot: [120, 148], elbow: [116, 80], hand: [128, 80] } },
     front: { bones: FB, spine: SP,
@@ -207,8 +217,13 @@ export const FIG: Record<string, FigureDef> = {
 
   pushup: { ground: 150, vb: "0 90 200 75",
     side: { bones: SB, spine: SPL,
+      frames: [
+        { head: [58, 114], sh: [72, 118], hip: [120, 132], knee: [150, 139], foot: [182, 148], elbow: [72, 133], hand: [72, 150] },
+        { head: [58, 122], sh: [72, 125], hip: [120, 137], knee: [150, 143], foot: [182, 149], elbow: [66, 137], hand: [76, 150] },
+        { head: [58, 130], sh: [72, 132], hip: [120, 141], knee: [150, 146], foot: [182, 150], elbow: [60, 143], hand: [80, 150] },
+      ],
       A: { head: [58, 114], sh: [72, 118], hip: [120, 132], knee: [150, 139], foot: [182, 148], elbow: [72, 133], hand: [72, 150] },
-      B: { head: [58, 128], sh: [72, 131], hip: [120, 140], knee: [150, 145], foot: [182, 150], elbow: [62, 141], hand: [80, 150] } } },
+      B: { head: [58, 130], sh: [72, 132], hip: [120, 141], knee: [150, 146], foot: [182, 150], elbow: [60, 143], hand: [80, 150] } } },
 
   ohp_stand: { ground: 150,
     side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
