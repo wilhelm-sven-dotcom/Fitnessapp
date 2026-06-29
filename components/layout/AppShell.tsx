@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         href="/settings"
                         aria-label="Cloud-Sync aktiv"
                         className="rounded-full p-1.5 focus:outline-none"
-                        style={{ color: "var(--accent)" }}
+                        style={{ color: "var(--accent-ink)" }}
                       >
                         <Cloud size={20} />
                       </Link>

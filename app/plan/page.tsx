@@ -341,7 +341,7 @@ export default function PlanPage() {
               </div>
               <Pressable
                 onClick={() => router.push(`/day/neu?from=${t.key}`)}
-                className="shrink-0 rounded-md px-1 py-1 text-xs text-accent-sessions focus:outline-none"
+                className="shrink-0 rounded-md px-1 py-1 text-xs text-accent-ink focus:outline-none"
               >
                 Anpassen
               </Pressable>

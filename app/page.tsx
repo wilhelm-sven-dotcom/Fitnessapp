@@ -92,7 +92,7 @@ export default function HomePage() {
           </h1>
           {streak > 0 && (
             <div className="flex shrink-0 items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-              <Flame size={15} className="text-accent-sessions" />
+              <Flame size={15} className="text-accent-ink" />
               <span className="font-display text-sm font-bold tabular-nums text-fg">{streak}</span>
               <span className="text-xs text-muted">Wo</span>
             </div>
@@ -142,10 +142,10 @@ export default function HomePage() {
             onClick={() => router.push(`/workout/${activeKey}`)}
             className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
           >
-            <span className="min-w-0 truncate text-sm text-accent-sessions">
+            <span className="min-w-0 truncate text-sm text-accent-ink">
               Einheit läuft · {activeName}
             </span>
-            <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-sessions">
+            <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-ink">
               Fortsetzen <ChevronRight size={16} />
             </span>
           </Pressable>
@@ -237,7 +237,7 @@ export default function HomePage() {
                 aria-label={isRec ? `${t.focus} · empfohlen` : t.focus}
                 className="rounded-card border border-line bg-surface-1 px-3 py-3 text-left shadow-card"
               >
-                <span className={cn("font-mono text-xs", isRec ? "text-accent-sessions" : "text-muted")}>
+                <span className={cn("font-mono text-xs", isRec ? "text-accent-ink" : "text-muted")}>
                   {isRec && <span aria-hidden>• </span>}
                   {t.key}
                 </span>
