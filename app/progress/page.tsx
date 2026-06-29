@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import { LineChart, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { AchievementsGrid } from "@/components/progress/AchievementsGrid";
 import { BackTraffic } from "@/components/progress/BackTraffic";
 import { GoalCard } from "@/components/progress/GoalCard";
+import { LevelCard } from "@/components/progress/LevelCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
@@ -177,11 +179,15 @@ export default function ProgressPage() {
         </Reveal>
       )}
 
+      <LevelCard />
+
       <FatigueCard log={log} cardio={cardio} />
 
       <PhaseCard log={log} cardio={cardio} settings={settings} />
 
       <RecordsBoard log={log} />
+
+      <AchievementsGrid />
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 
