@@ -9,6 +9,7 @@ import { GoalCard } from "@/components/progress/GoalCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
+import { RecordsBoard } from "@/components/progress/RecordsBoard";
 import { TrendChart } from "@/components/progress/TrendChart";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -173,6 +174,8 @@ export default function ProgressPage() {
           </Card>
         </Reveal>
       )}
+
+      <RecordsBoard log={log} />
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 
