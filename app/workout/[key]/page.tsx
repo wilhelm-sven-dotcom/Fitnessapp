@@ -287,7 +287,7 @@ export default function WorkoutPage() {
         onClick={() => router.push(`/warmup/${key}`)}
         className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-sessions focus:outline-none"
       >
-        <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl))} Min
+        <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl, { bike: settings.bikeWarmup }))} Min
       </Pressable>
 
       {cardioAdvice.level !== "none" && (

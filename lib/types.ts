@@ -204,6 +204,10 @@ export interface AppSettings {
   activeGymId?: string;
   /** Smallest available weight increment — suggestions snap to it (default 2.5). */
   weightStep?: number;
+  /** Warm up with an easy bike spin before every session. */
+  bikeWarmup?: boolean;
+  /** Append a short Peloton finisher to the A/B/C templates. */
+  cardioFinisher?: boolean;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;

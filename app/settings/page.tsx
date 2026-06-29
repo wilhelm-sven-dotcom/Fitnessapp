@@ -25,6 +25,8 @@ export default function SettingsPage() {
     setVoiceCues,
     setSuperset,
     setWeightStep,
+    setBikeWarmup,
+    setCardioFinisher,
   } = useTraining();
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -216,6 +218,18 @@ export default function SettingsPage() {
             onChange={setSuperset}
             label="Supersätze"
             hint="Die letzten zwei Übungen im Wechsel — spart Pausenzeit, mehr passt ins Zeitfenster."
+          />
+          <Toggle
+            checked={!!settings.bikeWarmup}
+            onChange={setBikeWarmup}
+            label="Auf dem Bike aufwärmen"
+            hint="Stellt jeder Einheit ein lockeres 3-Minuten-Einrollen auf dem Peloton voran (Bike muss im Gym aktiv sein)."
+          />
+          <Toggle
+            checked={!!settings.cardioFinisher}
+            onChange={setCardioFinisher}
+            label="Cardio-Finisher"
+            hint="Hängt an A/B/C einen kurzen Peloton-Sprintblock ans Ende — extra Kondition, jederzeit abschaltbar."
           />
           <div>
             <p className="text-sm font-medium text-fg">Gewichtsstufe</p>

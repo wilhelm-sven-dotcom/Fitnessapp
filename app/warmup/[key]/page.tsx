@@ -30,7 +30,7 @@ export default function WarmupPage() {
 
   return (
     <WarmupPlayer
-      drills={warmupFor(tpl)}
+      drills={warmupFor(tpl, { bike: settings.bikeWarmup })}
       voiceOn={!!settings.voiceCues}
       onClose={() => router.back()}
     />

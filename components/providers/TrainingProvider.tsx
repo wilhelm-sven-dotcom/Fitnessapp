@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
+import { CARDIO_DAY, DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
@@ -165,6 +165,8 @@ interface TrainingContextValue {
   setTheme: (t: ThemePref) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
+  setBikeWarmup: (on: boolean) => void;
+  setCardioFinisher: (on: boolean) => void;
   setUserName: (name: string) => void;
   setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
   completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
@@ -431,9 +433,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const athleteInjuries = effectiveProfile(settings, body).injuries;
   const affinity = exerciseAffinity(choices, log);
+  const hasBike = (equip as string[]).includes("bike");
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);
     if (day) return resolveDay(day, allLib, has);
+    if (key === CARDIO_DAY.key)
+      return resolveSession(CARDIO_DAY, log.length, choices, has, allLib, {
+        injuries: athleteInjuries,
+        affinity,
+      });
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
@@ -442,6 +450,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       injuries: athleteInjuries,
       affinity,
     });
+  };
+
+  /** Append an optional Peloton finisher to A/B/C sessions (opt-in, needs a bike). */
+  const withFinisher = (list: ResolvedSlot[], key: string): ResolvedSlot[] => {
+    if (!settings.cardioFinisher || !hasBike) return list;
+    if (key === CARDIO_DAY.key || days.some((d) => d.id === key)) return list;
+    if (list.some((s) => s.ex.pattern === "cardio")) return list;
+    const fin = allLib.find((e) => e.id === "bike_finisher");
+    return fin ? [...list, { ex: fin, slotKey: "finisher", pool: [] }] : list;
   };
 
   // Real template, or a synthesized one for a custom day (slots = its patterns),
@@ -455,6 +472,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         .filter((p): p is Pattern => !!p);
       return { key: day.id, name: day.name, focus: day.focus, slots };
     }
+    if (key === CARDIO_DAY.key) return CARDIO_DAY;
     return TEMPLATE.find((t) => t.key === key) ?? null;
   };
 
@@ -481,15 +499,18 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const recTpl = TEMPLATE[nextIndex];
   const recList = useMemo(
     () =>
-      applyReadiness(
-        fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
-          protectCore: lastBackRed,
-          superset: settings.superset,
-        }).list,
-        readinessScale,
+      withFinisher(
+        applyReadiness(
+          fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
+            protectCore: lastBackRed,
+            superset: settings.superset,
+          }).list,
+          readinessScale,
+        ),
+        recTpl.key,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin, settings.superset, readinessScale],
+    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
   );
   const estimatedMin = useMemo(
     () => estimateSessionMin(recList, { superset: settings.superset }),
@@ -500,18 +521,18 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // Both the workout screen and saveSession read this so shown == saved.
   const activeList = useMemo(() => {
     if (!activeKey) return [];
-    const isDay = days.some((d) => d.id === activeKey);
+    const noTrim = days.some((d) => d.id === activeKey) || activeKey === CARDIO_DAY.key;
     const base = sessionOf(activeKey, lastBackRed);
-    // Custom days are trained exactly as built (no budget auto-trim); A/B/C trim.
-    const fitted = isDay
+    // Custom/cardio days are trained exactly as built (no budget auto-trim); A/B/C trim.
+    const fitted = noTrim
       ? base
       : fitToBudget(base, settings.timeBudgetMin, {
           protectCore: lastBackRed,
           superset: settings.superset,
         }).list;
-    return applyReadiness(fitted, readinessScale);
+    return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, choices, equip, custom, days, lastBackRed, settings.timeBudgetMin, settings.superset, readinessScale]);
+  }, [activeKey, choices, equip, custom, days, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
@@ -667,6 +688,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
   const setWeightStep = (step: number) =>
     void saveSettings({ ...settings, weightStep: step });
+  const setBikeWarmup = (on: boolean) =>
+    void saveSettings({ ...settings, bikeWarmup: on });
+  const setCardioFinisher = (on: boolean) =>
+    void saveSettings({ ...settings, cardioFinisher: on });
 
   // Ensure one gym profile exists — migrate from the flat equipment list.
   useEffect(() => {
@@ -1021,6 +1046,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setTheme,
     setAccent,
     setWeightStep,
+    setBikeWarmup,
+    setCardioFinisher,
     setUserName,
     setAthleteProfile,
     completeOnboarding,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, Copy, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Bike, Check, ChevronRight, Copy, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
@@ -139,6 +139,14 @@ export default function PlanPage() {
               <Sparkles size={16} strokeWidth={2.5} /> Coach-Tag
             </Pressable>
           </div>
+          {(equip as string[]).includes("bike") && (
+            <Pressable
+              onClick={() => router.push("/workout/peloton")}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+            >
+              <Bike size={16} strokeWidth={2.5} /> Peloton-Tag starten
+            </Pressable>
+          )}
         </section>
       </Reveal>
 

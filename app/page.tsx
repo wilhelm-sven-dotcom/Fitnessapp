@@ -29,9 +29,11 @@ export default function HomePage() {
     recTpl,
     recList,
     activeKey,
+    sessionTemplate,
     lastLabel,
     log,
     days,
+    equip,
     daysAgo,
     weekCount,
     ringMetrics,
@@ -44,7 +46,7 @@ export default function HomePage() {
     dismissCard,
   } = useTraining();
   const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
-  const activeName = TEMPLATE.find((t) => t.key === activeKey)?.name;
+  const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
   const chips = homeChips({ daysAgo, weekCount });
   const today = new Date().toLocaleDateString("de-DE", {
     weekday: "long",
@@ -244,6 +246,15 @@ export default function HomePage() {
               <p className="mt-1 truncate text-sm font-medium leading-tight">{d.name}</p>
             </Pressable>
           ))}
+          {(equip as string[]).includes("bike") && (
+            <Pressable
+              onClick={() => start("peloton")}
+              className="rounded-2xl border border-surface-3 bg-surface-1 px-3 py-3 text-left focus:outline-none"
+            >
+              <span className="font-mono text-xs text-accent-coverage">Bike</span>
+              <p className="mt-1 truncate text-sm font-medium leading-tight">Peloton</p>
+            </Pressable>
+          )}
         </div>
       </Reveal>
 

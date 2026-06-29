@@ -100,6 +100,14 @@ export const TEMPLATE: Template[] = [
   { key: "C", name: "Ganzkörper C", focus: "Mix & Stabilität", slots: ["squat", "hpush", "hpull", "lateral", "core"] },
 ];
 
+/** Optionaler Peloton/Cardio-Tag — startbar, aber NICHT in der A/B/C-Auto-Rotation. */
+export const CARDIO_DAY: Template = {
+  key: "peloton",
+  name: "Peloton",
+  focus: "Cardio",
+  slots: ["cardio", "cardio"],
+};
+
 export const EQUIP_LIST: EquipItem[] = [
   { key: "db", label: "Kurzhanteln" }, { key: "kb", label: "Kettlebell" }, { key: "bar", label: "Langhantel" },
   { key: "pullup", label: "Klimmzugstange" }, { key: "rings", label: "Turnringe" }, { key: "bands", label: "Bänder" },
