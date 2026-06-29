@@ -7,6 +7,7 @@ import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
+import { FatigueCard } from "@/components/progress/FatigueCard";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Reveal } from "@/components/ui/Reveal";
@@ -63,6 +64,7 @@ export default function HomePage() {
     settings,
     setBudget,
     coach,
+    cardio,
     cardioAdvice,
     acceptDeload,
     dismissCard,
@@ -351,6 +353,8 @@ export default function HomePage() {
           </Reveal>
         </>
       )}
+
+      <FatigueCard log={log} cardio={cardio} />
 
       <Reveal delay={0.22}>
         <Pressable
