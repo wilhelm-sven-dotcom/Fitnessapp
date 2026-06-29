@@ -32,7 +32,14 @@ import {
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
-import { applyTheme, DEFAULT_ACCENT, type ThemePref } from "@/lib/theme";
+import {
+  applySkin,
+  applyTheme,
+  DEFAULT_ACCENT,
+  DEFAULT_SKIN,
+  type SkinId,
+  type ThemePref,
+} from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
 import type {
   AppSettings,
@@ -81,6 +88,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceCues: false,
   superset: false,
   theme: "dark",
+  skin: DEFAULT_SKIN,
   accentColor: DEFAULT_ACCENT,
 };
 
@@ -163,6 +171,7 @@ interface TrainingContextValue {
   setVoiceCues: (on: boolean) => void;
   setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
+  setSkin: (skin: SkinId) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
@@ -262,15 +271,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void loadAll();
   }, [loadAll]);
 
-  // Apply theme + accent to <html>; follow system changes when set to "system".
+  // Apply theme + skin to <html>; follow system changes when theme is "system".
   useEffect(() => {
-    applyTheme(settings.theme, settings.accentColor);
+    applyTheme(settings.theme);
+    applySkin(settings.skin);
     if (settings.theme !== "system" || typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
-    const onChange = () => applyTheme(settings.theme, settings.accentColor);
+    const onChange = () => {
+      applyTheme(settings.theme);
+      applySkin(settings.skin);
+    };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [settings.theme, settings.accentColor]);
+  }, [settings.theme, settings.skin]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -709,6 +722,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, superset: on });
   const setTheme = (t: ThemePref) =>
     void saveSettings({ ...settings, theme: t });
+  const setSkin = (skin: SkinId) =>
+    void saveSettings({ ...settings, skin });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
@@ -1044,6 +1059,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setVoiceCues,
     setSuperset,
     setTheme,
+    setSkin,
     setAccent,
     setWeightStep,
     setBikeWarmup,

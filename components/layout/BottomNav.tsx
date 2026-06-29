@@ -23,7 +23,7 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="glass fixed inset-x-0 bottom-0 z-30 border-t border-surface-3"
+      className="glass fixed inset-x-0 bottom-0 z-30 border-t border-line"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-auto flex max-w-md">
@@ -41,7 +41,7 @@ export function BottomNav() {
                 strokeWidth={active ? 2.5 : 2}
                 className={cn(
                   "transition-colors",
-                  active ? "text-neutral-50" : "text-muted",
+                  active ? "text-fg" : "text-muted",
                 )}
               />
               <span className="relative flex h-1 w-6 items-center justify-center">
@@ -57,7 +57,7 @@ export function BottomNav() {
               <span
                 className={cn(
                   "text-xs font-medium transition-colors",
-                  active ? "text-neutral-50" : "text-muted",
+                  active ? "text-fg" : "text-muted",
                 )}
               >
                 {label}

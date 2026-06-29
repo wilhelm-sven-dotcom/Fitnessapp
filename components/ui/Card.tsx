@@ -3,12 +3,12 @@ import { cn } from "@/lib/utils";
 type CardVariant = "base" | "elevated" | "glass";
 
 const VARIANT: Record<CardVariant, string> = {
-  // Material on surface-0: tinted surface + hairline + soft depth.
-  base: "border border-surface-3 bg-surface-1 shadow-card",
+  // Skin panel material: blueprint = flat + hairline; tactile = raised + depth.
+  base: "border border-line bg-panel shadow-card",
   // A touch more lift for hero / focal cards.
-  elevated: "border border-surface-3 bg-surface-1 shadow-card-lg",
+  elevated: "border border-line bg-panel shadow-card-lg",
   // Frosted floating chrome.
-  glass: "glass border border-surface-3 shadow-card",
+  glass: "glass border border-line shadow-card",
 };
 
 /**
