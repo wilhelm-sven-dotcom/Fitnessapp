@@ -1,13 +1,14 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS, volumeBucket } from "@/lib/training-science";
-import { MUSCLE_LABEL, type MuscleVolume, weekStartMon } from "@/lib/volume";
+import { MUSCLE_LABEL, muscleOf, type MuscleVolume, weekStartMon } from "@/lib/volume";
 import type {
   AppSettings,
   BodyMetric,
   CardioSession,
   Exercise,
   LoggedSession,
+  Muscle,
 } from "@/lib/types";
 
 export type CoachKind =
@@ -17,7 +18,8 @@ export type CoachKind =
   | "volume-under"
   | "back-doctor"
   | "cardio"
-  | "recomp";
+  | "recomp"
+  | "volume-bump";
 export type CoachSeverity = "info" | "warn" | "urgent";
 
 export interface CoachCard {
@@ -145,6 +147,38 @@ export function recompSignal(body: BodyMetric[]): CoachCard | null {
   return null;
 }
 
+/**
+ * Stalled lifts whose primary muscle still has room below the productive max →
+ * suggest adding a set. Individual variability: when progress stalls, more volume
+ * often breaks it. A suggestion (info), never an automatic change.
+ */
+export function volumeBumpSignal(
+  plateaus: CoachCard[],
+  allLib: Exercise[],
+  vols: MuscleVolume[],
+): CoachCard | null {
+  if (!plateaus.length) return null;
+  const byId = new Map(allLib.map((e) => [e.id, e]));
+  const volBy = new Map(vols.map((v) => [v.muscle, v.sets]));
+  const muscles = new Set<Muscle>();
+  for (const p of plateaus) {
+    const ex = p.exId ? byId.get(p.exId) : undefined;
+    if (!ex) continue;
+    const m = muscleOf(ex).primary;
+    const b = volumeBucket(volBy.get(m) ?? 0);
+    if (b === "maintain" || b === "optimal") muscles.add(m);
+  }
+  if (!muscles.size) return null;
+  return {
+    kind: "volume-bump",
+    severity: "info",
+    title: "Plateau? Mehr Volumen testen",
+    body: `${[...muscles]
+      .map((m) => MUSCLE_LABEL[m])
+      .join(", ")} stagniert trotz solidem Volumen — häng pro Übung einen Satz dran. Wenn der Fortschritt stockt, reagiert oft mehr Volumen.`,
+  };
+}
+
 const SEV_RANK: Record<CoachSeverity, number> = { urgent: 0, warn: 1, info: 2 };
 
 export function coachCards(opts: {
@@ -181,7 +215,10 @@ export function coachCards(opts: {
   const d = deloadSignal(opts.log, opts.settings);
   if (d) cards.push(d);
 
-  cards.push(...plateauSignals(opts.log, opts.allLib));
+  const plateaus = plateauSignals(opts.log, opts.allLib);
+  cards.push(...plateaus);
+  const bump = volumeBumpSignal(plateaus, opts.allLib, opts.muscleVolumes);
+  if (bump) cards.push(bump);
 
   opts.muscleVolumes
     .filter((v) => v.status === "over")

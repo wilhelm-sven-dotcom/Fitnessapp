@@ -13,6 +13,7 @@ import { coachCards, type CoachCard } from "@/lib/advisor";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
+import { exerciseAffinity } from "@/lib/affinity";
 import {
   NEUTRAL_SCALE,
   band,
@@ -429,6 +430,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 2].backTraffic === "red";
 
   const athleteInjuries = effectiveProfile(settings, body).injuries;
+  const affinity = exerciseAffinity(choices, log);
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);
     if (day) return resolveDay(day, allLib, has);
@@ -438,6 +440,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return resolveSession(tpl, idx, choices, has, allLib, {
       backSafe,
       injuries: athleteInjuries,
+      affinity,
     });
   };
 

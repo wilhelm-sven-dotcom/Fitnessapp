@@ -9,6 +9,7 @@ import type {
   Template,
   WorkoutDay,
 } from "@/lib/types";
+import { pickPreferred } from "@/lib/affinity";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
@@ -80,10 +81,11 @@ export function resolveSession(
   choices: Record<string, string>,
   has: (k: string) => boolean,
   allLib: Exercise[],
-  opts: { backSafe?: boolean; injuries?: InjuryArea[] } = {},
+  opts: { backSafe?: boolean; injuries?: InjuryArea[]; affinity?: Map<string, number> } = {},
 ): ResolvedSlot[] {
   const backSafe = opts.backSafe ?? false;
   const injuries = opts.injuries ?? [];
+  const affinity = opts.affinity;
   return tpl.slots
     .map((pat, slotIdx): ResolvedSlot | null => {
       const pool = poolFor(pat, has, allLib);
@@ -92,7 +94,11 @@ export function resolveSession(
       const explicit = choices[slotKey]
         ? pool.find((e) => e.id === choices[slotKey])
         : undefined;
-      let ex = explicit || pool[(sessIdx + slotIdx) % pool.length];
+      let ex =
+        explicit ||
+        (affinity
+          ? pickPreferred(pool, affinity, sessIdx + slotIdx)
+          : pool[(sessIdx + slotIdx) % pool.length]);
 
       // Back-safe adaptation (after a red back signal) — only when the user
       // has not explicitly chosen this slot, so manual swaps always win.
