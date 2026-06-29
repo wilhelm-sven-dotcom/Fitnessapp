@@ -161,7 +161,7 @@ export default function ProgressPage() {
 
       {log.length > 0 && (
         <Reveal>
-          <Card variant="elevated" className="edge-top mb-4 rounded-3xl p-5">
+          <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
             <Readout
               eyebrow="Gesamt gestemmt"
               value={totalT}
@@ -207,7 +207,7 @@ export default function ProgressPage() {
             action={
               <Pressable
                 onClick={() => router.push("/")}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
+                className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
               >
                 <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
               </Pressable>

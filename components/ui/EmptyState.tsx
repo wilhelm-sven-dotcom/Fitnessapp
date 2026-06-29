@@ -35,7 +35,7 @@ export function EmptyState({
             opacity: 0.22,
           }}
         />
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-surface-3 bg-surface-2">
+        <span className="flex h-16 w-16 items-center justify-center rounded-card border border-surface-3 bg-surface-2">
           <Icon size={28} style={{ color: "var(--accent)" }} />
         </span>
       </div>

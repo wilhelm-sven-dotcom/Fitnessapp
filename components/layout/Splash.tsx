@@ -37,7 +37,7 @@ export function Splash() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.45, delay: 0.5, ease: EASE_OUT }}
           >
-            <BrandMark size={56} className="rounded-2xl" />
+            <BrandMark size={56} className="rounded-card" />
           </motion.span>
         }
       />

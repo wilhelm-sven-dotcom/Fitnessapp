@@ -285,13 +285,13 @@ export default function WorkoutPage() {
 
       <Pressable
         onClick={() => router.push(`/warmup/${key}`)}
-        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-sessions focus:outline-none"
+        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-sessions focus:outline-none"
       >
         <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl, { bike: settings.bikeWarmup }))} Min
       </Pressable>
 
       {cardioAdvice.level !== "none" && (
-        <div className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4">
+        <div className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-4">
           <div className="flex items-start gap-3">
             <Bike size={18} className="mt-0.5 shrink-0 text-accent-coverage" />
             <div className="min-w-0">
@@ -342,7 +342,7 @@ export default function WorkoutPage() {
             <div
               key={slotKey}
               className={cn(
-                "rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4",
+                "rounded-card border border-surface-3 bg-surface-1 shadow-card p-4",
                 isDone && "ring-1 ring-emerald-700",
               )}
             >
@@ -492,7 +492,7 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-4">
+      <div className="mt-6 rounded-card border border-surface-3 bg-surface-1 shadow-card p-4">
         <p className="text-sm font-medium">Wie fühlt sich dein unterer Rücken an?</p>
         <p className="mb-3 mt-0.5 text-xs text-muted">
           Kurz einschätzen — steuert die nächste Einheit.
@@ -523,7 +523,7 @@ export default function WorkoutPage() {
       <Pressable
         onClick={onSave}
         disabled={saving}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
       >
         <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training speichern"}
       </Pressable>

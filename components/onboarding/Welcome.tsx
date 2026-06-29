@@ -73,7 +73,7 @@ export function Welcome() {
               opacity: 0.25,
             }}
           />
-          <BrandMark size={72} className="rounded-3xl" />
+          <BrandMark size={72} className="rounded-card" />
           <p className="mt-6 font-display text-3xl font-semibold tracking-tight text-fg">
             {greeting()}
           </p>
@@ -89,7 +89,7 @@ export function Welcome() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE_OUT }}
-              className="flex items-start gap-3 rounded-2xl border border-surface-3 bg-surface-1 p-4 shadow-card"
+              className="flex items-start gap-3 rounded-card border border-surface-3 bg-surface-1 p-4 shadow-card"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-2">
                 <f.icon size={20} style={{ color: "var(--accent)" }} />
@@ -151,7 +151,7 @@ export function Welcome() {
 
           <Pressable
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
-            className="flex w-full items-center justify-center rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none"
+            className="flex w-full items-center justify-center rounded-card bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none"
           >
             Los geht&rsquo;s
           </Pressable>

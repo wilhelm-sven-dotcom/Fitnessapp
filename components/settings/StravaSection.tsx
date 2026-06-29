@@ -29,7 +29,7 @@ export function StravaSection() {
   };
 
   return (
-    <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 p-5 shadow-card">
+    <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 p-5 shadow-card">
       <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
         <Activity size={13} /> Strava
       </p>

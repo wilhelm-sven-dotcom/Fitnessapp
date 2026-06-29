@@ -35,7 +35,7 @@ export default function HistoryPage() {
 
       {log.length > 0 && (
         <Reveal>
-          <Card variant="elevated" className="edge-top mb-4 rounded-3xl p-5">
+          <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
             <Readout
               eyebrow="Aufgezeichnet"
               value={log.length}
@@ -48,7 +48,7 @@ export default function HistoryPage() {
       )}
 
       {cardio.length > 0 && (
-        <div className="mb-3 rounded-2xl border border-surface-3 bg-surface-1 p-4 shadow-card">
+        <div className="mb-3 rounded-card border border-surface-3 bg-surface-1 p-4 shadow-card">
           <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
             <Bike size={13} /> Kardio
           </p>
@@ -77,7 +77,7 @@ export default function HistoryPage() {
           action={
             <Pressable
               onClick={() => router.push("/")}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
+              className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
             >
               <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
             </Pressable>
@@ -92,7 +92,7 @@ export default function HistoryPage() {
           const isDel = confirmDel === realIdx;
           const v = sessionVolume(s);
           return (
-            <div key={s.date + i} className="overflow-hidden rounded-2xl border border-surface-3 bg-surface-1 shadow-card">
+            <div key={s.date + i} className="overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card">
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <button
                   onClick={() => setExpanded(isOpen ? null : realIdx)}

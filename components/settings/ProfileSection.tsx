@@ -39,7 +39,7 @@ export function ProfileSection() {
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   return (
-    <section className="mb-4 rounded-2xl border border-surface-3 bg-surface-1 shadow-card p-5">
+    <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
       <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">
         Profil · über mich
       </p>

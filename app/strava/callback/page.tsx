@@ -71,7 +71,7 @@ export default function StravaCallbackPage() {
               : { duration: 1.1, repeat: Infinity, ease: "linear" }
           }
         >
-          <BrandMark size={56} className="rounded-2xl" />
+          <BrandMark size={56} className="rounded-card" />
         </motion.span>
       </motion.div>
       <p className="mt-6 max-w-xs text-sm leading-relaxed text-muted">{msg}</p>

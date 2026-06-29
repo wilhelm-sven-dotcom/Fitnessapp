@@ -108,7 +108,7 @@ function ItemRow({
       value={item}
       dragListener={false}
       dragControls={controls}
-      className="rounded-2xl border border-surface-3 bg-surface-1 shadow-card"
+      className="rounded-card border border-surface-3 bg-surface-1 shadow-card"
     >
       <div className="flex items-center gap-2 px-3 py-3">
         <button
@@ -395,7 +395,7 @@ export default function DayBuilderPage() {
       </Pressable>
 
       {/* Live instrument readouts */}
-      <Card variant="elevated" className="edge-top mt-4 rounded-3xl p-5">
+      <Card variant="elevated" className="edge-top mt-4 rounded-card p-5">
         <BalanceRadar axes={dnaAxes} />
         <div className="mt-4 flex items-center justify-center gap-10 border-t border-surface-3 pt-4">
           <Readout eyebrow="Dauer" value={duration} unit="Min" size="md" />
@@ -431,7 +431,7 @@ export default function DayBuilderPage() {
 
       <Pressable
         onClick={() => setAddOpen(true)}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-3 bg-surface-1 py-3 text-sm font-medium text-accent-sessions shadow-card focus:outline-none"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-3 text-sm font-medium text-accent-sessions shadow-card focus:outline-none"
       >
         <Plus size={16} strokeWidth={2.5} /> Übung hinzufügen
       </Pressable>
@@ -439,7 +439,7 @@ export default function DayBuilderPage() {
       <Pressable
         onClick={save}
         disabled={!name.trim() || !items.length}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none disabled:opacity-40"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none disabled:opacity-40"
       >
         <Check size={18} strokeWidth={2.5} /> Tag speichern
       </Pressable>
@@ -552,7 +552,7 @@ export default function DayBuilderPage() {
             <Pressable
               onClick={runCoach}
               disabled={coachBusy}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-50"
             >
               <Sparkles size={18} strokeWidth={2.5} />
               {coachBusy ? "Baut deine Einheit…" : "Einheit bauen"}

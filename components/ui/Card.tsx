@@ -23,7 +23,7 @@ export function Card({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant }) {
   return (
-    <div className={cn("rounded-2xl p-4", VARIANT[variant], className)} {...props}>
+    <div className={cn("rounded-card p-4", VARIANT[variant], className)} {...props}>
       {children}
     </div>
   );

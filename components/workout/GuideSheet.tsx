@@ -20,7 +20,7 @@ export function GuideSheet({
       {ex && (
         <>
           {fig ? (
-            <div className="mb-4 flex items-end gap-1 rounded-2xl bg-base p-2">
+            <div className="mb-4 flex items-end gap-1 rounded-card bg-base p-2">
               <FigurePanel label="Seitlich" fig={fig} viewKey="side" />
               {fig.front ? (
                 <FigurePanel label="Frontal" fig={fig} viewKey="front" />
@@ -29,7 +29,7 @@ export function GuideSheet({
               )}
             </div>
           ) : (
-            <div className="mb-4 rounded-2xl bg-base px-3 py-2">
+            <div className="mb-4 rounded-card bg-base px-3 py-2">
               <p className="font-mono text-xs text-faint">
                 Animation folgt — Schritte unten.
               </p>

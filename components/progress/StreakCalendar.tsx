@@ -32,7 +32,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   });
 
   return (
-    <Card className="rounded-3xl p-5">
+    <Card className="rounded-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <p className="font-mono text-xs uppercase tracking-widest text-muted">
           Diese & letzte Wochen
