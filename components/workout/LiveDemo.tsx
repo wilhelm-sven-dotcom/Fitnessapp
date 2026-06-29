@@ -66,7 +66,7 @@ export function LiveDemo({ ex, onOpen }: { ex: Exercise | null; onOpen: () => vo
                 aria-label={`Ausführung ${ex.name} öffnen`}
                 className="flex w-full items-center gap-3 p-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
               >
-                <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-pill bg-base">
+                <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-card border border-line bg-surface-2">
                   {fig ? (
                     <FigurePanel label="" fig={fig} viewKey="side" accentBones={accent} />
                   ) : (

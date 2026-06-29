@@ -63,19 +63,24 @@ export function FigurePanel({
   viewKey,
   flip,
   accentBones,
+  freeze,
 }: {
   label: string;
   fig: FigureDef;
   viewKey: "side" | "front";
   flip?: boolean;
   accentBones?: Set<string>;
+  /** Render one static phase (0..1) instead of looping — for the 3-pose filmstrip. */
+  freeze?: number;
 }) {
   const v = fig[viewKey];
-  const [f, setF] = useState(0);
+  const [animF, setAnimF] = useState(0);
+  const f = freeze ?? animF;
 
   useEffect(() => {
+    if (freeze != null) return; // static pose (filmstrip) — no animation loop
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      setF(0);
+      setAnimF(0);
       return;
     }
     let raf = 0;
@@ -84,12 +89,12 @@ export function FigurePanel({
     const loop = (ts: number) => {
       if (!st) st = ts;
       const ph = ((ts - st) % per) / per;
-      setF((1 - Math.cos(ph * 2 * Math.PI)) / 2);
+      setAnimF((1 - Math.cos(ph * 2 * Math.PI)) / 2);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [freeze]);
 
   if (!v) return null;
   const frames = framesOf(v);

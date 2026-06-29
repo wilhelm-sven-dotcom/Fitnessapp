@@ -88,14 +88,39 @@ export function GuideSheet({
               controls
             />
           ) : fig ? (
-            <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-base p-3">
-              <FigurePanel label="Seitlich" fig={fig} viewKey="side" accentBones={accent} />
-              {fig.front ? (
-                <FigurePanel label="Frontal" fig={fig} viewKey="front" accentBones={accent} />
-              ) : (
-                <FigurePanel label="Andere Seite" fig={fig} viewKey="side" flip accentBones={accent} />
-              )}
-            </div>
+            <>
+              <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-base p-3">
+                <FigurePanel label="Seitlich" fig={fig} viewKey="side" accentBones={accent} />
+                {fig.front ? (
+                  <FigurePanel label="Frontal" fig={fig} viewKey="front" accentBones={accent} />
+                ) : (
+                  <FigurePanel label="Andere Seite" fig={fig} viewKey="side" flip accentBones={accent} />
+                )}
+              </div>
+              {/* Movement broken into 3 frozen positions — studyable, and the full
+                  range stays visible even with reduced motion. */}
+              <div className="mb-3 rounded-card border border-line bg-base p-3">
+                <p className="mb-2 font-mono text-xs uppercase tracking-widest text-accent-2">
+                  Bewegung · 3 Positionen
+                </p>
+                <div className="flex items-end gap-2">
+                  {[
+                    { f: 0, label: "Start" },
+                    { f: 0.5, label: "Mitte" },
+                    { f: 1, label: "Ende" },
+                  ].map((p) => (
+                    <FigurePanel
+                      key={p.f}
+                      label={p.label}
+                      fig={fig}
+                      viewKey="side"
+                      accentBones={accent}
+                      freeze={p.f}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
           ) : (
             <div className="mb-3 rounded-card border border-line bg-base px-3 py-2">
               <p className="font-mono text-xs text-faint">Animation folgt — Schritte unten.</p>
