@@ -79,6 +79,33 @@ export function frameAt(n: number, f: number): { i: number; next: number; t: num
   return { i, next: i + 1, t: pos - i };
 }
 
+/**
+ * Worked-muscle highlight: which bone segments to tint in the accent for a given
+ * movement pattern. Keys are "a>b" (matching bone pairs, side + front variants).
+ * Approximate — a form aid, not anatomy.
+ */
+export function muscleBones(pattern?: string): Set<string> {
+  const s = new Set<string>();
+  const add = (...k: string[]) => k.forEach((x) => s.add(x));
+  switch (pattern) {
+    case "squat":
+    case "lunge":
+      add("hip>knee", "hip>knee2", "hip>kneeL", "hip>kneeR"); // Beine
+      break;
+    case "hinge":
+      add("sh>hip", "hip>knee", "hip>kneeL", "hip>kneeR"); // Hüfte/Rücken/Beine
+      break;
+    case "push":
+    case "pull":
+      add("sh>elbow", "elbow>hand", "sh>elbow2", "elbow2>hand2", "sh>elbowL", "elbowL>handL", "sh>elbowR", "elbowR>handR", "sh>hip");
+      break;
+    case "core":
+    default:
+      add("sh>hip");
+  }
+  return s;
+}
+
 export const FIG: Record<string, FigureDef> = {
   goblet: { ground: 150,
     side: { bones: SB, spine: SP, equip: { kind: "goblet", hands: ["hand"] },

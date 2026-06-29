@@ -65,6 +65,8 @@ export interface Exercise {
   muscleSecondary?: Muscle;
   /** User-defined exercise (created in settings). */
   custom?: boolean;
+  /** Optional real demonstration clip (looping, muted) shown in the guide. */
+  videoUrl?: string;
 }
 
 export interface Template {
