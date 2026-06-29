@@ -27,20 +27,25 @@ export function accentHex(id: string | undefined): string {
 
 /* ── Skins ────────────────────────────────────────────────────────────────── */
 
-export type SkinId = "blueprint" | "tactile";
+export type SkinId = "blueprint" | "tactile" | "editorial";
 
 export const SKINS: { id: SkinId; label: string; hint: string }[] = [
   { id: "blueprint", label: "Blueprint", hint: "Messraster, Stahl & Rot — technisch, präzise." },
   { id: "tactile", label: "Tactile", hint: "Tacho & Bernstein — geschliffenes Instrument." },
+  { id: "editorial", label: "Editorial", hint: "Magazin — Anton-Schlagzeile, Serif, Knochen auf Schwarz." },
 ];
 
 export const DEFAULT_SKIN: SkinId = "tactile";
 
-const SKIN_BASE: Record<SkinId, string> = { blueprint: "#0c0e12", tactile: "#0e0f12" };
+const SKIN_BASE: Record<SkinId, string> = {
+  blueprint: "#0c0e12",
+  tactile: "#0e0f12",
+  editorial: "#0f0f10",
+};
 const LIGHT_BG = "#f2f3f5";
 
 export function resolveSkin(skin: string | undefined): SkinId {
-  return skin === "blueprint" ? "blueprint" : "tactile";
+  return skin === "blueprint" || skin === "editorial" ? skin : "tactile";
 }
 
 /** Apply the skin to <html> and match the status-bar color (dark only). */

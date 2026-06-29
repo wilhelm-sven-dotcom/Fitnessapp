@@ -195,7 +195,7 @@ export interface AppSettings {
   /** Appearance: color theme preference (default 'dark'). */
   theme?: "dark" | "light" | "system";
   /** Appearance: design skin — drives palette, fonts, surfaces, signature. */
-  skin?: "blueprint" | "tactile";
+  skin?: "blueprint" | "tactile" | "editorial";
   /** Appearance: legacy brand accent (id from lib/theme ACCENTS) — app-icon only. */
   accentColor?: string;
   /** Display name for the personalized greeting ("Guten Abend, Sven"). */

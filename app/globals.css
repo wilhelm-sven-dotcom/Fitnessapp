@@ -81,6 +81,37 @@
   --page-bg-repeat: no-repeat;
 }
 
+[data-skin="editorial"] {
+  --base: #0f0f10;
+  --card: #16161a;
+  --surface-2: #1e1e22;
+  --line: #2c2b27;
+  --fg: #e8e2d6; /* Knochen */
+  --muted: #b9b2a4;
+  --faint: #6e695f;
+  --strong: #e8e2d6;
+  --on-strong: #0f0f10;
+  --glass: rgba(15, 15, 16, 0.72);
+
+  --accent: #ff375f; /* Rot */
+  --accent-2: #b9b2a4; /* warmes Knochen-Grau — Labels */
+  --live: #ff375f;
+
+  --font-display: var(--font-anton); /* kondensierte Schlagzeile */
+  --font-body: var(--font-newsreader); /* Serif */
+  --font-mono: var(--font-inter); /* getrackte Labels/Zahlen */
+
+  --radius-card: 2px; /* fast scharf — Haarlinien tragen */
+  --radius-pill: 999px;
+  --panel-bg: linear-gradient(0deg, #16161a, #16161a);
+  --panel-shadow: none;
+  --panel-shadow-lg: none;
+  --hero-sheen: linear-gradient(135deg, rgba(232, 226, 214, 0.05), transparent 42%);
+  --page-bg: radial-gradient(120% 75% at 50% -10%, #15151a, #0f0f10 62%);
+  --page-bg-size: 100% 100%;
+  --page-bg-repeat: no-repeat;
+}
+
 /* Light theme overrides the neutral palette under either skin (identity tokens
    — accent, fonts, radius, panel treatment — persist from the skin). */
 [data-theme="light"] {
@@ -170,15 +201,16 @@ html {
   pointer-events: none;
 }
 
-/* Skin-scoped visibility — lets one component ship both signature variants and
-   reveal the right one with zero JS / no hydration flash (data-skin is set
-   pre-paint). Default (blueprint) hides the tactile variant. */
-.only-tactile {
+/* Skin-scoped visibility — a component ships all signature variants and reveals
+   the active one with zero JS / no hydration flash (data-skin is set pre-paint).
+   Default-hide all three, then show the one matching the active skin. */
+.only-blueprint,
+.only-tactile,
+.only-editorial {
   display: none;
 }
-[data-skin="tactile"] .only-tactile {
+[data-skin="blueprint"] .only-blueprint,
+[data-skin="tactile"] .only-tactile,
+[data-skin="editorial"] .only-editorial {
   display: revert;
-}
-[data-skin="tactile"] .only-blueprint {
-  display: none;
 }

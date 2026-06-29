@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Sora, JetBrains_Mono } from "next/font/google";
+import { Archivo, Sora, JetBrains_Mono, Anton, Newsreader, Inter } from "next/font/google";
 import "./globals.css";
 import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
@@ -26,6 +26,16 @@ const jbmono = JetBrains_Mono({
   variable: "--font-jbmono",
   display: "swap",
 });
+// Editorial skin: condensed poster display + editorial serif body + clean labels.
+const anton = Anton({ subsets: ["latin"], weight: ["400"], variable: "--font-anton", display: "swap" });
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["400", "500", "600"],
+  variable: "--font-newsreader",
+  display: "swap",
+});
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Training",
@@ -54,14 +64,14 @@ export default function RootLayout({
       lang="de"
       data-theme="dark"
       data-skin="tactile"
-      className={`${archivo.variable} ${sora.variable} ${jbmono.variable}`}
+      className={`${archivo.variable} ${sora.variable} ${jbmono.variable} ${anton.variable} ${newsreader.variable} ${inter.variable}`}
     >
       <body>
         {/* Apply saved theme + skin before paint (no flash of the wrong look).
             --accent is owned by the skin's CSS, so nothing is set inline here. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'dark';var r=t==='light'?'light':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.setAttribute('data-theme',r);d.setAttribute('data-skin',s.skin==='blueprint'?'blueprint':'tactile');}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'dark';var r=t==='light'?'light':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.setAttribute('data-theme',r);var sk=s.skin;d.setAttribute('data-skin',sk==='blueprint'||sk==='editorial'?sk:'tactile');}catch(e){}})();`,
           }}
         />
         <TrainingProvider>
