@@ -7,6 +7,7 @@ import {
   lerpPts,
   SB,
   SP,
+  type Bone,
   type EquipDef,
   type FigureDef,
   type Frame,
@@ -43,16 +44,31 @@ function Equip({ P, eq }: { P: Frame; eq?: EquipDef }) {
   return <>{e}</>;
 }
 
+/** Limb thickness: torso > thigh/upper-arm > shin/forearm. */
+function boneWidth([a, b]: Bone): number {
+  if (a === "sh" && b === "hip") return 18;
+  if (a.startsWith("elbow") || a.startsWith("knee")) return 10;
+  return 13;
+}
+
+/**
+ * Animated body figure (filled "capsule" limbs over the shared pose engine).
+ * `accentBones` (keys "a>b") tints the worked muscles in the skin accent;
+ * the spine stays green as a neutral-back cue. Colours are tokens, so the
+ * figure adapts to skin + theme. prefers-reduced-motion freezes on pose 0.
+ */
 export function FigurePanel({
   label,
   fig,
   viewKey,
   flip,
+  accentBones,
 }: {
   label: string;
   fig: FigureDef;
   viewKey: "side" | "front";
   flip?: boolean;
+  accentBones?: Set<string>;
 }) {
   const v = fig[viewKey];
   const [f, setF] = useState(0);
@@ -79,36 +95,53 @@ export function FigurePanel({
   const frames = framesOf(v);
   const { i, next, t } = frameAt(frames.length, f);
   const P = lerpPts(frames[i], frames[next], t);
-  const spset = new Set((v.spine || SP).map((s) => s.join(">")));
-  const ln = (p: string, q: string) => {
-    const a = P[p];
-    const b = P[q];
-    if (!a || !b) return null;
-    const sp = spset.has(p + ">" + q);
-    return <line key={p + q} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={sp ? "#34d399" : "#e5e5e5"} strokeWidth={sp ? 8 : 6} strokeLinecap="round" />;
-  };
+  const bones = v.bones || SB;
+  const spine = v.spine || SP;
   const headKey = v.head || "head";
+
+  const cap = (bn: Bone, w: number, color: string, k: string) => {
+    const a = P[bn[0]];
+    const b = P[bn[1]];
+    if (!a || !b) return null;
+    return (
+      <line key={k} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={color} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />
+    );
+  };
+
   const inner = (
     <>
-      {fig.ground != null && <line x1="18" y1={fig.ground} x2="182" y2={fig.ground} stroke="#404040" strokeWidth="3" strokeLinecap="round" />}
-      {(v.static || []).map((s, i) =>
+      {fig.ground != null && <line x1="18" y1={fig.ground} x2="182" y2={fig.ground} stroke="var(--line)" strokeWidth="3" strokeLinecap="round" />}
+      {(v.static || []).map((s, idx) =>
         s.t === "line" ? (
-          <line key={"st" + i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "#737373"} strokeWidth={s.w || 3} strokeLinecap="round" />
+          <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "#737373"} strokeWidth={s.w || 3} strokeLinecap="round" />
         ) : (
-          <rect key={"st" + i} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="#262626" stroke="#404040" strokeWidth="2" />
+          <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="var(--surface-2)" stroke="var(--line)" strokeWidth="2" />
         ),
       )}
-      {(v.bones || SB).map((bn) => ln(bn[0], bn[1]))}
-      {P[headKey] && <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10" fill="#34d399" />}
+      {/* Outlines first (card colour) so overlapping limbs read separately. */}
+      {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--base)", "o" + bn[0] + bn[1]))}
+      {/* Body fills — worked muscles in the accent, else the figure colour. */}
+      {bones.map((bn) =>
+        cap(bn, boneWidth(bn), accentBones?.has(bn[0] + ">" + bn[1]) ? "var(--accent)" : "var(--fg)", "f" + bn[0] + bn[1]),
+      )}
+      {/* Neutral-spine cue. */}
+      {spine.map((sp, idx) => cap(sp, 3.5, "#34d399", "sp" + idx))}
+      {P[headKey] && (
+        <>
+          <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />
+          <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10.5" fill="var(--fg)" />
+        </>
+      )}
       <Equip P={P} eq={v.equip} />
     </>
   );
+
   return (
-    <div className="flex-1 min-w-0">
+    <div className="min-w-0 flex-1">
       <svg viewBox={fig.vb || "0 0 200 165"} style={{ display: "block", width: "100%", height: "auto" }}>
         {flip ? <g transform="translate(200,0) scale(-1,1)">{inner}</g> : inner}
       </svg>
-      <p className="text-center font-mono text-xs text-muted mt-1">{label}</p>
+      <p className="mt-1 text-center font-mono text-xs text-muted">{label}</p>
     </div>
   );
 }
