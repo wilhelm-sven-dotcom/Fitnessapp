@@ -132,11 +132,34 @@
   --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.04), transparent 42%);
 }
 [data-theme="light"][data-skin="blueprint"] {
+  /* Blaupause-Papier: flach + Stahl-Raster. */
+  --panel-shadow: 0 1px 0 rgba(34, 43, 56, 0.06);
+  --panel-shadow-lg: 0 1px 0 rgba(34, 43, 56, 0.08);
   --page-bg: linear-gradient(rgba(110, 144, 190, 0.16) 1px, transparent 1px),
     linear-gradient(90deg, rgba(110, 144, 190, 0.16) 1px, transparent 1px);
 }
 [data-theme="light"][data-skin="tactile"] {
+  /* Helles, geschliffenes Instrument (erhabene Panels bleiben). */
   --page-bg: radial-gradient(120% 80% at 50% -10%, #ffffff, #eef0f3 60%);
+}
+[data-theme="light"][data-skin="editorial"] {
+  /* Creme-Papier — echtes Magazin im Hellmodus. */
+  --base: #f4f1e8;
+  --card: #faf8f1;
+  --surface-2: #ece7da;
+  --line: #ddd6c5;
+  --fg: #1a1813;
+  --muted: #5b5547;
+  --faint: #9a9384;
+  --strong: #1a1813;
+  --on-strong: #faf8f1;
+  --glass: rgba(250, 248, 241, 0.72);
+  --accent-2: #8a8270;
+  --panel-bg: linear-gradient(0deg, #faf8f1, #faf8f1);
+  --panel-shadow: none;
+  --panel-shadow-lg: none;
+  --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.03), transparent 42%);
+  --page-bg: radial-gradient(120% 75% at 50% -10%, #f7f4ec, #f1ede1 62%);
 }
 
 html {
