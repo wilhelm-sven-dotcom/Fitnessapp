@@ -88,7 +88,7 @@ export function GoalCard() {
     const out: GoalItem[] = [];
     const seen = new Set<string>();
     log.forEach((s) =>
-      s.exercises.forEach((se) => {
+      (s.exercises ?? []).forEach((se) => {
         if (seen.has(se.id)) return;
         seen.add(se.id);
         const series = exercise1RMHistory(log, allLib, se.id);

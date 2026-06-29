@@ -47,7 +47,7 @@ export function exercise1RMHistory(
   if (!ex || !ex.weighted) return [];
   const out: SeriesPoint[] = [];
   log.forEach((s) => {
-    const se = s.exercises.find((e) => e.id === exId);
+    const se = (s.exercises ?? []).find((e) => e.id === exId);
     if (!se) return;
     const sets = workSets(se.sets).filter(isFilled);
     if (!sets.length) return;

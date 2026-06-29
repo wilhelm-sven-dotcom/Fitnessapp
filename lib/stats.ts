@@ -3,12 +3,14 @@ import type { LoggedSession, SetEntry } from "@/lib/types";
 /** A set counts as "done" once reps are entered. */
 export const isFilled = (s: SetEntry) => s.reps !== "" && s.reps != null;
 
-/** Working sets only — warm-ups never count toward volume, PRs or progression. */
-export const workSets = (sets: SetEntry[]) => sets.filter((s) => !s.warmup);
+/** Working sets only — warm-ups never count toward volume, PRs or progression.
+ *  Tolerates a missing `sets` array (legacy/partial sessions) so callers that
+ *  walk the whole history never throw. */
+export const workSets = (sets: SetEntry[]) => (sets ?? []).filter((s) => !s.warmup);
 
 /** Total weight × reps across all working sets of a session. */
 export function sessionVolume(s: LoggedSession): number {
-  return s.exercises.reduce(
+  return (s.exercises ?? []).reduce(
     (sum, ex) =>
       sum +
       workSets(ex.sets).reduce(
@@ -66,7 +68,7 @@ export function weeklyAvgRir(log: LoggedSession[], ref: Date = new Date()): numb
   for (const s of log) {
     const t = new Date(s.date);
     if (t < start || t >= end) continue;
-    for (const ex of s.exercises) {
+    for (const ex of s.exercises ?? []) {
       for (const set of workSets(ex.sets)) {
         if (set.rir != null && isFilled(set)) rirs.push(set.rir);
       }

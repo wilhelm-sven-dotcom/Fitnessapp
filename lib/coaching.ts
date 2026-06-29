@@ -11,7 +11,7 @@ export interface Chip {
 function historyForEx(log: LoggedSession[], id: string): SetEntry[] {
   const out: SetEntry[] = [];
   log.forEach((s) => {
-    const ex = s.exercises.find((e) => e.id === id);
+    const ex = (s.exercises ?? []).find((e) => e.id === id);
     if (ex) out.push(...workSets(ex.sets).filter(isFilled));
   });
   return out;
