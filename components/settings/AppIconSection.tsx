@@ -38,11 +38,17 @@ export function AppIconSection() {
     };
   }, [cfg.kind, cfg.imageId]);
 
-  // Redraw the live preview on any change.
+  // Redraw the live preview on any change. Guarded: a canvas error must never
+  // bubble out of the effect (React would surface it as a full-page crash).
   useEffect(() => {
     const c = canvasRef.current;
     const ctx = c?.getContext("2d");
-    if (c && ctx) drawIcon(ctx, c.width, cfg, img);
+    if (!c || !ctx) return;
+    try {
+      drawIcon(ctx, c.width, cfg, img);
+    } catch {
+      /* unsupported canvas op — leave the preview blank rather than crash */
+    }
   }, [cfg, img]);
 
   const update = (patch: Partial<IconConfig>) => setIcon({ ...cfg, ...patch });
