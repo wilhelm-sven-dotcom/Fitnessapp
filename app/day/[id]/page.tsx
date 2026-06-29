@@ -20,6 +20,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { Readout } from "@/components/ui/Readout";
 import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { sessionRadarAxes } from "@/lib/balance";
 import { buildCoachContext } from "@/lib/coach-context";
 import { PATTERN_LABEL } from "@/lib/exercises";
@@ -181,6 +182,7 @@ export default function DayBuilderPage() {
     body,
     cardio,
     equip,
+    settings,
   } = useTraining();
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -310,6 +312,7 @@ export default function DayBuilderPage() {
           focus: coachFocus,
           exercises,
           context: buildCoachContext({ log, allLib, body, cardio }),
+          persona: athletePersona(effectiveProfile(settings, body), settings.userName),
         }),
       });
       const j = (await res.json()) as

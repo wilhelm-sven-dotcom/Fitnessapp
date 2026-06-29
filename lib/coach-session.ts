@@ -75,12 +75,13 @@ export function buildSessionSystem(
   exercises: CoachExercise[],
   minutes: number,
   focus: string,
+  persona = "Profil: erfahrener Hypertrophie-Athlet, empfindlicher unterer Rücken.",
 ): string {
   const list = exercises.map((e) => `- ${e.id} · ${e.name} · ${e.pattern}`).join("\n");
   const focusText = focus.trim() || "Ganzkörper";
-  return `Du bist der persönliche Trainings-Coach von Sven und stellst EINE Trainingseinheit zusammen.
+  return `Du bist der persönliche Trainings-Coach und stellst EINE Trainingseinheit zusammen.
 
-Profil: Ziel Muskelaufbau (Hypertrophie), 1,93 m / ~90 kg.
+${persona}
 
 ${TRAINING_PRINCIPLES}
 

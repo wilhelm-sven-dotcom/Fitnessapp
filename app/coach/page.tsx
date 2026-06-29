@@ -7,6 +7,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { buildCoachContext } from "@/lib/coach-context";
 import { cn } from "@/lib/utils";
 
@@ -25,10 +26,14 @@ const RECAP_PROMPT =
 
 export default function CoachPage() {
   const router = useRouter();
-  const { log, allLib, body, cardio } = useTraining();
+  const { log, allLib, body, cardio, settings } = useTraining();
   const context = useMemo(
     () => buildCoachContext({ log, allLib, body, cardio }),
     [log, allLib, body, cardio],
+  );
+  const persona = useMemo(
+    () => athletePersona(effectiveProfile(settings, body), settings.userName),
+    [settings, body],
   );
 
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -48,7 +53,7 @@ export default function CoachPage() {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: base, context }),
+        body: JSON.stringify({ messages: base, context, persona }),
       });
       if (res.headers.get("content-type")?.includes("application/json")) {
         const j = (await res.json()) as { configured?: boolean };

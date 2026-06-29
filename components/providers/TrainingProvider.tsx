@@ -12,6 +12,8 @@ import { DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
+import { effectiveProfile } from "@/lib/athlete";
+import { exerciseAffinity } from "@/lib/affinity";
 import {
   NEUTRAL_SCALE,
   band,
@@ -34,6 +36,7 @@ import { applyTheme, DEFAULT_ACCENT, type ThemePref } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
 import type {
   AppSettings,
+  AthleteProfile,
   BodyMetric,
   CardioSession,
   EquipKey,
@@ -163,7 +166,8 @@ interface TrainingContextValue {
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setUserName: (name: string) => void;
-  completeOnboarding: (name?: string) => void;
+  setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
+  completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
   setReadiness: (r: Readiness) => void;
   acceptDeload: () => void;
   dismissCard: (card: CoachCard) => void;
@@ -425,13 +429,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 1].backTraffic === "red" &&
     log[log.length - 2].backTraffic === "red";
 
+  const athleteInjuries = effectiveProfile(settings, body).injuries;
+  const affinity = exerciseAffinity(choices, log);
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);
     if (day) return resolveDay(day, allLib, has);
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
-    return resolveSession(tpl, idx, choices, has, allLib, backSafe);
+    return resolveSession(tpl, idx, choices, has, allLib, {
+      backSafe,
+      injuries: athleteInjuries,
+      affinity,
+    });
   };
 
   // Real template, or a synthesized one for a custom day (slots = its patterns),
@@ -532,10 +542,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const coach = useMemo(
     () =>
-      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes, cardio }).filter(
+      coachCards({ log, allLib, settings, seeDoctor, muscleVolumes, cardio, body }).filter(
         (c) => !dismissed.includes(c.kind + (c.exId ?? "")),
       ),
-    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, dismissed],
+    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, body, dismissed],
   );
 
   const cardioTip = useMemo(() => cardioAdvice(cardio), [cardio]);
@@ -678,11 +688,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
     void saveSettings({ ...settings, userName: name.trim() || undefined });
-  const completeOnboarding = (name?: string) =>
+  const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
+    void saveSettings({
+      ...settings,
+      athleteProfile: { ...settings.athleteProfile, ...patch },
+    });
+  const completeOnboarding = (name?: string, profile?: Partial<AthleteProfile>) =>
     void saveSettings({
       ...settings,
       onboarded: true,
       userName: name?.trim() ? name.trim() : settings.userName,
+      athleteProfile: profile
+        ? { ...settings.athleteProfile, ...profile }
+        : settings.athleteProfile,
     });
 
   const saveCardio = async (next: CardioSession[]) => {
@@ -1004,6 +1022,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setAccent,
     setWeightStep,
     setUserName,
+    setAthleteProfile,
     completeOnboarding,
     setReadiness: (r) => setTodayReadiness(r),
     acceptDeload,

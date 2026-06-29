@@ -160,6 +160,25 @@ export interface Readiness {
   score: number; // 0..1
 }
 
+export type Experience = "anfänger" | "fortgeschritten" | "erfahren";
+export type TrainingGoal = "aufbau" | "optik" | "kraft";
+export type InjuryArea = "rücken" | "knie" | "schulter" | "ellbogen" | "handgelenk";
+
+/**
+ * Editable athlete profile — replaces the formerly hardcoded persona ("Sven",
+ * 1,93 m, 90 kg, …). Drives the coach/builder prompts and the engine; empty
+ * fields fall back to sensible defaults in `effectiveProfile` (lib/athlete.ts).
+ */
+export interface AthleteProfile {
+  sex?: "m" | "w" | "divers";
+  age?: number;
+  heightCm?: number;
+  bodyweightKg?: number;
+  experience?: Experience;
+  goals?: TrainingGoal[];
+  injuries?: InjuryArea[];
+}
+
 export interface AppSettings {
   /** Target session length in minutes. */
   timeBudgetMin: number;
@@ -191,6 +210,8 @@ export interface AppSettings {
     expiresAt: number;
     athleteName?: string;
   };
+  /** Editable athlete profile (replaces the hardcoded persona). */
+  athleteProfile?: AthleteProfile;
 }
 
 /** A cardio session (e.g. a Strava ride) — separate from strength `LoggedSession`. */

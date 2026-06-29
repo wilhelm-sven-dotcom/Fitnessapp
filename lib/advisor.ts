@@ -1,8 +1,15 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS, volumeBucket } from "@/lib/training-science";
-import { MUSCLE_LABEL, type MuscleVolume, weekStartMon } from "@/lib/volume";
-import type { AppSettings, CardioSession, Exercise, LoggedSession } from "@/lib/types";
+import { MUSCLE_LABEL, muscleOf, type MuscleVolume, weekStartMon } from "@/lib/volume";
+import type {
+  AppSettings,
+  BodyMetric,
+  CardioSession,
+  Exercise,
+  LoggedSession,
+  Muscle,
+} from "@/lib/types";
 
 export type CoachKind =
   | "deload"
@@ -10,7 +17,9 @@ export type CoachKind =
   | "volume-over"
   | "volume-under"
   | "back-doctor"
-  | "cardio";
+  | "cardio"
+  | "recomp"
+  | "volume-bump";
 export type CoachSeverity = "info" | "warn" | "urgent";
 
 export interface CoachCard {
@@ -100,6 +109,76 @@ export function plateauSignals(
   return cards.slice(0, 2);
 }
 
+/**
+ * Body recomposition read from the weight + waist trend (Optik/Definition focus).
+ * Needs ≥ 2 entries of each, spanning ≥ 2 weeks, so it reflects a real trend.
+ */
+export function recompSignal(body: BodyMetric[]): CoachCard | null {
+  const wts = body.filter((b) => b.weightKg != null);
+  const wsts = body.filter((b) => b.waistCm != null);
+  if (wts.length < 2 || wsts.length < 2) return null;
+  const spanDays =
+    (new Date(wts[wts.length - 1].date).getTime() - new Date(wts[0].date).getTime()) / DAY;
+  if (spanDays < 14) return null;
+  const dW = (wts[wts.length - 1].weightKg as number) - (wts[0].weightKg as number);
+  const dWaist = (wsts[wsts.length - 1].waistCm as number) - (wsts[0].waistCm as number);
+  const f = (n: number) => `${n >= 0 ? "+" : ""}${Math.round(n * 10) / 10}`;
+  if (dW >= 0.5 && dWaist <= -0.5)
+    return {
+      kind: "recomp",
+      severity: "info",
+      title: "Recomp läuft",
+      body: `Gewicht ${f(dW)} kg, Bauch ${f(dWaist)} cm — du baust Muskeln auf und wirst schlanker. Genau die Richtung, weiter so.`,
+    };
+  if (dW >= 1 && dWaist >= 1)
+    return {
+      kind: "recomp",
+      severity: "info",
+      title: "Überschuss im Blick",
+      body: `Gewicht ${f(dW)} kg, Bauch ${f(dWaist)} cm — der Zuwachs geht auch in die Taille. Etwas weniger Kalorienüberschuss hält den Aufbau definierter.`,
+    };
+  if (dW <= -0.5 && dWaist <= -0.5)
+    return {
+      kind: "recomp",
+      severity: "info",
+      title: "Du definierst",
+      body: `Gewicht ${f(dW)} kg, Bauch ${f(dWaist)} cm — halt das Krafttraining schwer, damit die Muskeln beim Abnehmen geschützt bleiben.`,
+    };
+  return null;
+}
+
+/**
+ * Stalled lifts whose primary muscle still has room below the productive max →
+ * suggest adding a set. Individual variability: when progress stalls, more volume
+ * often breaks it. A suggestion (info), never an automatic change.
+ */
+export function volumeBumpSignal(
+  plateaus: CoachCard[],
+  allLib: Exercise[],
+  vols: MuscleVolume[],
+): CoachCard | null {
+  if (!plateaus.length) return null;
+  const byId = new Map(allLib.map((e) => [e.id, e]));
+  const volBy = new Map(vols.map((v) => [v.muscle, v.sets]));
+  const muscles = new Set<Muscle>();
+  for (const p of plateaus) {
+    const ex = p.exId ? byId.get(p.exId) : undefined;
+    if (!ex) continue;
+    const m = muscleOf(ex).primary;
+    const b = volumeBucket(volBy.get(m) ?? 0);
+    if (b === "maintain" || b === "optimal") muscles.add(m);
+  }
+  if (!muscles.size) return null;
+  return {
+    kind: "volume-bump",
+    severity: "info",
+    title: "Plateau? Mehr Volumen testen",
+    body: `${[...muscles]
+      .map((m) => MUSCLE_LABEL[m])
+      .join(", ")} stagniert trotz solidem Volumen — häng pro Übung einen Satz dran. Wenn der Fortschritt stockt, reagiert oft mehr Volumen.`,
+  };
+}
+
 const SEV_RANK: Record<CoachSeverity, number> = { urgent: 0, warn: 1, info: 2 };
 
 export function coachCards(opts: {
@@ -109,8 +188,12 @@ export function coachCards(opts: {
   seeDoctor: boolean;
   muscleVolumes: MuscleVolume[];
   cardio: CardioSession[];
+  body: BodyMetric[];
 }): CoachCard[] {
   const cards: CoachCard[] = [];
+
+  const rc = recompSignal(opts.body);
+  if (rc) cards.push(rc);
 
   const ca = cardioAdvice(opts.cardio);
   if (ca.level !== "none")
@@ -132,7 +215,10 @@ export function coachCards(opts: {
   const d = deloadSignal(opts.log, opts.settings);
   if (d) cards.push(d);
 
-  cards.push(...plateauSignals(opts.log, opts.allLib));
+  const plateaus = plateauSignals(opts.log, opts.allLib);
+  cards.push(...plateaus);
+  const bump = volumeBumpSignal(plateaus, opts.allLib, opts.muscleVolumes);
+  if (bump) cards.push(bump);
 
   opts.muscleVolumes
     .filter((v) => v.status === "over")

@@ -1,5 +1,6 @@
 import type {
   Exercise,
+  InjuryArea,
   LastPerf,
   Prescription,
   PrescReason,
@@ -8,6 +9,7 @@ import type {
   Template,
   WorkoutDay,
 } from "@/lib/types";
+import { pickPreferred } from "@/lib/affinity";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
@@ -52,14 +54,38 @@ export function poolFor(
 /** Heavy hinges to avoid when the lower back is irritated. */
 const HEAVY_HINGE = new Set(["rdl_db", "hip_thrust"]);
 
+/**
+ * Whether an exercise meaningfully loads an injured area (pattern-based, no
+ * per-exercise data needed). Used for persistent, profile-driven injury sparing.
+ */
+export function stressesInjury(ex: Exercise, injury: InjuryArea): boolean {
+  switch (injury) {
+    case "rücken":
+      return !!ex.backCaution || HEAVY_HINGE.has(ex.id);
+    case "knie":
+      return ex.pattern === "squat" || ex.pattern === "lunge";
+    case "schulter":
+      return ex.pattern === "vpush" || ex.pattern === "lateral";
+    case "ellbogen":
+      return ex.pattern === "arm";
+    case "handgelenk":
+      return ex.pattern === "hpush" || ex.pattern === "vpush";
+    default:
+      return false;
+  }
+}
+
 export function resolveSession(
   tpl: Template,
   sessIdx: number,
   choices: Record<string, string>,
   has: (k: string) => boolean,
   allLib: Exercise[],
-  backSafe = false,
+  opts: { backSafe?: boolean; injuries?: InjuryArea[]; affinity?: Map<string, number> } = {},
 ): ResolvedSlot[] {
+  const backSafe = opts.backSafe ?? false;
+  const injuries = opts.injuries ?? [];
+  const affinity = opts.affinity;
   return tpl.slots
     .map((pat, slotIdx): ResolvedSlot | null => {
       const pool = poolFor(pat, has, allLib);
@@ -68,7 +94,11 @@ export function resolveSession(
       const explicit = choices[slotKey]
         ? pool.find((e) => e.id === choices[slotKey])
         : undefined;
-      let ex = explicit || pool[(sessIdx + slotIdx) % pool.length];
+      let ex =
+        explicit ||
+        (affinity
+          ? pickPreferred(pool, affinity, sessIdx + slotIdx)
+          : pool[(sessIdx + slotIdx) % pool.length]);
 
       // Back-safe adaptation (after a red back signal) — only when the user
       // has not explicitly chosen this slot, so manual swaps always win.
@@ -83,6 +113,16 @@ export function resolveSession(
             );
             if (gentle.length) ex = gentle[(sessIdx + slotIdx) % gentle.length];
           }
+        }
+      }
+
+      // Persistent profile-injury sparing: prefer a same-pattern option that
+      // doesn't load an injured area (again, manual choices always win).
+      if (injuries.length && !explicit) {
+        const stressed = (e: Exercise) => injuries.some((inj) => stressesInjury(e, inj));
+        if (stressed(ex)) {
+          const safe = pool.filter((e) => !stressed(e));
+          if (safe.length) ex = safe[(sessIdx + slotIdx) % safe.length];
         }
       }
       return { ex, slotKey, pool };

@@ -8,6 +8,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { greeting } from "@/lib/coaching";
 import { EASE_OUT } from "@/lib/motion";
+import type { Experience, TrainingGoal } from "@/lib/types";
 
 const FEATURES = [
   {
@@ -27,10 +28,25 @@ const FEATURES = [
   },
 ];
 
-/** First-run welcome screen. Greets, pitches the app, captures an optional name. */
+const EXP: { v: Experience; label: string }[] = [
+  { v: "anfänger", label: "Anfänger" },
+  { v: "fortgeschritten", label: "Mittel" },
+  { v: "erfahren", label: "Erfahren" },
+];
+const GOALS: { v: TrainingGoal; label: string }[] = [
+  { v: "aufbau", label: "Aufbau" },
+  { v: "optik", label: "Optik" },
+  { v: "kraft", label: "Kraft" },
+];
+
+/** First-run welcome screen. Greets, pitches the app, captures name + a quick profile. */
 export function Welcome() {
   const { completeOnboarding } = useTraining();
   const [name, setName] = useState("");
+  const [exp, setExp] = useState<Experience | undefined>(undefined);
+  const [goals, setGoals] = useState<TrainingGoal[]>(["aufbau", "optik"]);
+  const toggleGoal = (v: TrainingGoal) =>
+    setGoals((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
 
   return (
     <motion.div
@@ -98,10 +114,43 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Dein Name (optional)"
-            className="mb-3 w-full rounded-xl bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="mb-4 w-full rounded-xl bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
+
+          <p className="mb-1.5 px-1 text-sm font-medium text-fg">Dein Level</p>
+          <div className="mb-4 flex gap-1 rounded-xl bg-surface-2 p-1">
+            {EXP.map((x) => (
+              <Pressable
+                key={x.v}
+                onClick={() => setExp(x.v)}
+                className={
+                  "flex-1 rounded-lg py-2 text-sm font-medium focus:outline-none " +
+                  (exp === x.v ? "bg-strong text-on-strong" : "text-muted")
+                }
+              >
+                {x.label}
+              </Pressable>
+            ))}
+          </div>
+
+          <p className="mb-1.5 px-1 text-sm font-medium text-fg">Dein Ziel</p>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {GOALS.map((g) => (
+              <Pressable
+                key={g.v}
+                onClick={() => toggleGoal(g.v)}
+                className={
+                  "rounded-full px-3 py-1.5 text-sm font-medium focus:outline-none " +
+                  (goals.includes(g.v) ? "bg-strong text-on-strong" : "bg-surface-2 text-muted")
+                }
+              >
+                {g.label}
+              </Pressable>
+            ))}
+          </div>
+
           <Pressable
-            onClick={() => completeOnboarding(name)}
+            onClick={() => completeOnboarding(name, { experience: exp, goals })}
             className="flex w-full items-center justify-center rounded-2xl bg-strong py-4 text-lg font-semibold text-on-strong shadow-card-lg focus:outline-none"
           >
             Los geht&rsquo;s

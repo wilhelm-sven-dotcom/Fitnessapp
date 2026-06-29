@@ -4,10 +4,7 @@ import { TRAINING_PRINCIPLES } from "@/lib/training-science";
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
 
-const SYSTEM_BASE = `Du bist der persönliche Trainings-Coach von Sven in seiner Fitness-App.
-
-Profil: Ziel Muskelaufbau (Hypertrophie), 3× pro Woche Ganzkörper, 20–30 Minuten pro Einheit, 1,93 m / ~90 kg.
-WICHTIG — empfindlicher unterer Rücken: keine schweren Hinges unter Last, keine belastete Flexion, kein vorgebeugtes Langhantelrudern. Rücken-Stabilisatoren rotieren im Core-Slot.
+const SYSTEM_BASE = `Du bist der persönliche Trainings-Coach in dieser Fitness-App.
 
 Ton: direkt, locker, deutsch, „du". Kurz und konkret — keine Romane, keine Floskeln. Beziehe dich auf die echten Daten unten, statt allgemein zu reden. Nenne, wenn sinnvoll, konkrete Zahlen (Gewicht, Sätze, Wiederholungen).
 
@@ -15,9 +12,13 @@ Sicherheit: Du bist kein Arzt. War der untere Rücken zweimal in Folge „rot", 
 
 Kardio/Strava: Wenn unten Cardio-Einheiten (z. B. von Strava, inkl. Peloton-Fahrten) stehen, plane sie aktiv mit ein. Eine harte Fahrt in den letzten ~24 h vor einem bein-lastigen Tag (Kniebeuge/Ausfallschritt/Hüfte) → empfiehl, die Beine heute leichter zu nehmen oder den Oberkörper vorzuziehen. Achte auf die Wochenbalance Kraft vs. Kardio und auf Erholung; gib bei Bedarf eine klare Empfehlung „heute fahren vs. heben".`;
 
+const DEFAULT_PERSONA = "Profil: erfahrener Hypertrophie-Athlet, empfindlicher unterer Rücken.";
+
 interface CoachBody {
   messages?: { role: "user" | "assistant"; content: string }[];
   context?: string;
+  /** Profile-derived persona line (built client-side from the athlete profile). */
+  persona?: string;
 }
 
 export async function POST(req: Request) {
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
 
   const system =
     SYSTEM_BASE +
+    "\n\n" +
+    (body.persona?.trim() || DEFAULT_PERSONA) +
     "\n\n" +
     TRAINING_PRINCIPLES +
     "\n\nAktuelle Trainingsdaten:\n" +

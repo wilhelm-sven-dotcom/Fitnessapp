@@ -55,4 +55,6 @@ export const TRAINING_PRINCIPLES = `Evidenzbasierte Trainingsprinzipien (aktuell
 - Pausen: Grundübungen 2–3 Min, Isolation/Core kürzer (~60–90 s).
 - Lengthened-Fokus: Übungen, die den Muskel unter Last in der gedehnten Position fordern, bevorzugen — neuere Evidenz spricht dafür.
 - Cardio-Interferenz: hartes Radfahren (Peloton) mindert die Beinkraft-Entwicklung, v. a. < 24 h davor. Nach harter Fahrt Beine leichter nehmen oder Oberkörper vorziehen.
-- Rücken: empfindlicher unterer Rücken — keine schweren Hinges unter Last, keine belastete Flexion, kein vorgebeugtes Langhantelrudern.`;
+- Rücken (falls empfindlich): nicht dauerhaft meiden, sondern kontrolliert progressiv belasten — neutrale Wirbelsäule, moderat starten und steigern; schwere Hinges und belastete Flexion bewusst dosieren. Progressive Belastung stärkt den Rücken nachweislich (JOSPT 2024).
+- Erfahrung & Individualität: Volumen an den Stand anpassen (Anfänger untere Spanne + Technik, Erfahrene vertragen/brauchen mehr); bei Stillstand mehr Volumen testen — die Reaktion ist individuell.
+- Autoregulation: Last und Sätze nach Tagesform und RIR steuern statt starrer Prozente (Netz-Metaanalyse 2025).`;
