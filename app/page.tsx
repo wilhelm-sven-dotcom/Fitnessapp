@@ -73,7 +73,7 @@ export default function HomePage() {
     acceptDeload,
     dismissCard,
   } = useTraining();
-  const tags = [...new Set(recList.map(({ ex }) => ex.tag))];
+  const tags = [...new Set(recList.map((s) => s.ex?.tag).filter(Boolean))];
   const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
   const chips = homeChips({ daysAgo, weekCount });
   const now = new Date();
@@ -114,7 +114,7 @@ export default function HomePage() {
   // exercise that has a figure. Always in motion (FigurePanel's rAF loop), so it
   // reads as "alive" regardless of splash timing; reduced-motion freezes it.
   const reduceMotion = useReducedMotion();
-  const heroEx = recList.find((s) => FIG[s.ex.id])?.ex;
+  const heroEx = recList.find((s) => s.ex && FIG[s.ex.id])?.ex;
   const heroFig = heroEx ? FIG[heroEx.id] : undefined;
   const heroAccent = heroEx ? muscleBones(heroEx.pattern) : undefined;
   const heroFreeze = reduceMotion ? 0 : undefined;

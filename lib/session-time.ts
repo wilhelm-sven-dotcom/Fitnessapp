@@ -36,6 +36,8 @@ const TRIM_ORDER: Pattern[] = [
 const MIN_SLOTS = 3;
 
 export function estimateSlotMin(ex: Exercise): number {
+  // Defensive: a malformed/missing slot exercise contributes no time (never throw).
+  if (!ex?.pattern) return 0;
   // Cardio blocks carry their planned duration (minutes) directly.
   if (ex.pattern === "cardio") return ex.repHigh;
   const workSec = ex.unit === "Sek" ? TIME.timedSetSec : TIME.repSetSec;
@@ -53,8 +55,8 @@ export function estimateSlotMin(ex: Exercise): number {
  */
 export function supersetPair(list: ResolvedSlot[]): [number, number] | null {
   const acc = list
-    .map((s, i) => ({ pattern: s.ex.pattern, i }))
-    .filter((x) => x.pattern !== "core");
+    .map((s, i) => ({ pattern: s.ex?.pattern, i }))
+    .filter((x) => x.pattern && x.pattern !== "core");
   if (acc.length < 2) return null;
   return [acc[acc.length - 2].i, acc[acc.length - 1].i];
 }
