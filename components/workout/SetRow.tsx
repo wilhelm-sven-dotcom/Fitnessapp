@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Camera, Check } from "lucide-react";
+import { Camera, Check, Trophy } from "lucide-react";
 import { TimedSet } from "./TimedSet";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
@@ -68,6 +68,8 @@ export function SetRow({
   onIntensity,
   onActivate,
   onCamera,
+  recordLabel,
+  isRecord,
 }: {
   label: string;
   isWarmup: boolean;
@@ -75,6 +77,10 @@ export function SetRow({
   set: SetEntry;
   isDumbbell?: boolean;
   state: SetState;
+  /** All-time best to beat ("60 × 8") — shown as a target on the active set. */
+  recordLabel?: string;
+  /** This logged set beats the all-time best → celebrate with a "Rekord" badge. */
+  isRecord?: boolean;
   /** Suggested weight (autoregulation / carried from the last set) — ghosted in. */
   ghostWeight?: string;
   /** Target reps / hold — ghosted in. */
@@ -107,7 +113,18 @@ export function SetRow({
         >
           <Check size={15} strokeWidth={2.5} className="shrink-0 text-accent-2" />
           <span className="w-12 shrink-0 font-mono text-xs text-faint">{label}</span>
-          <span className="flex-1 truncate font-mono text-sm tabular-nums text-fg">{summary}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-fg">{summary}</span>
+          {isRecord && (
+            <motion.span
+              initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+              animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              style={{ boxShadow: "0 0 12px -2px #30d158" }}
+              className="flex shrink-0 items-center gap-1 rounded bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-strong"
+            >
+              <Trophy size={11} strokeWidth={2.5} /> Rekord
+            </motion.span>
+          )}
         </Pressable>
         {!isWarmup &&
           (timed ? (
@@ -151,6 +168,20 @@ export function SetRow({
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}
     >
+      {!isWarmup && isRecord ? (
+        <motion.p
+          initial={reduce ? false : { scale: 0.9, opacity: 0 }}
+          animate={reduce ? undefined : { scale: [0.9, 1.08, 1], opacity: 1 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          className="flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-accent-volume"
+        >
+          <Trophy size={12} className="shrink-0" /> Neuer Rekord!
+        </motion.p>
+      ) : !isWarmup && recordLabel ? (
+        <p className="flex items-center gap-1.5 font-mono text-xs text-accent-2">
+          <Trophy size={12} className="shrink-0" /> Bestmarke {recordLabel} schlagen
+        </p>
+      ) : null}
       <div className="flex items-center gap-2">
         <span className="w-12 shrink-0 font-mono text-xs text-muted">{label}</span>
         {timed ? (
