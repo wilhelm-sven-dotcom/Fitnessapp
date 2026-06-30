@@ -1,10 +1,13 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
 import { ChevronRight, Flame, Newspaper, Play, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { AmbientGlow } from "@/components/home/AmbientGlow";
+import { FigurePanel } from "@/components/figures/FigurePanel";
+import { FIG, muscleBones } from "@/components/figures/figureData";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
@@ -107,6 +110,15 @@ export default function HomePage() {
   const quote = coachQuote({ cardioLevel: cardioAdvice?.level, seed: greetingSeed });
   const focusParts = recTpl.focus.split(" & ");
 
+  // Living hero: a small athlete that continuously performs the first recommended
+  // exercise that has a figure. Always in motion (FigurePanel's rAF loop), so it
+  // reads as "alive" regardless of splash timing; reduced-motion freezes it.
+  const reduceMotion = useReducedMotion();
+  const heroEx = recList.find((s) => FIG[s.ex.id])?.ex;
+  const heroFig = heroEx ? FIG[heroEx.id] : undefined;
+  const heroAccent = heroEx ? muscleBones(heroEx.pattern) : undefined;
+  const heroFreeze = reduceMotion ? 0 : undefined;
+
   // Context blocks shared by both heroes (defined once; only the rendered branch mounts).
   const chipsEl =
     chips.length > 0 ? (
@@ -176,6 +188,13 @@ export default function HomePage() {
               </span>
             ))}
           </h1>
+          {heroFig && (
+            <div className="mt-4 flex justify-center">
+              <div className="w-28">
+                <FigurePanel label="" fig={heroFig} viewKey="side" accentBones={heroAccent} freeze={heroFreeze} />
+              </div>
+            </div>
+          )}
           <p className="mt-4 font-body text-lg italic leading-snug text-muted">{deck}</p>
 
           <Pressable
@@ -314,6 +333,13 @@ export default function HomePage() {
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">▸ Empfohlen heute</p>
               <h2 className="font-display text-4xl font-bold tracking-tight">{recTpl.name}</h2>
               <p className="mb-3 text-muted">{recTpl.focus}</p>
+              {heroFig && (
+                <div className="mb-4 flex justify-center">
+                  <div className="w-28">
+                    <FigurePanel label="" fig={heroFig} viewKey="side" accentBones={heroAccent} freeze={heroFreeze} />
+                  </div>
+                </div>
+              )}
               <div className="mb-4 flex items-center gap-2">
                 <DurationBadge min={estimatedMin} />
                 <div className="ml-auto flex gap-2">

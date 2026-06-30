@@ -1,7 +1,7 @@
 // Minimal offline service worker — no build step, no dependency.
 // Navigations: network-first (fresh when online, cached shell when offline).
 // Static assets: cache-first with runtime caching.
-const CACHE = "training-v1";
+const CACHE = "training-v2";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
