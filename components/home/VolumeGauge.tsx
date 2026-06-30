@@ -1,5 +1,9 @@
 "use client";
 
+import { animate, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { EASE_OUT } from "@/lib/motion";
+
 /**
  * The home signature — weekly tonnage as a calibrated instrument. Ships both
  * skin variants and reveals one via the global .only-blueprint/.only-tactile
@@ -33,10 +37,25 @@ const arcPath = (from: number, to: number, rad: number, steps = 56) =>
 export function VolumeGauge({ valueT, targetT }: Props) {
   const max = targetT > 0 ? targetT : Math.max(valueT, 1);
   const frac = Math.max(0, Math.min(1, valueT / max));
-  const pct = Math.round(frac * 100);
-  const value = valueT.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  // The instrument "powers on": one animated value sweeps 0 → frac on mount and
+  // drives every skin variant (marker / arc + needle / bar) plus the count-up.
+  // Reduced-motion renders the final position instantly (no sweep, no loop).
+  const reduce = useReducedMotion();
+  const [a, setA] = useState(reduce ? frac : 0);
+  useEffect(() => {
+    if (reduce) {
+      setA(frac);
+      return;
+    }
+    const controls = animate(0, frac, { duration: 0.9, ease: EASE_OUT, onUpdate: setA });
+    return () => controls.stop();
+  }, [frac, reduce]);
+
+  const pct = Math.round(a * 100);
+  const value = (a * max).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const goal = max.toLocaleString("de-DE", { maximumFractionDigits: max >= 10 ? 0 : 1 });
-  const [nx, ny] = polar(frac, R - 18);
+  const [nx, ny] = polar(a, R - 18);
 
   return (
     <div>
@@ -89,8 +108,8 @@ export function VolumeGauge({ valueT, targetT }: Props) {
       <div className="only-tactile">
         <svg viewBox="0 0 264 140" className="mt-1 block w-full">
           <path d={arcPath(0, 1, R)} fill="none" stroke="var(--surface-2)" strokeWidth={10} strokeLinecap="round" />
-          {frac > 0.005 && (
-            <path d={arcPath(0, frac, R)} fill="none" stroke="var(--accent)" strokeWidth={10} strokeLinecap="round" />
+          {a > 0.005 && (
+            <path d={arcPath(0, a, R)} fill="none" stroke="var(--accent)" strokeWidth={10} strokeLinecap="round" />
           )}
           {Array.from({ length: 11 }).map((_, i) => {
             const f = i / 10;
