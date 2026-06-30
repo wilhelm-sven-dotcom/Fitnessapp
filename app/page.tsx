@@ -4,6 +4,7 @@ import { ChevronRight, Flame, Newspaper, Play, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
+import { AmbientGlow } from "@/components/home/AmbientGlow";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
@@ -150,6 +151,7 @@ export default function HomePage() {
 
   return (
     <div className="relative">
+      <AmbientGlow />
       {isEditorial ? (
         /* ── Editorial: a magazine spread — nameplate, cover-line, headline,
            serif deck, the week as a stat block, and the coach's pull-quote. ── */
