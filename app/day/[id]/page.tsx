@@ -389,7 +389,7 @@ export default function DayBuilderPage() {
           setCoachErr("");
           setCoachOpen(true);
         }}
-        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-coverage shadow-card focus:outline-none"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
       >
         <Sparkles size={16} strokeWidth={2.5} /> Coach-Vorschlag
       </Pressable>
@@ -543,7 +543,7 @@ export default function DayBuilderPage() {
                 value={coachFocus}
                 onChange={(e) => setCoachFocus(e.target.value)}
                 placeholder="… oder eigenen Fokus eintippen"
-                className="mt-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+                className="mt-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
               />
             </div>
 
@@ -552,7 +552,7 @@ export default function DayBuilderPage() {
             <Pressable
               onClick={runCoach}
               disabled={coachBusy}
-              className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions disabled:opacity-50"
             >
               <Sparkles size={18} strokeWidth={2.5} />
               {coachBusy ? "Baut deine Einheit…" : "Einheit bauen"}

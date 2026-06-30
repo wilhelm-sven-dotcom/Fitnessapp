@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link
                     href="/coach"
                     aria-label="KI-Coach"
-                    className="rounded-full p-1.5 text-accent-coverage transition-colors focus:outline-none"
+                    className="rounded-full p-1.5 text-accent-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                   >
                     <Sparkles size={20} />
                   </Link>
