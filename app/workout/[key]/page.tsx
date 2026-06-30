@@ -13,7 +13,7 @@ import {
   Save,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CameraView, type FormResult } from "@/components/form-check/CameraView";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
@@ -27,6 +27,8 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL } from "@/lib/exercises";
+import { success } from "@/lib/haptics";
+import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
 import { configForPattern } from "@/lib/pose/exercise-pose-config";
@@ -143,9 +145,11 @@ export default function WorkoutPage() {
     return () => clearTimeout(id);
   }, [restOn, restLeft, settings.voiceCues]);
 
-  // Announce a new record once per exercise, hands-free.
+  // Celebrate a new record once per exercise: a haptic buzz always, plus a
+  // hands-free voice cue when voice is on. Fires the moment a logged set beats
+  // the all-time best (detected by exerciseChips' "Neuer Rekord" card).
   useEffect(() => {
-    if (!settings.voiceCues || activeKey !== key) return;
+    if (activeKey !== key) return;
     activeList.forEach(({ ex }) => {
       const p = presc(ex, lastPerf(ex.id), {
         lighter,
@@ -163,7 +167,8 @@ export default function WorkoutPage() {
         !announcedRef.current.has(ex.id)
       ) {
         announcedRef.current.add(ex.id);
-        speak("Neuer Rekord! Stark.");
+        success();
+        if (settings.voiceCues) speak("Neuer Rekord! Stark.");
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,6 +235,12 @@ export default function WorkoutPage() {
   const tpl = sessionTemplate(key ?? "");
   const list = activeList;
   const ssPair = settings.superset ? supersetPair(list) : null;
+  // All-time best per exercise (the in-progress session isn't in `log` yet, so
+  // this is the mark to beat for the Live-Rekordjagd).
+  const recordMap = useMemo(
+    () => new Map(exerciseRecords(log).map((r) => [r.exId, r] as const)),
+    [log],
+  );
 
   // Fill the first still-open working set from a spoken set entry.
   const fillFromSpeech = (parsed: ParsedSet) => {
@@ -571,6 +582,7 @@ export default function WorkoutPage() {
                         : undefined;
                       const ghostReps = p.r || String(ex.repHigh);
                       const canCamera = poseSupported && configForPattern(ex.pattern) != null;
+                      const rec = recordMap.get(ex.id) ?? null;
                       return (entries[ex.id] || []).map((s, i) => {
                         const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
                         const filled = s.reps !== "" && s.reps != null;
@@ -592,6 +604,8 @@ export default function WorkoutPage() {
                             onRir={(val) => setEntry(ex.id, i, "rir", val)}
                             onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
                             onActivate={() => setEditKey(`${ex.id}:${i}`)}
+                            recordLabel={rec?.label}
+                            isRecord={beatsRecord(ex, s, rec)}
                             onCamera={
                               canCamera && !s.warmup
                                 ? () =>

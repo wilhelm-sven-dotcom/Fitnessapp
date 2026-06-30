@@ -1,5 +1,5 @@
 import { isFilled, oneRm, workSets } from "@/lib/stats";
-import type { LoggedSession, SetEntry } from "@/lib/types";
+import type { Exercise, LoggedSession, SetEntry } from "@/lib/types";
 
 /**
  * Personal-record history. A PR is a working set that beats the all-time best
@@ -130,4 +130,29 @@ export function prStreakWeeks(log: LoggedSession[], ref: Date = new Date()): num
 /** Suffix for a record value by kind. */
 export function recordUnit(kind: RecordKind): string {
   return kind === "weight" ? "kg" : kind === "time" ? "s" : "Wdh";
+}
+
+/** All-time best for one exercise (null if never logged). Note: the in-progress
+ *  session isn't in `log` yet, so during a workout this is the mark to beat. */
+export function bestForExercise(log: LoggedSession[], exId: string): ExRecord | null {
+  return exerciseRecords(log).find((r) => r.exId === exId) ?? null;
+}
+
+/** A single set's record metric — rounded e1RM for weighted lifts (matches
+ *  `exerciseRecords`), reps for bodyweight, seconds for timed holds. */
+export function setMetric(ex: Pick<Exercise, "unit" | "weighted">, set: SetEntry): number {
+  const w = Number(set.weight) || 0;
+  const r = Number(set.reps) || 0;
+  if (ex.unit === "Sek") return r;
+  if (ex.weighted && w > 0) return Math.round(oneRm(w, r));
+  return r;
+}
+
+/** Whether a (working, filled) set beats the given all-time record. */
+export function beatsRecord(
+  ex: Pick<Exercise, "unit" | "weighted">,
+  set: SetEntry,
+  rec: ExRecord | null,
+): boolean {
+  return !!rec && rec.best > 0 && !set.warmup && isFilled(set) && setMetric(ex, set) > rec.best;
 }
