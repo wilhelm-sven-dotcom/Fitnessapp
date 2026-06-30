@@ -2,6 +2,7 @@
 
 import { animate, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useBooted } from "@/components/providers/booted";
 import { EASE_OUT } from "@/lib/motion";
 
 /**
@@ -42,15 +43,21 @@ export function VolumeGauge({ valueT, targetT }: Props) {
   // drives every skin variant (marker / arc + needle / bar) plus the count-up.
   // Reduced-motion renders the final position instantly (no sweep, no loop).
   const reduce = useReducedMotion();
+  const booted = useBooted();
   const [a, setA] = useState(reduce ? frac : 0);
   useEffect(() => {
     if (reduce) {
       setA(frac);
       return;
     }
-    const controls = animate(0, frac, { duration: 0.9, ease: EASE_OUT, onUpdate: setA });
+    // Hold at 0 under the splash; sweep once the shell is actually visible.
+    if (!booted) {
+      setA(0);
+      return;
+    }
+    const controls = animate(0, frac, { duration: 1.0, ease: EASE_OUT, onUpdate: setA });
     return () => controls.stop();
-  }, [frac, reduce]);
+  }, [frac, reduce, booted]);
 
   const pct = Math.round(a * 100);
   const value = (a * max).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });

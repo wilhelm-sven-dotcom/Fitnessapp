@@ -46,6 +46,7 @@
   --panel-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   --panel-shadow-lg: 0 1px 0 rgba(0, 0, 0, 0.5);
   --hero-sheen: linear-gradient(135deg, rgba(110, 144, 190, 0.07), transparent 42%);
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.22), transparent 62%);
   --page-bg: linear-gradient(rgba(110, 144, 190, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(110, 144, 190, 0.06) 1px, transparent 1px);
   --page-bg-size: 28px 28px;
@@ -80,6 +81,7 @@
   --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 22px rgba(0, 0, 0, 0.45);
   --panel-shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.55);
   --hero-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 42%);
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.20), transparent 62%);
   --page-bg: radial-gradient(120% 80% at 50% -10%, #15171c, #0e0f12 60%);
   --page-bg-size: 100% 100%;
   --page-bg-repeat: no-repeat;
@@ -113,6 +115,7 @@
   --panel-shadow: none;
   --panel-shadow-lg: none;
   --hero-sheen: linear-gradient(135deg, rgba(232, 226, 214, 0.05), transparent 42%);
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.18), transparent 62%);
   --page-bg: radial-gradient(120% 75% at 50% -10%, #15151a, #0f0f10 62%);
   --page-bg-size: 100% 100%;
   --page-bg-repeat: no-repeat;
@@ -141,12 +144,14 @@
   /* Blaupause-Papier: flach + Stahl-Raster. */
   --panel-shadow: 0 1px 0 rgba(34, 43, 56, 0.06);
   --panel-shadow-lg: 0 1px 0 rgba(34, 43, 56, 0.08);
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.12), transparent 62%);
   --page-bg: linear-gradient(rgba(110, 144, 190, 0.16) 1px, transparent 1px),
     linear-gradient(90deg, rgba(110, 144, 190, 0.16) 1px, transparent 1px);
 }
 [data-theme="light"][data-skin="tactile"] {
   /* Helles, geschliffenes Instrument (erhabene Panels bleiben). */
   --accent-ink: #b3700a; /* Bernstein vertieft — als Marke lesbar auf Hell (~3,5:1) */
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.16), transparent 62%);
   --page-bg: radial-gradient(120% 80% at 50% -10%, #ffffff, #eef0f3 60%);
 }
 [data-theme="light"][data-skin="editorial"] {
@@ -166,6 +171,7 @@
   --panel-shadow: none;
   --panel-shadow-lg: none;
   --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.03), transparent 42%);
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.10), transparent 62%);
   --page-bg: radial-gradient(120% 75% at 50% -10%, #f7f4ec, #f1ede1 62%);
 }
 
