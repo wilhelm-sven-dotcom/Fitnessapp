@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { BootedContext } from "@/components/providers/booted";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
 import { Splash } from "./Splash";
@@ -33,9 +34,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
+  // "Booted" once the splash has fully lifted — home animations wait for this so
+  // the user actually sees them (the page mounts UNDER the splash on a cold open,
+  // so a mount-time sweep would finish unseen). Set on the splash's exit-complete;
+  // a timeout backs it up if that never fires (e.g. reduced motion). AppShell is
+  // the persistent layout, so once true it stays true → in-app navigations sweep
+  // immediately.
+  const [booted, setBooted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBooted(true), 2600);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
-    <>
-      <AnimatePresence>{showSplash && <Splash key="splash" />}</AnimatePresence>
+    <BootedContext.Provider value={booted}>
+      <AnimatePresence onExitComplete={() => setBooted(true)}>
+        {showSplash && <Splash key="splash" />}
+      </AnimatePresence>
       {!loading && firstRun && <Welcome />}
       {!loading && !firstRun && (
         <div className="min-h-screen overflow-x-hidden">
@@ -93,6 +108,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {!hideChrome && <BottomNav />}
         </div>
       )}
-    </>
+    </BootedContext.Provider>
   );
 }
