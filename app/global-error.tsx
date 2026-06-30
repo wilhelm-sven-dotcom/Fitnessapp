@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { purgeCachesAndWorkers } from "@/lib/pwa-reset";
+
 /**
  * Root-level error boundary. Unlike `app/error.tsx`, this catches errors thrown in
  * `app/layout.tsx`, the providers, the AppShell, and chunk-load failures — anything
@@ -12,7 +14,6 @@ import { useEffect } from "react";
  */
 export default function GlobalError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -20,6 +21,23 @@ export default function GlobalError({
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.error("Root-Fehler:", error);
+    // Self-heal a stale-chunk / version-skew error after a deploy: an old
+    // session requested code chunks the new build no longer has. Purge the
+    // stale build + reload ONCE — sharing the one-shot key with the SW
+    // registrar so the two never double-reload. If the reload doesn't fix it,
+    // the flag stays set and this box remains visible (no reload loop).
+    const CHUNK_RE =
+      /ChunkLoadError|Loading chunk [\w-]+ failed|error loading dynamically imported module|Importing a module script failed/i;
+    if (!CHUNK_RE.test(`${error?.name ?? ""} ${error?.message ?? ""}`)) return;
+    let already = false;
+    try {
+      already = !!sessionStorage.getItem("chunk-reload");
+      if (!already) sessionStorage.setItem("chunk-reload", "1");
+    } catch {
+      /* storage unavailable */
+    }
+    if (already) return;
+    void purgeCachesAndWorkers().finally(() => window.location.reload());
   }, [error]);
 
   return (
@@ -52,14 +70,10 @@ export default function GlobalError({
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button
               onClick={() => {
-                // Prefer the framework reset; fall back to a hard reload (which
-                // fetches the fresh build and clears any stale-chunk state).
-                try {
-                  reset();
-                } catch {
-                  /* ignore */
-                }
-                window.location.reload();
+                // Hard-heal: drop the stale cache + service worker, then reload
+                // into a clean, consistent build. The guaranteed manual fix if
+                // the auto-reload above was already spent this session.
+                void purgeCachesAndWorkers().finally(() => window.location.reload());
               }}
               style={{
                 appearance: "none",

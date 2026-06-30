@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { purgeCachesAndWorkers } from "@/lib/pwa-reset";
+
 /**
  * Registers the service worker AND keeps it fresh — without this, an installed
  * PWA (especially iOS standalone, which resumes a suspended session) can run an
@@ -50,10 +52,12 @@ export function ServiceWorkerRegister() {
 
     // Auto-heal stale code-chunk errors after a deploy: an old open session can
     // request chunk files that no longer exist on the new build → a ChunkLoadError
-    // on (lazy) navigation. Reload once to pull the fresh HTML + chunks. A
-    // sessionStorage one-shot prevents a reload loop if the build is genuinely
-    // broken (then the global-error boundary shows instead); it's cleared after a
-    // stable load so a FUTURE deploy can auto-recover again.
+    // on (lazy) navigation. We PURGE every cache + unregister the worker, then
+    // hard-reload — so the reload can't be served the same stale build again and
+    // comes back internally consistent. A sessionStorage one-shot prevents a
+    // reload loop if the build is genuinely broken (then the global-error boundary
+    // shows instead); it's cleared after a stable load so a FUTURE deploy can
+    // auto-recover again.
     const CHUNK_RE =
       /ChunkLoadError|Loading chunk [\w-]+ failed|error loading dynamically imported module|Importing a module script failed/i;
     const KEY = "chunk-reload";
@@ -68,8 +72,8 @@ export function ServiceWorkerRegister() {
       } catch {
         /* storage unavailable */
       }
-      if (alreadyReloaded) return; // a prior reload didn't fix it → let it surface
-      window.location.reload();
+      if (alreadyReloaded) return; // a prior purge+reload didn't fix it → let it surface
+      void purgeCachesAndWorkers().finally(() => window.location.reload());
     };
     const onError = (e: ErrorEvent) => {
       if (CHUNK_RE.test(e.message || "") || CHUNK_RE.test((e.error as Error)?.message || ""))
