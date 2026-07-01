@@ -283,3 +283,31 @@ html {
   background: var(--panel-bg);
   box-shadow: var(--panel-shadow);
 }
+
+/* Page enter transition — a keyed fade/slide-in that runs on each route change.
+   Deliberately CSS, NOT framer-motion `AnimatePresence mode="wait"`: that mode
+   holds the incoming page unmounted until the outgoing page's exit animation
+   reports complete, and if that callback is ever dropped (a known Next App-Router
+   + framer edge case, hit on iOS standalone) the new page never mounts → blank
+   content under a working shell. The element's RESTING state here is visible
+   (opacity 1); the animation only dips in from transparent. So even if the
+   animation never runs (backgrounded tab, paused compositor, reduced motion) the
+   page still shows — it can never get stuck invisible. */
+.page-in {
+  animation: page-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in {
+    animation: none;
+  }
+}
