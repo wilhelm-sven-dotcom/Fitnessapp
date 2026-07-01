@@ -1,11 +1,15 @@
 "use client";
 
 import { useReducedMotion } from "framer-motion";
+import { Pencil, Trash2, X, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FIG, muscleBones } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
+import { useTraining } from "@/components/providers/TrainingProvider";
+import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { youtubeEmbedUrl } from "@/lib/youtube";
 import type { Exercise } from "@/lib/types";
 
 export function GuideSheet({
@@ -17,20 +21,38 @@ export function GuideSheet({
   onClose: () => void;
   ex: Exercise | null;
 }) {
+  const { exerciseVideos, setExerciseVideo } = useTraining();
   const fig = ex ? FIG[ex.id] : undefined;
   const accent = ex ? muscleBones(ex.pattern) : undefined;
-  // Real clip by convention: explicit videoUrl, else /exercise-media/<id>.mp4 if
-  // it exists (drop a file in → it shows, no code change). Probed per exercise.
-  const videoSrc = ex ? ex.videoUrl ?? `/exercise-media/${ex.id}.mp4` : undefined;
+
+  // Clip resolution, highest priority first: a user-pasted YouTube link (shown
+  // as an embed), then the exercise's own `videoUrl` (YouTube → embed, else an
+  // mp4), then a drop-in file `/exercise-media/<id>.mp4` (probed per exercise —
+  // drop a file in and it appears, no code change).
+  const userUrl = ex ? exerciseVideos[ex.id] : undefined;
+  const embedUrl = youtubeEmbedUrl(userUrl) ?? youtubeEmbedUrl(ex?.videoUrl);
+  const nativeSrc = embedUrl
+    ? undefined
+    : ex
+      ? (ex.videoUrl ?? `/exercise-media/${ex.id}.mp4`)
+      : undefined;
+
   const [hasVideo, setHasVideo] = useState(false);
   const [mode, setMode] = useState<"video" | "figure">("figure");
 
+  // A YouTube embed needs no existence check (and is offline-instant); an mp4 is
+  // HEAD-probed so a missing file silently falls back to the figure.
   useEffect(() => {
+    if (embedUrl) {
+      setHasVideo(true);
+      setMode("video");
+      return;
+    }
     setHasVideo(false);
     setMode("figure");
-    if (!videoSrc) return;
+    if (!nativeSrc) return;
     let on = true;
-    fetch(videoSrc, { method: "HEAD" })
+    fetch(nativeSrc, { method: "HEAD" })
       .then((r) => {
         if (on && r.ok) {
           setHasVideo(true);
@@ -41,7 +63,7 @@ export function GuideSheet({
     return () => {
       on = false;
     };
-  }, [ex?.id, ex?.videoUrl, videoSrc]);
+  }, [ex?.id, embedUrl, nativeSrc]);
 
   // Step ↔ pose sync: walk the active step in the figure's rhythm (half period).
   const reduce = useReducedMotion();
@@ -54,6 +76,28 @@ export function GuideSheet({
     const id = setInterval(() => setActiveStep((s) => (s + 1) % stepCount), 1300);
     return () => clearInterval(id);
   }, [ex?.id, syncing, stepCount]);
+
+  // Inline editor for the user's own YouTube demo link.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [invalid, setInvalid] = useState(false);
+  useEffect(() => {
+    setEditing(false);
+    setDraft("");
+    setInvalid(false);
+  }, [ex?.id]);
+
+  const saveLink = () => {
+    if (!ex) return;
+    const url = draft.trim();
+    if (!url || !youtubeEmbedUrl(url)) {
+      setInvalid(true);
+      return;
+    }
+    setExerciseVideo(ex.id, url);
+    setEditing(false);
+    setInvalid(false);
+  };
 
   return (
     <Sheet open={open} onClose={onClose} title={ex?.name}>
@@ -78,15 +122,35 @@ export function GuideSheet({
           )}
 
           {hasVideo && mode === "video" ? (
-            <video
-              src={videoSrc}
-              className="mb-3 w-full rounded-card border border-line bg-base"
-              loop
-              muted
-              playsInline
-              autoPlay
-              controls
-            />
+            embedUrl ? (
+              <div className="mb-3 flex justify-center">
+                <div
+                  className="overflow-hidden rounded-card border border-line bg-base"
+                  style={{ height: "min(60vh, 480px)", aspectRatio: "9 / 16" }}
+                >
+                  <iframe
+                    src={embedUrl}
+                    title={`YouTube-Video: ${ex.name}`}
+                    className="h-full w-full"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ) : (
+              <video
+                src={nativeSrc}
+                className="mb-3 w-full rounded-card border border-line bg-base"
+                loop
+                muted
+                playsInline
+                autoPlay
+                controls
+              />
+            )
           ) : fig ? (
             <>
               <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-base p-3">
@@ -126,6 +190,98 @@ export function GuideSheet({
               <p className="font-mono text-xs text-faint">Animation folgt — Schritte unten.</p>
             </div>
           )}
+
+          {/* Eigenes YouTube-Video pro Übung — hinzufügen / ändern / entfernen. */}
+          <div className="mb-3">
+            {editing ? (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    inputMode="url"
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    autoFocus
+                    value={draft}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      if (invalid) setInvalid(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveLink();
+                    }}
+                    placeholder="youtube.com/shorts/… einfügen"
+                    className={cn(
+                      "min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions",
+                      invalid && "ring-2 ring-status-danger",
+                    )}
+                  />
+                  <Pressable
+                    type="button"
+                    onClick={saveLink}
+                    disabled={!draft.trim()}
+                    className="shrink-0 rounded-xl bg-strong px-4 py-2.5 text-sm font-medium text-on-strong disabled:opacity-40"
+                  >
+                    Speichern
+                  </Pressable>
+                  <Pressable
+                    type="button"
+                    onClick={() => {
+                      setEditing(false);
+                      setInvalid(false);
+                    }}
+                    aria-label="Abbrechen"
+                    className="shrink-0 rounded-xl bg-surface-2 px-3 py-2.5 text-muted"
+                  >
+                    <X size={16} />
+                  </Pressable>
+                </div>
+                {invalid && (
+                  <p className="mt-1 text-xs text-status-danger">
+                    Kein gültiger YouTube-Link. Nutze z. B. youtube.com/shorts/… oder youtu.be/…
+                  </p>
+                )}
+              </>
+            ) : userUrl ? (
+              <div className="flex items-center gap-2 text-xs text-muted">
+                <Youtube size={14} className="shrink-0 text-accent-ink" />
+                <span className="min-w-0 flex-1 truncate">YouTube-Video verknüpft</span>
+                <Pressable
+                  type="button"
+                  onClick={() => {
+                    setDraft(userUrl);
+                    setInvalid(false);
+                    setEditing(true);
+                  }}
+                  aria-label="Link ändern"
+                  className="shrink-0 rounded-full p-1.5 text-muted"
+                >
+                  <Pencil size={14} />
+                </Pressable>
+                <Pressable
+                  type="button"
+                  onClick={() => setExerciseVideo(ex.id, null)}
+                  aria-label="Link entfernen"
+                  className="shrink-0 rounded-full p-1.5 text-muted"
+                >
+                  <Trash2 size={14} />
+                </Pressable>
+              </div>
+            ) : (
+              <Pressable
+                type="button"
+                onClick={() => {
+                  setDraft("");
+                  setInvalid(false);
+                  setEditing(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-pill px-2 py-1 text-xs text-muted"
+              >
+                <Youtube size={14} /> YouTube-Link hinzufügen
+              </Pressable>
+            )}
+          </div>
 
           {/* Colour legend + worked area. */}
           {mode === "figure" && fig && (
