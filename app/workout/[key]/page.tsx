@@ -11,6 +11,7 @@ import {
   Mic,
   Repeat,
   Save,
+  X,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -25,11 +26,13 @@ import { SetRow } from "@/components/workout/SetRow";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { exerciseAffinity } from "@/lib/affinity";
+import { effectiveProfile } from "@/lib/athlete";
 import { exerciseChips } from "@/lib/coaching";
 import { PATTERN_LABEL } from "@/lib/exercises";
-import { success } from "@/lib/haptics";
+import { success, tap } from "@/lib/haptics";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
-import { presc } from "@/lib/progression";
+import { bestAlternativeForPattern, presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
 import { recommendedSets } from "@/lib/set-plan";
 import { configForPattern } from "@/lib/pose/exercise-pose-config";
@@ -43,7 +46,7 @@ import {
   type ParsedSet,
 } from "@/lib/voice";
 import { cn } from "@/lib/utils";
-import type { Pattern, TrafficLight } from "@/lib/types";
+import type { Exercise, Pattern, TrafficLight } from "@/lib/types";
 
 const REST_SECONDS = 90;
 
@@ -102,14 +105,25 @@ export default function WorkoutPage() {
     log,
     daysAgo,
     cardioAdvice,
+    has,
+    choices,
+    allLib,
+    body,
+    lastBackRed,
   } = useTraining();
   const lighter = daysAgo != null && daysAgo > 5;
   const say = (text: string) => {
     if (settings.voiceCues) speak(text);
   };
+  const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
+  const injuries = effectiveProfile(settings, body).injuries ?? [];
+  const swapSeed = useRef(0);
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
   const [pickSlot, setPickSlot] = useState<string | null>(null);
+  const [swapNote, setSwapNote] = useState<
+    { slotKey: string; fromId: string; fromName: string; toName: string } | null
+  >(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restOn, setRestOn] = useState(false);
@@ -321,6 +335,30 @@ export default function WorkoutPage() {
   const total = list.length || 1;
 
   const guideEx = list.find((s) => s.slotKey === guideSlot)?.ex ?? null;
+  // Change an exercise mid-session → drop in the ideal same-pattern alternative
+  // (equipment-, preference- and injury-aware), with browse/undo. Cardio or no
+  // alternative falls back to the full picker.
+  const suggestSwap = (ex: Exercise, slotKey: string) => {
+    tap();
+    const alt =
+      ex.pattern === "cardio"
+        ? null
+        : bestAlternativeForPattern(ex.pattern, has, allLib, {
+            excludeIds: activeList.map((s) => s.ex.id), // current + others → differs, no dup
+            affinity,
+            backSafe: lastBackRed,
+            injuries,
+            seed: swapSeed.current++,
+          });
+    if (!alt) {
+      setSwapNote(null);
+      setPickSlot(slotKey);
+      return;
+    }
+    swapExercise(slotKey, alt.id);
+    setSwapNote({ slotKey, fromId: ex.id, fromName: ex.name, toName: alt.name });
+  };
+
   const pickItem = list.find((s) => s.slotKey === pickSlot) ?? null;
 
   const onSave = async () => {
@@ -514,7 +552,7 @@ export default function WorkoutPage() {
                 </Pressable>
                 {pool.length > 1 && (
                   <Pressable
-                    onClick={() => setPickSlot(slotKey)}
+                    onClick={() => suggestSwap(ex, slotKey)}
                     className="flex items-center gap-1 rounded px-1 py-1 text-xs text-muted focus:outline-none"
                   >
                     <Repeat size={13} /> Übung ändern
@@ -529,6 +567,46 @@ export default function WorkoutPage() {
                   </Pressable>
                 )}
               </div>
+
+              {swapNote?.slotKey === slotKey && (
+                <div className="mt-2 rounded-card border border-surface-3 bg-surface-1 p-3 shadow-card">
+                  <p className="text-sm text-fg">
+                    <span className="text-muted">{swapNote.fromName}</span>
+                    {" → "}
+                    <span className="font-medium">{swapNote.toName}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    Ideale Alternative — passend zu deinen Geräten.
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Pressable
+                      onClick={() => {
+                        setPickSlot(slotKey);
+                        setSwapNote(null);
+                      }}
+                      className="rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-accent-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                    >
+                      Andere
+                    </Pressable>
+                    <Pressable
+                      onClick={() => {
+                        swapExercise(slotKey, swapNote.fromId);
+                        setSwapNote(null);
+                      }}
+                      className="rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                    >
+                      Rückgängig
+                    </Pressable>
+                    <Pressable
+                      onClick={() => setSwapNote(null)}
+                      aria-label="Behalten"
+                      className="ml-auto rounded-full p-1.5 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                    >
+                      <X size={14} />
+                    </Pressable>
+                  </div>
+                </div>
+              )}
 
               {ex.pattern === "cardio" ? (
                 <div className="mt-3">
