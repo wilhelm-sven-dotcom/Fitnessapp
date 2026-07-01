@@ -131,6 +131,55 @@ export function resolveSession(
 }
 
 /**
+ * The single best same-pattern alternative for a slot — the "ideal replacement"
+ * shown when the user removes an exercise. Reuses the session engine's ranking:
+ * an equipment-filtered pool (minus `excludeIds`, e.g. the removed exercise and
+ * the others already in the day so we never suggest a duplicate), learned
+ * affinity, then the back-safe and injury-sparing overrides. Returns `null` when
+ * nothing else fits the pattern + equipment.
+ */
+export function bestAlternativeForPattern(
+  pattern: string,
+  has: (k: string) => boolean,
+  allLib: Exercise[],
+  opts: {
+    excludeIds?: string[];
+    affinity?: Map<string, number>;
+    backSafe?: boolean;
+    injuries?: InjuryArea[];
+    seed?: number;
+  } = {},
+): Exercise | null {
+  const exclude = new Set(opts.excludeIds ?? []);
+  const pool = poolFor(pattern, has, allLib).filter((e) => !exclude.has(e.id));
+  if (!pool.length) return null;
+  const seed = opts.seed ?? 0;
+  const rot = ((seed % pool.length) + pool.length) % pool.length;
+  let ex = opts.affinity ? pickPreferred(pool, opts.affinity, seed) : pool[rot];
+
+  if (opts.backSafe) {
+    if (pattern === "core") {
+      const stabs = pool.filter((e) => e.backStabilizer);
+      if (stabs.length) ex = stabs[seed % stabs.length];
+    } else if (pattern === "hinge" || pattern === "squat") {
+      if (ex.backCaution || HEAVY_HINGE.has(ex.id)) {
+        const gentle = pool.filter((e) => !e.backCaution && !HEAVY_HINGE.has(e.id));
+        if (gentle.length) ex = gentle[seed % gentle.length];
+      }
+    }
+  }
+  const injuries = opts.injuries ?? [];
+  if (injuries.length) {
+    const stressed = (e: Exercise) => injuries.some((inj) => stressesInjury(e, inj));
+    if (stressed(ex)) {
+      const safe = pool.filter((e) => !stressed(e));
+      if (safe.length) ex = safe[seed % safe.length];
+    }
+  }
+  return ex;
+}
+
+/**
  * Resolve a user-built day into ResolvedSlot[]. A per-exercise scheme override
  * becomes a cloned Exercise (so presc / estimateSessionMin read it automatically);
  * items whose exercise no longer exists are skipped. `pool` is the same-pattern,

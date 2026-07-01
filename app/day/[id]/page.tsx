@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BalanceRadar } from "@/components/progress/BalanceRadar";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { Card } from "@/components/ui/Card";
@@ -23,8 +23,9 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { sessionRadarAxes } from "@/lib/balance";
 import { buildCoachContext } from "@/lib/coach-context";
+import { exerciseAffinity } from "@/lib/affinity";
 import { PATTERN_LABEL } from "@/lib/exercises";
-import { reqOk } from "@/lib/progression";
+import { bestAlternativeForPattern, reqOk } from "@/lib/progression";
 import { estimateSessionMin } from "@/lib/session-time";
 import { exerciseMuscleVolume } from "@/lib/volume";
 import { tap } from "@/lib/haptics";
@@ -195,10 +196,16 @@ export default function DayBuilderPage() {
     cardio,
     equip,
     settings,
+    has,
+    choices,
+    lastBackRed,
   } = useTraining();
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
+  const injuries = effectiveProfile(settings, body).injuries ?? [];
+  const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
+  const swapSeed = useRef(0);
 
   const [name, setName] = useState("");
   const [focus, setFocus] = useState("");
@@ -207,6 +214,9 @@ export default function DayBuilderPage() {
   const [ready, setReady] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
+  const [swapNote, setSwapNote] = useState<
+    { key: string; fromId: string; fromName: string; toName: string } | null
+  >(null);
 
   // KI-Coach: builds a whole session from time + focus + available equipment.
   const [coachOpen, setCoachOpen] = useState(false);
@@ -225,6 +235,29 @@ export default function DayBuilderPage() {
       repLow: repLow ?? base?.repLow ?? 8,
       repHigh: repHigh ?? base?.repHigh ?? 12,
     };
+  };
+
+  // Remove an exercise → immediately drop in the ideal same-pattern alternative
+  // (equipment-, preference- and injury-aware) and offer to change / undo / drop.
+  const suggestAlternative = (it: Draft) => {
+    tap();
+    const ex = byId.get(it.exerciseId);
+    const alt = ex
+      ? bestAlternativeForPattern(ex.pattern, has, allLib, {
+          excludeIds: items.map((x) => x.exerciseId), // removed one + no duplicates
+          affinity,
+          backSafe: lastBackRed,
+          injuries,
+          seed: swapSeed.current++,
+        })
+      : null;
+    if (!ex || !alt) {
+      setItems((arr) => arr.filter((x) => x.key !== it.key));
+      setSwapNote(null);
+      return;
+    }
+    setItems((arr) => arr.map((x) => (x.key === it.key ? { ...x, exerciseId: alt.id } : x)));
+    setSwapNote({ key: it.key, fromId: it.exerciseId, fromName: ex.name, toName: alt.name });
   };
 
   // One-time init: edit an existing day, prefill from a template (?from=A), or blank.
@@ -407,6 +440,50 @@ export default function DayBuilderPage() {
         Übungen · ziehen zum Sortieren
       </p>
 
+      {swapNote && (
+        <div className="mb-2 rounded-card border border-surface-3 bg-surface-1 p-3 shadow-card">
+          <p className="text-sm text-fg">
+            <span className="text-muted">{swapNote.fromName}</span>
+            {" → "}
+            <span className="font-medium">{swapNote.toName}</span>
+          </p>
+          <p className="mt-0.5 text-xs text-muted">
+            Ideale Alternative — passend zu deinen Geräten.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Pressable
+              onClick={() => {
+                setSwapKey(swapNote.key);
+                setSwapNote(null);
+              }}
+              className="rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-accent-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Andere
+            </Pressable>
+            <Pressable
+              onClick={() => {
+                setItems((arr) =>
+                  arr.map((x) => (x.key === swapNote.key ? { ...x, exerciseId: swapNote.fromId } : x)),
+                );
+                setSwapNote(null);
+              }}
+              className="rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Rückgängig
+            </Pressable>
+            <Pressable
+              onClick={() => {
+                setItems((arr) => arr.filter((x) => x.key !== swapNote.key));
+                setSwapNote(null);
+              }}
+              className="rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Ganz entfernen
+            </Pressable>
+          </div>
+        </div>
+      )}
+
       {items.length === 0 ? (
         <Card className="p-6 text-center">
           <p className="text-sm text-muted">Noch keine Übung. Füge unten welche hinzu.</p>
@@ -420,10 +497,7 @@ export default function DayBuilderPage() {
               ex={byId.get(it.exerciseId)}
               onChange={(next) => setItems((arr) => arr.map((x) => (x.key === it.key ? next : x)))}
               onSwap={() => setSwapKey(it.key)}
-              onRemove={() => {
-                tap();
-                setItems((arr) => arr.filter((x) => x.key !== it.key));
-              }}
+              onRemove={() => suggestAlternative(it)}
             />
           ))}
         </Reorder.Group>
