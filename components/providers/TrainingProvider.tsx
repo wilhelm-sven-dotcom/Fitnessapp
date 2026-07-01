@@ -31,6 +31,7 @@ import {
   type MuscleVolume,
 } from "@/lib/volume";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
+import { youtubeEmbedUrl } from "@/lib/youtube";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import {
@@ -84,6 +85,7 @@ export interface ExportEnvelope {
   cardio: CardioSession[];
   days: WorkoutDay[];
   gyms: GymProfile[];
+  exerciseVideos: Record<string, string>;
   settings?: AppSettings;
 }
 
@@ -119,6 +121,7 @@ interface TrainingContextValue {
   equip: EquipKey[];
   choices: Record<string, string>;
   custom: Exercise[];
+  exerciseVideos: Record<string, string>;
   body: BodyMetric[];
   loading: boolean;
   saving: boolean;
@@ -159,6 +162,7 @@ interface TrainingContextValue {
   toggleEquip: (k: EquipKey) => void;
   addCustom: (data: AddCustomData) => void;
   removeCustom: (id: string) => void;
+  setExerciseVideo: (exId: string, url: string | null) => void;
   days: WorkoutDay[];
   addDay: (day: WorkoutDay) => void;
   updateDay: (day: WorkoutDay) => void;
@@ -261,6 +265,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [cardio, setCardio] = useState<CardioSession[]>([]);
   const [days, setDays] = useState<WorkoutDay[]>([]);
   const [gyms, setGyms] = useState<GymProfile[]>([]);
+  const [exerciseVideos, setExerciseVideos] = useState<Record<string, string>>({});
   const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -275,7 +280,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   // Read every key from the local cache into state. Reused after a cloud pull.
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, da, gy] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, da, gy, ev] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -285,6 +290,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<CardioSession[]>(KEYS.cardio, []),
       storage.getJSON<WorkoutDay[]>(KEYS.days, []),
       storage.getJSON<GymProfile[]>(KEYS.gyms, []),
+      storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
     ]);
     if (Array.isArray(l)) setLog(l);
     if (Array.isArray(e)) setEquip(e);
@@ -295,6 +301,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (Array.isArray(ca)) setCardio(ca);
     if (Array.isArray(da)) setDays(da);
     if (Array.isArray(gy)) setGyms(gy);
+    if (ev && typeof ev === "object") setExerciseVideos(ev);
     setLoading(false);
   }, []);
 
@@ -716,6 +723,21 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setChoices(next);
     await storage.setJSON(KEYS.choices, next);
   };
+  const saveExerciseVideos = async (next: Record<string, string>) => {
+    setExerciseVideos(next);
+    await storage.setJSON(KEYS.exerciseVideos, next);
+  };
+  // Attach / replace / clear a user-picked YouTube demo clip for one exercise.
+  // Stores the raw URL (the embed is derived at render); rejects anything that
+  // doesn't parse as YouTube and clears the entry on empty/invalid input, so the
+  // map never holds an un-embeddable URL. Persists + cloud-syncs like every store.
+  const setExerciseVideo = (exId: string, url: string | null) => {
+    const trimmed = (url ?? "").trim();
+    const next = { ...exerciseVideos };
+    if (!trimmed || !youtubeEmbedUrl(trimmed)) delete next[exId];
+    else next[exId] = trimmed;
+    void saveExerciseVideos(next);
+  };
   const saveEquip = async (next: EquipKey[]) => {
     setEquip(next);
     await storage.setJSON(KEYS.equip, next);
@@ -922,8 +944,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     };
     void saveCustom([...custom, ex]);
   };
-  const removeCustom = (id: string) =>
+  const removeCustom = (id: string) => {
     void saveCustom(custom.filter((e) => e.id !== id));
+    if (exerciseVideos[id]) {
+      const next = { ...exerciseVideos };
+      delete next[id];
+      void saveExerciseVideos(next);
+    }
+  };
 
   const saveDays = async (next: WorkoutDay[]) => {
     setDays(next);
@@ -1009,7 +1037,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
 
   const exportData = (): ExportEnvelope => ({
-    schemaVersion: 2,
+    schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     log,
     equip,
@@ -1019,6 +1047,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     cardio,
     days,
     gyms,
+    exerciseVideos,
     settings,
   });
 
@@ -1037,6 +1066,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const nextCardio = Array.isArray(d.cardio) ? (d.cardio as CardioSession[]) : cardio;
     const nextDays = Array.isArray(d.days) ? (d.days as WorkoutDay[]) : days;
     const nextGyms = Array.isArray(d.gyms) ? (d.gyms as GymProfile[]) : gyms;
+    const nextExerciseVideos =
+      d.exerciseVideos && typeof d.exerciseVideos === "object"
+        ? (d.exerciseVideos as Record<string, string>)
+        : exerciseVideos;
     const nextSettings =
       d.settings && typeof d.settings === "object"
         ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
@@ -1049,6 +1082,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCardio(nextCardio);
     setDays(nextDays);
     setGyms(nextGyms);
+    setExerciseVideos(nextExerciseVideos);
     setSettings(nextSettings);
     await Promise.all([
       storage.setJSON(KEYS.log, nextLog),
@@ -1059,6 +1093,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.setJSON(KEYS.cardio, nextCardio),
       storage.setJSON(KEYS.days, nextDays),
       storage.setJSON(KEYS.gyms, nextGyms),
+      storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
       storage.setJSON(KEYS.settings, nextSettings),
     ]);
     return true;
@@ -1069,6 +1104,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     equip,
     choices,
     custom,
+    exerciseVideos,
     body,
     loading,
     saving,
@@ -1104,6 +1140,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     toggleEquip,
     addCustom,
     removeCustom,
+    setExerciseVideo,
     days,
     addDay,
     updateDay,
