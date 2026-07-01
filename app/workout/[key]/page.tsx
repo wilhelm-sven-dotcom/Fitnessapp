@@ -31,6 +31,7 @@ import { success } from "@/lib/haptics";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
+import { recommendedSets } from "@/lib/set-plan";
 import { configForPattern } from "@/lib/pose/exercise-pose-config";
 import { isPoseSupported } from "@/lib/pose/landmarker";
 import { warmupFor, warmupTotalMin } from "@/lib/warmup";
@@ -92,6 +93,7 @@ export default function WorkoutPage() {
     settings,
     todayReadiness,
     readinessScale,
+    muscleVolumes,
     lastPerf,
     backTraffic,
     setBackTraffic,
@@ -417,6 +419,10 @@ export default function WorkoutPage() {
             log,
             currentSets: entries[ex.id] || [],
           });
+          const recSets =
+            ex.pattern === "cardio"
+              ? ex.sets
+              : recommendedSets(ex, { muscleVolumes, lowReadiness: readinessScale.setDelta < 0 });
           const ps = lp
             ? lp.sets
                 .filter((s) => !s.warmup)
@@ -482,6 +488,12 @@ export default function WorkoutPage() {
               </div>
 
               <p className="mt-2 text-xs leading-relaxed text-muted">{ex.cue}</p>
+
+              {recSets > ex.sets && (
+                <p className="mt-1.5 text-xs font-medium text-accent-2">
+                  Ziel heute: {recSets} Sätze — noch Raum für +1.
+                </p>
+              )}
 
               {ex.pattern !== "cardio" && chips.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">

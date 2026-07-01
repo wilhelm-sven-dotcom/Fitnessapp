@@ -10,7 +10,7 @@
 
 import { isFilled, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS } from "@/lib/training-science";
-import type { MuscleVolume } from "@/lib/volume";
+import { muscleOf, type MuscleVolume } from "@/lib/volume";
 import type { Exercise, LoggedSession } from "@/lib/types";
 
 const DAY = 86_400_000;
@@ -96,8 +96,9 @@ export interface SetRecCtx {
  */
 export function recommendedSets(ex: Exercise, ctx: SetRecCtx): number {
   const base = ex.sets;
-  if (ctx.deload || ctx.lowReadiness || !ex.muscle) return base;
-  const mv = ctx.muscleVolumes.find((v) => v.muscle === ex.muscle);
+  if (ctx.deload || ctx.lowReadiness) return base;
+  const primary = muscleOf(ex).primary; // built-in exercises don't carry `muscle`
+  const mv = ctx.muscleVolumes.find((v) => v.muscle === primary);
   if (!mv) return base;
   return mv.sets + 1 <= VOLUME_LANDMARKS.mav ? base + 1 : base;
 }
