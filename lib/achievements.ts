@@ -319,7 +319,8 @@ export function trainingLevel(input: AchievementInput): TrainingLevel {
     Math.round(m.totalVolume / 1000) +
     12 * m.prCount +
     8 * m.streak +
-    5 * m.bestCoverage;
+    5 * m.bestCoverage +
+    Math.round(m.totalSets / 4);
   const xpToReach = (n: number) => Math.round(50 * Math.pow(Math.max(0, n - 1), 1.6));
   let level = 1;
   while (level < 200 && xp >= xpToReach(level + 1)) level++;
