@@ -8,6 +8,7 @@ import { AchievementsGrid } from "@/components/progress/AchievementsGrid";
 import { BackTraffic } from "@/components/progress/BackTraffic";
 import { GoalCard } from "@/components/progress/GoalCard";
 import { LevelCard } from "@/components/progress/LevelCard";
+import { SetCollectorCard } from "@/components/progress/SetCollectorCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
@@ -180,6 +181,8 @@ export default function ProgressPage() {
       )}
 
       <LevelCard />
+
+      <SetCollectorCard />
 
       <FatigueCard log={log} cardio={cardio} />
 
