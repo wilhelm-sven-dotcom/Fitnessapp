@@ -25,6 +25,7 @@ import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
+import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { exerciseAffinity } from "@/lib/affinity";
 import { effectiveProfile } from "@/lib/athlete";
@@ -35,6 +36,7 @@ import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { bestAlternativeForPattern, presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
 import { recommendedSets } from "@/lib/set-plan";
+import { isFilled } from "@/lib/stats";
 import { configForPattern } from "@/lib/pose/exercise-pose-config";
 import { isPoseSupported } from "@/lib/pose/landmarker";
 import { warmupFor, warmupTotalMin } from "@/lib/warmup";
@@ -91,6 +93,7 @@ export default function WorkoutPage() {
     setEntry,
     swapExercise,
     saveSession,
+    discardSession,
     saving,
     activeList,
     settings,
@@ -124,6 +127,7 @@ export default function WorkoutPage() {
   const [swapNote, setSwapNote] = useState<
     { slotKey: string; fromId: string; fromName: string; toName: string } | null
   >(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restOn, setRestOn] = useState(false);
@@ -361,8 +365,15 @@ export default function WorkoutPage() {
 
   const pickItem = list.find((s) => s.slotKey === pickSlot) ?? null;
 
+  const doneCount = Object.values(entries).flat().filter(isFilled).length;
   const onSave = async () => {
+    setConfirmOpen(false);
     await saveSession();
+    router.push("/");
+  };
+  const onDiscard = () => {
+    setConfirmOpen(false);
+    discardSession();
     router.push("/");
   };
 
@@ -370,7 +381,7 @@ export default function WorkoutPage() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <Pressable
-          onClick={() => router.push("/")}
+          onClick={() => setConfirmOpen(true)}
           className="flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
         >
           <ArrowLeft size={18} /> Zurück
@@ -749,12 +760,64 @@ export default function WorkoutPage() {
       </div>
 
       <Pressable
-        onClick={onSave}
+        onClick={() => setConfirmOpen(true)}
         disabled={saving}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
       >
         <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training speichern"}
       </Pressable>
+
+      <Sheet open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Training beenden?">
+        {doneCount > 0 ? (
+          <>
+            <p className="mb-4 text-sm text-muted">
+              Du hast {doneCount} {doneCount === 1 ? "Satz" : "Sätze"} erledigt. Beenden speichert
+              diese — der Rest wird verworfen.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Pressable
+                onClick={onSave}
+                disabled={saving}
+                className="flex items-center justify-center gap-2 rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions disabled:opacity-60"
+              >
+                <Save size={16} strokeWidth={2.5} /> {saving ? "Speichert…" : "Beenden & speichern"}
+              </Pressable>
+              <Pressable
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              >
+                Weiter trainieren
+              </Pressable>
+              <Pressable
+                onClick={onDiscard}
+                className="rounded-card py-2 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              >
+                Ohne Speichern verwerfen
+              </Pressable>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mb-4 text-sm text-muted">
+              Noch keine Sätze erledigt. Training wirklich verlassen? Es wird nichts gespeichert.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Pressable
+                onClick={onDiscard}
+                className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              >
+                Training verlassen
+              </Pressable>
+              <Pressable
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              >
+                Weiter trainieren
+              </Pressable>
+            </div>
+          </>
+        )}
+      </Sheet>
 
       <GuideSheet open={!!guideSlot} onClose={() => setGuideSlot(null)} ex={guideEx} />
       {camFor && (
