@@ -172,6 +172,7 @@ interface TrainingContextValue {
   addGym: (name: string) => void;
   removeGym: (id: string) => void;
   saveSession: () => Promise<void>;
+  discardSession: () => void;
   deleteSession: (realIdx: number) => Promise<void>;
   resetAll: () => Promise<void>;
   setBackTraffic: (v: TrafficLight | null) => void;
@@ -983,7 +984,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
             (s.reps !== "" && s.reps != null) ||
             (s.weight !== "" && s.weight != null),
         ),
-    }));
+    })).filter((ex) => ex.sets.length > 0); // only keep exercises actually trained
     const newSession: LoggedSession = {
       date: new Date().toISOString(),
       dayKey: tpl.key,
@@ -1001,6 +1002,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.log, newLog);
     setLog(newLog);
     setSaving(false);
+    setActiveKey(null);
+    setEntries({});
+    setBackTrafficState(null);
+    setNoteState("");
+    setTodayReadiness(null);
+  };
+
+  // Leave an active session WITHOUT saving — clears the in-progress state so a
+  // discarded workout isn't silently resumed or logged.
+  const discardSession = () => {
     setActiveKey(null);
     setEntries({});
     setBackTrafficState(null);
@@ -1150,6 +1161,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     addGym,
     removeGym,
     saveSession,
+    discardSession,
     deleteSession,
     resetAll,
     setBackTraffic: (v) => setBackTrafficState(v),
