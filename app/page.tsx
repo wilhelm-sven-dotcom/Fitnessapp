@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducedMotion } from "framer-motion";
-import { ChevronRight, Newspaper, Play, Sparkles } from "lucide-react";
+import { ChevronRight, Newspaper, Play, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
@@ -12,14 +12,15 @@ import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
 import { AtlasCard } from "@/components/trainer/AtlasCard";
-import { FatigueCard } from "@/components/progress/FatigueCard";
+import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { StreakFlame } from "@/components/ui/StreakFlame";
 import { Reveal } from "@/components/ui/Reveal";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { coachQuote, editorialDeck, greeting, homeChips } from "@/lib/coaching";
+import { trainingLevel } from "@/lib/achievements";
+import { editorialDeck, greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
 import { tap } from "@/lib/haptics";
 import { weeklyAvgRir, weeklyStreak } from "@/lib/stats";
@@ -71,7 +72,7 @@ export default function HomePage() {
     setBudget,
     coach,
     trainer,
-    cardio,
+    allLib,
     cardioAdvice,
     acceptDeload,
     dismissCard,
@@ -110,8 +111,8 @@ export default function HomePage() {
     cardioLevel: cardioAdvice?.level,
     seed: greetingSeed,
   });
-  const quote = coachQuote({ cardioLevel: cardioAdvice?.level, seed: greetingSeed });
   const focusParts = recTpl.focus.split(" & ");
+  const level = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
 
   // Living hero: a small athlete that continuously performs the first recommended
   // exercise that has a figure. Always in motion (FigurePanel's rAF loop), so it
@@ -200,6 +201,36 @@ export default function HomePage() {
               </span>
             ))}
           </h1>
+
+          {/* „Der Trainer" — ATLAS als Magazin-Leader: Hairline, Kursiv-Direktive,
+              Mission als Mono-Datenzeile. Kein Karten-Wrapper — der Spread bleibt flach. */}
+          <Pressable
+            onClick={() => {
+              tap();
+              router.push("/coach");
+            }}
+            aria-label="ATLAS öffnen"
+            className="mt-4 block w-full border-t border-line pt-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          >
+            <span className="flex items-center gap-2">
+              <AtlasMark size={16} live className="text-fg" />
+              <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
+                Der Trainer — ATLAS
+              </span>
+            </span>
+            <p className="mt-2 font-body text-xl italic leading-snug text-fg">
+              {trainer.directive.text}
+            </p>
+            <p className="mt-1 font-mono text-xs text-faint">{trainer.directive.reason}</p>
+            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs tabular-nums text-muted">
+              {trainer.mission.meters.map((m) => (
+                <span key={m.id}>
+                  {m.current}/{m.target} {m.label.toUpperCase()}
+                </span>
+              ))}
+            </p>
+          </Pressable>
+
           {heroFig && (
             <div className="mt-4 flex justify-center">
               <div className="w-28">
@@ -274,82 +305,87 @@ export default function HomePage() {
               <span aria-hidden className="font-display text-5xl leading-none text-accent-ink">
                 „
               </span>
-              <p className="font-body text-xl italic leading-snug text-fg">{quote}</p>
+              <p className="font-body text-xl italic leading-snug text-fg">{trainer.statusLine}</p>
             </div>
             <figcaption className="mt-2 text-right font-mono text-xs uppercase tracking-widest text-accent-2">
-              — Dein Coach
+              — ATLAS
             </figcaption>
           </figure>
 
           <div className="mt-6">
             {chipsEl}
             {activeEl}
-            {atlasEl}
             {coachEl}
+            {/* Die Wache als Magazin-Fußzeile. */}
+            <p className="flex flex-wrap gap-x-3 gap-y-1 border-t border-line pt-3 font-mono text-xs text-muted">
+              {trainer.watch.map((w) => (
+                <span
+                  key={w.id}
+                  className={cn(
+                    w.tone === "alert" && "text-status-danger",
+                    w.tone === "watch" && "text-status-over",
+                  )}
+                >
+                  {w.label.toUpperCase()} {w.value}
+                </span>
+              ))}
+            </p>
           </div>
         </section>
       ) : (
-        /* ── Blueprint / Tactile: greeting + the calibrated tonnage gauge. ── */
+        /* ── Blueprint / Tactile: Kommandozentrale — ATLAS führt, die
+           Empfehlung ist das eine fette Visual, Instrumente kompakt. ── */
         <>
-          <header className="mb-5">
+          <header className="mb-4">
             <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-              {today} · {recTpl.focus}
+              {today} · KW {kw}
             </p>
-            <div className="mt-1 flex items-start justify-between gap-3">
-              <h1 className="font-display text-3xl font-bold tracking-tight text-fg">
-                {greeting({ name: settings.userName, seed: greetingSeed })}
-              </h1>
+            <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-fg">
+              {greeting({ name: settings.userName, seed: greetingSeed })}
+            </h1>
+            <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
+            {/* Status-Pills: Serie · Level · Einheiten — der Puls auf einen Blick. */}
+            <div className="mt-3 flex flex-wrap gap-2">
               {streak > 0 && (
-                <div className="flex shrink-0 items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-                  <StreakFlame size={15} className="text-accent-ink" />
+                <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
+                  <StreakFlame size={14} className="text-accent-ink" />
                   <span className="font-display text-sm font-bold tabular-nums text-fg">{streak}</span>
                   <span className="text-xs text-muted">Wo</span>
-                </div>
+                </span>
               )}
+              <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
+                <Trophy size={13} className="text-accent-ink" aria-hidden />
+                <span className="font-display text-sm font-bold tabular-nums text-fg">
+                  Lv {level.level}
+                </span>
+              </span>
+              <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
+                <span className="font-display text-sm font-bold tabular-nums text-fg">
+                  {weekCount}/3
+                </span>
+                <span className="text-xs text-muted">Woche</span>
+              </span>
             </div>
-            <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
           </header>
 
           {chipsEl}
-
-          {/* Signature: the week's tonnage as a calibrated instrument. */}
-          <Reveal>
-            <Card variant="elevated" className="edge-top bg-hero-sheen mb-4 overflow-hidden rounded-card p-6">
-              <VolumeGauge valueT={volT} targetT={volTargetT} />
-              <div className="mt-5 flex items-center gap-5 border-t border-line pt-4 font-mono text-xs">
-                <span>
-                  <span className="text-accent-2">EINH.</span>{" "}
-                  <span className="tabular-nums text-fg">{weekCount}/3</span>
-                </span>
-                <span>
-                  <span className="text-accent-2">ABDECKUNG</span>{" "}
-                  <span className="tabular-nums text-fg">
-                    {cov.hit}/{cov.total}
-                  </span>
-                </span>
-                {streak > 0 && (
-                  <span>
-                    <span className="text-accent-2">SERIE</span>{" "}
-                    <span className="tabular-nums text-fg">{streak} Wo</span>
-                  </span>
-                )}
-              </div>
-            </Card>
-          </Reveal>
-
           {activeEl}
+
+          {/* ATLAS führt: die Direktive ist das Erste, was der Trainer sagt. */}
           {atlasEl}
-          {coachEl}
 
           {/* The one bold moment: today's recommended session. */}
-          <Reveal delay={0.16}>
+          <Reveal delay={0.14}>
             <Card variant="elevated" className="glow-accent edge-top bg-hero-sheen mb-4 overflow-hidden rounded-card p-6">
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">▸ Empfohlen heute</p>
-              <h2 className="font-display text-4xl font-bold tracking-tight">{recTpl.name}</h2>
-              <p className="mb-3 text-muted">{recTpl.focus}</p>
+              <h2 className="font-display text-4xl font-bold leading-none tracking-tight">{recTpl.name}</h2>
+              <p className="mt-1 text-muted">{recTpl.focus}</p>
+              <p className="mb-3 mt-1 font-mono text-xs text-faint">
+                {recList.length} Übungen · ~{estimatedMin} Min
+              </p>
               {heroFig && (
                 <div className="mb-4 flex justify-center">
-                  <div className="w-28">
+                  <div className="w-36">
                     <FigurePanel label="" fig={heroFig} viewKey="side" accentBones={heroAccent} freeze={heroFreeze} />
                   </div>
                 </div>
@@ -376,7 +412,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="mb-5 flex flex-wrap gap-1.5">
-                {tags.map((t) => (
+                {tags.slice(0, 3).map((t) => (
                   <span key={t} className="rounded-pill bg-surface-2 px-2 py-1 text-xs text-muted">
                     {t}
                   </span>
@@ -393,6 +429,29 @@ export default function HomePage() {
               </Pressable>
             </Card>
           </Reveal>
+
+          {/* Instrumente kompakt: Tonnage-Strip + Kernzahlen (leer = verborgen). */}
+          {log.length > 0 && (
+            <Reveal delay={0.18}>
+              <Card className="mb-4 p-4">
+                <VolumeGauge valueT={volT} targetT={volTargetT} compact />
+                <div className="mt-3 flex items-center gap-5 border-t border-line pt-3 font-mono text-xs">
+                  <span>
+                    <span className="text-accent-2">EINH.</span>{" "}
+                    <span className="tabular-nums text-fg">{weekCount}/3</span>
+                  </span>
+                  <span>
+                    <span className="text-accent-2">ABDECKUNG</span>{" "}
+                    <span className="tabular-nums text-fg">
+                      {cov.hit}/{cov.total}
+                    </span>
+                  </span>
+                </div>
+              </Card>
+            </Reveal>
+          )}
+
+          {coachEl}
         </>
       )}
 
@@ -407,20 +466,6 @@ export default function HomePage() {
           <span className="flex items-center gap-1 font-mono text-xs text-muted">
             KW {kw} <ChevronRight size={16} />
           </span>
-        </Pressable>
-      </Reveal>
-
-      <FatigueCard log={log} cardio={cardio} />
-
-      <Reveal delay={0.22}>
-        <Pressable
-          onClick={() => router.push("/coach")}
-          className="mb-5 flex w-full items-center justify-between rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium text-fg">
-            <Sparkles size={17} className="text-accent-coverage" /> Frag den Coach
-          </span>
-          <ChevronRight size={16} className="text-muted" />
         </Pressable>
       </Reveal>
 

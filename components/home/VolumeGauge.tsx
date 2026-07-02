@@ -20,6 +20,8 @@ interface Props {
   valueT: number;
   /** Weekly tonnage target = the ruler/dial full scale. */
   targetT: number;
+  /** Slim strip variant — same animated value, no big dial (home instruments row). */
+  compact?: boolean;
 }
 
 // Half-dial geometry (tactile): points along the arc, left = 0 → right = max.
@@ -35,7 +37,7 @@ const arcPath = (from: number, to: number, rad: number, steps = 56) =>
     .map(([x, y], k) => `${k ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`)
     .join(" ");
 
-export function VolumeGauge({ valueT, targetT }: Props) {
+export function VolumeGauge({ valueT, targetT, compact = false }: Props) {
   const max = targetT > 0 ? targetT : Math.max(valueT, 1);
   const frac = Math.max(0, Math.min(1, valueT / max));
 
@@ -63,6 +65,55 @@ export function VolumeGauge({ valueT, targetT }: Props) {
   const value = (a * max).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const goal = max.toLocaleString("de-DE", { maximumFractionDigits: max >= 10 ? 0 : 1 });
   const [nx, ny] = polar(a, R - 18);
+
+  if (compact) {
+    // Schlankes Instrument: Wert + skin-eigene Mini-Skala, kein Half-Dial
+    // (unter ~w-28 unlesbar). Gleiche Sweep-Animation wie die Voll-Variante.
+    return (
+      <div>
+        <div className="flex items-baseline justify-between">
+          <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+            Volumen · Woche
+          </p>
+          <p className="font-mono text-xs uppercase tracking-widest text-faint">{pct}%</p>
+        </div>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="font-display text-3xl font-bold leading-none tracking-tight text-fg tabular-nums">
+            {value}
+          </span>
+          <span className="text-sm text-muted">t</span>
+          <span className="ml-auto font-mono text-xs text-faint">{goal} t · Ziel</span>
+        </div>
+        {/* Blueprint: Mini-Lineal */}
+        <div className="only-blueprint relative mt-2 h-4 border-t border-line">
+          {Array.from({ length: 11 }).map((_, i) => (
+            <span
+              key={i}
+              aria-hidden
+              className={i % 5 === 0 ? "absolute top-0 w-px bg-accent-2" : "absolute top-0 w-px bg-line"}
+              style={{ left: `${i * 10}%`, height: i % 5 === 0 ? 8 : 4 }}
+            />
+          ))}
+          <span
+            aria-hidden
+            className="absolute -top-0.5 w-0.5 bg-accent-sessions"
+            style={{ left: `${pct}%`, height: 12 }}
+          />
+        </div>
+        {/* Tactile: Pill-Balken */}
+        <div className="only-tactile mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-2">
+          <div
+            className="h-1.5 rounded-pill bg-accent-sessions"
+            style={{ width: `${pct}%`, boxShadow: "0 0 8px -1px var(--accent)" }}
+          />
+        </div>
+        {/* Editorial: Haarlinien-Baseline */}
+        <div className="only-editorial mt-2 h-0.5 w-full bg-line">
+          <div className="h-0.5 bg-accent-sessions" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
