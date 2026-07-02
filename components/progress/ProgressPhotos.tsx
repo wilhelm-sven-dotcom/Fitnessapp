@@ -40,7 +40,7 @@ function PhotoImg({ id, className }: { id: string; className?: string }) {
 function Figure({ id, label }: { id: string; label: string }) {
   return (
     <div>
-      <PhotoImg id={id} className="h-48 w-full rounded-xl" />
+      <PhotoImg id={id} className="h-48 w-full rounded-card" />
       <p className="mt-1 text-xs text-muted">{label}</p>
     </div>
   );
@@ -70,7 +70,7 @@ export function ProgressPhotos({ body }: { body: BodyMetric[] }) {
       <div className="flex gap-2 overflow-x-auto">
         {[...photos].reverse().map((p) => (
           <div key={p.photoId} className="shrink-0">
-            <PhotoImg id={p.photoId as string} className="h-20 w-20 rounded-lg" />
+            <PhotoImg id={p.photoId as string} className="h-20 w-20 rounded-card" />
             <p className="mt-1 text-center text-xs text-muted">
               {fmtDateShort(p.date)}
             </p>

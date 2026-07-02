@@ -36,7 +36,7 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="relative flex flex-1 flex-col items-center gap-1 pb-2 pt-3 focus:outline-none"
+              className="relative flex flex-1 flex-col items-center gap-1 rounded-card pb-2 pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink"
             >
               <Icon
                 size={20}

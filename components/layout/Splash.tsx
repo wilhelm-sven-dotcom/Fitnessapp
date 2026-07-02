@@ -108,7 +108,7 @@ function BlueprintBoot({ reduce }: { reduce: boolean }) {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 320, damping: 18, delay: 0.45 }}
         >
-          <BrandMark size={64} className="rounded-card" />
+          <BrandMark size={64} className="rounded-md" />
         </motion.div>
       </div>
       {/* tick ruler with a red index marker that sweeps and settles */}
@@ -146,7 +146,7 @@ function EditorialBoot({ reduce }: { reduce: boolean }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, ease: EASE_OUT }}
       >
-        <BrandMark size={52} className="rounded-card" />
+        <BrandMark size={52} className="rounded-md" />
       </motion.div>
       <p className="mt-5 flex font-display text-5xl font-bold uppercase leading-none tracking-tight text-fg" aria-label="Training">
         {WORD.map((c, i) => (

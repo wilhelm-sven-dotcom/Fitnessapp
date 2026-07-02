@@ -23,7 +23,7 @@ const GOALS: { v: TrainingGoal; label: string }[] = [
 const INJURIES: InjuryArea[] = ["rücken", "knie", "schulter", "ellbogen", "handgelenk"];
 
 const segBtn = (active: boolean) =>
-  "flex-1 rounded-lg py-2 text-sm font-medium tabular-nums focus:outline-none " +
+  "flex-1 rounded-card py-2 text-sm font-medium tabular-nums focus:outline-none " +
   (active ? "bg-strong text-on-strong" : "text-muted");
 const pill = (active: boolean) =>
   "rounded-full px-3 py-1.5 text-sm font-medium focus:outline-none " +
@@ -51,7 +51,7 @@ export function ProfileSection() {
       <div className="space-y-4">
         <div>
           <p className="mb-1.5 text-sm font-medium text-fg">Geschlecht</p>
-          <div className="flex gap-1 rounded-xl bg-surface-2 p-1">
+          <div className="flex gap-1 rounded-card bg-surface-2 p-1">
             {SEX.map((s) => (
               <Pressable
                 key={s.v}
@@ -75,7 +75,7 @@ export function ProfileSection() {
               onChange={(e) =>
                 setAthleteProfile({ age: e.target.value ? Number(e.target.value) : undefined })
               }
-              className="w-24 rounded-xl bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
             />
           </label>
           <label className="flex items-center justify-between gap-3">
@@ -88,7 +88,7 @@ export function ProfileSection() {
               onChange={(e) =>
                 setAthleteProfile({ heightCm: e.target.value ? Number(e.target.value) : undefined })
               }
-              className="w-24 rounded-xl bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
             />
           </label>
           <p className="text-xs leading-relaxed text-muted">
@@ -99,7 +99,7 @@ export function ProfileSection() {
 
         <div>
           <p className="mb-1.5 text-sm font-medium text-fg">Trainingserfahrung</p>
-          <div className="flex gap-1 rounded-xl bg-surface-2 p-1">
+          <div className="flex gap-1 rounded-card bg-surface-2 p-1">
             {EXP.map((x) => (
               <Pressable
                 key={x.v}

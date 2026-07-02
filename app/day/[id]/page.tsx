@@ -66,7 +66,7 @@ function Stepper({
       <Pressable
         onClick={onDec}
         aria-label={`${label} weniger`}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-fg focus:outline-none"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-surface-2 text-fg focus:outline-none"
       >
         <Minus size={15} />
       </Pressable>
@@ -77,7 +77,7 @@ function Stepper({
       <Pressable
         onClick={onInc}
         aria-label={`${label} mehr`}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-fg focus:outline-none"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-surface-2 text-fg focus:outline-none"
       >
         <Plus size={15} />
       </Pressable>
@@ -118,7 +118,7 @@ function ItemRow({
             controls.start(e);
           }}
           aria-label="Zum Verschieben ziehen"
-          className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-card text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         >
           <GripVertical size={18} />
         </button>
@@ -131,14 +131,14 @@ function ItemRow({
         <Pressable
           onClick={onSwap}
           aria-label="Übung tauschen"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
         >
           <Repeat size={15} />
         </Pressable>
         <Pressable
           onClick={onRemove}
           aria-label="Übung entfernen"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
         >
           <Trash2 size={15} />
         </Pressable>
@@ -399,7 +399,7 @@ export default function DayBuilderPage() {
     <div>
       <Pressable
         onClick={() => router.push("/plan")}
-        className="mb-4 flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
+        className="mb-4 flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
       >
         <ArrowLeft size={18} /> Plan
       </Pressable>
@@ -408,13 +408,13 @@ export default function DayBuilderPage() {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Name des Tages"
-        className="w-full rounded-xl bg-surface-2 px-3 py-2.5 font-display text-xl font-semibold tracking-tight text-fg placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+        className="w-full rounded-card bg-surface-2 px-3 py-2.5 font-display text-xl font-semibold tracking-tight text-fg placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
       />
       <input
         value={focus}
         onChange={(e) => setFocus(e.target.value)}
         placeholder="Fokus (z. B. Oberkörper, Push)"
-        className="mt-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+        className="mt-2 w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
       />
 
       <Pressable
@@ -422,7 +422,7 @@ export default function DayBuilderPage() {
           setCoachErr("");
           setCoachOpen(true);
         }}
-        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
       >
         <Sparkles size={16} strokeWidth={2.5} /> Coach-Vorschlag
       </Pressable>
@@ -557,7 +557,7 @@ export default function DayBuilderPage() {
             </p>
             <Pressable
               onClick={() => setCoachOpen(false)}
-              className="flex w-full items-center justify-center rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
+              className="flex w-full items-center justify-center rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
             >
               Verstanden
             </Pressable>
@@ -617,7 +617,7 @@ export default function DayBuilderPage() {
                 value={coachFocus}
                 onChange={(e) => setCoachFocus(e.target.value)}
                 placeholder="… oder eigenen Fokus eintippen"
-                className="mt-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+                className="mt-2 w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
               />
             </div>
 

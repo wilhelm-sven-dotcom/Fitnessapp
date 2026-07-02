@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   frameAt,
   framesOf,
@@ -77,8 +77,24 @@ export function FigurePanel({
   const [animF, setAnimF] = useState(0);
   const f = freeze ?? animF;
 
+  // Pause the rAF loop while scrolled offscreen — a looping figure otherwise
+  // burns ~60 state updates/s for something nobody sees (home hero, GuideSheet).
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "80px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   useEffect(() => {
     if (freeze != null) return; // static pose (filmstrip) — no animation loop
+    if (!inView) return; // offscreen — loop paused, resumes on re-entry
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       setAnimF(0);
       return;
@@ -94,7 +110,7 @@ export function FigurePanel({
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [freeze]);
+  }, [freeze, inView]);
 
   if (!v) return null;
   const frames = framesOf(v);
@@ -144,7 +160,7 @@ export function FigurePanel({
 
   return (
     <div className="min-w-0 flex-1">
-      <svg viewBox={fig.vb || "0 0 200 165"} style={{ display: "block", width: "100%", height: "auto" }}>
+      <svg ref={svgRef} viewBox={fig.vb || "0 0 200 165"} style={{ display: "block", width: "100%", height: "auto" }}>
         {flip ? <g transform="translate(200,0) scale(-1,1)">{inner}</g> : inner}
       </svg>
       <p className="mt-1 text-center font-mono text-xs text-muted">{label}</p>

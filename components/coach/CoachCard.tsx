@@ -6,13 +6,15 @@ import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 import type { CoachCard as CoachCardData, CoachSeverity } from "@/lib/advisor";
 
+// Token-based severity — the old rose-950 surface was dark-only and unreadable
+// on the light themes; a danger border + danger title reads in both.
 const sevSurface: Record<CoachSeverity, string> = {
-  urgent: "border-rose-900 bg-rose-950",
+  urgent: "border-status-danger",
   warn: "",
   info: "",
 };
 const sevTitle: Record<CoachSeverity, string> = {
-  urgent: "text-rose-200",
+  urgent: "text-status-danger",
   warn: "text-status-over",
   info: "text-fg",
 };
@@ -46,7 +48,7 @@ export function CoachCard({
       {card.action === "deload" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-xl bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+          className="mt-3 rounded-card bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
         >
           Entlastungswoche starten
         </Pressable>

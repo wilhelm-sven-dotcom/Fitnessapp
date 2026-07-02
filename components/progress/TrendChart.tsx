@@ -6,8 +6,8 @@ import { useId } from "react";
 const W = 300;
 const H = 56;
 const pad = 6;
-const GRID = "#2a2a30";
-const GREEN = "#30d158";
+const GRID = "var(--line)"; // theme-aware — the old fixed dark grey vanished on light
+const GREEN = "#30d158"; // semantic volume green (== accent-volume token)
 
 export function TrendChart({ values }: { values: number[] }) {
   const uid = useId().replace(/:/g, "");
@@ -73,7 +73,7 @@ export function TrendChart({ values }: { values: number[] }) {
         <circle key={i} cx={x(i)} cy={y(v)} r="1.6" fill={GREEN} opacity={0.85} />
       ))}
       <circle cx={x(maxIdx)} cy={y(max)} r="3.5" fill={GREEN} />
-      <circle cx={x(n - 1)} cy={y(values[n - 1])} r="3" fill="#e5e5e5" />
+      <circle cx={x(n - 1)} cy={y(values[n - 1])} r="3" fill="var(--fg)" />
     </svg>
   );
 }

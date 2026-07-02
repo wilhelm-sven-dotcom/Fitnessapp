@@ -131,7 +131,7 @@
   --line: #d8dce3;
   --fg: #14171c;
   --muted: #54606e;
-  --faint: #9aa3af;
+  --faint: #6b7280; /* ≥4.5:1 auf Weiß — #9aa3af (~2.5:1) war unlesbar für Hinweise/Placeholder */
   --strong: #14171c;
   --on-strong: #ffffff;
   --glass: rgba(255, 255, 255, 0.72);
@@ -162,7 +162,7 @@
   --line: #c9bfa6; /* Magazin-Haarlinie: deutlich sichtbar auf Creme (Footer-Regel, Card-Outlines) */
   --fg: #1a1813;
   --muted: #5b5547;
-  --faint: #9a9384;
+  --faint: #6e6759; /* warmes Grau, ≥4.5:1 auf Creme — vorher zu blass */
   --strong: #1a1813;
   --on-strong: #faf8f1;
   --glass: rgba(250, 248, 241, 0.72);

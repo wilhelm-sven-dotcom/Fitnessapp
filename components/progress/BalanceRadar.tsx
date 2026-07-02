@@ -7,8 +7,8 @@ import type { RadarAxis } from "@/lib/balance";
 const SIZE = 220;
 const C = SIZE / 2;
 const R = 74;
-const GRID = "#2a2a30";
-const GREEN = "#30d158";
+const GRID = "var(--line)"; // theme-aware — the old fixed dark grey vanished on light
+const GREEN = "#30d158"; // semantic volume green (== accent-volume token)
 
 export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
   const reduce = useReducedMotion();
@@ -44,7 +44,7 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
       </defs>
       <path d={gridOuter} fill="none" stroke={GRID} strokeWidth={1} />
       {/* Dashed ring marks the minimum target (10 sets). */}
-      <path d={gridMid} fill="none" stroke="#3a3a44" strokeWidth={1} strokeDasharray="2 3" />
+      <path d={gridMid} fill="none" stroke="var(--line)" strokeWidth={1} strokeDasharray="2 3" />
       {axes.map((a, i) => {
         const [ex, ey] = pt(i, R);
         const [lx, ly] = pt(i, R + 16);
@@ -54,7 +54,7 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
             <text
               x={lx}
               y={ly}
-              fill="#a1a1aa"
+              fill="var(--faint)"
               fontSize={9}
               textAnchor="middle"
               dominantBaseline="middle"

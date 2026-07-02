@@ -45,7 +45,7 @@ export function ReadinessGate({
         Kurz einschätzen — die Einheit passt sich an.
       </p>
       {cardioAdvice.level !== "none" && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl bg-surface-2 p-3">
+        <div className="mb-4 flex items-start gap-2 rounded-card bg-surface-2 p-3">
           <Bike size={15} className="mt-0.5 shrink-0 text-accent-coverage" />
           <p className="text-xs leading-relaxed text-muted">{cardioAdvice.body}</p>
         </div>
@@ -60,7 +60,7 @@ export function ReadinessGate({
                   key={o.v}
                   onClick={() => setVals((v) => ({ ...v, [row.key]: o.v }))}
                   className={cn(
-                    "flex-1 rounded-xl py-2.5 text-sm focus:outline-none",
+                    "flex-1 rounded-card py-2.5 text-sm focus:outline-none",
                     vals[row.key] === o.v
                       ? "bg-accent-sessions text-on-accent"
                       : "bg-surface-2 text-muted",
@@ -82,7 +82,7 @@ export function ReadinessGate({
       </Pressable>
       <Pressable
         onClick={onClose}
-        className="mt-2 w-full rounded-xl py-2.5 text-sm text-muted focus:outline-none"
+        className="mt-2 w-full rounded-card py-2.5 text-sm text-muted focus:outline-none"
       >
         Überspringen
       </Pressable>

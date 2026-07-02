@@ -32,7 +32,7 @@ export function ExercisePicker({
                 onClose();
               }}
               className={cn(
-                "flex w-full items-center justify-between gap-2 rounded-xl px-4 py-3 text-left focus:outline-none",
+                "flex w-full items-center justify-between gap-2 rounded-card px-4 py-3 text-left focus:outline-none",
                 active ? "bg-surface-2" : "bg-surface-2",
               )}
             >

@@ -174,6 +174,7 @@ export default function CoachPage() {
           }}
           rows={1}
           placeholder="Frag deinen Coach…"
+          aria-label="Nachricht an den Coach"
           className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
         />
         <Pressable
@@ -193,7 +194,7 @@ function BackRow({ onBack }: { onBack: () => void }) {
   return (
     <Pressable
       onClick={onBack}
-      className="mb-4 flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
+      className="mb-4 flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
     >
       <ArrowLeft size={18} /> Zurück
     </Pressable>

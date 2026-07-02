@@ -82,7 +82,7 @@ export default function PlanPage() {
               {days.map((d) => (
                 <div
                   key={d.id}
-                  className="flex items-center gap-1 rounded-xl bg-surface-2 px-3 py-2"
+                  className="flex items-center gap-1 rounded-card bg-surface-2 px-3 py-2"
                 >
                   <button
                     onClick={() => router.push(`/workout/${d.id}`)}
@@ -96,7 +96,7 @@ export default function PlanPage() {
                   <Pressable
                     onClick={() => router.push(`/day/${d.id}`)}
                     aria-label="Bearbeiten"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                   >
                     <Pencil size={14} />
                   </Pressable>
@@ -110,14 +110,14 @@ export default function PlanPage() {
                       })
                     }
                     aria-label="Duplizieren"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                   >
                     <Copy size={14} />
                   </Pressable>
                   <Pressable
                     onClick={() => removeDay(d.id)}
                     aria-label="Löschen"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                   >
                     <Trash2 size={14} />
                   </Pressable>
@@ -128,13 +128,13 @@ export default function PlanPage() {
           <div className="flex gap-2">
             <Pressable
               onClick={() => router.push("/day/neu")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
+              className="flex flex-1 items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
             >
               <Plus size={16} strokeWidth={2.5} /> Eigener Tag
             </Pressable>
             <Pressable
               onClick={() => router.push("/day/neu?coach=1")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
+              className="flex flex-1 items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
             >
               <Sparkles size={16} strokeWidth={2.5} /> Coach-Tag
             </Pressable>
@@ -142,7 +142,7 @@ export default function PlanPage() {
           {(equip as string[]).includes("bike") && (
             <Pressable
               onClick={() => router.push("/workout/peloton")}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
             >
               <Bike size={16} strokeWidth={2.5} /> Peloton-Tag starten
             </Pressable>
@@ -159,29 +159,31 @@ export default function PlanPage() {
           {gyms.map((g) => {
             const active = settings.activeGymId === g.id;
             return (
-              <Pressable
+              // Delete lives as a SIBLING control — a button can't nest a
+              // second interactive element (and the old span was mouse-only).
+              <div
                 key={g.id}
-                onClick={() => switchGym(g.id)}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium focus:outline-none",
+                  "flex items-center overflow-hidden rounded-full",
                   active ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                 )}
               >
-                {g.name}
+                <Pressable
+                  onClick={() => switchGym(g.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-sessions"
+                >
+                  {g.name}
+                </Pressable>
                 {active && gyms.length > 1 && (
-                  <span
-                    role="button"
-                    aria-label="Profil löschen"
-                    onClick={(ev) => {
-                      ev.stopPropagation();
-                      removeGym(g.id);
-                    }}
-                    className="-mr-1 rounded-full p-0.5"
+                  <Pressable
+                    onClick={() => removeGym(g.id)}
+                    aria-label={`Profil ${g.name} löschen`}
+                    className="py-1.5 pl-0.5 pr-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-sessions"
                   >
                     <X size={12} />
-                  </span>
+                  </Pressable>
                 )}
-              </Pressable>
+              </div>
             );
           })}
         </div>
@@ -190,7 +192,8 @@ export default function PlanPage() {
             value={newGym}
             onChange={(e) => setNewGym(e.target.value)}
             placeholder="Neues Profil (z. B. Zuhause)"
-            className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            aria-label="Neues Gym-Profil anlegen"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
           <Pressable
             onClick={() => {
@@ -199,7 +202,7 @@ export default function PlanPage() {
               setNewGym("");
             }}
             disabled={!newGym.trim()}
-            className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+            className="shrink-0 rounded-card bg-surface-2 px-3 py-2 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
           >
             Anlegen
           </Pressable>
@@ -218,7 +221,7 @@ export default function PlanPage() {
                 onClick={() => toggleEquip(e.key)}
                 style={on ? { boxShadow: "0 0 14px -4px var(--accent)" } : undefined}
                 className={cn(
-                  "flex items-center justify-between gap-2 rounded-xl px-3 py-3 text-sm focus:outline-none",
+                  "flex items-center justify-between gap-2 rounded-card px-3 py-3 text-sm focus:outline-none",
                   on
                     ? "bg-accent-sessions font-medium text-on-accent"
                     : "bg-surface-2 text-muted",
@@ -231,7 +234,7 @@ export default function PlanPage() {
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-between rounded-xl bg-base px-3 py-2 text-xs text-muted">
+        <div className="mt-3 flex items-center justify-between rounded-card bg-base px-3 py-2 text-xs text-muted">
           <span>
             <span className="font-mono tabular-nums text-fg">{equipStats.count}</span>{" "}
             Übungen verfügbar
@@ -251,12 +254,13 @@ export default function PlanPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name der Übung"
-          className="mb-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          aria-label="Name der Übung"
+          className="mb-2 w-full rounded-card bg-surface-2 px-3 py-2.5 text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         />
         <select
           value={pattern}
           onChange={(e) => setPattern(e.target.value as Pattern)}
-          className="mb-2 w-full rounded-xl bg-surface-2 px-3 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="mb-2 w-full rounded-card bg-surface-2 px-3 py-2.5 text-fg focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         >
           {(Object.keys(PATTERN_LABEL) as Pattern[]).map((k) => (
             <option key={k} value={k}>
@@ -270,7 +274,7 @@ export default function PlanPage() {
               key={u}
               onClick={() => setUnit(u)}
               className={cn(
-                "flex-1 rounded-xl py-2 text-sm focus:outline-none",
+                "flex-1 rounded-card py-2 text-sm focus:outline-none",
                 unit === u ? "bg-surface-2 text-fg" : "bg-surface-2 text-muted",
               )}
             >
@@ -297,7 +301,7 @@ export default function PlanPage() {
         <Pressable
           onClick={submit}
           disabled={!name.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
         >
           <Plus size={16} strokeWidth={2.5} /> Hinzufügen
         </Pressable>
@@ -306,14 +310,15 @@ export default function PlanPage() {
             {custom.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center justify-between gap-2 rounded-lg bg-base px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-card bg-base px-3 py-2"
               >
                 <span className="truncate text-sm text-muted">
                   {c.name} <span className="text-faint">· {PATTERN_LABEL[c.pattern]}</span>
                 </span>
                 <Pressable
                   onClick={() => removeCustom(c.id)}
-                  className="shrink-0 rounded p-1 text-muted focus:outline-none"
+                  aria-label={`Übung ${c.name} löschen`}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                 >
                   <Trash2 size={14} />
                 </Pressable>
@@ -341,7 +346,7 @@ export default function PlanPage() {
               </div>
               <Pressable
                 onClick={() => router.push(`/day/neu?from=${t.key}`)}
-                className="shrink-0 rounded-md px-1 py-1 text-xs text-accent-ink focus:outline-none"
+                className="shrink-0 rounded-card px-1 py-1 text-xs text-accent-ink focus:outline-none"
               >
                 Anpassen
               </Pressable>

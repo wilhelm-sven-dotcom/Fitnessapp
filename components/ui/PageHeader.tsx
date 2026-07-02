@@ -24,10 +24,7 @@ export function PageHeader({
       className="mb-5"
     >
       {eyebrow && (
-        <p
-          className="mb-1 font-mono text-xs uppercase tracking-widest"
-          style={{ color: "var(--accent)" }}
-        >
+        <p className="mb-1 font-mono text-xs uppercase tracking-widest text-accent-2">
           {eyebrow}
         </p>
       )}
