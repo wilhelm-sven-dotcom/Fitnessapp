@@ -12,7 +12,13 @@
 const CACHE = "training-v4";
 const SHELL = "/";
 
+// True when this install replaces a previous worker (a release update) — only
+// then is there a window on a stale build worth healing. Module state survives
+// the install→activate hop because skipWaiting activates immediately.
+let isUpdate = false;
+
 self.addEventListener("install", (event) => {
+  isUpdate = !!self.registration.active;
   event.waitUntil(
     caches
       .open(CACHE)
@@ -32,15 +38,21 @@ self.addEventListener("activate", (event) => {
       // 3) Heal any window stuck on the old build: now that the stale cache is
       //    gone and we control the page, reload it so it pulls the fresh HTML +
       //    chunks. Best-effort — older WebKit may not implement client.navigate.
-      try {
-        const wins = await self.clients.matchAll({ type: "window" });
-        await Promise.all(
-          wins.map((c) =>
-            typeof c.navigate === "function" ? c.navigate(c.url).catch(() => {}) : null,
-          ),
-        );
-      } catch {
-        /* navigate unsupported — the next manual reload still recovers */
+      //    Two hard-learned rules:
+      //    · Only on UPDATES — on the very first install there is no stale
+      //      build, and reloading a page that just loaded is pure churn.
+      //    · NEVER await the navigations inside waitUntil — a navigation can't
+      //      be served until activation finishes (fetch events queue behind the
+      //      activating worker), so awaiting it here deadlocks the page.
+      if (isUpdate) {
+        try {
+          const wins = await self.clients.matchAll({ type: "window" });
+          for (const c of wins) {
+            if (typeof c.navigate === "function") c.navigate(c.url).catch(() => {});
+          }
+        } catch {
+          /* navigate unsupported — the next manual reload still recovers */
+        }
       }
     })(),
   );
