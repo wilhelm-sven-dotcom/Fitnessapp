@@ -1,8 +1,9 @@
-import type { Exercise, Pattern, ResolvedSlot } from "@/lib/types";
+import type { Exercise, Pattern, ResolvedSlot, SetEntry } from "@/lib/types";
 
-/** Per-set timing model (seconds). */
+/** Per-set timing model (seconds). restSec == the live RestTimer duration —
+ *  ONE source of truth (they diverged 75 vs 90 before, skewing estimates). */
 export const TIME = {
-  restSec: 75,
+  restSec: 90,
   repSetSec: 30,
   timedSetSec: 40,
   warmupSetSec: 20,
@@ -76,6 +77,32 @@ export function estimateSessionMin(
     }
   }
   return Math.round(min);
+}
+
+/**
+ * Remaining minutes in a RUNNING session: open working sets × (work + rest),
+ * plus planned minutes of untouched cardio blocks. Feeds the workout HUD.
+ */
+export function estimateRemainingMin(
+  list: ResolvedSlot[],
+  entries: Record<string, SetEntry[]>,
+): number {
+  let sec = 0;
+  for (const { ex } of list) {
+    if (!ex?.pattern) continue;
+    const sets = entries[ex.id] ?? [];
+    if (ex.pattern === "cardio") {
+      const done = sets.some((s) => s.reps !== "" && s.reps != null);
+      if (!done) sec += ex.repHigh * 60;
+      continue;
+    }
+    const workSec = ex.unit === "Sek" ? TIME.timedSetSec : TIME.repSetSec;
+    const open = sets.filter(
+      (s) => !s.warmup && (s.reps === "" || s.reps == null),
+    ).length;
+    sec += open * (workSec + TIME.restSec);
+  }
+  return Math.max(0, Math.round(sec / 60));
 }
 
 export interface FitResult {

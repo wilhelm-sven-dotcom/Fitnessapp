@@ -18,7 +18,16 @@ import type { Exercise } from "@/lib/types";
  * page's IntersectionObserver). Tap opens the full GuideSheet. The cue walks the
  * technique steps in the figure's rhythm (reduced-motion → static).
  */
-export function LiveDemo({ ex, onOpen }: { ex: Exercise | null; onOpen: () => void }) {
+export function LiveDemo({
+  ex,
+  onOpen,
+  hud,
+}: {
+  ex: Exercise | null;
+  onOpen: () => void;
+  /** Session-HUD rechts in der Bar: Übungs-Fortschritt + Restzeit. */
+  hud?: { done: number; total: number; remainMin: number };
+}) {
   const reduce = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
@@ -79,6 +88,29 @@ export function LiveDemo({ ex, onOpen }: { ex: Exercise | null; onOpen: () => vo
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-muted">{cue}</span>
                 </span>
+                {hud && (
+                  <span className="flex shrink-0 flex-col items-end gap-0.5">
+                    <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden>
+                      <g transform="rotate(-90 10 10)">
+                        <circle cx="10" cy="10" r="7.5" fill="none" stroke="var(--surface-2)" strokeWidth="3" />
+                        <circle
+                          cx="10"
+                          cy="10"
+                          r="7.5"
+                          fill="none"
+                          stroke="var(--accent)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 7.5}
+                          strokeDashoffset={
+                            2 * Math.PI * 7.5 * (1 - (hud.total > 0 ? Math.min(1, hud.done / hud.total) : 0))
+                          }
+                        />
+                      </g>
+                    </svg>
+                    <span className="font-mono text-xs tabular-nums text-muted">~{hud.remainMin} Min</span>
+                  </span>
+                )}
                 <Maximize2 size={16} className="mr-1 shrink-0 text-accent-ink" />
               </Pressable>
             </motion.div>

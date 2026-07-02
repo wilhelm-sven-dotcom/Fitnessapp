@@ -31,6 +31,7 @@ import { LiveDemo } from "@/components/workout/LiveDemo";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
+import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { Chip } from "@/components/ui/Chip";
@@ -44,7 +45,8 @@ import { PATTERN_LABEL } from "@/lib/exercises";
 import { success, tap } from "@/lib/haptics";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { bestAlternativeForPattern, presc } from "@/lib/progression";
-import { estimateSessionMin, supersetPair } from "@/lib/session-time";
+import { estimateRemainingMin, estimateSessionMin, supersetPair, TIME } from "@/lib/session-time";
+import { liveLine } from "@/lib/trainer";
 import { recommendedSets } from "@/lib/set-plan";
 import { isFilled } from "@/lib/stats";
 import { SPRING } from "@/lib/motion";
@@ -61,7 +63,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Exercise, Pattern, TrafficLight } from "@/lib/types";
 
-const REST_SECONDS = 90;
+// Satzpause: EINE Quelle — TIME.restSec speist Live-Timer UND Zeitschätzung.
 
 // Selected state as a tinted outline chip — token-pure and readable on both
 // themes (the old filled raw-palette chips broke contrast in light mode).
@@ -172,6 +174,9 @@ export default function WorkoutPage() {
   const [poseSupported, setPoseSupported] = useState(false);
   const [camFor, setCamFor] = useState<{ exId: string; i: number; pattern: Pattern; name: string; ghost?: string } | null>(null);
   const announcedRef = useRef<Set<string>>(new Set());
+  // Aktuelle entries für Effekte, die nicht pro Tastendruck neu laufen dürfen.
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
 
   useEffect(() => {
     // A just-saved session clears activeKey — we're on the win screen now, so
@@ -193,6 +198,14 @@ export default function WorkoutPage() {
     if (restLeft <= 0) {
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(200);
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
+      // Fallback fürs Auto-Advance: Wer die Pause aussitzt (Keyboard offen,
+      // kein Blur), rückt spätestens jetzt zum nächsten offenen Satz vor.
+      setEditKey((k) => {
+        if (!k) return k;
+        const [exId, iStr] = k.split(":");
+        const s = entriesRef.current[exId]?.[Number(iStr)];
+        return s && s.reps !== "" && s.reps != null ? null : k;
+      });
       // Keep the card mounted for a beat so the ring's 0-snap (pop + flash) is
       // actually visible before it slides away. A new set mid-linger resets
       // restLeft and the cleanup cancels the hide.
@@ -270,7 +283,7 @@ export default function WorkoutPage() {
   }, [slotKeys, activeKey]);
 
   const startRest = () => {
-    setRestLeft(REST_SECONDS);
+    setRestLeft(TIME.restSec);
     setRestOn(true);
   };
   const onReps = (exId: string, i: number, oldVal: string, val: string) => {
@@ -304,6 +317,98 @@ export default function WorkoutPage() {
     [log],
   );
 
+  // Only filled WORKING sets count as "done" — warmups arrive pre-filled
+  // (reps "5"), so counting them claimed sets on an untouched workout.
+  const doneCount = Object.values(entries)
+    .flat()
+    .filter((s) => !s.warmup && isFilled(s)).length;
+
+  // ── Flow 2.0: die aktive Karte, Auto-Scroll & der Übungs-Abschluss.
+  //    (Hooks — MÜSSEN vor den Early-Returns unten stehen.) ──
+  const hasOpenSet = (exId: string) =>
+    (entries[exId] || []).some((s) => !s.warmup && (s.reps === "" || s.reps == null));
+  // Karte mit dem gepinnten Satz gewinnt, sonst die erste mit offenem Arbeitssatz.
+  const editExId = editKey ? editKey.split(":")[0] : null;
+  const activeCardSlot =
+    (editExId ? list.find((s) => s.ex.id === editExId)?.slotKey : undefined) ??
+    list.find(({ ex }) => ex.pattern !== "cardio" && hasOpenSet(ex.id))?.slotKey ??
+    null;
+
+  const scrollToSlot = (slot: string) => {
+    cardRefs.current
+      .get(slot)
+      ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  };
+
+  // Nach jedem erledigten Satz zur nächsten offenen Karte gleiten — aber erst,
+  // wenn der Fokus-Pin gelöst ist (beim Tippen wächst doneCount VOR dem Blur).
+  // Das Pending-Flag überbrückt die Lücke; 350 ms entkoppeln vom iOS-Keyboard-
+  // Einfahren und vom RestTimer-Slide-in.
+  const prevDoneRef = useRef(doneCount);
+  const pendingScrollRef = useRef(false);
+  useEffect(() => {
+    if (doneCount > prevDoneRef.current) pendingScrollRef.current = true;
+    prevDoneRef.current = doneCount;
+    if (!pendingScrollRef.current || editKey != null) return;
+    pendingScrollRef.current = false;
+    const next = list.find(({ ex }) => ex.pattern !== "cardio" && hasOpenSet(ex.id));
+    if (!next) return;
+    const id = window.setTimeout(() => scrollToSlot(next.slotKey), 350);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doneCount, editKey]);
+
+  // Übungs-Abschluss-Moment: kurzer Akzent-Flash + Haptik, wenn eine Übung
+  // alle Arbeitssätze voll hat (Übergangs-Erkennung je Slot).
+  const [flashSlot, setFlashSlot] = useState<string | null>(null);
+  const exCompleteRef = useRef<Map<string, boolean>>(new Map());
+  useEffect(() => {
+    for (const { ex, slotKey } of list) {
+      if (ex.pattern === "cardio") continue;
+      const work = (entries[ex.id] || []).filter((s) => !s.warmup);
+      const complete = work.length > 0 && work.every((s) => isFilled(s));
+      const was = exCompleteRef.current.get(slotKey) ?? false;
+      exCompleteRef.current.set(slotKey, complete);
+      if (complete && !was && doneCount > 0) {
+        success();
+        setFlashSlot(slotKey);
+        const id = window.setTimeout(() => setFlashSlot(null), 1000);
+        return () => window.clearTimeout(id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, list]);
+
+  // ATLAS spricht Live-Reaktionen (nur Rekordjagd/RIR — die Rekord-Feier
+  // spricht bereits), einmal je Satz-Stand.
+  const spokenRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!settings.voiceCues || !activeCardSlot) return;
+    const slot = list.find((s) => s.slotKey === activeCardSlot);
+    if (!slot || slot.ex.pattern === "cardio") return;
+    const p = presc(slot.ex, lastPerf(slot.ex.id), {
+      lighter,
+      loadMult: readinessScale.loadMult,
+      cap: readinessScale.cap,
+    });
+    const line = liveLine({
+      ex: slot.ex,
+      sets: entries[slot.ex.id] || [],
+      presc: p,
+      record: recordMap.get(slot.ex.id) ?? null,
+      readiness: readinessScale,
+    });
+    if (!line || (line.kind !== "chase" && line.kind !== "rir")) return;
+    const done = (entries[slot.ex.id] || []).filter((s) => !s.warmup && isFilled(s)).length;
+    const speakKey = `${slot.ex.id}:${done}:${line.text}`;
+    if (spokenRef.current.has(speakKey)) return;
+    spokenRef.current.add(speakKey);
+    say(line.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, activeCardSlot, settings.voiceCues]);
+
+  const remainMin = estimateRemainingMin(list, entries);
+
   // Fill the first still-open working set from a spoken set entry.
   const fillFromSpeech = (parsed: ParsedSet) => {
     for (const { ex } of list) {
@@ -315,7 +420,7 @@ export default function WorkoutPage() {
       if (parsed.reps != null) setEntry(ex.id, i, "reps", String(parsed.reps));
       if (parsed.rir != null) setEntry(ex.id, i, "rir", parsed.rir);
       if (parsed.reps != null) {
-        setRestLeft(REST_SECONDS);
+        setRestLeft(TIME.restSec);
         setRestOn(true);
       }
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(60);
@@ -413,11 +518,6 @@ export default function WorkoutPage() {
 
   const pickItem = list.find((s) => s.slotKey === pickSlot) ?? null;
 
-  // Only filled WORKING sets count as "done" — warmups arrive pre-filled
-  // (reps "5"), so counting them claimed sets on an untouched workout.
-  const doneCount = Object.values(entries)
-    .flat()
-    .filter((s) => !s.warmup && isFilled(s)).length;
   const onSave = async () => {
     setConfirmOpen(false);
     // The summary feeds the "Sieger-Moment" takeover; null (nothing real
@@ -518,6 +618,7 @@ export default function WorkoutPage() {
         <LiveDemo
           ex={list.find((s) => s.slotKey === activeSlot)?.ex ?? list[0]?.ex ?? null}
           onOpen={() => setGuideSlot(activeSlot ?? list[0]?.slotKey ?? null)}
+          hud={{ done, total: list.length, remainMin }}
         />
       )}
 
@@ -561,6 +662,23 @@ export default function WorkoutPage() {
           const activeSetIdx = (entries[ex.id] || []).findIndex(
             (s) => !s.warmup && (s.reps === "" || s.reps == null),
           );
+          const work = (entries[ex.id] || []).filter((s) => !s.warmup);
+          const exComplete =
+            ex.pattern !== "cardio" && work.length > 0 && work.every((s) => isFilled(s));
+          const isActiveCard = slotKey === activeCardSlot;
+          const nextOpen = exComplete
+            ? list.find(({ ex: e }) => e.pattern !== "cardio" && hasOpenSet(e.id))
+            : undefined;
+          const cardLine =
+            isActiveCard && ex.pattern !== "cardio"
+              ? liveLine({
+                  ex,
+                  sets: entries[ex.id] || [],
+                  presc: p,
+                  record: recordMap.get(ex.id) ?? null,
+                  readiness: readinessScale,
+                })
+              : null;
           return (
             <div
               key={slotKey}
@@ -569,12 +687,34 @@ export default function WorkoutPage() {
                 else cardRefs.current.delete(slotKey);
               }}
               data-slot={slotKey}
-              className="rounded-card border border-surface-3 bg-surface-1 shadow-card p-4"
+              className={cn(
+                "relative overflow-hidden rounded-card border border-surface-3 bg-surface-1 p-4",
+                isActiveCard ? "edge-top shadow-card-lg" : "shadow-card",
+                exComplete && !isActiveCard && "opacity-80",
+              )}
             >
+              {/* Abschluss-Flash: kurzer Akzent-Schimmer, wenn die Übung voll ist. */}
+              <AnimatePresence>
+                {flashSlot === slotKey && !reduce && (
+                  <motion.div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 rounded-card bg-hero-accent"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.9, ease: "easeInOut" }}
+                  />
+                )}
+              </AnimatePresence>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-faint">
+                    <span
+                      className={cn(
+                        "font-mono text-xs",
+                        isActiveCard ? "text-accent-ink" : "text-faint",
+                      )}
+                    >
                       {String(idx + 1).padStart(2, "0")}
                     </span>
                     <h3 className="font-semibold leading-tight">{ex.name}</h3>
@@ -589,6 +729,7 @@ export default function WorkoutPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  {exComplete && <Check size={14} className="text-status-in" aria-hidden />}
                   {ex.pattern !== "cardio" && <ProgressRing done={exDone} total={ex.sets} />}
                   <div className="text-right">
                     <p className="font-mono text-sm tabular-nums text-accent-ink">
@@ -737,6 +878,8 @@ export default function WorkoutPage() {
                     <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
                   </div>
 
+                  {cardLine && <AtlasLiveLine line={cardLine} />}
+
                   <div className="mt-3 space-y-1">
                     {(() => {
                       let workIdx = 0;
@@ -776,6 +919,9 @@ export default function WorkoutPage() {
                             onRir={(val) => setEntry(ex.id, i, "rir", val)}
                             onIntensity={(val) => setEntry(ex.id, i, "intensity", val)}
                             onActivate={() => setEditKey(`${ex.id}:${i}`)}
+                            onDeactivate={() =>
+                              setEditKey((k) => (k === `${ex.id}:${i}` ? null : k))
+                            }
                             recordLabel={rec?.label}
                             isRecord={beatsRecord(ex, s, rec)}
                             onCamera={
@@ -795,6 +941,21 @@ export default function WorkoutPage() {
                       });
                     })()}
                   </div>
+
+                  {/* Übung voll → direkte Brücke zur nächsten offenen Übung. */}
+                  {exComplete && nextOpen && (
+                    <Pressable
+                      onClick={() => {
+                        tap();
+                        setEditKey(null);
+                        scrollToSlot(nextOpen.slotKey);
+                      }}
+                      className="mt-2 flex w-full items-center justify-between rounded-card bg-surface-2 px-3 py-2 text-sm font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                    >
+                      <span className="min-w-0 truncate">Weiter: {nextOpen.ex.name}</span>
+                      <ChevronRight size={16} className="shrink-0" />
+                    </Pressable>
+                  )}
                 </>
               )}
             </div>
@@ -912,7 +1073,7 @@ export default function WorkoutPage() {
         {restOn && (
           <RestTimer
             left={restLeft}
-            total={REST_SECONDS}
+            total={TIME.restSec}
             onAdd={() => setRestLeft((x) => x + 15)}
             onSkip={() => setRestOn(false)}
           />

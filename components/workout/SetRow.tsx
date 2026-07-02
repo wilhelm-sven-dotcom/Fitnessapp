@@ -67,6 +67,7 @@ export function SetRow({
   onRir,
   onIntensity,
   onActivate,
+  onDeactivate,
   onCamera,
   recordLabel,
   isRecord,
@@ -91,6 +92,9 @@ export function SetRow({
   onIntensity: (val: number) => void;
   /** Focus this set (tap a collapsed line, or focus the active inputs). */
   onActivate: () => void;
+  /** Commit-Release: Blur auf einem GEFÜLLTEN Satz löst den Fokus-Pin, damit
+   *  der nächste leere Satz automatisch aktiv wird (Auto-Advance). */
+  onDeactivate?: () => void;
   /** Open the camera to auto-count reps for this set (rep-countable lifts only). */
   onCamera?: () => void;
 }) {
@@ -194,6 +198,9 @@ export function SetRow({
               step="0.5"
               value={set.weight}
               onFocus={onActivate}
+              onBlur={() => {
+                if (set.reps !== "" && set.reps != null) onDeactivate?.();
+              }}
               onChange={(e) => onWeight(e.target.value)}
               placeholder={ghostWeight ?? "kg"}
               className={inputClass}
@@ -203,6 +210,9 @@ export function SetRow({
               inputMode="numeric"
               value={set.reps}
               onFocus={onActivate}
+              onBlur={() => {
+                if (set.reps !== "" && set.reps != null) onDeactivate?.();
+              }}
               onChange={(e) => onReps(set.reps, e.target.value)}
               placeholder={ghostReps ?? "Wdh"}
               className={inputClass}
