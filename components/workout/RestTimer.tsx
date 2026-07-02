@@ -1,14 +1,17 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Pressable } from "@/components/ui/pressable";
+import { SPRING } from "@/lib/motion";
 
 const R = 26;
 const CIRC = 2 * Math.PI * R;
 
 /** Bottom rest-timer as a live instrument: a depleting countdown ring with the
  *  seconds inside, a breathing accent glow while it runs (faster in the last
- *  5 s). Reduced motion drops the glow and the ring jumps per second. */
+ *  5 s) and a spring snap (scale pop + accent flash) when it hits 0 — the
+ *  parent keeps the card mounted for a beat so the snap is visible. Reduced
+ *  motion drops glow and snap; the ring jumps per second. */
 export function RestTimer({
   left,
   total,
@@ -22,7 +25,8 @@ export function RestTimer({
 }) {
   const reduce = useReducedMotion();
   const frac = Math.max(0, Math.min(1, left / (total || 1))); // remaining
-  const urgent = left <= 5;
+  const urgent = left <= 5 && left > 0;
+  const done = left <= 0;
   return (
     <motion.div
       className="fixed inset-x-0 bottom-0 z-40"
@@ -34,8 +38,13 @@ export function RestTimer({
     >
       <div className="mx-auto m-3 max-w-md rounded-card border border-surface-3 bg-surface-1 shadow-card p-4 backdrop-blur">
         <div className="flex items-center gap-4">
-          <div className="relative shrink-0" style={{ width: 64, height: 64 }}>
-            {!reduce && (
+          <motion.div
+            className="relative shrink-0"
+            style={{ width: 64, height: 64 }}
+            animate={done && !reduce ? { scale: [1, 1.16, 1] } : { scale: 1 }}
+            transition={SPRING.pop}
+          >
+            {!reduce && !done && (
               <motion.div
                 aria-hidden
                 className="absolute inset-1 rounded-full"
@@ -44,6 +53,20 @@ export function RestTimer({
                 transition={{ duration: urgent ? 0.6 : 1.8, repeat: Infinity, ease: "easeInOut" }}
               />
             )}
+            {/* Accent flash the moment the pause snaps to done. */}
+            <AnimatePresence>
+              {done && !reduce && (
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-full"
+                  style={{ background: "radial-gradient(circle, var(--accent) 0%, transparent 70%)" }}
+                  initial={{ opacity: 0.6, scale: 0.7 }}
+                  animate={{ opacity: 0, scale: 1.5 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.55 }}
+                />
+              )}
+            </AnimatePresence>
             <svg width={64} height={64} viewBox="0 0 64 64" className="relative -rotate-90">
               <circle cx="32" cy="32" r={R} fill="none" stroke="var(--surface-2)" strokeWidth="4" />
               <circle
@@ -63,12 +86,14 @@ export function RestTimer({
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-display text-xl font-semibold tabular-nums text-fg">{left}</span>
+              <span className="font-display text-xl font-semibold tabular-nums text-fg">
+                {Math.max(0, left)}
+              </span>
             </div>
-          </div>
+          </motion.div>
           <div className="min-w-0 flex-1">
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-accent-ink">
-              Satzpause
+              {done ? "Pause vorbei" : "Satzpause"}
             </p>
             <div className="flex items-center gap-2">
               <Pressable

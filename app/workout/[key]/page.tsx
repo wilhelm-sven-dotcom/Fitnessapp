@@ -191,10 +191,13 @@ export default function WorkoutPage() {
   useEffect(() => {
     if (!restOn) return;
     if (restLeft <= 0) {
-      setRestOn(false);
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(200);
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
-      return;
+      // Keep the card mounted for a beat so the ring's 0-snap (pop + flash) is
+      // actually visible before it slides away. A new set mid-linger resets
+      // restLeft and the cleanup cancels the hide.
+      const id = setTimeout(() => setRestOn(false), 700);
+      return () => clearTimeout(id);
     }
     if (settings.voiceCues) {
       if (restLeft === 10) speak("Noch zehn Sekunden");
