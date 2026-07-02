@@ -12,7 +12,7 @@ const VARIANT: Record<CardVariant, string> = {
 };
 
 /**
- * Shared card surface. Replaces the copy-pasted `rounded-2xl bg-surface-1 p-4`
+ * Shared card surface. Replaces the copy-pasted `rounded-card bg-surface-1 p-4`
  * pattern with one elevated material. Padding/radius default sensibly and can be
  * overridden via `className` (twMerge resolves conflicts).
  */

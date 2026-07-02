@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { ChipTone } from "@/lib/coaching";
 
+// Token-based tones — the old raw amber/emerald tints were dark-only and
+// turned into heavy blocks on the light themes.
 const toneClass: Record<ChipTone, string> = {
-  amber: "bg-amber-950 text-amber-300",
-  emerald: "bg-emerald-950 text-emerald-300",
+  amber: "bg-surface-2 text-status-over",
+  emerald: "bg-surface-2 text-status-in",
   info: "bg-surface-2 text-muted",
 };
 
@@ -23,7 +25,7 @@ export function Chip({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "inline-block rounded-lg px-2.5 py-1 text-xs font-medium",
+        "inline-block rounded-pill px-2.5 py-1 text-xs font-medium",
         toneClass[tone],
       )}
     >

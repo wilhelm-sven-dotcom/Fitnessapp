@@ -124,7 +124,8 @@ export default function SettingsPage() {
             value={bw}
             onChange={(e) => setBw(e.target.value)}
             placeholder="Gewicht kg"
-            className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            aria-label="Körpergewicht in kg"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
           <input
             type="number"
@@ -133,7 +134,8 @@ export default function SettingsPage() {
             value={waist}
             onChange={(e) => setWaist(e.target.value)}
             placeholder="Bauch cm"
-            className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            aria-label="Bauchumfang in cm"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
           />
         </div>
         <input
@@ -145,18 +147,18 @@ export default function SettingsPage() {
           className="hidden"
         />
         {photoUrl ? (
-          <div className="mt-2 flex items-center gap-3 rounded-xl bg-surface-2 p-2">
+          <div className="mt-2 flex items-center gap-3 rounded-card bg-surface-2 p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photoUrl}
               alt="Vorschau"
-              className="h-14 w-14 rounded-lg object-cover"
+              className="h-14 w-14 rounded-card object-cover"
             />
             <span className="flex-1 text-sm text-muted">Foto angehängt</span>
             <Pressable
               onClick={clearPhoto}
               aria-label="Foto entfernen"
-              className="rounded-lg p-1.5 text-muted focus:outline-none"
+              className="rounded-card p-1.5 text-muted focus:outline-none"
             >
               <X size={16} />
             </Pressable>
@@ -165,7 +167,7 @@ export default function SettingsPage() {
           <Pressable
             onClick={() => photoRef.current?.click()}
             disabled={photoBusy}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
           >
             <Camera size={16} /> {photoBusy ? "Lädt…" : "Fortschritts-Foto"}
           </Pressable>
@@ -173,7 +175,7 @@ export default function SettingsPage() {
         <Pressable
           onClick={addBody}
           disabled={!bw.trim() && !waist.trim() && !photoId}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
         >
           <Plus size={16} strokeWidth={2.5} /> Eintragen
         </Pressable>
@@ -185,7 +187,7 @@ export default function SettingsPage() {
               .map(({ m, i }) => (
                 <div
                   key={m.date + i}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-base px-3 py-2"
+                  className="flex items-center justify-between gap-2 rounded-card bg-base px-3 py-2"
                 >
                   <span className="flex items-center gap-1.5 text-sm text-muted">
                     {fmtDateShort(m.date)}
@@ -195,7 +197,8 @@ export default function SettingsPage() {
                   </span>
                   <Pressable
                     onClick={() => deleteBodyMetric(i)}
-                    className="shrink-0 rounded p-1 text-muted focus:outline-none"
+                    aria-label="Eintrag löschen"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                   >
                     <Trash2 size={14} />
                   </Pressable>
@@ -239,7 +242,7 @@ export default function SettingsPage() {
             <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
               Kleinste Hantelstufe, die du laden kannst — die Vorschläge runden darauf.
             </p>
-            <div className="flex gap-1 rounded-xl bg-surface-2 p-1">
+            <div className="flex gap-1 rounded-card bg-surface-2 p-1">
               {[1.25, 2.5, 5].map((s) => {
                 const active = (settings.weightStep ?? 2.5) === s;
                 return (
@@ -247,7 +250,7 @@ export default function SettingsPage() {
                     key={s}
                     onClick={() => setWeightStep(s)}
                     className={
-                      "flex-1 rounded-lg py-2 text-sm font-medium tabular-nums focus:outline-none " +
+                      "flex-1 rounded-card py-2 text-sm font-medium tabular-nums focus:outline-none " +
                       (active ? "bg-strong text-on-strong" : "text-muted")
                     }
                   >
@@ -284,7 +287,7 @@ export default function SettingsPage() {
         <div className="mb-4 flex flex-col gap-2">
           <Pressable
             onClick={exportFile}
-            className="flex items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
+            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
           >
             <Download size={16} /> Export (JSON)
           </Pressable>
@@ -297,7 +300,7 @@ export default function SettingsPage() {
           />
           <Pressable
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
+            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
           >
             <Upload size={16} /> Import (JSON)
           </Pressable>
@@ -306,7 +309,7 @@ export default function SettingsPage() {
         {!confirmReset ? (
           <Pressable
             onClick={() => setConfirmReset(true)}
-            className="flex items-center gap-2 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
+            className="flex items-center gap-2 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
           >
             <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
           </Pressable>
@@ -317,13 +320,13 @@ export default function SettingsPage() {
                 void resetAll();
                 setConfirmReset(false);
               }}
-              className="rounded-lg bg-rose-950 px-3 py-2 text-sm text-rose-300 focus:outline-none"
+              className="rounded-card bg-rose-950 px-3 py-2 text-sm text-rose-300 focus:outline-none"
             >
               Wirklich löschen
             </Pressable>
             <Pressable
               onClick={() => setConfirmReset(false)}
-              className="rounded-lg px-3 py-2 text-sm text-muted focus:outline-none"
+              className="rounded-card px-3 py-2 text-sm text-muted focus:outline-none"
             >
               Abbrechen
             </Pressable>

@@ -38,7 +38,7 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
                   style={{
                     left: `${(VOLUME_TARGET.min / SCALE_MAX) * 100}%`,
                     width: `${((VOLUME_TARGET.max - VOLUME_TARGET.min) / SCALE_MAX) * 100}%`,
-                    backgroundColor: "#2a2a30",
+                    backgroundColor: "var(--line)",
                   }}
                 />
                 <motion.div

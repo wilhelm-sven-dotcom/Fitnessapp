@@ -73,7 +73,7 @@ export function Welcome() {
               opacity: 0.25,
             }}
           />
-          <BrandMark size={72} className="rounded-card" />
+          <BrandMark size={72} className="rounded-md" />
           <p className="mt-6 font-display text-3xl font-semibold tracking-tight text-fg">
             {greeting()}
           </p>

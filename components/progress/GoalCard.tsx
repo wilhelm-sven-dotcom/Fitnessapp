@@ -132,7 +132,7 @@ export function GoalCard() {
               setTarget("");
             }}
             className={cn(
-              "rounded-lg px-2.5 py-1 text-xs font-medium focus:outline-none",
+              "rounded-card px-2.5 py-1 text-xs font-medium focus:outline-none",
               it.id === sel.id
                 ? "bg-accent-coverage text-on-strong"
                 : "bg-surface-2 text-muted",
@@ -180,7 +180,7 @@ export function GoalCard() {
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder={`Ziel ${sel.unit}`}
-              className="w-28 rounded-xl bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+              className="w-28 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
             />
             <span className="text-sm text-muted">
               {tNum == null || Number.isNaN(tNum)

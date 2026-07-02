@@ -55,14 +55,14 @@ export function StravaSection() {
             <Pressable
               onClick={() => void sync()}
               disabled={strava.busy}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
             >
               <RefreshCw size={15} /> {strava.busy ? "Synct…" : "Jetzt syncen"}
             </Pressable>
             <Pressable
               onClick={() => strava.disconnect()}
               aria-label="Strava trennen"
-              className="flex items-center justify-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted focus:outline-none"
+              className="flex items-center justify-center gap-2 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-muted focus:outline-none"
             >
               <LogOut size={15} /> Trennen
             </Pressable>
@@ -79,7 +79,7 @@ export function StravaSection() {
           <Pressable
             onClick={connect}
             disabled={strava.busy}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
           >
             <Activity size={16} /> {strava.busy ? "Verbinde…" : "Mit Strava verbinden"}
           </Pressable>

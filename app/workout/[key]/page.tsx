@@ -13,9 +13,17 @@ import {
   Save,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CameraView, type FormResult } from "@/components/form-check/CameraView";
+import type { FormResult } from "@/components/form-check/CameraView";
+
+// Camera + pose UI is only needed once the user opens a check — keep it out of
+// the workout route's first-load bundle.
+const CameraView = dynamic(
+  () => import("@/components/form-check/CameraView").then((m) => m.CameraView),
+  { ssr: false },
+);
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { LiveDemo } from "@/components/workout/LiveDemo";
@@ -52,10 +60,12 @@ import type { Exercise, Pattern, TrafficLight } from "@/lib/types";
 
 const REST_SECONDS = 90;
 
+// Selected state as a tinted outline chip — token-pure and readable on both
+// themes (the old filled raw-palette chips broke contrast in light mode).
 const BACK_OPTIONS: { v: TrafficLight; label: string; on: string }[] = [
-  { v: "green", label: "Gut", on: "bg-emerald-500 text-on-strong" },
-  { v: "yellow", label: "Mittel", on: "bg-amber-400 text-on-strong" },
-  { v: "red", label: "Gereizt", on: "bg-rose-500 text-neutral-50" },
+  { v: "green", label: "Gut", on: "border-status-in text-status-in bg-surface-2" },
+  { v: "yellow", label: "Mittel", on: "border-status-over text-status-over bg-surface-2" },
+  { v: "red", label: "Gereizt", on: "border-status-danger text-status-danger bg-surface-2" },
 ];
 
 /** Per-exercise completion ring (done work-sets / planned). */
@@ -386,7 +396,7 @@ export default function WorkoutPage() {
       <div className="mb-4 flex items-center justify-between">
         <Pressable
           onClick={() => setConfirmOpen(true)}
-          className="flex items-center gap-1 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
+          className="flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
         >
           <ArrowLeft size={18} /> Zurück
         </Pressable>
@@ -647,7 +657,7 @@ export default function WorkoutPage() {
                       <Pressable
                         onClick={() => setEntry(ex.id, 0, "reps", isDone ? "" : "1")}
                         className={cn(
-                          "flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium focus:outline-none",
+                          "flex w-full items-center justify-center gap-2 rounded-card py-2.5 text-sm font-medium focus:outline-none",
                           isDone ? "bg-surface-2 text-accent-2" : "bg-surface-2 text-fg",
                         )}
                       >
@@ -662,7 +672,7 @@ export default function WorkoutPage() {
                 </div>
               ) : (
                 <>
-                  <div className="mt-3 rounded-xl border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
+                  <div className="mt-3 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
                     <p className="text-xs uppercase tracking-widest text-muted">
                       Letztes Mal
                     </p>
@@ -748,8 +758,8 @@ export default function WorkoutPage() {
               key={o.v}
               onClick={() => setBackTraffic(backTraffic === o.v ? null : o.v)}
               className={cn(
-                "flex-1 rounded-xl py-3 text-sm font-medium focus:outline-none",
-                backTraffic === o.v ? o.on : "bg-surface-2 text-muted",
+                "flex-1 rounded-card border py-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+                backTraffic === o.v ? o.on : "border-transparent bg-surface-2 text-muted",
               )}
             >
               {o.label}
@@ -761,7 +771,7 @@ export default function WorkoutPage() {
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz zur Einheit — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="mt-4 w-full resize-none rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
         />
       </div>
 
@@ -770,7 +780,7 @@ export default function WorkoutPage() {
         disabled={saving}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
       >
-        <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training speichern"}
+        <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training beenden"}
       </Pressable>
 
       <Sheet open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Training beenden?">

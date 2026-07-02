@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Link
                         href="/settings"
                         aria-label="Cloud-Sync aktiv"
-                        className="rounded-full p-1.5 focus:outline-none"
+                        className="rounded-full p-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                         style={{ color: "var(--accent-ink)" }}
                       >
                         <Cloud size={20} />
@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Link
                         href="/settings"
                         aria-label="Anmelden für Cloud-Sync"
-                        className="rounded-full p-1.5 text-faint focus:outline-none"
+                        className="rounded-full p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                       >
                         <CloudOff size={20} />
                       </Link>
@@ -87,14 +87,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link
                     href="/coach"
                     aria-label="KI-Coach"
-                    className="rounded-full p-1.5 text-accent-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    className="rounded-full p-2.5 text-accent-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                   >
                     <Sparkles size={20} />
                   </Link>
                   <Link
                     href="/settings"
                     aria-label="Einstellungen"
-                    className="rounded-full p-1.5 text-muted transition-colors focus:outline-none"
+                    className="rounded-full p-2.5 text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                   >
                     <Settings size={20} />
                   </Link>

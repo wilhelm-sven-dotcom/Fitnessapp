@@ -240,7 +240,7 @@ export function CameraView({
 
         {/* warning banner */}
         {warning && (
-          <div className="absolute inset-x-4 top-16 flex items-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-sm font-medium text-neutral-50">
+          <div className="absolute inset-x-4 top-16 flex items-center gap-2 rounded-card bg-rose-600 px-3 py-2 text-sm font-medium text-neutral-50">
             <TriangleAlert size={16} className="shrink-0" /> {warning}
           </div>
         )}
@@ -263,7 +263,7 @@ export function CameraView({
             {status !== "loading" && (
               <Pressable
                 onClick={onClose}
-                className="mt-2 rounded-xl bg-strong px-4 py-2 text-sm font-medium text-on-strong focus:outline-none"
+                className="mt-2 rounded-card bg-strong px-4 py-2 text-sm font-medium text-on-strong focus:outline-none"
               >
                 Zurück
               </Pressable>

@@ -172,7 +172,7 @@ export function AppIconSection() {
       {settings.icon && (
         <Pressable
           onClick={() => setIcon(undefined)}
-          className="mt-2 flex items-center gap-2 rounded-md px-1 py-1 text-sm text-muted focus:outline-none"
+          className="mt-2 flex items-center gap-2 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
         >
           <RotateCcw size={15} /> Auf Standard zurücksetzen
         </Pressable>

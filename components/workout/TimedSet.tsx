@@ -44,13 +44,13 @@ export function TimedSet({
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="min-w-0 flex-1 rounded-xl bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg">
+      <div className="min-w-0 flex-1 rounded-card bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg">
         {fmtClock(el)}
       </div>
       <Pressable
         onClick={toggle}
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl focus:outline-none",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-card focus:outline-none",
           run ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-accent-ink",
         )}
       >
@@ -58,7 +58,7 @@ export function TimedSet({
       </Pressable>
       <Pressable
         onClick={reset}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-muted focus:outline-none"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-surface-2 text-muted focus:outline-none"
       >
         <RotateCcw size={16} />
       </Pressable>

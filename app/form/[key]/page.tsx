@@ -1,10 +1,15 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { CameraView } from "@/components/form-check/CameraView";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+
+const CameraView = dynamic(
+  () => import("@/components/form-check/CameraView").then((m) => m.CameraView),
+  { ssr: false },
+);
 
 export default function FormPage() {
   const params = useParams();
@@ -32,7 +37,11 @@ export default function FormPage() {
       exerciseName={ex.name}
       pattern={ex.pattern}
       voiceOn={!!settings.voiceCues}
-      onClose={() => router.back()}
+      onClose={() => {
+        // A deep link / SW reload may have no history — back() would leave the PWA.
+        if (window.history.length > 1) router.back();
+        else router.push("/");
+      }}
     />
   );
 }

@@ -30,7 +30,23 @@ export function GuideSheet({
   // mp4), then a drop-in file `/exercise-media/<id>.mp4` (probed per exercise —
   // drop a file in and it appears, no code change).
   const userUrl = ex ? exerciseVideos[ex.id] : undefined;
-  const embedUrl = youtubeEmbedUrl(userUrl) ?? youtubeEmbedUrl(ex?.videoUrl);
+  // Offline, a YouTube iframe renders an empty block — fall back to the figure
+  // (the mp4 HEAD probe below already fails silently on its own).
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    const update = () =>
+      setOffline(typeof navigator !== "undefined" && navigator.onLine === false);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  const embedUrl = offline
+    ? null
+    : (youtubeEmbedUrl(userUrl) ?? youtubeEmbedUrl(ex?.videoUrl));
   const nativeSrc = embedUrl
     ? undefined
     : ex
@@ -213,7 +229,7 @@ export function GuideSheet({
                     }}
                     placeholder="youtube.com/shorts/… einfügen"
                     className={cn(
-                      "min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions",
+                      "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions",
                       invalid && "ring-2 ring-status-danger",
                     )}
                   />
@@ -221,7 +237,7 @@ export function GuideSheet({
                     type="button"
                     onClick={saveLink}
                     disabled={!draft.trim()}
-                    className="shrink-0 rounded-xl bg-strong px-4 py-2.5 text-sm font-medium text-on-strong disabled:opacity-40"
+                    className="shrink-0 rounded-card bg-strong px-4 py-2.5 text-sm font-medium text-on-strong disabled:opacity-40"
                   >
                     Speichern
                   </Pressable>
@@ -232,7 +248,7 @@ export function GuideSheet({
                       setInvalid(false);
                     }}
                     aria-label="Abbrechen"
-                    className="shrink-0 rounded-xl bg-surface-2 px-3 py-2.5 text-muted"
+                    className="shrink-0 rounded-card bg-surface-2 px-3 py-2.5 text-muted"
                   >
                     <X size={16} />
                   </Pressable>
@@ -246,7 +262,11 @@ export function GuideSheet({
             ) : userUrl ? (
               <div className="flex items-center gap-2 text-xs text-muted">
                 <Youtube size={14} className="shrink-0 text-accent-ink" />
-                <span className="min-w-0 flex-1 truncate">YouTube-Video verknüpft</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {offline
+                    ? "YouTube-Video verknüpft — offline nicht verfügbar"
+                    : "YouTube-Video verknüpft"}
+                </span>
                 <Pressable
                   type="button"
                   onClick={() => {
@@ -321,8 +341,8 @@ export function GuideSheet({
           )}
 
           {ex.back && (
-            <div className="mb-2 rounded-card border border-line px-3 py-2" style={{ background: "rgba(255,159,10,0.12)" }}>
-              <p className="mb-1 font-mono text-xs uppercase tracking-widest" style={{ color: "#ff9f0a" }}>
+            <div className="mb-2 rounded-card border-l-2 border-status-over bg-surface-2 px-3 py-2">
+              <p className="mb-1 font-mono text-xs uppercase tracking-widest text-status-over">
                 Rücken
               </p>
               <p className="text-sm text-fg">{ex.back}</p>

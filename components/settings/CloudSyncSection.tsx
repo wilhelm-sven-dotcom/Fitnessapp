@@ -6,7 +6,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 
 const inputCls =
-  "rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-volume";
+  "rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-volume";
 
 export function CloudSyncSection() {
   const { cloud } = useTraining();
@@ -91,14 +91,14 @@ export function CloudSyncSection() {
             <Pressable
               onClick={() => void cloud.syncNow()}
               disabled={cloud.busy}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
             >
               <RefreshCw size={15} /> {cloud.busy ? "Synct…" : "Jetzt synchronisieren"}
             </Pressable>
             <Pressable
               onClick={() => void cloud.signOut()}
               aria-label="Abmelden"
-              className="flex items-center justify-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted focus:outline-none"
+              className="flex items-center justify-center gap-2 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-muted focus:outline-none"
             >
               <LogOut size={15} /> Abmelden
             </Pressable>
@@ -120,7 +120,7 @@ export function CloudSyncSection() {
               <Pressable
                 onClick={() => void savePw()}
                 disabled={cloud.busy || newPassword.length < 6}
-                className="shrink-0 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+                className="shrink-0 rounded-card bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
               >
                 Setzen
               </Pressable>
@@ -155,7 +155,7 @@ export function CloudSyncSection() {
           <Pressable
             onClick={() => void loginPw()}
             disabled={cloud.busy || !email.trim() || !password}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
           >
             {cloud.busy ? "Anmelden…" : "Anmelden"}
           </Pressable>
@@ -167,7 +167,7 @@ export function CloudSyncSection() {
           <Pressable
             onClick={() => void sendLink()}
             disabled={cloud.busy || !email.trim()}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
           >
             {cloud.busy ? "Sendet…" : "Magic-Link senden"}
           </Pressable>
@@ -184,7 +184,7 @@ export function CloudSyncSection() {
             <Pressable
               onClick={() => void confirmCode()}
               disabled={cloud.busy || !email.trim() || code.trim().length < 6}
-              className="shrink-0 rounded-xl bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+              className="shrink-0 rounded-card bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
             >
               Code einlösen
             </Pressable>

@@ -96,7 +96,7 @@ export default function HistoryPage() {
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <button
                   onClick={() => setExpanded(isOpen ? null : realIdx)}
-                  className="flex min-w-0 flex-1 items-center justify-between text-left transition focus:outline-none"
+                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -124,7 +124,8 @@ export default function HistoryPage() {
                 </button>
                 <Pressable
                   onClick={() => setConfirmDel(isDel ? null : realIdx)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted focus:outline-none"
+                  aria-label="Einheit löschen"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                 >
                   <Trash2 size={16} />
                 </Pressable>
@@ -138,13 +139,13 @@ export default function HistoryPage() {
                       setConfirmDel(null);
                       if (isOpen) setExpanded(null);
                     }}
-                    className="rounded-lg bg-surface-2 px-3 py-2 text-sm font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                    className="rounded-card bg-surface-2 px-3 py-2 text-sm font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                   >
                     Einheit löschen
                   </Pressable>
                   <Pressable
                     onClick={() => setConfirmDel(null)}
-                    className="rounded-lg px-3 py-2 text-sm text-muted focus:outline-none"
+                    className="rounded-card px-3 py-2 text-sm text-muted focus:outline-none"
                   >
                     Abbrechen
                   </Pressable>
@@ -171,7 +172,7 @@ export default function HistoryPage() {
                     </div>
                   ))}
                   {s.note && (
-                    <p className="mt-2 rounded-lg bg-base px-3 py-2 text-sm italic text-muted">
+                    <p className="mt-2 rounded-card bg-base px-3 py-2 text-sm italic text-muted">
                       „{s.note}“
                     </p>
                   )}

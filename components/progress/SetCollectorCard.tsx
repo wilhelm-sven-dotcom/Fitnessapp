@@ -55,7 +55,7 @@ export function SetCollectorCard() {
         <p className="mt-2 text-xs text-muted">
           {week.collected >= week.target
             ? "Wochenziel erreicht — stark!"
-            : `Noch ${remaining} Sätze bis zum Wochenziel.`}
+            : `Noch ${remaining} ${remaining === 1 ? "Satz" : "Sätze"} bis zum Wochenziel.`}
         </p>
       </Card>
     </Reveal>

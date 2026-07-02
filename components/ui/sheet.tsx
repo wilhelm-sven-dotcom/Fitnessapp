@@ -1,8 +1,18 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useId, useRef } from "react";
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Bottom sheet used by every modal in the app. Accessibility contract:
+ * focus moves INTO the panel on open, Tab cycles inside it (trap), Escape
+ * closes, and focus returns to the trigger on close — otherwise keyboard/
+ * VoiceOver users keep operating the page behind the backdrop. Honors
+ * reduced motion (fade instead of the spring slide).
+ */
 export function Sheet({
   open,
   onClose,
@@ -14,10 +24,40 @@ export function Sheet({
   title?: string;
   children: React.ReactNode;
 }) {
+  const reduce = useReducedMotion();
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!open) return;
+    restoreRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Focus after the mount frame so the enter animation doesn't fight it.
+    const t = window.setTimeout(() => panelRef.current?.focus(), 30);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => el.offsetParent !== null,
+      );
+      if (!items.length) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === panel)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -25,6 +65,8 @@ export function Sheet({
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      window.clearTimeout(t);
+      restoreRef.current?.focus();
     };
   }, [open, onClose]);
 
@@ -41,20 +83,25 @@ export function Sheet({
             onClick={onClose}
           />
           <motion.div
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-3xl border border-surface-3 bg-surface-1 shadow-card"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 360, damping: 36 }}
+            ref={panelRef}
+            tabIndex={-1}
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-surface-3 bg-surface-1 shadow-card focus:outline-none"
+            initial={reduce ? { opacity: 0 } : { y: "100%" }}
+            animate={reduce ? { opacity: 1 } : { y: 0 }}
+            exit={reduce ? { opacity: 0 } : { y: "100%" }}
+            transition={reduce ? { duration: 0.15 } : { type: "spring", stiffness: 360, damping: 36 }}
             role="dialog"
             aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
           >
             <div className="flex justify-center pt-3">
               <span className="h-1 w-10 rounded-full bg-surface-2" />
             </div>
             {title && (
               <div className="px-5 pb-1 pt-3">
-                <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
+                <h3 id={titleId} className="text-lg font-semibold tracking-tight">
+                  {title}
+                </h3>
               </div>
             )}
             <div

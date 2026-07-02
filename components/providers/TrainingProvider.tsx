@@ -521,8 +521,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 1].backTraffic === "red" &&
     log[log.length - 2].backTraffic === "red";
 
-  const athleteInjuries = effectiveProfile(settings, body).injuries;
-  const affinity = exerciseAffinity(choices, log);
+  // Memoized — both run on every provider render otherwise (affinity scans the
+  // full log), and the provider re-renders on every keystroke in a workout.
+  const athleteInjuries = useMemo(
+    () => effectiveProfile(settings, body).injuries,
+    [settings, body],
+  );
+  const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
   const hasBike = (equip as string[]).includes("bike");
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);

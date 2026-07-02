@@ -32,7 +32,11 @@ export default function WarmupPage() {
     <WarmupPlayer
       drills={warmupFor(tpl, { bike: settings.bikeWarmup })}
       voiceOn={!!settings.voiceCues}
-      onClose={() => router.back()}
+      onClose={() => {
+        // A deep link / SW reload may have no history — back() would leave the PWA.
+        if (window.history.length > 1) router.back();
+        else router.push(`/workout/${key}`);
+      }}
     />
   );
 }
