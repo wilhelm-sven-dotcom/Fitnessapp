@@ -29,12 +29,13 @@ import { GuideSheet } from "@/components/workout/GuideSheet";
 import { LiveDemo } from "@/components/workout/LiveDemo";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { RestTimer } from "@/components/workout/RestTimer";
+import { SessionComplete } from "@/components/workout/SessionComplete";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
-import { useTraining } from "@/components/providers/TrainingProvider";
+import { useTraining, type SessionSummary } from "@/components/providers/TrainingProvider";
 import { exerciseAffinity } from "@/lib/affinity";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseChips } from "@/lib/coaching";
@@ -138,6 +139,7 @@ export default function WorkoutPage() {
     { slotKey: string; fromId: string; fromName: string; toName: string } | null
   >(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [complete, setComplete] = useState<SessionSummary | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restOn, setRestOn] = useState(false);
@@ -148,12 +150,15 @@ export default function WorkoutPage() {
   const announcedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    // A just-saved session clears activeKey — we're on the win screen now, so
+    // don't treat the null as "fresh arrival" and restart / reopen the gate.
+    if (complete) return;
     if (key && activeKey !== key) {
       if (settings.autoregOn && !todayReadiness) setGateOpen(true);
       else startSession(key);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, activeKey]);
+  }, [key, activeKey, complete]);
 
   // Probe device support after mount so SSR and first client render agree.
   useEffect(() => setVoiceSupported(isVoiceInputSupported()), []);
@@ -322,6 +327,12 @@ export default function WorkoutPage() {
     );
   }
 
+  // Saving clears activeKey; show the "Sieger-Moment" takeover instead of
+  // falling through to the "prepare…" gate (this guard must precede it).
+  if (complete) {
+    return <SessionComplete summary={complete} onDone={() => router.push("/")} />;
+  }
+
   if (activeKey !== key) {
     return (
       <>
@@ -382,8 +393,11 @@ export default function WorkoutPage() {
     .filter((s) => !s.warmup && isFilled(s)).length;
   const onSave = async () => {
     setConfirmOpen(false);
-    await saveSession();
-    router.push("/");
+    // The summary feeds the "Sieger-Moment" takeover; null (nothing real
+    // performed) falls back to the old direct exit.
+    const s = await saveSession();
+    if (s) setComplete(s);
+    else router.push("/");
   };
   const onDiscard = () => {
     setConfirmOpen(false);
