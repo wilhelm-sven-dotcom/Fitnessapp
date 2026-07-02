@@ -1,4 +1,5 @@
 import { buildCoachContext } from "@/lib/coach-context";
+import { missionReviewFact, type MissionReview } from "@/lib/trainer";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
 import { weeklyPrs, type PrEvent } from "@/lib/records";
@@ -44,6 +45,8 @@ export function buildBriefing(opts: {
   body: BodyMetric[];
   allLib: Exercise[];
   settings: { lastDeloadDate?: string };
+  /** Review der Vorwochen-Mission (ATLAS) — fließt in Facts + Fallback-Note. */
+  missionReview?: MissionReview;
   ref?: Date;
 }): Briefing {
   const { log, cardio, body, allLib, settings } = opts;
@@ -87,7 +90,10 @@ export function buildBriefing(opts: {
   const nextPart = `Nächste Woche: ${phase.due ? "Entlastung einlegen — " : ""}${phase.focus}${
     under.length ? ` Häng ${under.slice(0, 2).join(" & ")} dran.` : ""
   }`;
-  const coachNote = (prPart + volPart + loadPart + nextPart).trim();
+  const missionPart = opts.missionReview
+    ? `Mission zu ${Math.round(opts.missionReview.outcomePct * 100)} % erfüllt. `
+    : "";
+  const coachNote = (missionPart + prPart + volPart + loadPart + nextPart).trim();
 
   // Compact facts for the AI editorial prompt.
   const facts = [
@@ -101,6 +107,7 @@ export function buildBriefing(opts: {
       : "Keine neuen Rekorde diese Woche.",
     fatigue.enough ? `Belastungs-Index: ${fatigue.title} (Akut/Schnitt ${fatigue.ratio.toFixed(2)}).` : "",
     `Phase: ${phase.title}, Woche ${phase.cycleWeek}/${phase.cycleLength}${phase.due ? " — Deload fällig" : ""}.`,
+    opts.missionReview ? missionReviewFact(opts.missionReview) : "",
   ]
     .filter(Boolean)
     .join("\n");

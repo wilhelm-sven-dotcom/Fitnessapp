@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FatigueCard } from "@/components/progress/FatigueCard";
+import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { PhaseCard } from "@/components/progress/PhaseCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Reveal } from "@/components/ui/Reveal";
@@ -30,10 +31,11 @@ function Stat({ value, unit, label }: { value: string; unit?: string; label: str
 
 export default function BriefingPage() {
   const router = useRouter();
-  const { log, cardio, body, allLib, settings } = useTraining();
+  const { log, cardio, body, allLib, settings, mission } = useTraining();
   const b = useMemo(
-    () => buildBriefing({ log, cardio, body, allLib, settings }),
-    [log, cardio, body, allLib, settings],
+    () =>
+      buildBriefing({ log, cardio, body, allLib, settings, missionReview: mission?.lastReview }),
+    [log, cardio, body, allLib, settings, mission],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),
@@ -107,14 +109,15 @@ export default function BriefingPage() {
         <EmptyState
           icon={Newspaper}
           title="Noch keine Ausgabe"
-          description="Trainier ein paar Einheiten — dann schreibt der Coach hier dein wöchentliches Briefing aus deinen echten Daten."
+          description="Trainier ein paar Einheiten — dann schreibt ATLAS hier deinen wöchentlichen Rapport aus deinen echten Daten."
         />
       ) : (
         <>
           {/* Masthead */}
           <div className="flex items-baseline justify-between border-b-2 border-fg pb-2">
-            <span className="font-display text-2xl font-bold uppercase leading-none tracking-tight text-fg">
-              Das Wochen-Briefing
+            <span className="flex items-center gap-2 font-display text-2xl font-bold uppercase leading-none tracking-tight text-fg">
+              <AtlasMark size={20} className="text-fg" />
+              ATLAS-Rapport
             </span>
           </div>
           <div className="mt-1.5 flex items-center justify-between border-b border-line pb-2 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -133,11 +136,11 @@ export default function BriefingPage() {
           <Reveal>
             <div className="mt-6 border-t border-line pt-5">
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-accent-ink">
-                Vom Coach
+                Von ATLAS
               </p>
               {state === "loading" ? (
                 <p className="font-body text-base italic leading-relaxed text-faint">
-                  Der Coach liest deine Woche…
+                  ATLAS liest deine Woche…
                 </p>
               ) : (
                 <div className="space-y-3">

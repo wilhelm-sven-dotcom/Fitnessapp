@@ -59,6 +59,9 @@ export const KEYS = {
   days: "wilhelm-training-days",
   gyms: "wilhelm-training-gyms",
   exerciseVideos: "wilhelm-training-exercise-videos",
+  // Eingefrorene Wochen-Mission (ATLAS) — mergeCloudLocal behandelt unbekannte
+  // Keys mit "local wins", der Rollover-Check heilt Konflikte beim Öffnen.
+  mission: "wilhelm-training-mission",
 } as const;
 
 export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
