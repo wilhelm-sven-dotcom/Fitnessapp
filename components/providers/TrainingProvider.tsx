@@ -30,7 +30,11 @@ import {
   weeklyVolume,
   type MuscleVolume,
 } from "@/lib/volume";
+import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
+import { prTimeline } from "@/lib/records";
+import { weeklySetStats } from "@/lib/set-plan";
+import { sessionVolume } from "@/lib/stats";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
@@ -73,6 +77,19 @@ export interface AddCustomData {
   pattern: Pattern;
   unit: Unit;
   weighted: boolean;
+}
+
+/** What a just-saved session achieved — feeds the "Sieger-Moment" takeover. */
+export interface SessionSummary {
+  sets: number;
+  tonnage: number; // kg moved this session
+  prs: number; // records set today
+  levelBefore: number;
+  levelAfter: number;
+  xpPctFrom: number; // 0..1 progress toward next level, before/after
+  xpPctTo: number;
+  weekSets: number;
+  weekTarget: number;
 }
 
 export interface ExportEnvelope {
@@ -172,7 +189,7 @@ interface TrainingContextValue {
   switchGym: (id: string) => void;
   addGym: (name: string) => void;
   removeGym: (id: string) => void;
-  saveSession: () => Promise<void>;
+  saveSession: () => Promise<SessionSummary | null>;
   discardSession: () => void;
   deleteSession: (realIdx: number) => Promise<void>;
   resetAll: () => Promise<void>;
@@ -986,9 +1003,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveDays(days.map((d) => (d.id === day.id ? day : d)));
   const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
 
-  const saveSession = async () => {
+  const saveSession = async (): Promise<SessionSummary | null> => {
     const tpl = activeKey ? sessionTemplate(activeKey) : null;
-    if (!tpl) return;
+    if (!tpl) return null;
     const list = activeList;
     const exercises = list.map(({ ex }) => ({
       id: ex.id,
@@ -1017,7 +1034,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setBackTrafficState(null);
       setNoteState("");
       setTodayReadiness(null);
-      return;
+      return null;
     }
     const newSession: LoggedSession = {
       date: new Date().toISOString(),
@@ -1032,6 +1049,22 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (todayReadiness) newSession.readiness = todayReadiness;
     if (deloadActive) newSession.isDeload = true;
     const newLog = [...log, newSession];
+    // Summary for the completion takeover — computed BEFORE state clears so
+    // the celebration can show exactly what this session achieved.
+    const lvlBefore = trainingLevel({ log, allLib, settings });
+    const lvlAfter = trainingLevel({ log: newLog, allLib, settings });
+    const week = weeklySetStats(newLog);
+    const summary: SessionSummary = {
+      sets: exercises.reduce((a, ex) => a + ex.sets.filter((s) => !s.warmup).length, 0),
+      tonnage: sessionVolume(newSession),
+      prs: prTimeline(newLog).filter((e) => e.date === newSession.date).length,
+      levelBefore: lvlBefore.level,
+      levelAfter: lvlAfter.level,
+      xpPctFrom: lvlAfter.level > lvlBefore.level ? 0 : lvlBefore.pct,
+      xpPctTo: lvlAfter.pct,
+      weekSets: week.collected,
+      weekTarget: week.target,
+    };
     setSaving(true);
     await storage.setJSON(KEYS.log, newLog);
     setLog(newLog);
@@ -1041,6 +1074,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTrafficState(null);
     setNoteState("");
     setTodayReadiness(null);
+    return summary;
   };
 
   // Leave an active session WITHOUT saving — clears the in-progress state so a
