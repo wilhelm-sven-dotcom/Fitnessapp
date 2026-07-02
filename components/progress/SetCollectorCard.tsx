@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Readout } from "@/components/ui/Readout";
 import { Reveal } from "@/components/ui/Reveal";
+import { SkinSignature } from "@/components/ui/SkinSignature";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { setCollectorTier, totalSetCount, weeklySetStats } from "@/lib/set-plan";
 
@@ -57,6 +58,7 @@ export function SetCollectorCard() {
             ? "Wochenziel erreicht — stark!"
             : `Noch ${remaining} ${remaining === 1 ? "Satz" : "Sätze"} bis zum Wochenziel.`}
         </p>
+        <SkinSignature />
       </Card>
     </Reveal>
   );
