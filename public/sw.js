@@ -9,7 +9,7 @@
 // device stuck on a stale build (an old session requesting chunks the new build
 // no longer has → ChunkLoadError on navigation). It only ever clears CODE
 // caches — never localStorage/IndexedDB, so training data is untouched.
-const CACHE = "training-v4";
+const CACHE = "training-v5";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -69,17 +69,16 @@ self.addEventListener("fetch", (event) => {
       (cached) =>
         cached ||
         fetch(request).then((res) => {
+          // Cache successful same-origin GETs. NO size-cap prune: within one
+          // release the content-hashed URL set is fixed, so this cache is
+          // naturally bounded to a single build's assets, and the activate
+          // handler drops the whole previous-version cache on the next release.
+          // A prior oldest-first prune (removed — it caused a crash loop) evicted
+          // the FIRST-cached entries, i.e. the shell + framework/webpack chunks
+          // the app can't run without → ChunkLoadError on the next navigation.
           if (res && res.ok) {
             const copy = res.clone();
-            caches.open(CACHE).then(async (c) => {
-              await c.put(request, copy);
-              // LRU-ish prune: without a cap the runtime cache grows across
-              // releases forever (old hashed chunks, media). Oldest-first.
-              const keys = await c.keys();
-              const MAX = 80;
-              if (keys.length > MAX)
-                await Promise.all(keys.slice(0, keys.length - MAX).map((k) => c.delete(k)));
-            });
+            caches.open(CACHE).then((c) => c.put(request, copy));
           }
           return res;
         }),
