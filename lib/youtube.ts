@@ -47,10 +47,9 @@ export function youtubeVideoId(raw: string | null | undefined): string | null {
     candidate = parts[1] ?? null;
   } else if (parts[0] === "watch") {
     candidate = url.searchParams.get("v");
-  } else if (parts.length > 0) {
-    // Fallback for odd shapes like /v/ID — only accepted if it looks like an id.
-    candidate = parts[parts.length - 1];
   }
+  // No last-segment fallback: it produced false positives ("videoseries",
+  // 11-char channel handles) that render broken embeds instead of rejecting.
 
   return candidate && ID_RE.test(candidate) ? candidate : null;
 }

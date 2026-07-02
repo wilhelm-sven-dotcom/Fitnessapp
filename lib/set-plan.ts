@@ -13,8 +13,6 @@ import { VOLUME_LANDMARKS } from "@/lib/training-science";
 import { muscleOf, type MuscleVolume } from "@/lib/volume";
 import type { Exercise, LoggedSession } from "@/lib/types";
 
-const DAY = 86_400_000;
-
 /** Monday 00:00 of the week containing `ref`. */
 function weekStartMon(ref: Date): Date {
   const d = new Date(ref);
@@ -26,8 +24,11 @@ function weekStartMon(ref: Date): Date {
 
 /** Working, filled sets logged in the Monday-based week containing `ref`. */
 export function weeklySetCount(log: LoggedSession[], ref: Date): number {
-  const start = weekStartMon(ref).getTime();
-  const end = start + 7 * DAY;
+  const startD = weekStartMon(ref);
+  const endD = new Date(startD);
+  endD.setDate(endD.getDate() + 7); // calendar days, DST-safe (not ms math)
+  const start = startD.getTime();
+  const end = endD.getTime();
   let n = 0;
   for (const s of log) {
     const t = new Date(s.date).getTime();
@@ -73,9 +74,13 @@ export interface WeeklySetStats {
 
 export function weeklySetStats(log: LoggedSession[], ref: Date = new Date()): WeeklySetStats {
   const collected = weeklySetCount(log, ref);
-  const thisStart = weekStartMon(ref).getTime();
+  const thisStart = weekStartMon(ref);
   const prev: number[] = [];
-  for (let w = 1; w <= 4; w++) prev.push(weeklySetCount(log, new Date(thisStart - w * 7 * DAY)));
+  for (let w = 1; w <= 4; w++) {
+    const d = new Date(thisStart);
+    d.setDate(d.getDate() - 7 * w); // calendar days, DST-safe (not ms math)
+    prev.push(weeklySetCount(log, d));
+  }
   const base = median(prev.filter((n) => n > 0));
   const raw = base > 0 ? Math.round(base * 1.08) : MIN_WEEKLY_TARGET;
   const target = Math.max(MIN_WEEKLY_TARGET, Math.min(MAX_WEEKLY_TARGET, raw));

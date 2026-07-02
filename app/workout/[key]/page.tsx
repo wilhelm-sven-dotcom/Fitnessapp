@@ -365,7 +365,11 @@ export default function WorkoutPage() {
 
   const pickItem = list.find((s) => s.slotKey === pickSlot) ?? null;
 
-  const doneCount = Object.values(entries).flat().filter(isFilled).length;
+  // Only filled WORKING sets count as "done" — warmups arrive pre-filled
+  // (reps "5"), so counting them claimed sets on an untouched workout.
+  const doneCount = Object.values(entries)
+    .flat()
+    .filter((s) => !s.warmup && isFilled(s)).length;
   const onSave = async () => {
     setConfirmOpen(false);
     await saveSession();
@@ -468,10 +472,12 @@ export default function WorkoutPage() {
             log,
             currentSets: entries[ex.id] || [],
           });
+          // Advisory only on neutral days — applyReadiness already bumps sets
+          // on good days (the hint used to stack a second +1 on top).
           const recSets =
-            ex.pattern === "cardio"
+            ex.pattern === "cardio" || readinessScale.setDelta !== 0
               ? ex.sets
-              : recommendedSets(ex, { muscleVolumes, lowReadiness: readinessScale.setDelta < 0 });
+              : recommendedSets(ex, { muscleVolumes, lowReadiness: false });
           const ps = lp
             ? lp.sets
                 .filter((s) => !s.warmup)
@@ -538,7 +544,7 @@ export default function WorkoutPage() {
 
               <p className="mt-2 text-xs leading-relaxed text-muted">{ex.cue}</p>
 
-              {recSets > ex.sets && (
+              {recSets > ex.sets && exDone < recSets && (
                 <p className="mt-1.5 text-xs font-medium text-accent-2">
                   Ziel heute: {recSets} Sätze — noch Raum für +1.
                 </p>
