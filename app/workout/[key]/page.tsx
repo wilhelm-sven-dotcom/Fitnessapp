@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   Bike,
@@ -8,6 +8,7 @@ import {
   Check,
   ChevronRight,
   Flame,
+  Layers,
   Mic,
   Repeat,
   Save,
@@ -46,6 +47,7 @@ import { bestAlternativeForPattern, presc } from "@/lib/progression";
 import { estimateSessionMin, supersetPair } from "@/lib/session-time";
 import { recommendedSets } from "@/lib/set-plan";
 import { isFilled } from "@/lib/stats";
+import { SPRING } from "@/lib/motion";
 import { configForPattern } from "@/lib/pose/exercise-pose-config";
 import { isPoseSupported } from "@/lib/pose/landmarker";
 import { warmupFor, warmupTotalMin } from "@/lib/warmup";
@@ -69,26 +71,47 @@ const BACK_OPTIONS: { v: TrafficLight; label: string; on: string }[] = [
   { v: "red", label: "Gereizt", on: "border-status-danger text-status-danger bg-surface-2" },
 ];
 
-/** Per-exercise completion ring (done work-sets / planned). */
+/** Per-exercise completion ring (done work-sets / planned). The arc springs to
+ *  its new fill and the whole ring pops each time a set is completed — the
+ *  set-level micro-moment. Static under reduced motion. */
 function ProgressRing({ done, total }: { done: number; total: number }) {
+  const reduce = useReducedMotion();
+  const controls = useAnimationControls();
+  const prev = useRef(done);
   const r = 9;
   const circ = 2 * Math.PI * r;
   const pct = total > 0 ? Math.min(1, done / total) : 0;
+  useEffect(() => {
+    if (done > prev.current && !reduce) {
+      controls.start({ scale: [1, 1.22, 1], transition: { duration: 0.4, ease: "easeOut" } });
+    }
+    prev.current = done;
+  }, [done, reduce, controls]);
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6 -rotate-90" aria-hidden>
-      <circle cx="12" cy="12" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="3" />
-      <circle
-        cx="12"
-        cy="12"
-        r={r}
-        fill="none"
-        stroke="var(--accent-ink)"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray={circ}
-        strokeDashoffset={circ * (1 - pct)}
-      />
-    </svg>
+    <motion.svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      aria-hidden
+      animate={controls}
+      style={{ transformOrigin: "center" }}
+    >
+      <g transform="rotate(-90 12 12)">
+        <circle cx="12" cy="12" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="3" />
+        <motion.circle
+          cx="12"
+          cy="12"
+          r={r}
+          fill="none"
+          stroke="var(--accent-ink)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          initial={false}
+          animate={{ strokeDashoffset: circ * (1 - pct) }}
+          transition={reduce ? { duration: 0 } : SPRING.pop}
+        />
+      </g>
+    </motion.svg>
   );
 }
 
@@ -132,6 +155,7 @@ export default function WorkoutPage() {
   const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
   const injuries = effectiveProfile(settings, body).injuries ?? [];
   const swapSeed = useRef(0);
+  const reduce = useReducedMotion();
 
   const [guideSlot, setGuideSlot] = useState<string | null>(null);
   const [pickSlot, setPickSlot] = useState<string | null>(null);
@@ -429,6 +453,20 @@ export default function WorkoutPage() {
               <Mic size={14} /> {listening ? "Hört zu…" : "Sprechen"}
             </Pressable>
           )}
+          {/* Session work-set tally — pops +1 on each filled set (bridge to the
+              Set-Collector). Distinct from "N/M erledigt" (exercises done). */}
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={doneCount}
+              initial={reduce ? false : { scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={reduce ? { opacity: 0 } : { scale: 0.5, opacity: 0 }}
+              transition={SPRING.pop}
+              className="flex items-center gap-1 rounded-pill bg-surface-2 px-2 py-1 font-mono text-xs tabular-nums text-accent-ink"
+            >
+              <Layers size={12} /> {doneCount}
+            </motion.span>
+          </AnimatePresence>
           <span className="font-mono text-xs tabular-nums text-muted">
             {done}/{list.length} erledigt
           </span>
