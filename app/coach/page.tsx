@@ -7,8 +7,10 @@ import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { buildCoachContext } from "@/lib/coach-context";
+import { trainerContextBlock } from "@/lib/trainer";
 import { cn } from "@/lib/utils";
 
 interface Msg {
@@ -17,19 +19,22 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  "Wie war meine Woche?",
+  "Wie läuft meine Mission?",
+  "Warum diese Direktive heute?",
   "Worauf soll ich die nächste Einheit achten?",
-  "Mein unterer Rücken zwickt — was tun?",
 ];
 const RECAP_PROMPT =
   "Gib mir ein kurzes Wochen-Recap: 2–3 Sätze, was gut lief, plus 1–2 konkrete Fokus-Punkte für nächste Woche.";
 
 export default function CoachPage() {
   const router = useRouter();
-  const { log, allLib, body, cardio, settings } = useTraining();
+  const { log, allLib, body, cardio, settings, trainer } = useTraining();
   const context = useMemo(
-    () => buildCoachContext({ log, allLib, body, cardio }),
-    [log, allLib, body, cardio],
+    () =>
+      buildCoachContext({ log, allLib, body, cardio }) +
+      "\n\nATLAS-Status:\n" +
+      trainerContextBlock(trainer),
+    [log, allLib, body, cardio, trainer],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),
@@ -117,8 +122,8 @@ export default function CoachPage() {
     <div>
       <BackRow onBack={() => router.push("/")} />
       <div className="mb-5 flex items-center gap-2">
-        <Sparkles size={22} className="text-accent-coverage" />
-        <h2 className="text-2xl font-semibold tracking-tight">Coach</h2>
+        <AtlasMark size={22} live className="text-fg" />
+        <h2 className="text-2xl font-semibold tracking-tight">ATLAS</h2>
       </div>
 
       {messages.length === 0 ? (
@@ -173,7 +178,7 @@ export default function CoachPage() {
             }
           }}
           rows={1}
-          placeholder="Frag deinen Coach…"
+          placeholder="Frag ATLAS…"
           aria-label="Nachricht an den Coach"
           className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
         />

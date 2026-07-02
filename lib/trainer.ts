@@ -25,12 +25,13 @@ import {
   weeklyPrs,
   type ExRecord,
 } from "@/lib/records";
-import type { WeeklySetStats } from "@/lib/set-plan";
+import { weeklySetCount, type WeeklySetStats } from "@/lib/set-plan";
 import { isFilled, weeklyStreak, workSets } from "@/lib/stats";
 import {
   MUSCLE_LABEL,
   underservedMuscles,
   VOLUME_TARGET,
+  weeklyMuscleVolume,
   weekStartMon,
   type MuscleVolume,
 } from "@/lib/volume";
@@ -591,6 +592,86 @@ export function liveLine(opts: {
     default:
       return null;
   }
+}
+
+/* ─────────────── Wochen-Mission: Persistenz + Review ─────────────── */
+
+export interface MissionReview {
+  kw: number;
+  weekKey: string;
+  sessions: number;
+  sessionsTarget: number;
+  sets: number;
+  setsTarget: number;
+  prs: number;
+  /** Fokus-Muskel hat sein Wochenziel in JENER Woche erreicht (oder es gab keinen). */
+  focusHit: boolean;
+  outcomePct: number; // 0..1
+}
+
+/** Die im Storage eingefrorene Wochen-Mission — Montag generiert, Ziele
+ *  driften nicht mit, wenn die Historie sich unter der Woche ändert. */
+export interface StoredMission {
+  version: 1;
+  targets: MissionTargets;
+  generatedAt: string;
+  /** Ergebnis der VORWOCHE — füttert den ATLAS-Rapport. */
+  lastReview?: MissionReview;
+}
+
+/** Bewertet eine (abgelaufene) Mission gegen das Log ihrer Zielwoche. */
+export function reviewMission(
+  targets: MissionTargets,
+  log: LoggedSession[],
+  allLib: Exercise[],
+): MissionReview {
+  const ref = new Date(`${targets.weekKey}T12:00:00`);
+  const start = weekStartMon(ref);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  const sessions = log.filter((s) => {
+    const d = new Date(s.date);
+    return d >= start && d < end;
+  }).length;
+  const sets = weeklySetCount(log, ref);
+  const prs = weeklyPrs(log, ref).length;
+  const focusSets = targets.focusMuscle
+    ? (weeklyMuscleVolume(log, allLib, ref).find((m) => m.muscle === targets.focusMuscle)
+        ?.sets ?? 0)
+    : 0;
+  const focusHit =
+    !targets.focusMuscle || focusSets >= (targets.focusTarget ?? VOLUME_TARGET.min);
+
+  const parts = [
+    Math.min(1, sessions / targets.sessionsTarget),
+    Math.min(1, targets.setsTarget > 0 ? sets / targets.setsTarget : 0),
+  ];
+  if (targets.focusMuscle && targets.focusTarget) {
+    parts.push(Math.min(1, focusSets / targets.focusTarget));
+  }
+  if (targets.prExId) parts.push(Math.min(1, prs));
+
+  return {
+    kw: targets.kw,
+    weekKey: targets.weekKey,
+    sessions,
+    sessionsTarget: targets.sessionsTarget,
+    sets,
+    setsTarget: targets.setsTarget,
+    prs,
+    focusHit,
+    outcomePct: parts.reduce((a, b) => a + b, 0) / parts.length,
+  };
+}
+
+/** Eine Zeile fürs Facts-Paket des Rapports (und den deterministischen Fallback). */
+export function missionReviewFact(r: MissionReview): string {
+  return (
+    `Mission KW ${r.kw}: ${r.sessions}/${r.sessionsTarget} Einheiten, ` +
+    `${r.sets}/${r.setsTarget} Sätze (${fmtPct(r.outcomePct)}), ` +
+    `Fokus ${r.focusHit ? "erfüllt" : "offen"}, ` +
+    `${r.prs} ${r.prs === 1 ? "Bestmarke" : "Bestmarken"}.`
+  );
 }
 
 /* ─────────────── Kontextblock (Chat/Rapport, PR BD) ─────────────── */

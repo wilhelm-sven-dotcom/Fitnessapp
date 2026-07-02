@@ -461,7 +461,7 @@ export default function HomePage() {
           className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
         >
           <span className="flex items-center gap-2 text-sm font-medium text-fg">
-            <Newspaper size={17} className="text-accent-ink" /> Wochen-Briefing
+            <Newspaper size={17} className="text-accent-ink" /> ATLAS-Rapport
           </span>
           <span className="flex items-center gap-1 font-mono text-xs text-muted">
             KW {kw} <ChevronRight size={16} />

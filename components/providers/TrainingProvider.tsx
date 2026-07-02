@@ -12,7 +12,15 @@ import { CARDIO_DAY, DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
-import { trainerState, type TrainerState } from "@/lib/trainer";
+import {
+  generateMissionTargets,
+  reviewMission,
+  trainerState,
+  weekKeyOf,
+  type StoredMission,
+  type TrainerInput,
+  type TrainerState,
+} from "@/lib/trainer";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
@@ -167,6 +175,7 @@ interface TrainingContextValue {
   phase: PhaseState;
   weekSetStats: WeeklySetStats;
   trainer: TrainerState;
+  mission: StoredMission | null;
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
@@ -304,8 +313,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   // Read every key from the local cache into state. Reused after a cloud pull.
+  const [mission, setMission] = useState<StoredMission | null>(null);
+
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, da, gy, ev] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, da, gy, ev, mi] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -316,6 +327,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<WorkoutDay[]>(KEYS.days, []),
       storage.getJSON<GymProfile[]>(KEYS.gyms, []),
       storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
+      storage.getJSON<StoredMission | null>(KEYS.mission, null),
     ]);
     if (Array.isArray(l)) setLog(l);
     if (Array.isArray(e)) setEquip(e);
@@ -327,6 +339,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (Array.isArray(da)) setDays(da);
     if (Array.isArray(gy)) setGyms(gy);
     if (ev && typeof ev === "object") setExerciseVideos(ev);
+    if (mi && typeof mi === "object" && mi.targets) setMission(mi);
     setLoading(false);
   }, []);
 
@@ -708,31 +721,53 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const cardioTip = useMemo(() => cardioAdvice(cardio), [cardio]);
 
   // ATLAS — die überwachende Trainer-Intelligenz. Bewusst OHNE `entries` in
-  // den Deps: kein Recompute pro Tastendruck im laufenden Training.
-  const trainer = useMemo<TrainerState>(
-    () =>
-      trainerState({
-        log,
-        allLib,
-        settings,
-        cardio,
-        muscleVolumes,
-        fatigue,
-        phase,
-        weekSets: weekSetStats,
-        seeDoctor,
-        todayReadiness,
-        cardioLevel: cardioTip.level,
-        recTpl,
-        recList,
-        estimatedMin,
-        weekCount,
-        daysAgo,
-      }),
+  // den Deps: kein Recompute pro Tastendruck im laufenden Training. Die
+  // eingefrorene Wochen-Mission (storedTargets) speist die Meter, sobald sie
+  // geladen ist — sonst generiert trainerState frische Ziele.
+  const trainerInput = useMemo<TrainerInput>(
+    () => ({
+      log,
+      allLib,
+      settings,
+      cardio,
+      muscleVolumes,
+      fatigue,
+      phase,
+      weekSets: weekSetStats,
+      seeDoctor,
+      todayReadiness,
+      cardioLevel: cardioTip.level,
+      recTpl,
+      recList,
+      estimatedMin,
+      weekCount,
+      daysAgo,
+      storedTargets: mission?.targets,
+    }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [log, allLib, settings, cardio, muscleVolumes, fatigue, phase, weekSetStats,
-     seeDoctor, todayReadiness, cardioTip, recTpl, recList, estimatedMin, weekCount, daysAgo],
+     seeDoctor, todayReadiness, cardioTip, recTpl, recList, estimatedMin, weekCount, daysAgo, mission],
   );
+  const trainer = useMemo<TrainerState>(() => trainerState(trainerInput), [trainerInput]);
+
+  // Wochen-Rollover: Montag friert ATLAS neue Ziele ein; die Vorwoche wird
+  // reviewt und füttert den Rapport. Guard (weekKey identisch) verhindert
+  // jede Schleife; der Zwei-Geräte-Fall heilt sich über denselben Check.
+  useEffect(() => {
+    if (loading) return;
+    const wk = weekKeyOf(new Date());
+    if (mission?.targets.weekKey === wk) return;
+    const lastReview = mission ? reviewMission(mission.targets, log, allLib) : undefined;
+    const next: StoredMission = {
+      version: 1,
+      targets: generateMissionTargets({ ...trainerInput, storedTargets: undefined }),
+      generatedAt: new Date().toISOString(),
+      lastReview,
+    };
+    setMission(next);
+    void storage.setJSON(KEYS.mission, next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, mission, log, allLib]);
 
   // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
   const ringMetrics = useMemo<RingMetric[]>(() => {
@@ -1259,6 +1294,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     phase,
     weekSetStats,
     trainer,
+    mission,
     weekCount,
     daysAgo,
     lastLabel,
