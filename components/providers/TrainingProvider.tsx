@@ -30,6 +30,7 @@ import {
   weeklyVolume,
   type MuscleVolume,
 } from "@/lib/volume";
+import { mergeCloudLocal } from "@/lib/merge";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
@@ -362,12 +363,27 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const map = await cloudPull();
     if (map && Object.keys(map).length) {
       const known = new Set<string>(Object.values(KEYS));
-      await Promise.all(
-        Object.entries(map)
-          .filter(([k]) => known.has(k))
-          .map(([k, v]) => storage.setRaw(k, v)),
-      );
-      await loadAll();
+      const localLog = await storage.getJSON<LoggedSession[]>(KEYS.log, []);
+      if (localLog.length) {
+        // Both sides carry data (device trained before signing in) → MERGE.
+        // A blind cloud pull used to silently drop the unsynced local sessions.
+        const local: Record<string, string> = {};
+        for (const [k, v] of await collectLocal()) local[k] = v;
+        const cloudKnown: Record<string, string> = {};
+        for (const [k, v] of Object.entries(map)) if (known.has(k)) cloudKnown[k] = v;
+        const merged = mergeCloudLocal(cloudKnown, local);
+        await Promise.all(Object.entries(merged).map(([k, v]) => storage.setRaw(k, v)));
+        await loadAll();
+        await cloudPushAll(Object.entries(merged));
+      } else {
+        // Fresh device → adopt the cloud copy.
+        await Promise.all(
+          Object.entries(map)
+            .filter(([k]) => known.has(k))
+            .map(([k, v]) => storage.setRaw(k, v)),
+        );
+        await loadAll();
+      }
     } else {
       // First login with an empty cloud → seed it from local data.
       await cloudPushAll(await collectLocal());
@@ -490,7 +506,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const lastPerf = (id: string): LastPerf | null => {
     for (let i = log.length - 1; i >= 0; i--) {
       const ex = log[i].exercises?.find((e) => e.id === id);
-      if (ex && ex.sets && ex.sets.some((s) => s.reps !== "" && s.reps != null))
+      // Only a filled WORKING set counts as a performance — a warmup-only entry
+      // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
+      if (ex && ex.sets && ex.sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null))
         return { sets: ex.sets, date: log[i].date };
     }
     return null;
@@ -979,12 +997,23 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           if (s.warmup) out.warmup = true;
           return out;
         })
-        .filter(
-          (s) =>
-            (s.reps !== "" && s.reps != null) ||
-            (s.weight !== "" && s.weight != null),
-        ),
-    })).filter((ex) => ex.sets.length > 0); // only keep exercises actually trained
+        // Only truly filled sets (reps present) — weight-prefilled empty sets
+        // are suggestions, not performed work.
+        .filter((s) => s.reps !== "" && s.reps != null),
+    }))
+    // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
+    // auto-prefilled (reps "5") and used to slip through as ghost sessions,
+    // inflating streak/XP and corrupting the next prescription.
+    .filter((ex) => ex.sets.some((s) => !s.warmup));
+    if (!exercises.length) {
+      // Nothing real was performed → don't log a session; still clear state.
+      setActiveKey(null);
+      setEntries({});
+      setBackTrafficState(null);
+      setNoteState("");
+      setTodayReadiness(null);
+      return;
+    }
     const newSession: LoggedSession = {
       date: new Date().toISOString(),
       dayKey: tpl.key,
@@ -1067,12 +1096,18 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const d = raw as Record<string, unknown>;
     if (!Array.isArray(d.log)) return false;
     const nextLog = d.log as LoggedSession[];
+    // Minimal per-item shape check — a structurally wrong import would corrupt
+    // every downstream stat (dates are the backbone of weeks/streaks/records).
+    if (!nextLog.every((s) => !!s && typeof s === "object" && typeof s.date === "string"))
+      return false;
     const nextEquip = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
     const nextChoices =
       d.choices && typeof d.choices === "object"
         ? (d.choices as Record<string, string>)
         : choices;
-    const nextCustom = Array.isArray(d.custom) ? (d.custom as Exercise[]) : custom;
+    const nextCustom = Array.isArray(d.custom)
+      ? normalizeCustom(d.custom as Exercise[])
+      : custom;
     const nextBody = Array.isArray(d.body) ? (d.body as BodyMetric[]) : body;
     const nextCardio = Array.isArray(d.cardio) ? (d.cardio as CardioSession[]) : cardio;
     const nextDays = Array.isArray(d.days) ? (d.days as WorkoutDay[]) : days;

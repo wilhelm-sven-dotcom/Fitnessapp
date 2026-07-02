@@ -9,7 +9,7 @@
 // device stuck on a stale build (an old session requesting chunks the new build
 // no longer has → ChunkLoadError on navigation). It only ever clears CODE
 // caches — never localStorage/IndexedDB, so training data is untouched.
-const CACHE = "training-v3";
+const CACHE = "training-v4";
 const SHELL = "/";
 
 self.addEventListener("install", (event) => {
@@ -71,7 +71,15 @@ self.addEventListener("fetch", (event) => {
         fetch(request).then((res) => {
           if (res && res.ok) {
             const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(request, copy));
+            caches.open(CACHE).then(async (c) => {
+              await c.put(request, copy);
+              // LRU-ish prune: without a cap the runtime cache grows across
+              // releases forever (old hashed chunks, media). Oldest-first.
+              const keys = await c.keys();
+              const MAX = 80;
+              if (keys.length > MAX)
+                await Promise.all(keys.slice(0, keys.length - MAX).map((k) => c.delete(k)));
+            });
           }
           return res;
         }),
