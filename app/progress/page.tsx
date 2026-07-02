@@ -10,6 +10,7 @@ import { GoalCard } from "@/components/progress/GoalCard";
 import { LevelCard } from "@/components/progress/LevelCard";
 import { SetCollectorCard } from "@/components/progress/SetCollectorCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
+import { MuscleHeatmap } from "@/components/progress/MuscleHeatmap";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { RecordsBoard } from "@/components/progress/RecordsBoard";
@@ -193,6 +194,8 @@ export default function ProgressPage() {
       <AchievementsGrid />
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
+
+      {muscleVolumes.some((m) => m.sets > 0) && <MuscleHeatmap data={muscleVolumes} />}
 
       <MuscleBalanceCard muscleVolumes={muscleVolumes} />
 

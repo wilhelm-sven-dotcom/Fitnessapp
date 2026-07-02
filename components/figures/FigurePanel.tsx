@@ -63,6 +63,7 @@ export function FigurePanel({
   viewKey,
   flip,
   accentBones,
+  boneTint,
   freeze,
 }: {
   label: string;
@@ -70,6 +71,9 @@ export function FigurePanel({
   viewKey: "side" | "front";
   flip?: boolean;
   accentBones?: Set<string>;
+  /** Per-bone colour override ("a>b" → CSS colour) — the muscle heatmap tint.
+   *  Wins over accentBones; unlisted bones keep the figure colour. */
+  boneTint?: Record<string, string>;
   /** Render one static phase (0..1) instead of looping — for the 3-pose filmstrip. */
   freeze?: number;
 }) {
@@ -142,9 +146,15 @@ export function FigurePanel({
       )}
       {/* Outlines first (card colour) so overlapping limbs read separately. */}
       {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--base)", "o" + bn[0] + bn[1]))}
-      {/* Body fills — worked muscles in the accent, else the figure colour. */}
+      {/* Body fills — heatmap tint wins, else worked-muscle accent, else figure colour. */}
       {bones.map((bn) =>
-        cap(bn, boneWidth(bn), accentBones?.has(bn[0] + ">" + bn[1]) ? "var(--accent)" : "var(--fg)", "f" + bn[0] + bn[1]),
+        cap(
+          bn,
+          boneWidth(bn),
+          boneTint?.[bn[0] + ">" + bn[1]] ??
+            (accentBones?.has(bn[0] + ">" + bn[1]) ? "var(--accent)" : "var(--fg)"),
+          "f" + bn[0] + bn[1],
+        ),
       )}
       {/* Neutral-spine cue. */}
       {spine.map((sp, idx) => cap(sp, 3.5, "#34d399", "sp" + idx))}
