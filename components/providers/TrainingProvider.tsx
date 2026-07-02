@@ -10,7 +10,9 @@ import {
 } from "react";
 import { CARDIO_DAY, DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
-import { fatigueState } from "@/lib/fatigue";
+import { fatigueState, type FatigueState } from "@/lib/fatigue";
+import { phaseState, type PhaseState } from "@/lib/periodization";
+import { trainerState, type TrainerState } from "@/lib/trainer";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
@@ -33,7 +35,7 @@ import {
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
 import { prTimeline } from "@/lib/records";
-import { weeklySetStats } from "@/lib/set-plan";
+import { weeklySetStats, type WeeklySetStats } from "@/lib/set-plan";
 import { sessionVolume } from "@/lib/stats";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { youtubeEmbedUrl } from "@/lib/youtube";
@@ -161,6 +163,10 @@ interface TrainingContextValue {
   muscleVolumes: MuscleVolume[];
   coach: CoachCard[];
   cardioAdvice: CardioAdvice;
+  fatigue: FatigueState;
+  phase: PhaseState;
+  weekSetStats: WeeklySetStats;
+  trainer: TrainerState;
   weekCount: number;
   daysAgo: number | null;
   lastLabel: string;
@@ -673,6 +679,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     [log, allLib],
   );
 
+  // ATLAS-Substrat: Ermüdung, Phase und Wochen-Sätze einmal zentral rechnen —
+  // vorher taten das mehrere Karten ad hoc mit vollen Log-Scans pro Render.
+  const fatigue = useMemo(() => fatigueState(log, cardio), [log, cardio]);
+  const phase = useMemo(() => {
+    const minDate = log.length
+      ? Math.min(...log.map((s) => new Date(s.date).getTime()))
+      : Date.now();
+    return phaseState(settings, fatigue.band, (Date.now() - minDate) / (7 * 86_400_000));
+  }, [settings, fatigue, log]);
+  const weekSetStats = useMemo(() => weeklySetStats(log), [log]);
+
   const coach = useMemo(
     () =>
       coachCards({
@@ -683,12 +700,39 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         muscleVolumes,
         cardio,
         body,
-        fatigueBand: fatigueState(log, cardio).band,
+        fatigueBand: fatigue.band,
       }).filter((c) => !dismissed.includes(c.kind + (c.exId ?? ""))),
-    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, body, dismissed],
+    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, body, dismissed, fatigue],
   );
 
   const cardioTip = useMemo(() => cardioAdvice(cardio), [cardio]);
+
+  // ATLAS — die überwachende Trainer-Intelligenz. Bewusst OHNE `entries` in
+  // den Deps: kein Recompute pro Tastendruck im laufenden Training.
+  const trainer = useMemo<TrainerState>(
+    () =>
+      trainerState({
+        log,
+        allLib,
+        settings,
+        cardio,
+        muscleVolumes,
+        fatigue,
+        phase,
+        weekSets: weekSetStats,
+        seeDoctor,
+        todayReadiness,
+        cardioLevel: cardioTip.level,
+        recTpl,
+        recList,
+        estimatedMin,
+        weekCount,
+        daysAgo,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [log, allLib, settings, cardio, muscleVolumes, fatigue, phase, weekSetStats,
+     seeDoctor, todayReadiness, cardioTip, recTpl, recList, estimatedMin, weekCount, daysAgo],
+  );
 
   // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
   const ringMetrics = useMemo<RingMetric[]>(() => {
@@ -1211,6 +1255,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     muscleVolumes,
     coach,
     cardioAdvice: cardioTip,
+    fatigue,
+    phase,
+    weekSetStats,
+    trainer,
     weekCount,
     daysAgo,
     lastLabel,
