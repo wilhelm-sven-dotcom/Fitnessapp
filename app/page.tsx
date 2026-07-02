@@ -11,6 +11,7 @@ import { FIG, muscleBones } from "@/components/figures/figureData";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
+import { AtlasCard } from "@/components/trainer/AtlasCard";
 import { FatigueCard } from "@/components/progress/FatigueCard";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
@@ -69,6 +70,7 @@ export default function HomePage() {
     settings,
     setBudget,
     coach,
+    trainer,
     cardio,
     cardioAdvice,
     acceptDeload,
@@ -146,11 +148,14 @@ export default function HomePage() {
     </Reveal>
   ) : null;
 
+  // ATLAS absorbiert das Info-Geplauder (Plateau/Volumen/Recomp) in Mission +
+  // Wache; als Karten bleiben nur handlungsrelevante Fälle mit eigenem CTA.
+  const actionCards = coach.filter((c) => c.severity !== "info" || c.action);
   const coachEl =
-    coach.length > 0 ? (
+    actionCards.length > 0 ? (
       <Reveal delay={0.12}>
         <div className="mb-4 space-y-2">
-          {coach.map((c, i) => (
+          {actionCards.map((c, i) => (
             <CoachCard
               key={c.kind + (c.exId ?? "") + i}
               card={c}
@@ -161,6 +166,12 @@ export default function HomePage() {
         </div>
       </Reveal>
     ) : null;
+
+  const atlasEl = (
+    <Reveal delay={0.08}>
+      <AtlasCard trainer={trainer} className="mb-4" />
+    </Reveal>
+  );
 
   return (
     <div className="relative">
@@ -273,6 +284,7 @@ export default function HomePage() {
           <div className="mt-6">
             {chipsEl}
             {activeEl}
+            {atlasEl}
             {coachEl}
           </div>
         </section>
@@ -326,6 +338,7 @@ export default function HomePage() {
           </Reveal>
 
           {activeEl}
+          {atlasEl}
           {coachEl}
 
           {/* The one bold moment: today's recommended session. */}
