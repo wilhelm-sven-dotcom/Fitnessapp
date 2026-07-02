@@ -501,6 +501,13 @@ export function trainerState(input: TrainerInput): TrainerState {
 
 /* ─────────────────── Live-Zeile (Workout, PR BC) ─────────────────── */
 
+export interface LiveLine {
+  text: string;
+  tone: "ok" | "watch" | "push";
+  /** Auslöser — fürs Voice-Gating (Rekord spricht schon die Rekord-Feier). */
+  kind: "record" | "chase" | "rir" | "readiness" | "presc";
+}
+
 export function liveLine(opts: {
   ex: Exercise;
   sets: SetEntry[];
@@ -508,7 +515,7 @@ export function liveLine(opts: {
   record: ExRecord | null;
   readiness: ReadinessScale;
   seed?: number;
-}): { text: string; tone: "ok" | "watch" | "push" } | null {
+}): LiveLine | null {
   const { ex, sets, presc, record, readiness } = opts;
   const seed = opts.seed ?? daySeed(new Date());
   if (ex.pattern === "cardio") return null;
@@ -520,6 +527,7 @@ export function liveLine(opts: {
     return {
       text: pick(["Bestmarke gefallen. Notiert.", "Neue Bestmarke — genau so."], seed),
       tone: "push",
+      kind: "record",
     };
   }
 
@@ -533,6 +541,7 @@ export function liveLine(opts: {
       return {
         text: `Bestmarke ${record.label} in Reichweite — greif zu.`,
         tone: "push",
+        kind: "chase",
       };
     }
   }
@@ -544,16 +553,21 @@ export function liveLine(opts: {
       return {
         text: "Grenze getroffen — Respekt. Nächster Satz ruhig.",
         tone: "watch",
+        kind: "rir",
       };
     }
     if (lastSet.rir >= 4) {
-      return { text: "Da war mehr drin — plus 2,5 kg?", tone: "push" };
+      return { text: "Da war mehr drin — plus 2,5 kg?", tone: "push", kind: "rir" };
     }
   }
 
   // ④ Readiness gedrosselt.
   if (readiness.loadMult < 1 || readiness.cap) {
-    return { text: "Heute bewusst gedrosselt — Qualität zählt doppelt.", tone: "ok" };
+    return {
+      text: "Heute bewusst gedrosselt — Qualität zählt doppelt.",
+      tone: "ok",
+      kind: "readiness",
+    };
   }
 
   // ⑤ Progressions-Hinweis aus der Verordnung.
@@ -562,17 +576,18 @@ export function liveLine(opts: {
       return {
         text: presc.w ? `Plan sagt ${presc.w} kg — du bist bereit.` : "Heute eine Stufe höher — du bist bereit.",
         tone: "push",
+        kind: "presc",
       };
     case "down":
-      return { text: "Etwas zurück, dafür sauber — so wächst es weiter.", tone: "ok" };
+      return { text: "Etwas zurück, dafür sauber — so wächst es weiter.", tone: "ok", kind: "presc" };
     case "hold":
-      return { text: "Gleiches Gewicht, bessere Wiederholungen.", tone: "ok" };
+      return { text: "Gleiches Gewicht, bessere Wiederholungen.", tone: "ok", kind: "presc" };
     case "lighter":
-      return { text: "Nach der Pause kontrolliert rein.", tone: "ok" };
+      return { text: "Nach der Pause kontrolliert rein.", tone: "ok", kind: "presc" };
     case "start":
-      return { text: "Startgewicht finden — zwei bis drei im Tank lassen.", tone: "ok" };
+      return { text: "Startgewicht finden — zwei bis drei im Tank lassen.", tone: "ok", kind: "presc" };
     case "rep":
-      return { text: "Eine Wiederholung mehr als letztes Mal — hol sie.", tone: "push" };
+      return { text: "Eine Wiederholung mehr als letztes Mal — hol sie.", tone: "push", kind: "presc" };
     default:
       return null;
   }
