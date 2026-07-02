@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducedMotion } from "framer-motion";
-import { ChevronRight, Flame, Newspaper, Play, Sparkles } from "lucide-react";
+import { ChevronRight, Newspaper, Play, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
@@ -14,6 +14,7 @@ import { CoachCard } from "@/components/coach/CoachCard";
 import { FatigueCard } from "@/components/progress/FatigueCard";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { StreakFlame } from "@/components/ui/StreakFlame";
 import { Reveal } from "@/components/ui/Reveal";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -288,7 +289,7 @@ export default function HomePage() {
               </h1>
               {streak > 0 && (
                 <div className="flex shrink-0 items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-                  <Flame size={15} className="text-accent-ink" />
+                  <StreakFlame size={15} className="text-accent-ink" />
                   <span className="font-display text-sm font-bold tabular-nums text-fg">{streak}</span>
                   <span className="text-xs text-muted">Wo</span>
                 </div>

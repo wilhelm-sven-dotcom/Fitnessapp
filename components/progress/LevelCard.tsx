@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Readout } from "@/components/ui/Readout";
 import { Reveal } from "@/components/ui/Reveal";
+import { SkinSignature } from "@/components/ui/SkinSignature";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
 
@@ -39,6 +40,7 @@ export function LevelCard() {
             ? "Erste Einheit starten und Level 2 freischalten."
             : `Noch ${remaining} XP bis Level ${lvl.level + 1}.`}
         </p>
+        <SkinSignature />
       </Card>
     </Reveal>
   );

@@ -3,6 +3,7 @@
 import { Trophy } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Reveal } from "@/components/ui/Reveal";
+import { SkinSignature } from "@/components/ui/SkinSignature";
 import { fmtDateShort } from "@/lib/format";
 import { prStreakWeeks, prTimeline, recordUnit } from "@/lib/records";
 import type { LoggedSession } from "@/lib/types";
@@ -43,6 +44,7 @@ export function RecordsBoard({ log }: { log: LoggedSession[] }) {
             </li>
           ))}
         </ul>
+        <SkinSignature />
       </Card>
     </Reveal>
   );
