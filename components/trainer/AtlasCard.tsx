@@ -2,10 +2,13 @@
 
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AtlasCore } from "@/components/trainer/AtlasCore";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
+import { TypedLine } from "@/components/trainer/TypedLine";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { tap } from "@/lib/haptics";
+import type { ReadinessBand } from "@/lib/readiness";
 import type { TrainerState, WatchSignal } from "@/lib/trainer";
 import { cn } from "@/lib/utils";
 
@@ -22,15 +25,25 @@ const chipTone: Record<WatchSignal["tone"], string> = {
 };
 
 /**
- * ATLAS auf der Startseite: die Tages-Direktive als Befehl + Begründung,
- * die Wochen-Mission als Mikro-Meter und die "Wache" als kompakte Chips.
- * Die ganze Karte führt zum Trainer-Chat.
+ * „Der Kern" — ATLAS als Hero-Karte der Startseite: der lebende Energie-Kern
+ * (AtlasCore) über der Tages-Direktive, die sich Zeichen für Zeichen tippt,
+ * darunter die Wochen-Mission als Mikro-Meter und die Wache als Chips.
+ * Die Karte trägt das eine bold Visual der Seite und führt zum Trainer-Chat.
  */
 export function AtlasCard({
   trainer,
+  readinessBand,
+  fatigueHot,
+  deload,
   className,
 }: {
   trainer: TrainerState;
+  /** band(todayReadiness.score) oder null vor dem Check-in. */
+  readinessBand: ReadinessBand | null;
+  /** Ermüdung „hoch" mit genug Historie → der Kern flackert nervös. */
+  fatigueHot: boolean;
+  /** Deload-Direktive/-Phase → der Kern dimmt und atmet langsam. */
+  deload: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -50,14 +63,14 @@ export function AtlasCard({
       <Card
         variant="elevated"
         className={cn(
-          "edge-top bg-hero-sheen p-5",
+          "glow-accent edge-top bg-hero-sheen p-5",
           directive.severity === "urgent" && "border-status-danger",
           className,
         )}
       >
-        <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <AtlasMark size={18} live className="text-fg" />
+            <AtlasMark size={18} className="text-fg" />
             <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
               ATLAS
             </span>
@@ -71,9 +84,23 @@ export function AtlasCard({
           </span>
         </div>
 
-        <p className="font-display text-xl font-bold leading-snug tracking-tight text-fg">
-          {directive.text}
-        </p>
+        {/* Der Kern — ATLAS atmet mit deinem Zustand. */}
+        <div className="relative flex justify-center py-2">
+          <AtlasCore
+            missionPct={mission.pct}
+            readinessBand={readinessBand}
+            fatigueHot={fatigueHot}
+            deload={deload}
+          />
+          <span className="absolute bottom-2 right-0 font-mono text-xs uppercase tracking-widest text-faint">
+            Mission {Math.round(mission.pct * 100)} %
+          </span>
+        </div>
+
+        <TypedLine
+          text={directive.text}
+          className="font-display text-xl font-bold leading-snug tracking-tight text-fg"
+        />
         <p className="mt-1 text-xs leading-relaxed text-muted">{directive.reason}</p>
 
         <div className="mt-4 space-y-1.5">

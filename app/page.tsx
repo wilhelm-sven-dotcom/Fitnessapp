@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { AmbientGlow } from "@/components/home/AmbientGlow";
-import { HeroStage } from "@/components/home/HeroStage";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
 import { AtlasCard } from "@/components/trainer/AtlasCard";
+import { AtlasCore } from "@/components/trainer/AtlasCore";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
+import { TypedLine } from "@/components/trainer/TypedLine";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { StreakFlame } from "@/components/ui/StreakFlame";
@@ -21,6 +22,7 @@ import { trainingLevel } from "@/lib/achievements";
 import { editorialDeck, greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
 import { tap } from "@/lib/haptics";
+import { band } from "@/lib/readiness";
 import { weeklyAvgRir, weeklyStreak } from "@/lib/stats";
 import { coverageCount, weeklyVolume } from "@/lib/volume";
 import { cn } from "@/lib/utils";
@@ -70,6 +72,9 @@ export default function HomePage() {
     setBudget,
     coach,
     trainer,
+    todayReadiness,
+    fatigue,
+    phase,
     allLib,
     cardioAdvice,
     acceptDeload,
@@ -111,6 +116,15 @@ export default function HomePage() {
   });
   const focusParts = recTpl.focus.split(" & ");
   const level = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
+
+  // Der Kern liest den Trainer-Zustand: Atem-Tempo aus der Readiness,
+  // Flackern bei heißer Ermüdung, gedimmt im Deload.
+  const readinessBand = todayReadiness ? band(todayReadiness.score) : null;
+  const fatigueHot = fatigue.enough && fatigue.band === "hoch";
+  const coreDeload =
+    trainer.directive.kind === "deload" ||
+    trainer.directive.kind === "deload-active" ||
+    phase.phase === "entlastung";
 
   // Context blocks shared by both heroes (defined once; only the rendered branch mounts).
   const chipsEl =
@@ -159,7 +173,13 @@ export default function HomePage() {
 
   const atlasEl = (
     <Reveal delay={0.08}>
-      <AtlasCard trainer={trainer} className="mb-4" />
+      <AtlasCard
+        trainer={trainer}
+        readinessBand={readinessBand}
+        fatigueHot={fatigueHot}
+        deload={coreDeload}
+        className="mb-4"
+      />
     </Reveal>
   );
 
@@ -207,10 +227,25 @@ export default function HomePage() {
                 Der Trainer — ATLAS
               </span>
             </span>
-            <p className="mt-2 font-body text-xl italic leading-snug text-fg">
-              {trainer.directive.text}
-            </p>
-            <p className="mt-1 font-mono text-xs text-faint">{trainer.directive.reason}</p>
+            <span className="mt-2 flex items-start gap-4">
+              <span className="min-w-0 flex-1">
+                <TypedLine
+                  text={trainer.directive.text}
+                  className="font-body text-xl italic leading-snug text-fg"
+                />
+                <p className="mt-1 font-mono text-xs text-faint">{trainer.directive.reason}</p>
+              </span>
+              {/* Der Kern, flach: Haarlinien-Bögen — Magazin-tauglich, ohne Glow. */}
+              <AtlasCore
+                flat
+                size={72}
+                missionPct={trainer.mission.pct}
+                readinessBand={readinessBand}
+                fatigueHot={fatigueHot}
+                deload={coreDeload}
+                className="mt-1 shrink-0"
+              />
+            </span>
             <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs tabular-nums text-muted">
               {trainer.mission.meters.map((m) => (
                 <span key={m.id}>
@@ -220,7 +255,6 @@ export default function HomePage() {
             </p>
           </Pressable>
 
-          <HeroStage slots={recList} compact className="mt-4" />
           <p className="mt-4 font-body text-lg italic leading-snug text-muted">{deck}</p>
 
           <Pressable
@@ -359,14 +393,13 @@ export default function HomePage() {
 
           {/* The one bold moment: today's recommended session. */}
           <Reveal delay={0.14}>
-            <Card variant="elevated" className="glow-accent edge-top bg-hero-sheen mb-4 overflow-hidden rounded-card p-6">
+            <Card variant="elevated" className="mb-4 overflow-hidden rounded-card p-6">
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">▸ Empfohlen heute</p>
               <h2 className="font-display text-4xl font-bold leading-none tracking-tight">{recTpl.name}</h2>
               <p className="mt-1 text-muted">{recTpl.focus}</p>
               <p className="mb-3 mt-1 font-mono text-xs text-faint">
                 {recList.length} Übungen · ~{estimatedMin} Min
               </p>
-              <HeroStage slots={recList} className="mb-4" />
               <div className="mb-4 flex items-center gap-2">
                 <DurationBadge min={estimatedMin} />
                 <div className="ml-auto flex gap-2">
