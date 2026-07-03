@@ -19,10 +19,14 @@ export function WarmupPlayer({
   drills,
   voiceOn,
   onClose,
+  onFinished,
 }: {
   drills: WarmupDrill[];
   voiceOn: boolean;
   onClose: () => void;
+  /** Reached the done screen and confirmed — a completed warm-up, unlike
+   *  an early exit via „Beenden" (which stays plain onClose). */
+  onFinished?: () => void;
 }) {
   const total = drills.length;
   const [index, setIndex] = useState(0);
@@ -74,7 +78,7 @@ export function WarmupPlayer({
           Gelenke warm, Rücken aktiviert. Jetzt sauber und kontrolliert trainieren.
         </p>
         <Pressable
-          onClick={onClose}
+          onClick={onFinished ?? onClose}
           className="mt-2 rounded-card bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
         >
           Los geht&apos;s

@@ -11,7 +11,7 @@ export default function WarmupPage() {
   const params = useParams();
   const key = Array.isArray(params.key) ? params.key[0] : params.key;
   const router = useRouter();
-  const { settings, sessionTemplate } = useTraining();
+  const { settings, sessionTemplate, setWarmupDone } = useTraining();
   const tpl = sessionTemplate(key ?? "");
 
   if (!tpl) {
@@ -34,6 +34,12 @@ export default function WarmupPage() {
       voiceOn={!!settings.voiceCues}
       onClose={() => {
         // A deep link / SW reload may have no history — back() would leave the PWA.
+        if (window.history.length > 1) router.back();
+        else router.push(`/workout/${key}`);
+      }}
+      onFinished={() => {
+        // Done screen confirmed → the warm-up phase counts as completed.
+        setWarmupDone(true);
         if (window.history.length > 1) router.back();
         else router.push(`/workout/${key}`);
       }}
