@@ -1,13 +1,11 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
 import { ChevronRight, Newspaper, Play, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { AmbientGlow } from "@/components/home/AmbientGlow";
-import { FigurePanel } from "@/components/figures/FigurePanel";
-import { FIG, muscleBones } from "@/components/figures/figureData";
+import { HeroStage } from "@/components/home/HeroStage";
 import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
@@ -113,15 +111,6 @@ export default function HomePage() {
   });
   const focusParts = recTpl.focus.split(" & ");
   const level = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
-
-  // Living hero: a small athlete that continuously performs the first recommended
-  // exercise that has a figure. Always in motion (FigurePanel's rAF loop), so it
-  // reads as "alive" regardless of splash timing; reduced-motion freezes it.
-  const reduceMotion = useReducedMotion();
-  const heroEx = recList.find((s) => s.ex && FIG[s.ex.id])?.ex;
-  const heroFig = heroEx ? FIG[heroEx.id] : undefined;
-  const heroAccent = heroEx ? muscleBones(heroEx.pattern) : undefined;
-  const heroFreeze = reduceMotion ? 0 : undefined;
 
   // Context blocks shared by both heroes (defined once; only the rendered branch mounts).
   const chipsEl =
@@ -231,13 +220,7 @@ export default function HomePage() {
             </p>
           </Pressable>
 
-          {heroFig && (
-            <div className="mt-4 flex justify-center">
-              <div className="w-28">
-                <FigurePanel label="" fig={heroFig} viewKey="side" accentBones={heroAccent} freeze={heroFreeze} />
-              </div>
-            </div>
-          )}
+          <HeroStage slots={recList} compact className="mt-4" />
           <p className="mt-4 font-body text-lg italic leading-snug text-muted">{deck}</p>
 
           <Pressable
@@ -383,13 +366,7 @@ export default function HomePage() {
               <p className="mb-3 mt-1 font-mono text-xs text-faint">
                 {recList.length} Übungen · ~{estimatedMin} Min
               </p>
-              {heroFig && (
-                <div className="mb-4 flex justify-center">
-                  <div className="w-36">
-                    <FigurePanel label="" fig={heroFig} viewKey="side" accentBones={heroAccent} freeze={heroFreeze} />
-                  </div>
-                </div>
-              )}
+              <HeroStage slots={recList} className="mb-4" />
               <div className="mb-4 flex items-center gap-2">
                 <DurationBadge min={estimatedMin} />
                 <div className="ml-auto flex gap-2">
