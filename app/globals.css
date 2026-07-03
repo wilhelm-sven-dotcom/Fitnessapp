@@ -246,6 +246,16 @@ html {
   pointer-events: none;
 }
 
+/* Horizontal scroller without a visible scrollbar (phase rail etc.) —
+   the row's own nodes communicate the overflow. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Skin-scoped visibility — a component ships all signature variants and reveals
    the active one with zero JS / no hydration flash (data-skin is set pre-paint).
    Default-hide all three, then show the one matching the active skin. */

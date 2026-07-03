@@ -28,6 +28,7 @@ const CameraView = dynamic(
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { LiveDemo } from "@/components/workout/LiveDemo";
+import { PhaseRail } from "@/components/workout/PhaseRail";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
@@ -134,6 +135,8 @@ export default function WorkoutPage() {
     activeList,
     settings,
     todayReadiness,
+    warmupDone,
+    setWarmupDone,
     readinessScale,
     muscleVolumes,
     lastPerf,
@@ -255,6 +258,7 @@ export default function WorkoutPage() {
   // working set (activeSetIdx) is the active one.
   const [editKey, setEditKey] = useState<string | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const warmupRef = useRef<HTMLDivElement>(null);
   const ratios = useRef<Record<string, number>>({});
   const slotKeys = activeList.map((s) => s.slotKey).join(",");
   useEffect(() => {
@@ -339,6 +343,13 @@ export default function WorkoutPage() {
       .get(slot)
       ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
   };
+
+  // Fokus-Akkordeon: höchstens EINE manuell aufgeklappte (nicht-aktive) Karte;
+  // wandert der aktive Fokus, klappt der manuelle Blick wieder zu.
+  const [viewSlot, setViewSlot] = useState<string | null>(null);
+  useEffect(() => {
+    setViewSlot(null);
+  }, [activeCardSlot]);
 
   // Nach jedem erledigten Satz zur nächsten offenen Karte gleiten — aber erst,
   // wenn der Fokus-Pin gelöst ist (beim Tippen wächst doneCount VOR dem Blur).
@@ -491,6 +502,33 @@ export default function WorkoutPage() {
   ).length;
   const total = list.length || 1;
 
+  // ── Geführter Ablauf: Phasen-Zustand je Slot (Kraft: alle Arbeitssätze voll;
+  //    Cardio: Erledigt-Toggle) → Rail, Fokus-Akkordeon und Abschluss-Zug. ──
+  const slotIsDone = ({ ex }: { ex: Exercise }) => {
+    if (ex.pattern === "cardio") {
+      const cur = (entries[ex.id] || [])[0];
+      return !!cur && cur.reps !== "" && cur.reps != null;
+    }
+    const work = (entries[ex.id] || []).filter((s) => !s.warmup);
+    return work.length > 0 && work.every((s) => isFilled(s));
+  };
+  const allDone = list.length > 0 && list.every(slotIsDone);
+  // Reine Cardio-Tage haben keinen Satz-Fokus — dort bleibt jede Karte voll.
+  const hasStrength = list.some((s) => s.ex.pattern !== "cardio");
+  const railItems = list.map((s) => ({
+    slotKey: s.slotKey,
+    name: s.ex.name,
+    state:
+      s.slotKey === activeCardSlot
+        ? ("active" as const)
+        : slotIsDone(s)
+          ? ("done" as const)
+          : ("open" as const),
+  }));
+  const ssSlots = ssPair ? [list[ssPair[0]]?.slotKey, list[ssPair[1]]?.slotKey] : [];
+  const wuDrills = warmupFor(tpl, { bike: settings.bikeWarmup });
+  const wuMin = warmupTotalMin(wuDrills);
+
   const guideEx = list.find((s) => s.slotKey === guideSlot)?.ex ?? null;
   // Change an exercise mid-session → drop in the ideal same-pattern alternative
   // (equipment-, preference- and injury-aware), with browse/undo. Cardio or no
@@ -590,12 +628,72 @@ export default function WorkoutPage() {
         budgetMin={settings.timeBudgetMin}
       />
 
-      <Pressable
-        onClick={() => router.push(`/warmup/${key}`)}
-        className="mb-4 mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 shadow-card py-3 text-sm font-medium text-accent-ink focus:outline-none"
+      {/* Der Ablauf auf einen Blick: 🔥 → 01…NN → ⚑. Tap springt zur Phase. */}
+      <PhaseRail
+        warmupDone={warmupDone}
+        items={railItems}
+        allDone={allDone}
+        onWarmup={() =>
+          warmupRef.current?.scrollIntoView({
+            behavior: reduce ? "auto" : "smooth",
+            block: "center",
+          })
+        }
+        onItem={scrollToSlot}
+      />
+
+      {/* Phase · Aufwärmen — eine echte Phase mit Abschluss statt nur ein Link. */}
+      <div
+        ref={warmupRef}
+        className={cn(
+          "mb-4 mt-3 rounded-card border border-surface-3 bg-surface-1 shadow-card",
+          warmupDone ? "px-4 py-3 opacity-80" : "p-4",
+        )}
       >
-        <Flame size={16} /> Aufwärmen · {warmupTotalMin(warmupFor(tpl, { bike: settings.bikeWarmup }))} Min
-      </Pressable>
+        {warmupDone ? (
+          <div className="flex items-center gap-2">
+            <Check size={14} className="shrink-0 text-status-in" aria-hidden />
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
+              Aufgewärmt · {wuMin} Min
+            </span>
+            <Pressable
+              onClick={() => router.push(`/warmup/${key}`)}
+              className="shrink-0 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Nochmal
+            </Pressable>
+          </div>
+        ) : (
+          <>
+            <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+              Phase · Aufwärmen
+            </p>
+            <p className="mt-1.5 truncate text-xs text-muted">
+              {wuDrills.map((d) => d.name).join(" · ")}
+            </p>
+            <p className="mt-0.5 font-mono text-xs text-faint">
+              {wuDrills.length} Drills · ~{wuMin} Min
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Pressable
+                onClick={() => router.push(`/warmup/${key}`)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-card bg-accent-sessions py-2.5 text-sm font-semibold text-on-accent focus:outline-none"
+              >
+                <Flame size={15} /> Aufwärmen starten
+              </Pressable>
+              <Pressable
+                onClick={() => {
+                  setWarmupDone(true);
+                  success();
+                }}
+                className="shrink-0 rounded-card bg-surface-2 px-4 py-2.5 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              >
+                Abschließen
+              </Pressable>
+            </div>
+          </>
+        )}
+      </div>
 
       {cardioAdvice.level !== "none" && (
         <div className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-4">
@@ -679,6 +777,24 @@ export default function WorkoutPage() {
                   readiness: readinessScale,
                 })
               : null;
+          // Fokus-Akkordeon: erledigt → Ergebnis-Zeile, offen → Ghost-Vorschau,
+          // aktiv/angesehen → volle Karte. Der Superset-Partner der aktiven
+          // Karte bleibt immer offen (man wechselt jeden Satz); der Flash-Guard
+          // lässt den Abschluss-Schimmer erst auf der offenen Karte ausspielen.
+          const slotDone = slotIsDone({ ex });
+          const isSsPartner =
+            activeCardSlot != null &&
+            ssSlots.includes(slotKey) &&
+            ssSlots.includes(activeCardSlot) &&
+            slotKey !== activeCardSlot;
+          const collapsedDone =
+            hasStrength &&
+            slotDone &&
+            !isActiveCard &&
+            viewSlot !== slotKey &&
+            flashSlot !== slotKey;
+          const collapsedUpcoming =
+            hasStrength && !slotDone && !isActiveCard && viewSlot !== slotKey && !isSsPartner;
           return (
             <div
               key={slotKey}
@@ -688,9 +804,10 @@ export default function WorkoutPage() {
               }}
               data-slot={slotKey}
               className={cn(
-                "relative overflow-hidden rounded-card border border-surface-3 bg-surface-1 p-4",
+                "relative overflow-hidden rounded-card border border-surface-3 bg-surface-1",
+                !collapsedDone && !collapsedUpcoming && "p-4",
                 isActiveCard ? "edge-top shadow-card-lg" : "shadow-card",
-                exComplete && !isActiveCard && "opacity-80",
+                slotDone && !isActiveCard && "opacity-80",
               )}
             >
               {/* Abschluss-Flash: kurzer Akzent-Schimmer, wenn die Übung voll ist. */}
@@ -706,6 +823,60 @@ export default function WorkoutPage() {
                   />
                 )}
               </AnimatePresence>
+              {collapsedDone ? (
+                /* Erledigt: schlanke Ergebnis-Zeile — Tap zeigt die Karte (ansehen). */
+                <Pressable
+                  onClick={() => {
+                    tap();
+                    setViewSlot(slotKey);
+                  }}
+                  aria-label={`${ex.name} anzeigen`}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                >
+                  <span className="font-mono text-xs text-status-in">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
+                    {ex.name}
+                  </span>
+                  <span className="max-w-32 shrink-0 truncate font-mono text-xs tabular-nums text-muted">
+                    {ex.pattern === "cardio"
+                      ? "Erledigt"
+                      : work
+                          .map((s) =>
+                            ex.unit === "Sek"
+                              ? `${s.reps}s`
+                              : s.weight !== "" && s.weight != null
+                                ? `${s.weight}×${s.reps}`
+                                : `${s.reps}`,
+                          )
+                          .join("  ")}
+                  </span>
+                  <Check size={14} className="shrink-0 text-status-in" aria-hidden />
+                </Pressable>
+              ) : collapsedUpcoming ? (
+                /* Offen: Ghost-Vorschau — Tap macht die Karte zur aktiven. */
+                <Pressable
+                  onClick={() => {
+                    tap();
+                    if (ex.pattern === "cardio" || activeSetIdx < 0) setViewSlot(slotKey);
+                    else setEditKey(`${ex.id}:${activeSetIdx}`);
+                  }}
+                  aria-label={`${ex.name} öffnen`}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                >
+                  <span className="font-mono text-xs text-faint">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted">{ex.name}</span>
+                  <span className="shrink-0 font-mono text-xs tabular-nums text-faint">
+                    {ex.pattern === "cardio"
+                      ? `${ex.repLow}–${ex.repHigh} Min`
+                      : `${ex.sets} × ${ex.repLow}–${ex.repHigh}`}
+                  </span>
+                </Pressable>
+              ) : (
+                <>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -958,6 +1129,8 @@ export default function WorkoutPage() {
                   )}
                 </>
               )}
+                </>
+              )}
             </div>
           );
         })}
@@ -994,7 +1167,10 @@ export default function WorkoutPage() {
       <Pressable
         onClick={() => setConfirmOpen(true)}
         disabled={saving}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
+        className={cn(
+          "mt-3 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60",
+          allDone && "glow-accent",
+        )}
       >
         <Save size={18} strokeWidth={2.5} /> {saving ? "Speichert…" : "Training beenden"}
       </Pressable>

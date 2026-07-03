@@ -166,6 +166,9 @@ interface TrainingContextValue {
   estimatedMin: number;
   settings: AppSettings;
   todayReadiness: Readiness | null;
+  /** Warm-up phase of the active session completed (guided flow). */
+  warmupDone: boolean;
+  setWarmupDone: (done: boolean) => void;
   readinessScale: ReadinessScale;
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
@@ -310,6 +313,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
   const [note, setNoteState] = useState("");
   const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
+  // Warm-up phase of the ACTIVE session was completed (player finished or
+  // checked off manually). Session-scoped: reset on start/save/discard.
+  const [warmupDone, setWarmupDone] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   // Read every key from the local cache into state. Reused after a cloud pull.
@@ -827,6 +833,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setActiveKey(key);
     setBackTrafficState(null);
     setNoteState("");
+    setWarmupDone(false);
   };
 
   const setEntry: TrainingContextValue["setEntry"] = (exId, i, field, val) => {
@@ -1113,6 +1120,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setBackTrafficState(null);
       setNoteState("");
       setTodayReadiness(null);
+      setWarmupDone(false);
       return null;
     }
     const newSession: LoggedSession = {
@@ -1153,6 +1161,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTrafficState(null);
     setNoteState("");
     setTodayReadiness(null);
+    setWarmupDone(false);
     return summary;
   };
 
@@ -1164,6 +1173,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTrafficState(null);
     setNoteState("");
     setTodayReadiness(null);
+    setWarmupDone(false);
   };
 
   const deleteSession = async (realIdx: number) => {
@@ -1285,6 +1295,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     estimatedMin,
     settings,
     todayReadiness,
+    warmupDone,
+    setWarmupDone,
     readinessScale,
     ringMetrics,
     muscleVolumes,
