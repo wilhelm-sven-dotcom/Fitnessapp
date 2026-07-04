@@ -21,6 +21,19 @@ const config: Config = {
           "system-ui",
           "sans-serif",
         ],
+        // Alias for the body face: makes the widely-used `font-body` class real.
+        // Same value as `sans` — deliberately NO serif fallback (under
+        // blueprint/tactile a serif fallback would be wrong).
+        body: [
+          "var(--font-body)",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "SF Pro Display",
+          "SF Pro Text",
+          "Segoe UI",
+          "system-ui",
+          "sans-serif",
+        ],
         // Mono face for labels / data / readouts — JetBrains Mono in both skins.
         mono: [
           "var(--font-mono)",

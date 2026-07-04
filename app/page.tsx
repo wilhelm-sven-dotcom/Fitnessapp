@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Newspaper, Play, Trophy } from "lucide-react";
+import { BookMarked, ChevronRight, Newspaper, Play, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
@@ -468,13 +468,28 @@ export default function HomePage() {
       <Reveal delay={0.2}>
         <Pressable
           onClick={() => router.push("/briefing")}
-          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
+          className="mb-2 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
         >
           <span className="flex items-center gap-2 text-sm font-medium text-fg">
             <Newspaper size={17} className="text-accent-ink" /> ATLAS-Rapport
           </span>
           <span className="flex items-center gap-1 font-mono text-xs text-muted">
             KW {kw} <ChevronRight size={16} />
+          </span>
+        </Pressable>
+      </Reveal>
+
+      {/* Das Magazin: jeder Trainingsmonat eine eigene Ausgabe — von ATLAS. */}
+      <Reveal delay={0.24}>
+        <Pressable
+          onClick={() => router.push("/magazin")}
+          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-fg">
+            <BookMarked size={17} className="text-accent-ink" /> Das Magazin
+          </span>
+          <span className="flex items-center gap-1 font-mono text-xs text-muted">
+            Deine Ausgaben <ChevronRight size={16} />
           </span>
         </Pressable>
       </Reveal>
