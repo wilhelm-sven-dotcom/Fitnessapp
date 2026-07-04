@@ -65,6 +65,11 @@ export default function RootLayout({
       lang="de"
       data-theme="dark"
       data-skin="tactile"
+      // The pre-paint script below rewrites data-theme/data-skin/--accent on
+      // <html> from localStorage before hydration, so React would flag an
+      // attribute mismatch on this element. Suppress it (scoped to <html>'s own
+      // attributes only; descendant mismatches still surface).
+      suppressHydrationWarning
       className={`${archivo.variable} ${sora.variable} ${jbmono.variable} ${anton.variable} ${newsreader.variable} ${inter.variable}`}
     >
       <body>
