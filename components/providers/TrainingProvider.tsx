@@ -15,6 +15,7 @@ import { phaseState, type PhaseState } from "@/lib/periodization";
 import {
   generateMissionTargets,
   reviewMission,
+  sessionDebrief,
   trainerState,
   weekKeyOf,
   type StoredMission,
@@ -100,6 +101,8 @@ export interface SessionSummary {
   xpPctTo: number;
   weekSets: number;
   weekTarget: number;
+  /** ATLAS-Debrief (3 Zeilen) — auch an der LoggedSession persistiert. */
+  debrief: string[];
 }
 
 export interface ExportEnvelope {
@@ -1141,7 +1144,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const lvlBefore = trainingLevel({ log, allLib, settings });
     const lvlAfter = trainingLevel({ log: newLog, allLib, settings });
     const week = weeklySetStats(newLog);
-    const summary: SessionSummary = {
+    const core = {
       sets: exercises.reduce((a, ex) => a + ex.sets.filter((s) => !s.warmup).length, 0),
       tonnage: sessionVolume(newSession),
       prs: prTimeline(newLog).filter((e) => e.date === newSession.date).length,
@@ -1152,6 +1155,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       weekSets: week.collected,
       weekTarget: week.target,
     };
+    // ATLAS-Debrief: VOR dem Log-Write erzeugen und an die Session hängen —
+    // so fließt es in Persistenz + Cloud-Sync und bleibt für immer stabil.
+    const debrief = sessionDebrief({
+      session: newSession,
+      log: newLog,
+      allLib,
+      summary: core,
+      readiness: todayReadiness,
+    });
+    newSession.debrief = debrief;
+    const summary: SessionSummary = { ...core, debrief };
     setSaving(true);
     await storage.setJSON(KEYS.log, newLog);
     setLog(newLog);

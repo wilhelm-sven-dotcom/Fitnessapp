@@ -508,6 +508,95 @@ export function trainerState(input: TrainerInput): TrainerState {
   return { directive, mission, watch, statusLine };
 }
 
+/* ─────────────────── Session-Debrief (nach dem Speichern) ─────────────────── */
+
+/**
+ * Drei Zeilen Urteil zur eben gespeicherten Einheit — Urteil, Beobachtung,
+ * Fokus für die nächste Einheit. Deterministisch (Seed = Tag der Einheit,
+ * ein Debrief schreibt sich nie um), mit echten Zahlen aus der Session.
+ */
+export function sessionDebrief(opts: {
+  session: LoggedSession;
+  /** Log INKLUSIVE der eben gespeicherten Einheit. */
+  log: LoggedSession[];
+  allLib: Exercise[];
+  summary: { sets: number; tonnage: number; prs: number; weekSets: number; weekTarget: number };
+  readiness?: Readiness | null;
+}): string[] {
+  const { session, log, allLib, summary } = opts;
+  const seed = daySeed(new Date(session.date));
+  const t = fmtKg(Math.round(summary.tonnage / 100) / 10);
+  const saetze = `${summary.sets} ${summary.sets === 1 ? "Satz" : "Sätze"}`;
+
+  // ① Das Urteil.
+  const line1 = session.isDeload
+    ? pick(
+        [
+          `Entlastung sauber gefahren — ${saetze}, bewusst leicht.`,
+          `Deload nach Plan: ${saetze}, der Körper dankt es dir nächste Woche.`,
+        ],
+        seed,
+      )
+    : summary.prs > 0
+      ? pick(
+          [
+            `${saetze}, ${t} Tonnen — und ${summary.prs === 1 ? "eine Bestmarke" : `${summary.prs} Bestmarken`}. Starker Auftritt.`,
+            `${summary.prs === 1 ? "Bestmarke gefallen" : `${summary.prs} Bestmarken gefallen`} — dazu ${saetze}, ${t} t bewegt.`,
+          ],
+          seed,
+        )
+      : pick(
+          [
+            `Geliefert: ${saetze}, ${t} Tonnen bewegtes Eisen.`,
+            `${saetze} im Buch, ${t} t Eisen — solide Schicht.`,
+          ],
+          seed,
+        );
+
+  // ② Die Beobachtung (Rücken > Readiness > Grenze > Wochenstand).
+  const rirs = (session.exercises ?? []).flatMap((e) =>
+    workSets(e.sets ?? [])
+      .filter(isFilled)
+      .map((s) => s.rir)
+      .filter((r): r is number => r != null),
+  );
+  const avgRir = rirs.length ? rirs.reduce((a, b) => a + b, 0) / rirs.length : null;
+  const line2 =
+    session.backTraffic === "red"
+      ? "Der untere Rücken hat sich gemeldet — ernst nehmen, die nächste Einheit entschärfe ich."
+      : opts.readiness && band(opts.readiness.score) === "low"
+        ? "Trotz mäßiger Bereitschaft durchgezogen — das zählt doppelt."
+        : avgRir != null && avgRir < 1
+          ? "Du warst nah an der Grenze — Mut ja, aber lass meist einen im Tank."
+          : pick(
+              [
+                `Die Woche steht bei ${summary.weekSets}/${summary.weekTarget} Sätzen.`,
+                `Wochenstand: ${summary.weekSets} von ${summary.weekTarget} Sätzen eingefahren.`,
+              ],
+              seed + 1,
+            );
+
+  // ③ Der Fokus für die nächste Einheit.
+  const under = underservedMuscles(weeklyMuscleVolume(log, allLib));
+  const line3 = under[0]
+    ? pick(
+        [
+          `Nächste Einheit: ${MUSCLE_LABEL[under[0].muscle]} zuerst — da fehlt Volumen.`,
+          `Fokus fürs nächste Mal: ${MUSCLE_LABEL[under[0].muscle]}.`,
+        ],
+        seed + 2,
+      )
+    : pick(
+        [
+          "Nächster Termin steht — dein Schatten von heute wartet schon.",
+          "Kurs halten: gleiche Präzision, eine Stufe mehr.",
+        ],
+        seed + 2,
+      );
+
+  return [line1, line2, line3];
+}
+
 /* ─────────────────── Live-Zeile (Workout, PR BC) ─────────────────── */
 
 export interface LiveLine {

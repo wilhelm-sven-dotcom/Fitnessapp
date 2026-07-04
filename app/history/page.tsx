@@ -3,6 +3,7 @@
 import { Bike, Dumbbell, Play, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -171,6 +172,16 @@ export default function HistoryPage() {
                       </span>
                     </div>
                   ))}
+                  {s.debrief && s.debrief.length > 0 && (
+                    <div className="mt-2 rounded-card bg-base px-3 py-2">
+                      <p className="mb-1 flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+                        <AtlasMark size={12} className="text-fg" /> ATLAS
+                      </p>
+                      <p className="text-sm italic leading-relaxed text-muted">
+                        {s.debrief.join(" ")}
+                      </p>
+                    </div>
+                  )}
                   {s.note && (
                     <p className="mt-2 rounded-card bg-base px-3 py-2 text-sm italic text-muted">
                       „{s.note}“

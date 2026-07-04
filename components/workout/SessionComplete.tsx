@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Burst } from "@/components/ui/Burst";
 import { Pressable } from "@/components/ui/pressable";
 import { Readout } from "@/components/ui/Readout";
@@ -40,7 +41,8 @@ export function SessionComplete({
 
   useEffect(() => {
     success();
-    if (settings.voiceCues) speak("Training gespeichert. Stark!");
+    // ATLAS spricht Zeile 1 des Debriefs (drei Zeilen wären TTS-zu-lang).
+    if (settings.voiceCues) speak(summary.debrief[0] ?? "Training gespeichert. Stark!");
     if (reduce) {
       setPct(summary.xpPctTo);
       setLvl(summary.levelAfter);
@@ -155,6 +157,28 @@ export function SessionComplete({
           Diese Woche: {summary.weekSets}/{summary.weekTarget} Sätze
         </p>
       </motion.div>
+
+      {/* Das Urteil des Trainers — wandert mit der Session ins Log (Tagebuch). */}
+      {summary.debrief.length > 0 && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={stagger(5)}
+          data-testid="session-debrief"
+          className="mt-6 w-full max-w-xs rounded-card border border-line bg-surface-1 p-4 text-left shadow-card"
+        >
+          <p className="mb-2 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-accent-2">
+            <AtlasMark size={14} className="text-fg" /> ATLAS-Debrief
+          </p>
+          <div className="space-y-1.5">
+            {summary.debrief.map((l, i) => (
+              <p key={i} className="text-sm leading-relaxed text-fg">
+                {l}
+              </p>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       <motion.div
         initial={reduce ? false : { opacity: 0 }}
