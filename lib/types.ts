@@ -233,6 +233,8 @@ export interface AppSettings {
   bikeWarmup?: boolean;
   /** Append a short Peloton finisher to the A/B/C templates. */
   cardioFinisher?: boolean;
+  /** Show short motivational coach lines between sets during a workout (default on). */
+  coachMotivation?: boolean;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;

@@ -28,6 +28,7 @@ export default function SettingsPage() {
     setWeightStep,
     setBikeWarmup,
     setCardioFinisher,
+    setCoachMotivation,
   } = useTraining();
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -236,6 +237,12 @@ export default function SettingsPage() {
             onChange={setCardioFinisher}
             label="Cardio-Finisher"
             hint="Hängt an A/B/C einen kurzen Peloton-Sprintblock ans Ende — extra Kondition, jederzeit abschaltbar."
+          />
+          <Toggle
+            checked={settings.coachMotivation !== false}
+            onChange={setCoachMotivation}
+            label="Coach-Motivation im Training"
+            hint="ATLAS spornt dich zwischen den Sätzen kurz an — nur als Text, stört die Musik nie. Jederzeit abschaltbar."
           />
           <div>
             <p className="text-sm font-medium text-fg">Gewichtsstufe</p>
