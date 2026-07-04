@@ -13,6 +13,7 @@ import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleHeatmap } from "@/components/progress/MuscleHeatmap";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
+import { ProjectionCard } from "@/components/progress/ProjectionCard";
 import { RecordsBoard } from "@/components/progress/RecordsBoard";
 import { FatigueCard } from "@/components/progress/FatigueCard";
 import { PhaseCard } from "@/components/progress/PhaseCard";
@@ -25,6 +26,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
+import { projectionTargets } from "@/lib/projection-targets";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
 
 type Kind = "weight" | "reps" | "time";
@@ -85,8 +87,12 @@ function BodyCard({
 }
 
 export default function ProgressPage() {
-  const { log, body, muscleVolumes, cardio, settings } = useTraining();
+  const { log, body, muscleVolumes, cardio, settings, allLib } = useTraining();
   const router = useRouter();
+  const projTargets = useMemo(
+    () => projectionTargets(log, allLib, { weightStep: settings.weightStep }),
+    [log, allLib, settings.weightStep],
+  );
   const weightSeries = body
     .filter((m) => m.weightKg != null)
     .map((m) => m.weightKg as number);
@@ -190,6 +196,8 @@ export default function ProgressPage() {
       <PhaseCard log={log} cardio={cardio} settings={settings} />
 
       <RecordsBoard log={log} />
+
+      <ProjectionCard targets={projTargets} />
 
       <AchievementsGrid />
 

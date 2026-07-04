@@ -15,6 +15,8 @@
 import { plateauSignals } from "@/lib/advisor";
 import { balanceRatios } from "@/lib/balance";
 import type { CardioLevel } from "@/lib/coaching";
+import { fmtKg, fmtPct, isoWeek } from "@/lib/format";
+import { projectionTargets } from "@/lib/projection-targets";
 import type { FatigueState } from "@/lib/fatigue";
 import type { PhaseState } from "@/lib/periodization";
 import { band, type ReadinessScale } from "@/lib/readiness";
@@ -102,7 +104,7 @@ export interface TrainerMission {
 }
 
 export interface WatchSignal {
-  id: "last" | "phase" | "balance" | "serie" | "cardio";
+  id: "last" | "phase" | "balance" | "serie" | "cardio" | "prognose";
   label: string; // mono-uppercase im UI
   value: string;
   tone: "ok" | "watch" | "alert";
@@ -156,19 +158,8 @@ export function weekKeyOf(ref: Date = new Date()): string {
   return `${m.getFullYear()}-${p(m.getMonth() + 1)}-${p(m.getDate())}`;
 }
 
-/** ISO-Kalenderwoche. */
-export function isoWeek(ref: Date = new Date()): number {
-  const t = new Date(ref.getTime());
-  t.setHours(0, 0, 0, 0);
-  t.setDate(t.getDate() + 3 - ((t.getDay() + 6) % 7));
-  const week1 = new Date(t.getFullYear(), 0, 4);
-  return (
-    1 +
-    Math.round(
-      ((t.getTime() - week1.getTime()) / DAY - 3 + ((week1.getDay() + 6) % 7)) / 7,
-    )
-  );
-}
+/** ISO-Kalenderwoche — kanonisch in lib/format.ts, hier für Alt-Importe re-exportiert. */
+export { isoWeek };
 
 interface PrChance {
   exId: string;
@@ -214,7 +205,6 @@ function prChance(
   return best;
 }
 
-const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
 /* ────────────────────── Direktiven-Kaskade ────────────────────── */
 
@@ -470,7 +460,24 @@ function watchFor(input: TrainerInput): WatchSignal[] {
         ? { id: "cardio", label: "Cardio", value: "locker rein", tone: "watch" }
         : { id: "cardio", label: "Cardio", value: "frei", tone: "ok" };
 
-  return [last, phaseSig, balance, serie, cardio];
+  const out: WatchSignal[] = [last, phaseSig, balance, serie, cardio];
+
+  // Prognose: nur wenn die Top-Kernübung auf Kurs ist — kein Fantasie-Datum.
+  const proj = projectionTargets(log, input.allLib, {
+    weightStep: input.settings.weightStep,
+    max: 1,
+    ref: input.ref,
+  })[0];
+  if (proj && proj.state === "kurs" && proj.etaKw != null) {
+    out.push({
+      id: "prognose",
+      label: "Prognose",
+      value: `${fmtKg(proj.targetKg)} kg ≈ KW ${proj.etaKw}`,
+      tone: "ok",
+    });
+  }
+
+  return out;
 }
 
 /* ────────────────────────── State ────────────────────────── */
