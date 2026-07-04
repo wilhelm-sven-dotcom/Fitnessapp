@@ -44,6 +44,16 @@ import {
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
 import { prTimeline } from "@/lib/records";
+import {
+  sanitizeBody,
+  sanitizeCardio,
+  sanitizeCustom,
+  sanitizeDays,
+  sanitizeGyms,
+  sanitizeSessions,
+  sanitizeStringMap,
+  sanitizeVideoMap,
+} from "@/lib/sanitize";
 import { weeklySetStats, type WeeklySetStats } from "@/lib/set-plan";
 import { sessionVolume } from "@/lib/stats";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
@@ -272,30 +282,6 @@ export function useTraining(): TrainingContextValue {
   return ctx;
 }
 
-/** Custom exercises created by older builds can miss required fields (e.g. `steps`
- * was added to addCustom later). An undefined `ex.steps` crashed the guide. Backfill
- * safe defaults on load so every consumer can rely on the full Exercise shape. */
-function normalizeCustom(list: Exercise[]): Exercise[] {
-  return (Array.isArray(list) ? list : [])
-    .filter((e): e is Exercise => !!e && typeof e === "object" && typeof e.id === "string")
-    .map((e) => ({
-      ...e,
-      tag: e.tag ?? "",
-      req: Array.isArray(e.req) ? e.req : ["none"],
-      cue: e.cue ?? "",
-      steps: Array.isArray(e.steps) ? e.steps : [],
-      back: e.back ?? "",
-      easier: e.easier ?? "",
-      unit: e.unit ?? "kg",
-      sets: typeof e.sets === "number" ? e.sets : 3,
-      repLow: typeof e.repLow === "number" ? e.repLow : 8,
-      repHigh: typeof e.repHigh === "number" ? e.repHigh : 12,
-      pattern: e.pattern ?? "core",
-      weighted: e.weighted ?? false,
-      custom: true,
-    }));
-}
-
 export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [log, setLog] = useState<LoggedSession[]>([]);
   const [equip, setEquip] = useState<EquipKey[]>(DEFAULT_EQUIP);
@@ -338,16 +324,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
       storage.getJSON<StoredMission | null>(KEYS.mission, null),
     ]);
-    if (Array.isArray(l)) setLog(l);
+    // Alles durch die Sanitizer VOR setState — vergiftete Sync-/Legacy-Daten
+    // dürfen den Render nie erreichen (sonst global-error auf jeder Route).
+    // Videos bleiben dabei erhalten (nur Nicht-String-Werte fallen raus).
+    setLog(sanitizeSessions(l));
     if (Array.isArray(e)) setEquip(e);
-    if (c && typeof c === "object") setChoices(c);
-    if (Array.isArray(cu)) setCustom(normalizeCustom(cu));
-    if (Array.isArray(b)) setBody(b);
+    setChoices(sanitizeStringMap(c));
+    setCustom(sanitizeCustom(cu));
+    setBody(sanitizeBody(b));
     if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
-    if (Array.isArray(ca)) setCardio(ca);
-    if (Array.isArray(da)) setDays(da);
-    if (Array.isArray(gy)) setGyms(gy);
-    if (ev && typeof ev === "object") setExerciseVideos(ev);
+    setCardio(sanitizeCardio(ca));
+    setDays(sanitizeDays(da));
+    setGyms(sanitizeGyms(gy));
+    setExerciseVideos(sanitizeVideoMap(ev));
     if (mi && typeof mi === "object" && mi.targets) setMission(mi);
     setLoading(false);
   }, []);
@@ -618,7 +607,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const nextIndex = useMemo(() => {
     if (!log.length) return 0;
-    const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1].dayKey);
+    const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1]?.dayKey);
     return (idx + 1) % TEMPLATE.length;
   }, [log]);
   const deloadActive =
@@ -757,7 +746,18 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     [log, allLib, settings, cardio, muscleVolumes, fatigue, phase, weekSetStats,
      seeDoctor, todayReadiness, cardioTip, recTpl, recList, estimatedMin, weekCount, daysAgo, mission],
   );
-  const trainer = useMemo<TrainerState>(() => trainerState(trainerInput), [trainerInput]);
+  const trainer = useMemo<TrainerState>(() => {
+    try {
+      return trainerState(trainerInput);
+    } catch (err) {
+      // Letzte Verteidigungslinie: ATLAS degradiert auf den Kaltstart-Zustand
+      // (leerer Log = garantiert sicher), statt die ganze App per global-error
+      // niederzureißen. Die Sanitizer in loadAll sollten das nie auslösen.
+      // eslint-disable-next-line no-console
+      console.error("trainerState fehlgeschlagen — ATLAS degradiert:", err);
+      return trainerState({ ...trainerInput, log: [], allLib: LIB, cardio: [], storedTargets: undefined });
+    }
+  }, [trainerInput]);
 
   // Wochen-Rollover: Montag friert ATLAS neue Ziele ein; die Vorwoche wird
   // reviewt und füttert den Rapport. Guard (weekKey identisch) verhindert
@@ -1237,27 +1237,18 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (!raw || typeof raw !== "object") return false;
     const d = raw as Record<string, unknown>;
     if (!Array.isArray(d.log)) return false;
-    const nextLog = d.log as LoggedSession[];
-    // Minimal per-item shape check — a structurally wrong import would corrupt
-    // every downstream stat (dates are the backbone of weeks/streaks/records).
-    if (!nextLog.every((s) => !!s && typeof s === "object" && typeof s.date === "string"))
-      return false;
+    // Sanitizer statt roher Cast — dieselbe Härtung wie loadAll (eine Wahrheit).
+    // Ein fehlendes Feld behält den aktuellen State (Teil-Backup löscht nichts).
+    const nextLog = sanitizeSessions(d.log);
     const nextEquip = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
-    const nextChoices =
-      d.choices && typeof d.choices === "object"
-        ? (d.choices as Record<string, string>)
-        : choices;
-    const nextCustom = Array.isArray(d.custom)
-      ? normalizeCustom(d.custom as Exercise[])
-      : custom;
-    const nextBody = Array.isArray(d.body) ? (d.body as BodyMetric[]) : body;
-    const nextCardio = Array.isArray(d.cardio) ? (d.cardio as CardioSession[]) : cardio;
-    const nextDays = Array.isArray(d.days) ? (d.days as WorkoutDay[]) : days;
-    const nextGyms = Array.isArray(d.gyms) ? (d.gyms as GymProfile[]) : gyms;
+    const nextChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : choices;
+    const nextCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : custom;
+    const nextBody = d.body !== undefined ? sanitizeBody(d.body) : body;
+    const nextCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : cardio;
+    const nextDays = d.days !== undefined ? sanitizeDays(d.days) : days;
+    const nextGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
     const nextExerciseVideos =
-      d.exerciseVideos && typeof d.exerciseVideos === "object"
-        ? (d.exerciseVideos as Record<string, string>)
-        : exerciseVideos;
+      d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
     const nextSettings =
       d.settings && typeof d.settings === "object"
         ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }

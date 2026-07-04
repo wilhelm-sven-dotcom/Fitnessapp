@@ -19,7 +19,9 @@ const HOSTS = new Set([
 
 /** Extract the 11-character YouTube video id from a raw string, or null. */
 export function youtubeVideoId(raw: string | null | undefined): string | null {
-  if (!raw) return null;
+  // Typ-Guard: ein truthy Nicht-String (Objekt/Zahl aus korrupten Daten) darf
+  // `raw.trim()` nie werfen (TypeError: raw.trim is not a function).
+  if (!raw || typeof raw !== "string") return null;
   const s = raw.trim();
   if (!s || s.length > 2048) return null;
 
