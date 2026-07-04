@@ -147,6 +147,8 @@ export interface LoggedSession {
   isDeload?: boolean;
   /** Pre-session readiness check. */
   readiness?: Readiness;
+  /** ATLAS-Debrief: three verdict lines, generated at save time (stable). */
+  debrief?: string[];
 }
 
 export interface BodyMetric {
