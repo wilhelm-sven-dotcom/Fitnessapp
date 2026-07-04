@@ -237,6 +237,7 @@ interface TrainingContextValue {
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
   setCardioFinisher: (on: boolean) => void;
+  setCoachMotivation: (on: boolean) => void;
   setUserName: (name: string) => void;
   setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
   completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
@@ -924,6 +925,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, bikeWarmup: on });
   const setCardioFinisher = (on: boolean) =>
     void saveSettings({ ...settings, cardioFinisher: on });
+  const setCoachMotivation = (on: boolean) =>
+    void saveSettings({ ...settings, coachMotivation: on });
 
   // Ensure one gym profile exists — migrate from the flat equipment list.
   useEffect(() => {
@@ -1361,6 +1364,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setWeightStep,
     setBikeWarmup,
     setCardioFinisher,
+    setCoachMotivation,
     setUserName,
     setAthleteProfile,
     completeOnboarding,

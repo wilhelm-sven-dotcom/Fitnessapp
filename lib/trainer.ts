@@ -603,7 +603,7 @@ export interface LiveLine {
   text: string;
   tone: "ok" | "watch" | "push";
   /** Auslöser — fürs Voice-Gating (Rekord spricht schon die Rekord-Feier). */
-  kind: "record" | "chase" | "shadow" | "rir" | "readiness" | "presc";
+  kind: "record" | "chase" | "shadow" | "rir" | "readiness" | "presc" | "motivate";
 }
 
 export function liveLine(opts: {
@@ -722,6 +722,59 @@ export function liveLine(opts: {
     default:
       return null;
   }
+}
+
+/* ─────────────── Motivations-Zeile (Coach-Ansporn, an/aus) ─────────────── */
+
+const MOTIVATE_START = [
+  "Erster Satz — gib den Ton an.",
+  "Los geht's. Sauber, kontrolliert, voll da.",
+  "Kopf an, Fokus auf die Technik. Jetzt.",
+  "Anfangen ist die halbe Miete — leg los.",
+];
+const MOTIVATE_MID = [
+  "Dranbleiben — genau hier entsteht der Fortschritt.",
+  "Technik hält, Tempo hält. Weiter so.",
+  "Sauber wie eben — nächster Satz.",
+  "Jeder Satz zählt. Bleib präsent.",
+];
+const MOTIVATE_LAST = [
+  "Letzter Satz — alles rein, was du hast.",
+  "Noch einer. Beiß dich sauber durch bis zum Schluss.",
+  "Finish stark — dafür bist du hier.",
+];
+const MOTIVATE_DONE = [
+  "Übung durch — stark gezogen.",
+  "Abgehakt. Genau so weiter.",
+  "Sitzt. Nächste Übung wartet.",
+];
+
+/**
+ * Kurze, anspornende Coach-Zeile fürs Training — bewusst SEPARAT von `liveLine`
+ * (die taktisch first-match-wins ist und deren `presc`-Zweig fast immer greift).
+ * Deterministisch (daySeed + Satz-Stand), kontextbewusst nach Fortschritt: liefert
+ * immer eine Zeile für Kraft-Übungen, `null` nur für Cardio. Rendert leise als
+ * eigene Zeile (MotivationLine), per `settings.coachMotivation` abschaltbar.
+ */
+export function motivationLine(opts: {
+  ex: Exercise;
+  sets: SetEntry[];
+  seed?: number;
+}): LiveLine | null {
+  const { ex } = opts;
+  if (ex.pattern === "cardio") return null;
+  const seed = opts.seed ?? daySeed(new Date());
+  const done = (opts.sets ?? []).filter((s) => !s.warmup && isFilled(s)).length;
+  const target = typeof ex.sets === "number" && ex.sets > 0 ? ex.sets : 3;
+  const pool =
+    done <= 0
+      ? MOTIVATE_START
+      : done >= target
+        ? MOTIVATE_DONE
+        : done >= target - 1
+          ? MOTIVATE_LAST
+          : MOTIVATE_MID;
+  return { text: pick(pool, seed + done), tone: "push", kind: "motivate" };
 }
 
 /* ─────────────── Wochen-Mission: Persistenz + Review ─────────────── */

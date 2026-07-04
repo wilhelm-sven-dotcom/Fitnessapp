@@ -33,6 +33,7 @@ import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
+import { MotivationLine } from "@/components/trainer/MotivationLine";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { ShadowRace } from "@/components/workout/ShadowRace";
@@ -48,7 +49,7 @@ import { success, tap } from "@/lib/haptics";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { bestAlternativeForPattern, presc } from "@/lib/progression";
 import { estimateRemainingMin, estimateSessionMin, supersetPair, TIME } from "@/lib/session-time";
-import { liveLine } from "@/lib/trainer";
+import { liveLine, motivationLine } from "@/lib/trainer";
 import { recommendedSets } from "@/lib/set-plan";
 import { isFilled } from "@/lib/stats";
 import { SPRING } from "@/lib/motion";
@@ -781,6 +782,16 @@ export default function WorkoutPage() {
                   lastPerf: lp,
                 })
               : null;
+          // Coach-Motivation (an/aus): eigene, leise Ansporn-Zeile — nur Text,
+          // stört die Musik nie. Weicht bei den großen Momenten (Rekord/Schatten)
+          // zurück, damit die taktische Zeile allein steht. Default an.
+          const cardMotivation =
+            settings.coachMotivation !== false &&
+            isActiveCard &&
+            ex.pattern !== "cardio" &&
+            !(cardLine && (cardLine.kind === "record" || cardLine.kind === "shadow"))
+              ? motivationLine({ ex, sets: entries[ex.id] || [] })
+              : null;
           // Fokus-Akkordeon: erledigt → Ergebnis-Zeile, offen → Ghost-Vorschau,
           // aktiv/angesehen → volle Karte. Der Superset-Partner der aktiven
           // Karte bleibt immer offen (man wechselt jeden Satz); der Flash-Guard
@@ -1064,6 +1075,7 @@ export default function WorkoutPage() {
                   )}
 
                   {cardLine && <AtlasLiveLine line={cardLine} />}
+                  {cardMotivation && <MotivationLine text={cardMotivation.text} />}
 
                   <div className="mt-3 space-y-1">
                     {(() => {
