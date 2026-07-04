@@ -9,6 +9,10 @@ export interface CardioWeek {
   count: number;
   minutes: number;
   kj: number;
+  /** Total burned calories this week (0 if none recorded). */
+  calories: number;
+  /** Total distance this week in metres (0 if none recorded). */
+  distance: number;
 }
 
 const weekStart = (ref: Date) => {
@@ -26,15 +30,25 @@ export function weeklyCardio(cardio: CardioSession[], ref: Date = new Date()): C
   let count = 0;
   let sec = 0;
   let kj = 0;
+  let cal = 0;
+  let dist = 0;
   for (const c of cardio) {
     const t = new Date(c.date);
     if (t >= mon && t < end) {
       count++;
       sec += c.durationSec;
       kj += c.kj ?? 0;
+      cal += c.calories ?? 0;
+      dist += c.distance ?? 0;
     }
   }
-  return { count, minutes: Math.round(sec / 60), kj: Math.round(kj) };
+  return {
+    count,
+    minutes: Math.round(sec / 60),
+    kj: Math.round(kj),
+    calories: Math.round(cal),
+    distance: Math.round(dist),
+  };
 }
 
 export function lastRide(cardio: CardioSession[]): CardioSession | null {

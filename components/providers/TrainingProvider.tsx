@@ -249,6 +249,8 @@ interface TrainingContextValue {
   exportData: () => ExportEnvelope;
   importData: (raw: unknown) => Promise<boolean>;
   cardio: CardioSession[];
+  addManualCardio: (entry: Omit<CardioSession, "id" | "source">) => Promise<void>;
+  removeCardio: (id: string) => Promise<void>;
   strava: StravaApi;
   cloud: CloudApi;
 }
@@ -973,6 +975,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCardio(next);
     await storage.setJSON(KEYS.cardio, next);
   };
+  // Manually logged endurance session (run/interval/ride/…) — the "manual"
+  // source seam, deduped by id like Strava imports.
+  const addManualCardio = async (entry: Omit<CardioSession, "id" | "source">) => {
+    const id = `manual-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    await saveCardio(mergeCardio(cardio, [{ ...entry, id, source: "manual" }]));
+  };
+  const removeCardio = async (id: string) => {
+    await saveCardio(cardio.filter((c) => c.id !== id));
+  };
   type StravaTokens = NonNullable<AppSettings["strava"]>;
   const stravaPost = async (payload: Record<string, unknown>) => {
     const res = await fetch("/api/strava", {
@@ -1376,6 +1387,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     exportData,
     importData,
     cardio,
+    addManualCardio,
+    removeCardio,
     strava,
     cloud,
   };

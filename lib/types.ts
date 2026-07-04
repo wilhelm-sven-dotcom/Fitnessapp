@@ -252,6 +252,8 @@ export interface CardioSession {
   id: string;
   /** "peloton" kept for any data synced before the switch to Strava. */
   source: "peloton" | "strava" | "manual";
+  /** Activity kind — drives the endurance hub grouping/icons and the coach. */
+  sport?: "run" | "ride" | "interval" | "row" | "walk" | "other";
   date: string; // ISO
   durationSec: number;
   kj?: number;

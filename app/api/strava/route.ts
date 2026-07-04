@@ -155,9 +155,29 @@ export async function POST(req: Request) {
 
       const data = (await res.json()) as RawStravaActivity[];
       const raw = Array.isArray(data) ? data : [];
-      const rides = raw
+      let rides = raw
         .map(normalizeActivity)
         .filter((r): r is CardioSession => r !== null);
+
+      // The summary list carries no `calories` (only kilojoules). Pull real
+      // calories from the per-activity detail endpoint for the most recent
+      // activities — best-effort and capped, so a sync stays well within
+      // Strava's rate limits (100 req / 15 min).
+      const recent = raw.filter((a) => a.id != null).slice(0, 12);
+      const details = await Promise.allSettled(
+        recent.map((a) =>
+          fetch(`${STRAVA_API}/activities/${a.id}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }).then((r) => (r.ok ? (r.json() as Promise<RawStravaActivity>) : null)),
+        ),
+      );
+      const calById = new Map<string, number>();
+      details.forEach((d, i) => {
+        const cal = d.status === "fulfilled" && d.value ? d.value.calories : undefined;
+        if (typeof cal === "number") calById.set(`strava-${recent[i].id}`, Math.round(cal));
+      });
+      rides = rides.map((r) => (calById.has(r.id) ? { ...r, calories: calById.get(r.id) } : r));
+
       return Response.json({ ok: true, rides, tokens: refreshed });
     }
 

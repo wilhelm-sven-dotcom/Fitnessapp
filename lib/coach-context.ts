@@ -1,5 +1,6 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
 import { hoursSince, lastRide, weeklyCardio } from "@/lib/cardio";
+import { intensityLabel, kmLabel, sportLabel } from "@/lib/cardio-sport";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS } from "@/lib/training-science";
 import { MUSCLE_LABEL, underservedMuscles, weeklyMuscleVolume } from "@/lib/volume";
@@ -109,15 +110,20 @@ export function buildCoachContext(opts: {
 
   if (cardio.length) {
     const wk = weeklyCardio(cardio);
-    lines.push("", "Kardio:");
-    lines.push(`Diese Woche: ${wk.count} Fahrten · ${wk.minutes} Min · ${wk.kj} kJ.`);
+    lines.push("", "Ausdauer:");
+    const wkDist = wk.distance ? ` · ${kmLabel(wk.distance)}` : "";
+    const wkCal = wk.calories ? ` · ${wk.calories} kcal` : "";
+    lines.push(
+      `Diese Woche: ${wk.count} Einheiten · ${wk.minutes} Min${wkDist} · ${wk.kj} kJ${wkCal}.`,
+    );
     const lr = lastRide(cardio);
     if (lr) {
       const h = Math.round(hoursSince(lr.date));
-      const intDE =
-        lr.intensity === "hard" ? "hart" : lr.intensity === "moderate" ? "moderat" : "locker";
+      const km = lr.distance ? ` · ${kmLabel(lr.distance)}` : "";
+      const kj = lr.kj != null ? ` · ${lr.kj} kJ` : "";
+      const cal = lr.calories ? ` · ${lr.calories} kcal` : "";
       lines.push(
-        `Letzte Fahrt: vor ${h} h · ${Math.round(lr.durationSec / 60)} Min · ${lr.kj ?? "?"} kJ (${intDE})${lr.title ? ` — ${lr.title}` : ""}.`,
+        `Letzte Einheit: ${sportLabel(lr.sport)}, vor ${h} h · ${Math.round(lr.durationSec / 60)} Min${km}${kj}${cal} (${intensityLabel(lr.intensity)})${lr.title ? ` — ${lr.title}` : ""}.`,
       );
     }
   }

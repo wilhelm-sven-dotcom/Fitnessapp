@@ -1,3 +1,4 @@
+import { stravaSport } from "@/lib/cardio-sport";
 import type { CardioSession } from "@/lib/types";
 
 /** Official Strava OAuth + API. Client secret is used server-side only. */
@@ -29,6 +30,8 @@ export interface RawStravaActivity {
   distance?: number;
   average_heartrate?: number;
   kilojoules?: number;
+  /** Only present on the per-activity detail endpoint (not the summary list). */
+  calories?: number;
 }
 
 /** Map a raw Strava activity to a CardioSession. Defensive — fields may be missing. */
@@ -55,12 +58,16 @@ export function normalizeActivity(raw: RawStravaActivity): CardioSession | null 
     intensity = "moderate";
   }
 
+  const calories = typeof raw.calories === "number" ? Math.round(raw.calories) : undefined;
+
   return {
     id: `strava-${raw.id}`,
     source: "strava",
+    sport: stravaSport(raw.type, raw.sport_type),
     date,
     durationSec,
     kj,
+    calories,
     avgHr,
     distance,
     title: raw.name ?? undefined,
