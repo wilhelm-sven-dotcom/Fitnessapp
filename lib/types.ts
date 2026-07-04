@@ -243,6 +243,14 @@ export interface AppSettings {
     expiresAt: number;
     athleteName?: string;
   };
+  /** Spotify connection (OAuth PKCE, public client — no server secret). */
+  spotify?: {
+    accessToken: string;
+    refreshToken: string;
+    /** Unix seconds when the access token expires. */
+    expiresAt: number;
+    displayName?: string;
+  };
   /** Editable athlete profile (replaces the hardcoded persona). */
   athleteProfile?: AthleteProfile;
 }
