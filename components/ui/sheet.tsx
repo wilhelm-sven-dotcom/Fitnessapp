@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useRef } from "react";
 
 const FOCUSABLE =
@@ -25,6 +25,7 @@ export function Sheet({
   children: React.ReactNode;
 }) {
   const reduce = useReducedMotion();
+  const dragControls = useDragControls();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
@@ -90,20 +91,41 @@ export function Sheet({
             animate={reduce ? { opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0 } : { y: "100%" }}
             transition={reduce ? { duration: 0.15 } : { type: "spring", stiffness: 360, damping: 36 }}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 1 }}
+            onDragEnd={(_, info) => {
+              // Swipe the sheet down past a threshold (or with a downward flick)
+              // to dismiss; otherwise it springs back to its resting position
+              // (the drag constraint at y:0) — no half-open state.
+              if (info.offset.y > 110 || info.velocity.y > 500) onClose();
+            }}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? titleId : undefined}
           >
-            <div className="flex justify-center pt-3">
-              <span className="h-1 w-10 rounded-full bg-surface-2" />
-            </div>
-            {title && (
-              <div className="px-5 pb-1 pt-3">
-                <h3 id={titleId} className="text-lg font-semibold tracking-tight">
-                  {title}
-                </h3>
+            {/* Grab zone = handle pill + title. Pointer-down here starts the
+                drag (dragListener is off), so swiping the scrollable content /
+                video below scrolls normally and never drags the sheet. Swipe
+                this zone down to dismiss. */}
+            <div
+              onPointerDown={(e) => dragControls.start(e)}
+              className="cursor-grab select-none active:cursor-grabbing"
+              style={{ touchAction: "none" }}
+            >
+              <div className="flex justify-center pb-1 pt-3">
+                <span className="h-1.5 w-10 rounded-full bg-surface-3" />
               </div>
-            )}
+              {title && (
+                <div className="px-5 pb-1 pt-3">
+                  <h3 id={titleId} className="text-lg font-semibold tracking-tight">
+                    {title}
+                  </h3>
+                </div>
+              )}
+            </div>
             <div
               className="overflow-y-auto px-5 pb-8 pt-2"
               style={{ maxHeight: "78vh" }}

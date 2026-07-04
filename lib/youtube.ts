@@ -58,12 +58,19 @@ export function youtubeVideoId(raw: string | null | undefined): string | null {
 
 /**
  * Build a privacy-domain (youtube-nocookie) embeddable URL for a raw YouTube
- * URL, or null if it isn't a YouTube link. `rel=0` keeps end-card suggestions
- * to the same channel.
+ * URL, or null if it isn't a YouTube link.
+ * · `rel=0` keeps end-card suggestions to the same channel.
+ * · `mute=1` starts the player muted so opening a form demo never seizes the
+ *   iOS audio session — Spotify/AirPods keep playing. (A form demo needs no
+ *   sound; the user can still unmute in the YouTube player, which then, by iOS
+ *   design, pauses the music.)
+ * · `playsinline=1` plays inline instead of forcing iOS fullscreen.
  */
 export function youtubeEmbedUrl(raw: string | null | undefined): string | null {
   const id = youtubeVideoId(raw);
-  return id ? `https://www.youtube-nocookie.com/embed/${id}?rel=0` : null;
+  return id
+    ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&mute=1&playsinline=1`
+    : null;
 }
 
 /** Whether a raw string parses as a YouTube link. */
