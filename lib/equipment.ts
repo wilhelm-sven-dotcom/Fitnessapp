@@ -4,10 +4,7 @@
  * total across both hands, so there's no mental math mid-set.
  */
 
-/** Format a kg value with a German decimal comma, trimming a trailing ",0". */
-function fmtKg(kg: number): string {
-  return (Math.round(kg * 10) / 10).toString().replace(".", ",");
-}
+import { fmtKg } from "@/lib/format";
 
 /**
  * Hint shown under the weight input of a dumbbell set, e.g.
