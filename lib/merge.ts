@@ -31,8 +31,11 @@ function parse<T>(raw: string | undefined, fallback: T): T {
 
 function unionBy<T>(local: T[], cloud: T[], key: (x: T) => string): T[] {
   const out = new Map<string, T>();
-  for (const x of local) out.set(key(x), x);
-  for (const x of cloud) out.set(key(x), x); // cloud wins on collision
+  // Array-Guard: ein Nicht-Array-Parse-Ergebnis (verformte Cloud-/Local-Kopie)
+  // darf die `for..of`-Schleife nicht werfen — sonst reißt der Pull komplett ab
+  // (der Docstring „never throws on malformed input" wird damit wahr).
+  for (const x of Array.isArray(local) ? local : []) out.set(key(x), x);
+  for (const x of Array.isArray(cloud) ? cloud : []) out.set(key(x), x); // cloud wins on collision
   return [...out.values()];
 }
 
