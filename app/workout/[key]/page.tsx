@@ -34,6 +34,7 @@ import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
 import { MotivationLine } from "@/components/trainer/MotivationLine";
+import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { ShadowRace } from "@/components/workout/ShadowRace";
@@ -698,6 +699,8 @@ export default function WorkoutPage() {
           </>
         )}
       </div>
+
+      <SpotifyNowPlaying />
 
       {cardioAdvice.level !== "none" && (
         <div className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-4">

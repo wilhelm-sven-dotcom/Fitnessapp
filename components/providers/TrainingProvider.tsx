@@ -72,6 +72,7 @@ import {
   type ThemePref,
 } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
+import type { SpotifyAuth } from "@/lib/spotify";
 import type {
   AppSettings,
   AthleteProfile,
@@ -252,6 +253,7 @@ interface TrainingContextValue {
   addManualCardio: (entry: Omit<CardioSession, "id" | "source">) => Promise<void>;
   removeCardio: (id: string) => Promise<void>;
   strava: StravaApi;
+  spotify: SpotifyApi;
   cloud: CloudApi;
 }
 
@@ -275,6 +277,14 @@ export interface StravaApi {
   connect: (code: string) => Promise<{ ok: boolean; error?: string }>;
   syncNow: () => Promise<{ ok: boolean; error?: string }>;
   disconnect: () => void;
+}
+
+export interface SpotifyApi {
+  /** True when NEXT_PUBLIC_SPOTIFY_CLIENT_ID is set — otherwise fully inert. */
+  configured: boolean;
+  auth: SpotifyAuth | undefined;
+  connect: (auth: SpotifyAuth) => Promise<void>;
+  disconnect: () => Promise<void>;
 }
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
@@ -1054,6 +1064,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     disconnect: () => void saveSettings({ ...settings, strava: undefined }),
   };
 
+  // Spotify uses OAuth PKCE (no server secret) — the token exchange/refresh and
+  // now-playing polling live in the useSpotify hook; the provider only persists
+  // the auth (so it syncs to the cloud like every other setting).
+  const spotify: SpotifyApi = {
+    configured: !!process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
+    auth: settings.spotify,
+    connect: async (auth) => {
+      await saveSettings({ ...settings, spotify: auth });
+    },
+    disconnect: async () => {
+      await saveSettings({ ...settings, spotify: undefined });
+    },
+  };
+
   const acceptDeload = () =>
     void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
   const dismissCard = (card: CoachCard) =>
@@ -1390,6 +1414,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     addManualCardio,
     removeCardio,
     strava,
+    spotify,
     cloud,
   };
 
