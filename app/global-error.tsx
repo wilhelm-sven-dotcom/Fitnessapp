@@ -1,16 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { purgeCachesAndWorkers } from "@/lib/pwa-reset";
+import { repairPersistedData } from "@/lib/sanitize";
 
 /**
  * Root-level error boundary. Unlike `app/error.tsx`, this catches errors thrown in
  * `app/layout.tsx`, the providers, the AppShell, and chunk-load failures — anything
- * above the per-route boundaries. Without it the user sees the raw default Next.js
- * "Application error" screen with no way back. It must render its own <html>/<body>
- * (it replaces the whole document) and can't rely on the app's CSS/skin, so styles
- * are inline and neutral.
+ * above the per-route boundaries. Crucially, when it shows, the normal app tree is
+ * replaced, so `ServiceWorkerRegister` (the update machinery) is NOT mounted — the
+ * device can't discover a new build on its own. So this boundary self-heals:
+ *
+ * On the FIRST root crash of a session it (1) repairs the persisted data in place
+ * — the usual culprit is a structurally-broken localStorage entry that an old
+ * cached build chokes on; cleaning it makes ANY build render again — (2) purges
+ * stale code caches + the service worker, then (3) reloads into a clean, current
+ * build. A sessionStorage one-shot prevents a reload loop: if it still crashes the
+ * box stays put, now showing the real error so it can be reported. It must render
+ * its own <html>/<body> (it replaces the whole document) with inline neutral styles.
  */
 export default function GlobalError({
   error,
@@ -18,27 +26,48 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
+  const detail = `${error?.name ?? "Error"}: ${error?.message ?? ""}${error?.digest ? ` [${error.digest}]` : ""}`;
+
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.error("Root-Fehler:", error);
-    // Self-heal a stale-chunk / version-skew error after a deploy: an old
-    // session requested code chunks the new build no longer has. Purge the
-    // stale build + reload ONCE — sharing the one-shot key with the SW
-    // registrar so the two never double-reload. If the reload doesn't fix it,
-    // the flag stays set and this box remains visible (no reload loop).
-    const CHUNK_RE =
-      /ChunkLoadError|Loading chunk [\w-]+ failed|error loading dynamically imported module|Importing a module script failed/i;
-    if (!CHUNK_RE.test(`${error?.name ?? ""} ${error?.message ?? ""}`)) return;
-    let already = false;
+    let healed = false;
     try {
-      already = !!sessionStorage.getItem("chunk-reload");
-      if (!already) sessionStorage.setItem("chunk-reload", "1");
+      healed = !!sessionStorage.getItem("app-crash-heal");
+      if (!healed) sessionStorage.setItem("app-crash-heal", "1");
     } catch {
-      /* storage unavailable */
+      /* storage unavailable — skip the one-shot, show the box */
     }
-    if (already) return;
+    if (healed) return; // a prior heal+reload didn't fix it → let the box surface
+    // Repair the data FIRST (fixes the common case even on a stale build), then
+    // drop stale code + reload for a clean, current build.
+    try {
+      repairPersistedData();
+    } catch {
+      /* never blocks the reload */
+    }
     void purgeCachesAndWorkers().finally(() => window.location.reload());
   }, [error]);
+
+  const hardReload = () => {
+    try {
+      repairPersistedData();
+    } catch {
+      /* ignore */
+    }
+    void purgeCachesAndWorkers().finally(() => window.location.reload());
+  };
+
+  const copy = () => {
+    try {
+      void navigator.clipboard?.writeText(detail);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
 
   return (
     <html lang="de">
@@ -56,7 +85,7 @@ export default function GlobalError({
           WebkitFontSmoothing: "antialiased",
         }}
       >
-        <div style={{ maxWidth: 320, padding: "0 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 340, padding: "0 24px", textAlign: "center" }}>
           <div style={{ fontSize: 34, marginBottom: 10 }} aria-hidden>
             ⚠️
           </div>
@@ -69,12 +98,7 @@ export default function GlobalError({
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button
-              onClick={() => {
-                // Hard-heal: drop the stale cache + service worker, then reload
-                // into a clean, consistent build. The guaranteed manual fix if
-                // the auto-reload above was already spent this session.
-                void purgeCachesAndWorkers().finally(() => window.location.reload());
-              }}
+              onClick={hardReload}
               style={{
                 appearance: "none",
                 border: 0,
@@ -106,6 +130,57 @@ export default function GlobalError({
               }}
             >
               Zur Startseite
+            </button>
+          </div>
+
+          {/* The actual error — so a persistent crash can be reported instead of guessed. */}
+          <div style={{ marginTop: 22, textAlign: "left" }}>
+            <p
+              style={{
+                margin: "0 0 6px",
+                fontSize: 11,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "#5e6672",
+              }}
+            >
+              Technische Details
+            </p>
+            <pre
+              style={{
+                margin: 0,
+                maxHeight: 120,
+                overflow: "auto",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                fontSize: 11,
+                lineHeight: 1.45,
+                color: "#9aa3af",
+                background: "#12161c",
+                border: "1px solid #222b38",
+                borderRadius: 8,
+                padding: "10px 12px",
+              }}
+            >
+              {detail}
+            </pre>
+            <button
+              onClick={copy}
+              style={{
+                appearance: "none",
+                marginTop: 8,
+                border: "1px solid #222b38",
+                borderRadius: 8,
+                padding: "8px 12px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#e8ecf2",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+            >
+              {copied ? "Kopiert ✓" : "Fehler kopieren"}
             </button>
           </div>
         </div>
