@@ -41,6 +41,7 @@ import type {
   AppSettings,
   CardioSession,
   Exercise,
+  LastPerf,
   LoggedSession,
   Muscle,
   Prescription,
@@ -513,7 +514,7 @@ export interface LiveLine {
   text: string;
   tone: "ok" | "watch" | "push";
   /** Auslöser — fürs Voice-Gating (Rekord spricht schon die Rekord-Feier). */
-  kind: "record" | "chase" | "rir" | "readiness" | "presc";
+  kind: "record" | "chase" | "shadow" | "rir" | "readiness" | "presc";
 }
 
 export function liveLine(opts: {
@@ -522,6 +523,8 @@ export function liveLine(opts: {
   presc: Prescription;
   record: ExRecord | null;
   readiness: ReadinessScale;
+  /** Letzte Leistung der Übung — fürs Schattenrennen (Überhol-Kommentar). */
+  lastPerf?: LastPerf | null;
   seed?: number;
 }): LiveLine | null {
   const { ex, sets, presc, record, readiness } = opts;
@@ -537,6 +540,37 @@ export function liveLine(opts: {
       tone: "push",
       kind: "record",
     };
+  }
+
+  // ①′ Schattenrennen: der eben gefüllte Satz schlägt den Schatten-Satz
+  //    (gleicher Index in der letzten Leistung dieser Übung).
+  if (opts.lastPerf) {
+    const shadow = workSets(opts.lastPerf.sets).filter(isFilled);
+    const i = filled.length - 1;
+    const last = filled[i];
+    if (last && shadow[i]) {
+      const now = setMetric(ex, last);
+      const then = setMetric(ex, shadow[i]);
+      if (now > then) {
+        const lbl = (s: SetEntry) =>
+          ex.unit === "Sek"
+            ? `${s.reps}s`
+            : s.weight !== "" && s.weight != null
+              ? `${s.weight}×${s.reps}`
+              : `${s.reps}`;
+        return {
+          text: pick(
+            [
+              `Satz ${i + 1}: ${lbl(last)} — dein Schatten hatte ${lbl(shadow[i])}. Überholt.`,
+              `Schatten geschlagen — ${lbl(last)} gegen ${lbl(shadow[i])} in Satz ${i + 1}.`,
+            ],
+            seed + i,
+          ),
+          tone: "push",
+          kind: "shadow",
+        };
+      }
+    }
   }
 
   // ② Rekordjagd: Vorschlag nahe an der Bestmarke.

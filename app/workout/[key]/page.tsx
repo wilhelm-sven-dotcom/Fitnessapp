@@ -35,6 +35,7 @@ import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
+import { ShadowRace } from "@/components/workout/ShadowRace";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
@@ -408,8 +409,10 @@ export default function WorkoutPage() {
       presc: p,
       record: recordMap.get(slot.ex.id) ?? null,
       readiness: readinessScale,
+      lastPerf: lastPerf(slot.ex.id),
     });
-    if (!line || (line.kind !== "chase" && line.kind !== "rir")) return;
+    if (!line || (line.kind !== "chase" && line.kind !== "rir" && line.kind !== "shadow"))
+      return;
     const done = (entries[slot.ex.id] || []).filter((s) => !s.warmup && isFilled(s)).length;
     const speakKey = `${slot.ex.id}:${done}:${line.text}`;
     if (spokenRef.current.has(speakKey)) return;
@@ -775,6 +778,7 @@ export default function WorkoutPage() {
                   presc: p,
                   record: recordMap.get(ex.id) ?? null,
                   readiness: readinessScale,
+                  lastPerf: lp,
                 })
               : null;
           // Fokus-Akkordeon: erledigt → Ergebnis-Zeile, offen → Ghost-Vorschau,
@@ -1039,15 +1043,25 @@ export default function WorkoutPage() {
                 </div>
               ) : (
                 <>
-                  <div className="mt-3 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
-                    <p className="text-xs uppercase tracking-widest text-muted">
-                      Letztes Mal
-                    </p>
-                    <p className="font-mono text-sm tabular-nums text-fg">
-                      {ps || "—"}
-                    </p>
-                    <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
-                  </div>
+                  {/* Aktive Karte mit Historie → das Duell; sonst das ruhige Kästchen. */}
+                  {isActiveCard && lp ? (
+                    <ShadowRace
+                      ex={ex}
+                      sets={entries[ex.id] || []}
+                      lastPerf={lp}
+                      prescLine={p.line}
+                    />
+                  ) : (
+                    <div className="mt-3 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
+                      <p className="text-xs uppercase tracking-widest text-muted">
+                        Letztes Mal
+                      </p>
+                      <p className="font-mono text-sm tabular-nums text-fg">
+                        {ps || "—"}
+                      </p>
+                      <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
+                    </div>
+                  )}
 
                   {cardLine && <AtlasLiveLine line={cardLine} />}
 
