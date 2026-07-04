@@ -332,12 +332,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setChoices(sanitizeStringMap(c));
     setCustom(sanitizeCustom(cu));
     setBody(sanitizeBody(b));
-    if (s && typeof s === "object") setSettings({ ...DEFAULT_SETTINGS, ...s });
+    if (s && typeof s === "object" && !Array.isArray(s)) setSettings({ ...DEFAULT_SETTINGS, ...s });
     setCardio(sanitizeCardio(ca));
     setDays(sanitizeDays(da));
     setGyms(sanitizeGyms(gy));
     setExerciseVideos(sanitizeVideoMap(ev));
-    if (mi && typeof mi === "object" && mi.targets) setMission(mi);
+    // Mission nur mit einem echten targets-OBJEKT (der Rollover liest
+    // mission.targets.weekKey — ein Nicht-Objekt würfe dort).
+    if (mi && typeof mi === "object" && mi.targets && typeof mi.targets === "object") setMission(mi);
     setLoading(false);
   }, []);
 
@@ -764,17 +766,24 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // jede Schleife; der Zwei-Geräte-Fall heilt sich über denselben Check.
   useEffect(() => {
     if (loading) return;
-    const wk = weekKeyOf(new Date());
-    if (mission?.targets.weekKey === wk) return;
-    const lastReview = mission ? reviewMission(mission.targets, log, allLib) : undefined;
-    const next: StoredMission = {
-      version: 1,
-      targets: generateMissionTargets({ ...trainerInput, storedTargets: undefined }),
-      generatedAt: new Date().toISOString(),
-      lastReview,
-    };
-    setMission(next);
-    void storage.setJSON(KEYS.mission, next);
+    // In try/catch: ein Fehler in reviewMission/generateMissionTargets darf als
+    // Effekt-Wurf nicht die Root-Boundary (global-error) auslösen.
+    try {
+      const wk = weekKeyOf(new Date());
+      if (mission?.targets?.weekKey === wk) return;
+      const lastReview = mission ? reviewMission(mission.targets, log, allLib) : undefined;
+      const next: StoredMission = {
+        version: 1,
+        targets: generateMissionTargets({ ...trainerInput, storedTargets: undefined }),
+        generatedAt: new Date().toISOString(),
+        lastReview,
+      };
+      setMission(next);
+      void storage.setJSON(KEYS.mission, next);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Mission-Rollover übersprungen:", err);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, mission, log, allLib]);
 

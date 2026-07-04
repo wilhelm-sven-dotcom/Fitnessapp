@@ -98,6 +98,80 @@ export function sanitizeVideoMap(x: unknown): Record<string, string> {
   return sanitizeStringMap(x);
 }
 
+/**
+ * Repair the persisted app data IN PLACE in localStorage — the last-resort
+ * recovery the root error boundary can run even when the app tree (and thus the
+ * provider's loadAll sanitize) never mounts. Sanitizes every known store and
+ * writes the cleaned value back, so ANY build — old or new — reads renderable
+ * data on the next load. Pure DOM localStorage access (no Supabase-heavy storage
+ * layer import), every step guarded → never throws. Valid data incl. video URLs
+ * is preserved 1:1; only structurally-broken entries are dropped.
+ *
+ * Key strings MUST match KEYS in lib/storage.ts.
+ */
+export function repairPersistedData(): void {
+  let ls: Storage;
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    ls = window.localStorage;
+  } catch {
+    return;
+  }
+  const jobs: [string, (v: unknown) => unknown][] = [
+    ["wilhelm-training-log", sanitizeSessions],
+    ["wilhelm-training-cardio", sanitizeCardio],
+    ["wilhelm-training-body", sanitizeBody],
+    ["wilhelm-training-days", sanitizeDays],
+    ["wilhelm-training-gyms", sanitizeGyms],
+    ["wilhelm-training-custom", sanitizeCustom],
+    ["wilhelm-training-choices", sanitizeStringMap],
+    ["wilhelm-training-exercise-videos", sanitizeVideoMap],
+  ];
+  for (const [key, fn] of jobs) {
+    try {
+      const raw = ls.getItem(key);
+      if (raw == null) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        ls.removeItem(key);
+        continue;
+      }
+      const next = JSON.stringify(fn(parsed));
+      if (next !== raw) ls.setItem(key, next);
+    } catch {
+      /* never throw */
+    }
+  }
+  // settings/mission: keep only a plain object (mission also needs a targets
+  // object). A malformed value here can throw in the provider/rollover effect.
+  for (const key of ["wilhelm-training-settings", "wilhelm-training-mission"]) {
+    try {
+      const raw = ls.getItem(key);
+      if (raw == null) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        ls.removeItem(key);
+        continue;
+      }
+      const okObj = !!parsed && typeof parsed === "object" && !Array.isArray(parsed);
+      if (!okObj) {
+        ls.removeItem(key);
+        continue;
+      }
+      if (key.endsWith("mission")) {
+        const t = (parsed as Record<string, unknown>).targets;
+        if (!t || typeof t !== "object" || Array.isArray(t)) ls.removeItem(key);
+      }
+    } catch {
+      /* never throw */
+    }
+  }
+}
+
 /** Custom exercises — backfill fields older builds omitted (guide relied on them). */
 export function sanitizeCustom(x: unknown): Exercise[] {
   return arr(x)
