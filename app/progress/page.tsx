@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LineChart, Play } from "lucide-react";
+import { ChevronRight, Images, LineChart, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { AchievementsGrid } from "@/components/progress/AchievementsGrid";
@@ -12,7 +12,6 @@ import { SetCollectorCard } from "@/components/progress/SetCollectorCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleHeatmap } from "@/components/progress/MuscleHeatmap";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
-import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { ProjectionCard } from "@/components/progress/ProjectionCard";
 import { RecordsBoard } from "@/components/progress/RecordsBoard";
 import { FatigueCard } from "@/components/progress/FatigueCard";
@@ -220,7 +219,18 @@ export default function ProgressPage() {
         </div>
       )}
 
-      <ProgressPhotos body={body} />
+      {/* Physique: Fortschrittsfotos als Vorher/Nachher-Timeline (eigene Seite). */}
+      <Pressable
+        onClick={() => router.push("/physique")}
+        className="mb-3 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+      >
+        <span className="flex items-center gap-2 text-sm font-medium text-fg">
+          <Images size={17} className="text-accent-ink" /> Physique
+        </span>
+        <span className="flex items-center gap-1 font-mono text-xs text-muted">
+          Vorher / Nachher <ChevronRight size={16} />
+        </span>
+      </Pressable>
 
       <GoalCard />
 
