@@ -2,43 +2,67 @@
 
 import { useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { FLIP_END, FLIP_FRAMES } from "@/components/flipbook/sequence";
+import { FLIP_END_STEP, FLIP_STEPS } from "@/components/flipbook/sequence";
 
 /**
  * Das Daumenkino: die Tafeln rattern im ~88-ms-Takt durch und bleiben auf der
  * roten Finale-Karte stehen — wie ein Filmvorspann. Läuft INNERHALB der ohnehin
  * vorhandenen Wartezeit (Splash-Minimum bzw. Workout-Vorbereitung), verlängert
- * also nichts. `compact` zeigt nur jede zweite Tafel (~0,8 s) für den kurzen
- * „bereite vor…"-Moment. Reduced motion → sofort das statische Finale, kein
- * Flackern. Der Timer räumt sich beim Unmount auf und stoppt am Ende selbst.
+ * also nichts.
+ *
+ * Vollbild (Default, Splash): jeder Frame malt seine Papier-/Grundfarbe
+ * bildschirmfüllend hinter die volle Tafelbreite — Kante zu Kante, harte
+ * Schnitte, kein sichtbarer App-Hintergrund. `compact` (Workout-Moment) bleibt
+ * eine kleine Inline-Karte mit jeder zweiten Tafel (~0,8 s).
+ *
+ * Reduced motion → sofort das statische Finale, kein Flackern. Der Timer räumt
+ * sich beim Unmount auf und stoppt am Ende selbst. Ein Mount-Gate verhindert
+ * den Hydration-Mismatch der Media-Query.
  */
 const STEP_MS = 88;
 
 export function FlipbookBoot({ compact = false }: { compact?: boolean }) {
   const reduce = useReducedMotion() ?? false;
-  const frames = compact ? FLIP_FRAMES.filter((_, i) => i % 2 === 0) : FLIP_FRAMES;
+  const steps = compact ? FLIP_STEPS.filter((_, i) => i % 2 === 0) : FLIP_STEPS;
   const [idx, setIdx] = useState(0);
-  // Erst nach dem Mount rendern: `reduce` weicht auf dem Client vom
-  // Server-Wert ab (Media-Query) — ein SSR-Frame würde einen Hydration-
-  // Mismatch werfen. Der Splash-Hintergrund überbrückt den einen Frame.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const done = reduce || idx >= frames.length;
+  const done = reduce || idx >= steps.length;
+  const step = done ? FLIP_END_STEP : steps[idx];
 
   useEffect(() => {
     if (reduce) return;
     const id = window.setInterval(
-      () => setIdx((i) => (i >= frames.length ? i : i + 1)),
+      () => setIdx((i) => (i >= steps.length ? i : i + 1)),
       STEP_MS,
     );
     return () => window.clearInterval(id);
-  }, [reduce, frames.length]);
+  }, [reduce, steps.length]);
 
   if (!mounted) return null;
 
+  if (compact) {
+    return (
+      <div aria-hidden style={{ width: "min(80vw, 300px)", margin: "0 auto" }}>
+        {step.node}
+      </div>
+    );
+  }
+
   return (
-    <div aria-hidden style={{ width: "min(80vw, 300px)", margin: "0 auto" }}>
-      {done ? FLIP_END : frames[idx]}
+    <div
+      aria-hidden
+      data-flipbook-bg
+      style={{
+        position: "absolute",
+        inset: 0,
+        background: step.bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 480 }}>{step.node}</div>
     </div>
   );
 }
