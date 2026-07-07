@@ -221,6 +221,9 @@ export interface AppSettings {
   icon?: IconConfig;
   /** Optional accent override (hex) — replaces the skin's accent app-wide. */
   accentOverride?: string;
+  /** Optional text-color override (hex) — replaces the skin's --fg in DARK mode
+   *  only (light mode keeps ink for readability). Unset = skin default. */
+  textTone?: string;
   /** Display name for the personalized greeting ("Guten Abend, Sven"). */
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */

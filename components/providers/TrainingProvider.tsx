@@ -234,6 +234,7 @@ interface TrainingContextValue {
   setSkin: (skin: SkinId) => void;
   setIcon: (icon: IconConfig | undefined) => void;
   setAccentOverride: (hex: string | undefined) => void;
+  setTextTone: (hex: string | undefined) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
@@ -380,19 +381,31 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         root.style.removeProperty("--accent-ink");
       }
     };
+    // Optional text tone replaces the skin's --fg — DARK mode only; in light
+    // mode ink stays (a light tone would be unreadable on paper).
+    const applyTextTone = () => {
+      const root = document.documentElement;
+      if (settings.textTone && resolveTheme(settings.theme) !== "light") {
+        root.style.setProperty("--fg", settings.textTone);
+      } else {
+        root.style.removeProperty("--fg");
+      }
+    };
     applyTheme(settings.theme);
     applySkin(settings.skin);
     applyAccent();
+    applyTextTone();
     if (settings.theme !== "system" || typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
     const onChange = () => {
       applyTheme(settings.theme);
       applySkin(settings.skin);
       applyAccent();
+      applyTextTone();
     };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [loading, settings.theme, settings.skin, settings.accentOverride]);
+  }, [loading, settings.theme, settings.skin, settings.accentOverride, settings.textTone]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -962,6 +975,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, icon });
   const setAccentOverride = (hex: string | undefined) =>
     void saveSettings({ ...settings, accentOverride: hex });
+  const setTextTone = (hex: string | undefined) =>
+    void saveSettings({ ...settings, textTone: hex });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
@@ -1395,6 +1410,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setSkin,
     setIcon,
     setAccentOverride,
+    setTextTone,
     setAccent,
     setWeightStep,
     setBikeWarmup,

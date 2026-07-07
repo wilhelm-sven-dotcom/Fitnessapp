@@ -119,6 +119,8 @@
   --page-bg: radial-gradient(120% 75% at 50% -10%, #15151a, #0f0f10 62%);
   --page-bg-size: 100% 100%;
   --page-bg-repeat: no-repeat;
+  /* Papierkorn — sehr subtiles helles Rauschen, wie Druckpapier (Tafel-Look). */
+  --page-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Light theme overrides the neutral palette under either skin (identity tokens
@@ -173,6 +175,8 @@
   --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.03), transparent 42%);
   --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.10), transparent 62%);
   --page-bg: radial-gradient(120% 75% at 50% -10%, #f7f4ec, #f1ede1 62%);
+  /* Papierkorn hell — dunkles Rauschen auf Creme-Papier. */
+  --page-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 html {
@@ -184,9 +188,11 @@ html {
   body {
     @apply font-sans antialiased;
     background-color: var(--base);
-    background-image: var(--page-bg);
-    background-size: var(--page-bg-size);
-    background-repeat: var(--page-bg-repeat);
+    /* Zwei Ebenen: optionales Papierkorn (Editorial) über dem Seiten-Verlauf.
+       --page-texture defaultet auf none — andere Skins bleiben unverändert. */
+    background-image: var(--page-texture, none), var(--page-bg);
+    background-size: auto, var(--page-bg-size);
+    background-repeat: repeat, var(--page-bg-repeat);
     background-attachment: fixed;
     color: var(--fg);
     text-rendering: optimizeLegibility;
@@ -268,6 +274,15 @@ html {
 [data-skin="tactile"] .only-tactile,
 [data-skin="editorial"] .only-editorial {
   display: revert;
+}
+/* Gegenstück: sichtbar in Blueprint/Tactile, ausgeblendet im Editorial —
+   für Elemente, die im Editorial durch eine Tafel-Variante ersetzt werden. */
+[data-skin="editorial"] .not-editorial {
+  display: none;
+}
+/* Editorial: Untertitel in Serif-Kursive — wie die Bildunterschriften der Tafeln. */
+[data-skin="editorial"] .page-subtitle {
+  font-style: italic;
 }
 
 /* Set-logger ("Fokus-Logbuch") — one signature per skin on the ledger rows.

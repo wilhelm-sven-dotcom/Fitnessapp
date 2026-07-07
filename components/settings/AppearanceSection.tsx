@@ -12,11 +12,23 @@ const THEMES: { id: ThemePref; label: string }[] = [
   { id: "dark", label: "Dunkel" },
 ];
 
+/** Kuratierte Schrift-Töne für den Dunkelmodus — alle kontrastsicher auf den
+ *  dunklen Skin-Flächen. „Skin" = Standard (z. B. Knochen im Editorial). */
+const TEXT_TONES: { hex: string; label: string }[] = [
+  { hex: "#ffffff", label: "Reinweiß" },
+  { hex: "#e8ecf2", label: "Kühlweiß" },
+  { hex: "#f2ede2", label: "Warmweiß" },
+  { hex: "#d9d2c4", label: "Sand" },
+  { hex: "#c9cdd6", label: "Silber" },
+];
+
 export function AppearanceSection() {
-  const { settings, setTheme, setSkin, setAccentOverride, setUserName } = useTraining();
+  const { settings, setTheme, setSkin, setAccentOverride, setTextTone, setUserName } =
+    useTraining();
   const theme = settings.theme ?? "dark";
   const skin = settings.skin ?? "blueprint";
   const accentOverride = settings.accentOverride;
+  const textTone = settings.textTone;
   const [name, setName] = useState(settings.userName ?? "");
 
   return (
@@ -91,6 +103,36 @@ export function AppearanceSection() {
           />
         ))}
       </div>
+
+      <p className="mb-2 mt-5 text-sm font-medium text-fg">Schrift</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Pressable
+          onClick={() => setTextTone(undefined)}
+          aria-label="Skin-Standard-Schriftfarbe"
+          className="flex h-9 items-center rounded-pill border border-line px-3 text-xs font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          style={{ boxShadow: !textTone ? "0 0 0 2px var(--accent)" : undefined }}
+        >
+          Skin
+        </Pressable>
+        {TEXT_TONES.map((t) => (
+          <Pressable
+            key={t.hex}
+            onClick={() => setTextTone(t.hex)}
+            aria-label={`Schriftfarbe ${t.label}`}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line font-display text-sm font-bold focus:outline-none"
+            style={{
+              color: t.hex,
+              backgroundColor: "var(--surface-2)",
+              boxShadow: textTone === t.hex ? `0 0 0 3px var(--card), 0 0 0 5px ${t.hex}` : undefined,
+            }}
+          >
+            A
+          </Pressable>
+        ))}
+      </div>
+      <p className="mt-1.5 text-xs text-muted">
+        Färbt Überschriften und Fließtext — wirkt im Dunkelmodus, im hellen Modus bleibt Tinte.
+      </p>
 
       <p className="mb-2 mt-5 text-sm font-medium text-fg">Modus</p>
       <div className="flex gap-1 rounded-pill bg-surface-2 p-1">

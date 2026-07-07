@@ -189,7 +189,19 @@ export default function HomePage() {
       {isEditorial ? (
         /* ── Editorial: a magazine spread — nameplate, cover-line, headline,
            serif deck, the week as a stat block, and the coach's pull-quote. ── */
-        <section className="mb-6">
+        <section className="relative mb-6">
+          {/* Passermarken — Druck-Eckmarken wie auf einem frisch gedruckten
+              Bogen (Teil des Archiv-Looks; nur Editorial rendert diesen Zweig). */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            {[
+              { top: -6, left: -6, borderTop: "1.5px solid var(--accent)", borderLeft: "1.5px solid var(--accent)" },
+              { top: -6, right: -6, borderTop: "1.5px solid var(--accent)", borderRight: "1.5px solid var(--accent)" },
+              { bottom: -6, left: -6, borderBottom: "1.5px solid var(--accent)", borderLeft: "1.5px solid var(--accent)" },
+              { bottom: -6, right: -6, borderBottom: "1.5px solid var(--accent)", borderRight: "1.5px solid var(--accent)" },
+            ].map((s, i) => (
+              <span key={i} className="absolute h-3 w-3 opacity-70" style={s} />
+            ))}
+          </div>
           <div className="flex items-baseline justify-between border-b-2 border-fg pb-2">
             <span className="font-display text-3xl font-bold uppercase tracking-tight text-fg">
               Training
