@@ -145,6 +145,8 @@ export interface LoggedSession {
   estimatedMin?: number;
   /** Marked as a deload session (reduced load/volume). */
   isDeload?: boolean;
+  /** Session was the guided max-strength test day („Die Prüfung"). */
+  isExam?: boolean;
   /** Pre-session readiness check. */
   readiness?: Readiness;
   /** ATLAS-Debrief: three verdict lines, generated at save time (stable). */
@@ -207,6 +209,8 @@ export interface AppSettings {
   autoregOn: boolean;
   /** ISO date of the last accepted deload week. */
   lastDeloadDate?: string;
+  /** ISO date of the last completed ATLAS test week („Die Prüfung"). */
+  lastExamDate?: string;
   /** Speak rest-timer countdown and PR cues aloud (Gym-Modus, hands-free). */
   voiceCues?: boolean;
   /** Pair the last two accessory slots as a superset — saves rest time. */

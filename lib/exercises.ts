@@ -108,6 +108,14 @@ export const CARDIO_DAY: Template = {
   slots: ["cardio", "cardio"],
 };
 
+/** „Die Prüfung" — ATLAS-Testtag: nur die Kernmuster, Rampe zum schweren Satz. */
+export const EXAM_DAY: Template = {
+  key: "exam",
+  name: "Die Prüfung",
+  focus: "Maximalkraft",
+  slots: ["squat", "hinge", "hpush", "vpull"],
+};
+
 export const EQUIP_LIST: EquipItem[] = [
   { key: "db", label: "Kurzhanteln" }, { key: "kb", label: "Kettlebell" }, { key: "bar", label: "Langhantel" },
   { key: "pullup", label: "Klimmzugstange" }, { key: "rings", label: "Turnringe" }, { key: "bands", label: "Bänder" },

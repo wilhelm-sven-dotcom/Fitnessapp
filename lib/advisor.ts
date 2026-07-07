@@ -20,7 +20,8 @@ export type CoachKind =
   | "back-doctor"
   | "cardio"
   | "recomp"
-  | "volume-bump";
+  | "volume-bump"
+  | "exam";
 export type CoachSeverity = "info" | "warn" | "urgent";
 
 export interface CoachCard {
@@ -29,7 +30,7 @@ export interface CoachCard {
   title: string;
   body: string;
   exId?: string;
-  action?: "deload";
+  action?: "deload" | "exam";
 }
 
 const DAY = 86400000;
@@ -79,6 +80,33 @@ export function deloadSignal(
       ? "Über sechs Wochen ohne Deload. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück."
       : "Mehrere Zeichen für Ermüdung. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück.",
     action: "deload",
+  };
+}
+
+/**
+ * „Die Prüfung" — alle ~12 Wochen einen geführten Maximalkraft-Testtag
+ * vorschlagen. Erst mit echter Historie sinnvoll; nie direkt nach einem
+ * Deload (ermüdungsfrei testen), nie öfter als im Zyklus.
+ */
+const EXAM_WEEKS = 12;
+export function examSignal(
+  log: LoggedSession[],
+  settings: AppSettings,
+): CoachCard | null {
+  if (log.length < 12) return null;
+  const since = weeksSince(settings.lastExamDate);
+  const historyWeeks = weeksSince(log[0]?.date);
+  const eff = isFinite(since) ? since : historyWeeks;
+  if (eff < EXAM_WEEKS) return null;
+  // Frisch aus dem Deload: eine Woche wieder aufbauen, dann testen.
+  const sinceDeload = weeksSince(settings.lastDeloadDate);
+  if (sinceDeload < 1) return null;
+  return {
+    kind: "exam",
+    severity: "info",
+    title: "Die Prüfung ist fällig",
+    body: "Zwölf Wochen Arbeit — Zeit, das Maximum zu messen. Ein geführter Testtag: Rampe zum schweren Satz je Kernübung. ATLAS trägt die Ergebnisse ins Archiv und kalibriert deine Prognosen neu.",
+    action: "exam",
   };
 }
 
@@ -226,6 +254,12 @@ export function coachCards(opts: {
 
   const d = deloadSignal(opts.log, opts.settings, opts.fatigueBand);
   if (d) cards.push(d);
+
+  // Prüfung nicht neben einem fälligen Deload anbieten — erst erholen, dann testen.
+  if (!d) {
+    const ex = examSignal(opts.log, opts.settings);
+    if (ex) cards.push(ex);
+  }
 
   const plateaus = plateauSignals(opts.log, opts.allLib);
   cards.push(...plateaus);
