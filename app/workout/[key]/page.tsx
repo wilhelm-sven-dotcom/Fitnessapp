@@ -35,6 +35,7 @@ import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
 import { MotivationLine } from "@/components/trainer/MotivationLine";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
+import { FlipbookBoot } from "@/components/layout/FlipbookBoot";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { ShadowRace } from "@/components/workout/ShadowRace";
@@ -484,8 +485,10 @@ export default function WorkoutPage() {
   if (activeKey !== key) {
     return (
       <>
-        <div className="py-10 text-center font-mono text-sm text-faint">
-          bereite vor…
+        <div className="py-6">
+          {/* Kurzfassung des Boot-Daumenkinos — füllt die Vorbereitungs-Wartezeit. */}
+          <FlipbookBoot compact />
+          <p className="mt-3 text-center font-mono text-sm text-faint">bereite vor…</p>
         </div>
         <ReadinessGate
           open={gateOpen}
