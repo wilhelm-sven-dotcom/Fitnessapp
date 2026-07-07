@@ -13,7 +13,9 @@ import { PageTransition } from "./PageTransition";
 import { Splash } from "./Splash";
 import { Welcome } from "@/components/onboarding/Welcome";
 
-const SPLASH_MIN_MS = 1500;
+// Deckt das Daumenkino ab: 16 Tafeln × 130 ms (~2,1 s) + ein Atemzug fürs
+// Finale, bevor die Ausblendung beginnt (Svens Wunsch: gemächlicherer Start).
+const SPLASH_MIN_MS = 2600;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loading, cloud, settings, log, body } = useTraining();
@@ -42,7 +44,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // immediately.
   const [booted, setBooted] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setBooted(true), 2600);
+    // Fallback NACH dem regulären Splash-Ende (SPLASH_MIN_MS + Exit-Fade) —
+    // sonst starten die Home-Animationen unsichtbar unter dem Splash.
+    const t = setTimeout(() => setBooted(true), SPLASH_MIN_MS + 1000);
     return () => clearTimeout(t);
   }, []);
 
