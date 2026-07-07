@@ -53,6 +53,14 @@ export function CoachCard({
           Entlastungswoche starten
         </Pressable>
       )}
+      {card.action === "exam" && onAccept && (
+        <Pressable
+          onClick={onAccept}
+          className="mt-3 rounded-card bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+        >
+          Prüfung antreten
+        </Pressable>
+      )}
     </Card>
   );
 }

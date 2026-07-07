@@ -778,7 +778,7 @@ export default function WorkoutPage() {
             ? list.find(({ ex: e }) => e.pattern !== "cardio" && hasOpenSet(e.id))
             : undefined;
           const cardLine =
-            isActiveCard && ex.pattern !== "cardio"
+            isActiveCard && ex.pattern !== "cardio" && key !== "exam"
               ? liveLine({
                   ex,
                   sets: entries[ex.id] || [],
@@ -1066,7 +1066,11 @@ export default function WorkoutPage() {
                       ex={ex}
                       sets={entries[ex.id] || []}
                       lastPerf={lp}
-                      prescLine={p.line}
+                      prescLine={
+                        key === "exam"
+                          ? "Prüfung: Rampe 5 · 4 · 3 — steigere zum schweren Test-Satz."
+                          : p.line
+                      }
                     />
                   ) : (
                     <div className="mt-3 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
@@ -1076,7 +1080,11 @@ export default function WorkoutPage() {
                       <p className="font-mono text-sm tabular-nums text-fg">
                         {ps || "—"}
                       </p>
-                      <p className="mt-1 text-xs text-accent-ink">{p.line}</p>
+                      <p className="mt-1 text-xs text-accent-ink">
+                        {key === "exam"
+                          ? "Prüfung: Rampe 5 · 4 · 3 — steigere zum schweren Test-Satz."
+                          : p.line}
+                      </p>
                     </div>
                   )}
 

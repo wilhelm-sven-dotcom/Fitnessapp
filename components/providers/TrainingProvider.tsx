@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { CARDIO_DAY, DEFAULT_EQUIP, LIB, TEMPLATE } from "@/lib/exercises";
+import { CARDIO_DAY, DEFAULT_EQUIP, EXAM_DAY, LIB, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
@@ -245,6 +245,7 @@ interface TrainingContextValue {
   completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
   setReadiness: (r: Readiness) => void;
   acceptDeload: () => void;
+  acceptExam: () => void;
   dismissCard: (card: CoachCard) => void;
   addBodyMetric: (m: BodyMetric) => Promise<void>;
   deleteBodyMetric: (idx: number) => Promise<void>;
@@ -599,6 +600,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         injuries: athleteInjuries,
         affinity,
       });
+    if (key === EXAM_DAY.key)
+      return resolveSession(EXAM_DAY, log.length, choices, has, allLib, {
+        backSafe,
+        injuries: athleteInjuries,
+        affinity,
+      });
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
@@ -612,7 +619,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   /** Append an optional Peloton finisher to A/B/C sessions (opt-in, needs a bike). */
   const withFinisher = (list: ResolvedSlot[], key: string): ResolvedSlot[] => {
     if (!settings.cardioFinisher || !hasBike) return list;
-    if (key === CARDIO_DAY.key || days.some((d) => d.id === key)) return list;
+    if (key === CARDIO_DAY.key || key === EXAM_DAY.key || days.some((d) => d.id === key))
+      return list;
     if (list.some((s) => s.ex.pattern === "cardio")) return list;
     const fin = allLib.find((e) => e.id === "bike_finisher");
     return fin ? [...list, { ex: fin, slotKey: "finisher", pool: [] }] : list;
@@ -630,6 +638,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       return { key: day.id, name: day.name, focus: day.focus, slots };
     }
     if (key === CARDIO_DAY.key) return CARDIO_DAY;
+    if (key === EXAM_DAY.key) return EXAM_DAY;
     return TEMPLATE.find((t) => t.key === key) ?? null;
   };
 
@@ -847,6 +856,36 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return [...warm, ...working];
   };
 
+  // „Die Prüfung": aufsteigende Rampe 5 → 4 → 3 zum schweren Test-Satz,
+  // ausgehend von der letzten Leistung. Ohne belastbare Historie (oder ohne
+  // Gewicht) fällt die Übung auf den normalen Plan zurück — getestet wird nur,
+  // was eine Basis hat.
+  const examEntryFor = (ex: Exercise, scale: ReadinessScale): SetEntry[] => {
+    const lp = lastPerf(ex.id);
+    const best = lp
+      ? Math.max(
+          0,
+          ...lp.sets
+            .filter((s) => !s.warmup && s.reps !== "" && s.weight !== "")
+            .map((s) => Number(s.weight) || 0),
+        )
+      : 0;
+    if (!ex.weighted || !isFinite(best) || best <= 0) return initEntryFor(ex, scale);
+    const step = settings.weightStep ?? 2.5;
+    // Strikt aufsteigend, Rundung darf die Stufen nicht kollabieren lassen;
+    // der Test-Satz liegt einen Schritt ÜBER der letzten Bestleistung.
+    const base = Math.max(step, Math.round(best / step) * step);
+    const w5 = Math.max(step, Math.round((base * 0.85) / step) * step);
+    const w4 = Math.max(w5 + step, Math.round((base * 0.95) / step) * step);
+    const w3 = Math.max(w4 + step, base + step);
+    const working: SetEntry[] = [
+      { weight: String(w5), reps: "" },
+      { weight: String(w4), reps: "" },
+      { weight: String(w3), reps: "" },
+    ];
+    return [...warmupSets(w5, settings.weightStep), ...working];
+  };
+
   const startSession = (key: string, readiness?: Readiness) => {
     const r = readiness ?? todayReadiness;
     const scale = withDeload(
@@ -855,17 +894,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     );
     if (readiness) setTodayReadiness(readiness);
     const isDay = days.some((d) => d.id === key);
+    const isExam = key === EXAM_DAY.key;
     const base = sessionOf(key, lastBackRed);
-    const fitted = isDay
-      ? base
-      : fitToBudget(base, settings.timeBudgetMin, {
-          protectCore: lastBackRed,
-          superset: settings.superset,
-        }).list;
+    // Prüfung: nichts wegtrimmen — alle Kernmuster werden getestet.
+    const fitted =
+      isDay || isExam
+        ? base
+        : fitToBudget(base, settings.timeBudgetMin, {
+            protectCore: lastBackRed,
+            superset: settings.superset,
+          }).list;
     const list = applyReadiness(fitted, scale);
     const init: Record<string, SetEntry[]> = {};
     list.forEach(({ ex }) => {
-      init[ex.id] = initEntryFor(ex, scale);
+      init[ex.id] = isExam ? examEntryFor(ex, scale) : initEntryFor(ex, scale);
     });
     setEntries(init);
     setActiveKey(key);
@@ -1093,6 +1135,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     },
   };
 
+  const acceptExam = () =>
+    void saveSettings({ ...settings, lastExamDate: new Date().toISOString() });
   const acceptDeload = () =>
     void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
   const dismissCard = (card: CoachCard) =>
@@ -1200,6 +1244,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (note.trim()) newSession.note = note.trim();
     if (todayReadiness) newSession.readiness = todayReadiness;
     if (deloadActive) newSession.isDeload = true;
+    if (tpl.key === EXAM_DAY.key) newSession.isExam = true;
     const newLog = [...log, newSession];
     // Summary for the completion takeover — computed BEFORE state clears so
     // the celebration can show exactly what this session achieved.
@@ -1421,6 +1466,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     completeOnboarding,
     setReadiness: (r) => setTodayReadiness(r),
     acceptDeload,
+    acceptExam,
     dismissCard,
     addBodyMetric,
     deleteBodyMetric,

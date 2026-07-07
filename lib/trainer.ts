@@ -529,7 +529,11 @@ export function sessionDebrief(opts: {
   const saetze = `${summary.sets} ${summary.sets === 1 ? "Satz" : "Sätze"}`;
 
   // ① Das Urteil.
-  const line1 = session.isDeload
+  const line1 = session.isExam
+    ? summary.prs > 0
+      ? `Prüfung bestanden — ${summary.prs === 1 ? "eine neue Bestmarke" : `${summary.prs} neue Bestmarken`} im Archiv. Deine Prognosen sind neu kalibriert.`
+      : "Prüfung abgelegt — Standort vermessen, das Archiv ist aktualisiert. Ab hier zählt der nächste Zyklus."
+    : session.isDeload
     ? pick(
         [
           `Entlastung sauber gefahren — ${saetze}, bewusst leicht.`,

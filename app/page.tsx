@@ -78,6 +78,7 @@ export default function HomePage() {
     allLib,
     cardioAdvice,
     acceptDeload,
+    acceptExam,
     dismissCard,
   } = useTraining();
   const tags = [...new Set(recList.map((s) => s.ex?.tag).filter(Boolean))];
@@ -163,7 +164,16 @@ export default function HomePage() {
             <CoachCard
               key={c.kind + (c.exId ?? "") + i}
               card={c}
-              onAccept={c.action === "deload" ? acceptDeload : undefined}
+              onAccept={
+                c.action === "deload"
+                  ? acceptDeload
+                  : c.action === "exam"
+                    ? () => {
+                        acceptExam();
+                        router.push("/workout/exam");
+                      }
+                    : undefined
+              }
               onDismiss={() => dismissCard(c)}
             />
           ))}
