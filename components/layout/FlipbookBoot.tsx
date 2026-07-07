@@ -18,12 +18,18 @@ import { FLIP_END_STEP, FLIP_STEPS } from "@/components/flipbook/sequence";
  * Reduced motion → sofort das statische Finale, kein Flackern. Der Timer räumt
  * sich beim Unmount auf und stoppt am Ende selbst. Ein Mount-Gate verhindert
  * den Hydration-Mismatch der Media-Query.
+ *
+ * Takt: Vollbild 130 ms/Tafel (Svens Wunsch: am App-Start etwas gemächlicher —
+ * SPLASH_MIN_MS in AppShell ist darauf abgestimmt); compact bleibt bei 88 ms,
+ * damit der kurze Workout-Moment kurz bleibt.
  */
-const STEP_MS = 88;
+const STEP_FULL_MS = 130;
+const STEP_COMPACT_MS = 88;
 
 export function FlipbookBoot({ compact = false }: { compact?: boolean }) {
   const reduce = useReducedMotion() ?? false;
   const steps = compact ? FLIP_STEPS.filter((_, i) => i % 2 === 0) : FLIP_STEPS;
+  const stepMs = compact ? STEP_COMPACT_MS : STEP_FULL_MS;
   const [idx, setIdx] = useState(0);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -34,10 +40,10 @@ export function FlipbookBoot({ compact = false }: { compact?: boolean }) {
     if (reduce) return;
     const id = window.setInterval(
       () => setIdx((i) => (i >= steps.length ? i : i + 1)),
-      STEP_MS,
+      stepMs,
     );
     return () => window.clearInterval(id);
-  }, [reduce, steps.length]);
+  }, [reduce, steps.length, stepMs]);
 
   if (!mounted) return null;
 
