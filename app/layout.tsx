@@ -77,7 +77,7 @@ export default function RootLayout({
             --accent is owned by the skin's CSS, so nothing is set inline here. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'dark';var r=t==='light'?'light':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.setAttribute('data-theme',r);var sk=s.skin;d.setAttribute('data-skin',sk==='blueprint'||sk==='editorial'?sk:'tactile');if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'dark';var r=t==='light'?'light':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.setAttribute('data-theme',r);var sk=s.skin;d.setAttribute('data-skin',sk==='blueprint'||sk==='editorial'?sk:'tactile');if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);if(s.textTone&&r!=='light')d.style.setProperty('--fg',s.textTone);}catch(e){}})();`,
           }}
         />
         <TrainingProvider>

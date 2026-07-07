@@ -23,13 +23,23 @@ export function PageHeader({
       transition={{ duration: 0.35, ease: EASE_OUT }}
       className="mb-5"
     >
+      {/* Editorial: Tafel-Kopfzeile — Doppellinie mit rotem Diamant, wie die
+          Rahmen der Archiv-Tafeln (in den anderen Skins unsichtbar). */}
+      <div className="only-editorial mb-2" aria-hidden>
+        <div className="flex items-center gap-2">
+          <span className="h-px flex-1 bg-fg" />
+          <span className="h-1.5 w-1.5 rotate-45" style={{ background: "var(--accent)" }} />
+          <span className="h-px flex-1 bg-fg" />
+        </div>
+        <div className="mt-0.5 h-px w-full bg-line" />
+      </div>
       {eyebrow && (
         <p className="mb-1 font-mono text-xs uppercase tracking-widest text-accent-2">
           {eyebrow}
         </p>
       )}
       <h2 className="font-display text-2xl font-semibold tracking-tight text-fg">{title}</h2>
-      {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+      {subtitle && <p className="page-subtitle mt-1 text-sm text-muted">{subtitle}</p>}
     </motion.div>
   );
 }
