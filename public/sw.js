@@ -9,7 +9,7 @@
 // device stuck on a stale build (an old session requesting chunks the new build
 // no longer has → ChunkLoadError on navigation). It only ever clears CODE
 // caches — never localStorage/IndexedDB, so training data is untouched.
-const CACHE = "training-v17";
+const CACHE = "training-v18";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only
