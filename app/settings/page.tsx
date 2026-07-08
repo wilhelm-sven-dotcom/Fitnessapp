@@ -30,6 +30,7 @@ export default function SettingsPage() {
     setBikeWarmup,
     setCardioFinisher,
     setCoachMotivation,
+    setKeepAwake,
   } = useTraining();
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -244,6 +245,12 @@ export default function SettingsPage() {
             onChange={setCoachMotivation}
             label="Coach-Motivation im Training"
             hint="ATLAS spornt dich zwischen den Sätzen kurz an — nur als Text, stört die Musik nie. Jederzeit abschaltbar."
+          />
+          <Toggle
+            checked={settings.keepAwake !== false}
+            onChange={setKeepAwake}
+            label="Display an im Training"
+            hint="Der Bildschirm bleibt wach, solange eine Einheit läuft — kein Sperrbildschirm zwischen den Sätzen."
           />
           <div>
             <p className="text-sm font-medium text-fg">Gewichtsstufe</p>
