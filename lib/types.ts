@@ -242,6 +242,8 @@ export interface AppSettings {
   cardioFinisher?: boolean;
   /** Show short motivational coach lines between sets during a workout (default on). */
   coachMotivation?: boolean;
+  /** Keep the screen awake while a session is running (Screen Wake Lock, default on). */
+  keepAwake?: boolean;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;

@@ -30,6 +30,7 @@ import { GuideSheet } from "@/components/workout/GuideSheet";
 import { LiveDemo } from "@/components/workout/LiveDemo";
 import { PhaseRail } from "@/components/workout/PhaseRail";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
+import { useWakeLock } from "@/components/workout/useWakeLock";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
@@ -195,6 +196,10 @@ export default function WorkoutPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, activeKey, complete]);
+
+  // Display wach halten, solange die Einheit läuft (abschaltbar in den
+  // Einstellungen) — im Gym liegt das Handy, der Sperrbildschirm nervt.
+  useWakeLock(settings.keepAwake !== false && activeKey === key && !complete);
 
   // Probe device support after mount so SSR and first client render agree.
   useEffect(() => setVoiceSupported(isVoiceInputSupported()), []);

@@ -240,6 +240,7 @@ interface TrainingContextValue {
   setBikeWarmup: (on: boolean) => void;
   setCardioFinisher: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
+  setKeepAwake: (on: boolean) => void;
   setUserName: (name: string) => void;
   setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
   completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
@@ -1005,6 +1006,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [loading, gyms.length]);
   const setBudget = (min: number) =>
     void saveSettings({ ...settings, timeBudgetMin: min });
+  const setKeepAwake = (on: boolean) =>
+    void saveSettings({ ...settings, keepAwake: on });
   const setVoiceCues = (on: boolean) =>
     void saveSettings({ ...settings, voiceCues: on });
   const setSuperset = (on: boolean) =>
@@ -1461,6 +1464,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBikeWarmup,
     setCardioFinisher,
     setCoachMotivation,
+    setKeepAwake,
     setUserName,
     setAthleteProfile,
     completeOnboarding,
