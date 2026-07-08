@@ -108,8 +108,15 @@ export function estimateRemainingMin(
 export interface FitResult {
   list: ResolvedSlot[];
   estMin: number;
-  adjusted: "trim" | "pad" | "none";
+  adjusted: "trim" | "pad" | "extend" | "none";
 }
+
+/** Ab hier gilt ein Budget als „lange Einheit": höheres Satz-Polster und
+ *  notfalls zusätzliche Übungen aus den Slot-Pools. */
+const LONG_BUDGET_MIN = 45;
+// Bevorzugte Muster für Zusatz-Übungen (sinnvolle Zweitübungen zuerst);
+// dahinter greifen die übrigen Muster des Tages in Template-Reihenfolge.
+const EXTEND_ORDER: Pattern[] = ["vpush", "hpull", "lunge", "arm", "lateral", "core"];
 
 /**
  * Trim or pad a resolved session to fit a time budget (minutes).
@@ -151,13 +158,56 @@ export function fitToBudget(
     est = est0();
   }
 
+  // Polstern: mehr Sätze auf Compounds (lange Einheiten dürfen höher stapeln
+  // und nehmen auch Iso-Slots mit), solange Luft im Budget ist.
+  const longSession = budgetMin >= LONG_BUDGET_MIN;
+  const compoundCap = longSession ? 5 : 4;
   guard = 0;
-  while (est < budgetMin - 4 && guard++ < 20) {
-    const slot = slots.find((s) => isCompound(s.ex.pattern) && s.ex.sets < 4);
+  while (est < budgetMin - 4 && guard++ < 40) {
+    const slot =
+      slots.find((s) => isCompound(s.ex.pattern) && s.ex.sets < compoundCap) ??
+      (longSession
+        ? slots.find(
+            (s) =>
+              (s.ex.pattern === "arm" || s.ex.pattern === "lateral") && s.ex.sets < 4,
+          )
+        : undefined);
     if (!slot) break;
     slot.ex.sets += 1;
     adjusted = adjusted === "trim" ? "trim" : "pad";
     est = est0();
+  }
+
+  // Verlängern: reicht das Satz-Polster nicht (45+ min), kommen ZUSÄTZLICHE
+  // Übungen aus den vorhandenen Slot-Pools dazu — je Runde eine, dedupe über
+  // die ganze Session, EXTEND_ORDER zuerst, dann die übrigen Tages-Muster.
+  if (longSession) {
+    const patternOrder = [
+      ...EXTEND_ORDER,
+      ...slots.map((s) => s.ex.pattern).filter((p) => !EXTEND_ORDER.includes(p)),
+    ];
+    let extraNo = 0;
+    guard = 0;
+    while (est < budgetMin - 6 && guard++ < 12) {
+      const used = new Set(slots.map((s) => s.ex.id));
+      let added = false;
+      for (const pat of patternOrder) {
+        const donor = slots.find((s) => s.ex.pattern === pat && s.pool.length > 1);
+        const cand = donor?.pool.find((e) => !used.has(e.id));
+        if (!donor || !cand) continue;
+        extraNo += 1;
+        slots.push({
+          ex: { ...cand },
+          slotKey: `${donor.slotKey.split(":")[0]}:x${extraNo}`,
+          pool: donor.pool,
+        });
+        adjusted = "extend";
+        est = est0();
+        added = true;
+        break;
+      }
+      if (!added) break;
+    }
   }
 
   return { list: slots, estMin: est, adjusted };

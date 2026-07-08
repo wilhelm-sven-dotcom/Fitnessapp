@@ -27,7 +27,7 @@ import { weeklyAvgRir, weeklyStreak } from "@/lib/stats";
 import { coverageCount, weeklyVolume } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 
-const BUDGETS = [20, 25, 30];
+const BUDGETS = [20, 25, 30, 45, 60, 75, 90];
 
 /** Editorial "DIE WOCHE" stat cell — big Anton number, mono caption. */
 function MagStat({
@@ -288,9 +288,9 @@ export default function HomePage() {
           >
             <Play size={18} strokeWidth={2.5} /> Training starten
           </Pressable>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex items-start gap-2">
             <DurationBadge min={estimatedMin} />
-            <div className="ml-auto flex gap-2">
+            <div className="ml-auto flex flex-wrap justify-end gap-1.5">
               {BUDGETS.map((b) => (
                 <Pressable
                   key={b}
@@ -422,9 +422,9 @@ export default function HomePage() {
               <p className="mb-3 mt-1 font-mono text-xs text-faint">
                 {recList.length} Übungen · ~{estimatedMin} Min
               </p>
-              <div className="mb-4 flex items-center gap-2">
+              <div className="mb-4 flex items-start gap-2">
                 <DurationBadge min={estimatedMin} />
-                <div className="ml-auto flex gap-2">
+                <div className="ml-auto flex flex-wrap justify-end gap-1.5">
                   {BUDGETS.map((b) => (
                     <Pressable
                       key={b}
