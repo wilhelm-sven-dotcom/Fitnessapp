@@ -1,6 +1,6 @@
 "use client";
 
-import { CountUp } from "@/components/ui/CountUp";
+import { Odometer } from "@/components/ui/Odometer";
 import { cn } from "@/lib/utils";
 
 type ReadoutSize = "sm" | "md" | "lg" | "xl";
@@ -15,7 +15,7 @@ const SIZE: Record<ReadoutSize, string> = {
 /**
  * The signature numeral readout: a big Space-Grotesk number with a small mono
  * eyebrow and optional unit — the app's "instrument" voice. One bold metric,
- * stated plainly. Counts up on mount (reduced-motion safe via CountUp).
+ * stated plainly. Rollt beim Einblenden wie ein Zählwerk hoch (reduced-motion-sicher via Odometer).
  */
 export function Readout({
   value,
@@ -53,7 +53,7 @@ export function Readout({
           style={tone ? { color: tone } : undefined}
         >
           {count ? (
-            <CountUp value={value} decimals={decimals} />
+            <Odometer value={value} decimals={decimals} />
           ) : (
             value.toLocaleString("de-DE", {
               minimumFractionDigits: decimals,

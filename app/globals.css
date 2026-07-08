@@ -319,6 +319,7 @@ html {
    animation never runs (backgrounded tab, paused compositor, reduced motion) the
    page still shows — it can never get stuck invisible. */
 .page-in {
+  position: relative;
   animation: page-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes page-in {
@@ -331,8 +332,155 @@ html {
     transform: none;
   }
 }
+
+/* Motion-Identität: jeder Skin blättert anders um — weiterhin reines CSS,
+   nur transform/opacity/filter, Ruhelage immer sichtbar (kann nie hängen). */
+
+/* Blueprint: Mess-Sweep — Seite schiebt minimal ein, eine Akzent-Haarlinie
+   wischt einmal von links nach rechts durch und verglimmt. */
+[data-skin="blueprint"] .page-in {
+  animation: page-in-bp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes page-in-bp {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+[data-skin="blueprint"] .page-in::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0; /* Ruhelage unsichtbar — läuft die Animation nie, stört nichts. */
+  pointer-events: none;
+  animation: page-sweep 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes page-sweep {
+  from {
+    opacity: 0.7;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100vw);
+  }
+}
+
+/* Tactile: weiches Pop mit minimalem Überschwingen — wie ein Gerät, das
+   einrastet. */
+[data-skin="tactile"] .page-in {
+  animation: page-in-tac 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes page-in-tac {
+  0% {
+    opacity: 0;
+    transform: scale(0.985) translateY(8px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.003) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Editorial: das Blatt legt sich — leichte Perspektive von oben plus ein
+   kurzer Helligkeits-Kick wie frisch aufgeschlagenes Papier. */
+[data-skin="editorial"] .page-in {
+  transform-origin: 50% 0;
+  animation: page-in-ed 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes page-in-ed {
+  0% {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(4deg) translateY(10px);
+    filter: brightness(1.08);
+  }
+  60% {
+    filter: brightness(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .page-in {
+  .page-in,
+  [data-skin="blueprint"] .page-in,
+  [data-skin="tactile"] .page-in,
+  [data-skin="editorial"] .page-in {
+    animation: page-in-fade 0.2s ease-out;
+  }
+  [data-skin="blueprint"] .page-in::before {
     animation: none;
+  }
+}
+@keyframes page-in-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Gym-Modus „Die Bühne": im Live-Training tritt die aktive Übung ins
+   Licht, alles Erledigte/Kommende tritt zurück. Reine visuelle Schicht. ── */
+[data-skin="blueprint"] {
+  --stage-glow: rgba(255, 55, 95, 0.26);
+}
+[data-skin="tactile"] {
+  --stage-glow: rgba(255, 159, 10, 0.22);
+}
+[data-skin="editorial"] {
+  --stage-glow: rgba(255, 55, 95, 0.2);
+}
+[data-skin="blueprint"][data-theme="light"] {
+  --stage-glow: rgba(255, 55, 95, 0.16);
+}
+[data-skin="tactile"][data-theme="light"] {
+  --stage-glow: rgba(255, 159, 10, 0.15);
+}
+[data-skin="editorial"][data-theme="light"] {
+  --stage-glow: rgba(193, 58, 44, 0.14);
+}
+
+.stage-dim {
+  opacity: 0.55;
+  filter: saturate(0.72);
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
+}
+/* Fokuslicht: Außen-Schein (führt den Karten-Schatten mit, damit die
+   Tiefe erhalten bleibt) + sanftes Licht von oben in der Karte. */
+.stage-light {
+  box-shadow:
+    0 0 56px -10px var(--stage-glow),
+    var(--panel-shadow-lg);
+}
+.stage-light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 55% at 50% 0%, var(--stage-glow), transparent 62%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-dim {
+    transition: none;
   }
 }
