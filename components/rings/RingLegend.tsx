@@ -1,6 +1,6 @@
 "use client";
 
-import { CountUp } from "@/components/ui/CountUp";
+import { Odometer } from "@/components/ui/Odometer";
 import type { RingMetric } from "@/lib/ring-colors";
 
 export function RingLegend({ metrics }: { metrics: RingMetric[] }) {
@@ -22,7 +22,7 @@ export function RingLegend({ metrics }: { metrics: RingMetric[] }) {
               {m.label}
             </span>
             <span className="shrink-0 whitespace-nowrap font-display text-sm font-medium tabular-nums text-fg">
-              <CountUp value={value} decimals={big ? 1 : 0} />
+              <Odometer value={value} decimals={big ? 1 : 0} />
               <span className="text-muted">
                 /{target}
                 {big ? " t" : ""}
