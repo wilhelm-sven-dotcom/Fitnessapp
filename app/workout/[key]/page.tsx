@@ -827,8 +827,9 @@ export default function WorkoutPage() {
               className={cn(
                 "relative overflow-hidden rounded-card border border-surface-3 bg-surface-1",
                 !collapsedDone && !collapsedUpcoming && "p-4",
-                isActiveCard ? "edge-top shadow-card-lg" : "shadow-card",
-                slotDone && !isActiveCard && "opacity-80",
+                isActiveCard ? "edge-top shadow-card-lg stage-light" : "shadow-card",
+                (collapsedDone || collapsedUpcoming) && "stage-dim",
+                slotDone && !isActiveCard && !collapsedDone && "opacity-80",
               )}
             >
               {/* Abschluss-Flash: kurzer Akzent-Schimmer, wenn die Übung voll ist. */}
@@ -1060,6 +1061,45 @@ export default function WorkoutPage() {
                 </div>
               ) : (
                 <>
+                  {/* Bühne: der aktuelle Auftrag riesig — was JETZT zu tun ist.
+                      Gleiche Quelle wie die Ghost-Werte der Satz-Zeilen. */}
+                  {isActiveCard &&
+                    activeSetIdx >= 0 &&
+                    (() => {
+                      const cur = (entries[ex.id] || [])[activeSetIdx];
+                      const prevW = [...(entries[ex.id] || [])]
+                        .slice(0, activeSetIdx)
+                        .reverse()
+                        .find((s) => !s.warmup && s.weight !== "" && s.weight != null)?.weight;
+                      const w = !ex.weighted
+                        ? undefined
+                        : cur && cur.weight !== "" && cur.weight != null
+                          ? String(cur.weight)
+                          : ((prevW as string | undefined) ??
+                            (p.suggestedWeight != null ? String(p.suggestedWeight) : undefined));
+                      const r = p.r || String(ex.repHigh);
+                      const orderText =
+                        ex.unit === "Sek" ? `${r} Sek` : w ? `${w} kg × ${r}` : `× ${r}`;
+                      const setNo = (entries[ex.id] || [])
+                        .slice(0, activeSetIdx + 1)
+                        .filter((s) => !s.warmup).length;
+                      return (
+                        <div className="mt-3 text-center" data-testid="stage-order">
+                          <p className="font-mono text-xs uppercase tracking-widest text-faint">
+                            Jetzt · Satz {setNo}/{ex.sets}
+                          </p>
+                          <motion.p
+                            key={orderText}
+                            initial={reduce ? false : { scale: 0.92, opacity: 0.5 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={reduce ? { duration: 0 } : SPRING.pop}
+                            className="mt-1 font-display text-5xl font-bold leading-none tracking-tight tabular-nums text-fg"
+                          >
+                            {orderText}
+                          </motion.p>
+                        </div>
+                      );
+                    })()}
                   {/* Aktive Karte mit Historie → das Duell; sonst das ruhige Kästchen. */}
                   {isActiveCard && lp ? (
                     <ShadowRace
