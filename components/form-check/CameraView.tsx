@@ -8,6 +8,8 @@ import { checkForm } from "@/lib/pose/form-rules";
 import { configForPattern } from "@/lib/pose/exercise-pose-config";
 import { getPoseLandmarker, isPoseSupported } from "@/lib/pose/landmarker";
 import { initRepState, updateRep, type RepState } from "@/lib/pose/rep-counter";
+import { liveVelocityLoss, velocityRead } from "@/lib/pose/velocity";
+import { beepEnd } from "@/lib/beep";
 import { speak } from "@/lib/voice";
 import type { Pattern } from "@/lib/types";
 
@@ -28,6 +30,10 @@ export interface FormResult {
   reps: number;
   formScore: number; // 0..100, share of tracked frames without a form warning
   flags: string[]; // distinct technique warnings seen
+  /** Kamera-VBT: Tempoverlust über den Satz (0..100 %), wenn messbar. */
+  velLossPct?: number;
+  /** Aus dem Tempoverlust geschätztes RIR (0..4), wenn messbar. */
+  estRir?: number;
 }
 
 export function CameraView({
@@ -63,11 +69,20 @@ export function CameraView({
   const flagsRef = useRef<Set<string>>(new Set());
   const voiceRef = useRef(voiceOn);
   voiceRef.current = voiceOn;
+  /** "Letzte Wiederholung"-Signal nur einmal pro Satz. */
+  const limitCuedRef = useRef(false);
 
   const finish = () => {
     const total = goodFramesRef.current + warnFramesRef.current;
     const formScore = total ? Math.round((100 * goodFramesRef.current) / total) : 100;
-    onComplete?.({ reps, formScore, flags: [...flagsRef.current] });
+    const vel = velocityRead(repRef.current.history);
+    onComplete?.({
+      reps,
+      formScore,
+      flags: [...flagsRef.current],
+      velLossPct: vel?.velLossPct,
+      estRir: vel?.estRir,
+    });
     onClose();
   };
 
@@ -81,6 +96,7 @@ export function CameraView({
     let stream: MediaStream | null = null;
     repRef.current = initRepState();
     warnRef.current = false;
+    limitCuedRef.current = false;
     goodFramesRef.current = 0;
     warnFramesRef.current = 0;
     flagsRef.current = new Set();
@@ -148,11 +164,20 @@ export function CameraView({
                   ? m.elbowAngle
                   : m.hipAngle;
             if (value != null) {
-              const next = updateRep(repRef.current, value, cfg.rep);
+              const next = updateRep(repRef.current, value, cfg.rep, ts);
               if (next.reps !== repRef.current.reps) {
                 setReps(next.reps);
                 vibrate(40);
                 if (voiceRef.current) speak(String(next.reps));
+                // Kamera-VBT: bricht das Tempo messbar ein, ist der Satz nah
+                // an der Grenze — einmal pro Satz ansagen (Ton + Stimme).
+                const loss = liveVelocityLoss(next.history);
+                if (!limitCuedRef.current && loss != null && loss >= 0.25 && next.reps >= 4) {
+                  limitCuedRef.current = true;
+                  beepEnd();
+                  if (voiceRef.current)
+                    speak("Letzte Wiederholung — sauber bleiben.", { interrupt: true });
+                }
               }
               repRef.current = next;
             }
