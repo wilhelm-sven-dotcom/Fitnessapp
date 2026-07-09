@@ -31,6 +31,7 @@ import { LiveDemo } from "@/components/workout/LiveDemo";
 import { PhaseRail } from "@/components/workout/PhaseRail";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { useWakeLock } from "@/components/workout/useWakeLock";
+import { primeAudio } from "@/lib/beep";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
@@ -678,7 +679,10 @@ export default function WorkoutPage() {
               Aufgewärmt · {wuMin} Min
             </span>
             <Pressable
-              onClick={() => router.push(`/warmup/${key}`)}
+              onClick={() => {
+                primeAudio();
+                router.push(`/warmup/${key}`);
+              }}
               className="shrink-0 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
             >
               Nochmal
@@ -697,7 +701,10 @@ export default function WorkoutPage() {
             </p>
             <div className="mt-3 flex gap-2">
               <Pressable
-                onClick={() => router.push(`/warmup/${key}`)}
+                onClick={() => {
+                primeAudio();
+                router.push(`/warmup/${key}`);
+              }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-card bg-accent-sessions py-2.5 text-sm font-semibold text-on-accent focus:outline-none"
               >
                 <Flame size={15} /> Aufwärmen starten

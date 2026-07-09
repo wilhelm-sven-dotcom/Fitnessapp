@@ -7,9 +7,12 @@ import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
 import { Pressable } from "@/components/ui/pressable";
 import { EASE_OUT } from "@/lib/motion";
+import { beep, beepEnd, primeAudio } from "@/lib/beep";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 import type { WarmupDrill } from "@/lib/warmup";
+
+const SWITCH_SEC = 5;
 
 function vibrate(p: number | number[]) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(p);
@@ -31,6 +34,8 @@ export function WarmupPlayer({
   const total = drills.length;
   const [index, setIndex] = useState(0);
   const [left, setLeft] = useState(drills[0]?.durationSec ?? 0);
+  /** "drill" = Übung läuft; "switch" = 5-s-Wechselpause vor der nächsten. */
+  const [phase, setPhase] = useState<"drill" | "switch">("drill");
   const [paused, setPaused] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -48,26 +53,50 @@ export function WarmupPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, done]);
 
-  // Countdown for the current drill; auto-advance at zero.
+  // Akustik: Tick in den letzten 5 s einer Übung, Doppelton am Ende —
+  // hörbar ohne aufs Display zu schauen. (Nur im Drill, nicht im Wechsel.)
+  useEffect(() => {
+    if (paused || done || phase !== "drill") return;
+    if (left <= 5 && left > 0) beep();
+    if (left === 0) beepEnd();
+  }, [left, paused, done, phase]);
+
+  // Countdown; bei 0: Drill → 5-s-Wechselpause → nächster Drill (bzw. Done).
   useEffect(() => {
     if (paused || done) return;
     if (left <= 0) {
-      if (index + 1 < total) {
-        setIndex((i) => i + 1);
+      if (phase === "drill") {
+        if (index + 1 < total) {
+          setPhase("switch");
+          setLeft(SWITCH_SEC);
+        } else {
+          setDone(true);
+          vibrate([60, 40, 60]);
+          if (voiceOn) speak("Aufgewärmt. Los geht's.", { interrupt: true });
+        }
       } else {
-        setDone(true);
-        vibrate([60, 40, 60]);
-        if (voiceOn) speak("Aufgewärmt. Los geht's.", { interrupt: true });
+        // Atomar in den nächsten Drill: left SOFORT mitsetzen — sonst sieht
+        // dieser Effekt einen Zwischen-Render mit left=0 im Drill-Zustand
+        // und pendelt zurück in einen neuen Wechsel (der Drill startet nie).
+        setPhase("drill");
+        setIndex((i) => i + 1);
+        setLeft(drills[index + 1]?.durationSec ?? 0);
       }
       return;
     }
     const t = setTimeout(() => setLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [left, paused, done, index, total, voiceOn]);
+  }, [left, paused, done, index, total, voiceOn, phase, drills]);
 
   const skip = () => {
-    if (index + 1 < total) setIndex((i) => i + 1);
-    else setDone(true);
+    primeAudio();
+    if (index + 1 < total) {
+      setPhase("drill");
+      setIndex((i) => i + 1);
+      setLeft(drills[index + 1]?.durationSec ?? 0);
+    } else {
+      setDone(true);
+    }
   };
 
   if (done) {
@@ -100,9 +129,13 @@ export function WarmupPlayer({
     );
   }
 
-  const pct = current.durationSec > 0 ? (left / current.durationSec) * 100 : 0;
-  const isMobility = current.kind === "mobility";
-  const fig = FIG[current.figure ?? current.id];
+  const switching = phase === "switch";
+  const next = drills[index + 1];
+  const showing = switching && next ? next : current;
+  const phaseTotal = switching ? SWITCH_SEC : current.durationSec;
+  const pct = phaseTotal > 0 ? (left / phaseTotal) * 100 : 0;
+  const isMobility = showing.kind === "mobility";
+  const fig = FIG[showing.figure ?? showing.id];
 
   return (
     <div
@@ -142,7 +175,7 @@ export function WarmupPlayer({
       {/* drill */}
       <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
         <motion.div
-          key={index}
+          key={`${index}:${phase}`}
           className="flex flex-col items-center"
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -154,7 +187,7 @@ export function WarmupPlayer({
               isMobility ? "bg-accent-coverage text-on-strong" : "bg-accent-volume text-on-strong",
             )}
           >
-            {isMobility ? "Mobilität" : "Aktivierung"}
+            {switching ? "Wechsel" : isMobility ? "Mobilität" : "Aktivierung"}
           </span>
           {fig && (
             <div className="mb-3 w-44 rounded-card border border-surface-3 bg-surface-1 p-2 shadow-card">
@@ -162,9 +195,11 @@ export function WarmupPlayer({
             </div>
           )}
           <h2 className="font-display text-4xl font-semibold tracking-tight text-fg">
-            {current.name}
+            {switching ? `Gleich: ${showing.name}` : showing.name}
           </h2>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">{current.cue}</p>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
+            {switching ? "Position wechseln — es geht gleich weiter." : showing.cue}
+          </p>
         </motion.div>
         <p className="mt-8 font-display text-7xl font-semibold tabular-nums text-neutral-50">{left}</p>
         <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
@@ -178,7 +213,10 @@ export function WarmupPlayer({
       {/* controls */}
       <div className="flex items-center gap-2 px-5">
         <Pressable
-          onClick={() => setPaused((p) => !p)}
+          onClick={() => {
+            primeAudio();
+            setPaused((p) => !p);
+          }}
           className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-3.5 text-sm font-medium text-fg focus:outline-none"
         >
           {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Weiter" : "Pause"}
