@@ -32,6 +32,7 @@ import { PhaseRail } from "@/components/workout/PhaseRail";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { primeAudio } from "@/lib/beep";
+import type { CoachCall } from "@/lib/coach-live";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
@@ -182,6 +183,10 @@ export default function WorkoutPage() {
   const [lastCommitted, setLastCommitted] = useState<{ exId: string; i: number } | null>(
     null,
   );
+  /** Ringecke: ATLAS' Ansage zur laufenden Pause (null = still). */
+  const [coachCall, setCoachCall] = useState<CoachCall | null>(null);
+  const coachLiveOffRef = useRef(false); // Route meldete configured:false
+  const coachCallCountRef = useRef(0); // Kosten-Deckel je Session
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [poseSupported, setPoseSupported] = useState(false);
@@ -310,8 +315,101 @@ export default function WorkoutPage() {
       // Den eben beendeten Satz merken — die Pause trägt seine RIR-Chips.
       setLastCommitted({ exId, i });
       startRest();
+      void maybeCoachCall(exId, i, val);
     }
   };
+
+  // Ringecke: an relevanten Momenten sieht ATLAS die Live-Session und gibt
+  // EINE taktische Ansage in die Pause. Still ohne Key/offline/Deckel.
+  const maybeCoachCall = async (exId: string, i: number, justReps: string) => {
+    setCoachCall(null);
+    if (settings.coachLive === false || coachLiveOffRef.current) return;
+    if (coachCallCountRef.current >= 6) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    const slot = list.find((sl) => sl.ex.id === exId);
+    if (!slot || slot.ex.pattern === "cardio") return;
+    const sets = entriesRef.current[exId] || [];
+    const set = sets[i];
+    if (!set || set.warmup) return;
+    // Der Ref hinkt dem eben committeten setEntry einen Render hinterher —
+    // die frische Eingabe wird deshalb explizit eingerechnet.
+    const committed =
+      set.reps !== "" && set.reps != null ? set : { ...set, reps: justReps };
+    const work = sets.filter((st) => !st.warmup);
+    const doneNow =
+      work.filter((st) => st.reps !== "" && st.reps != null).length +
+      (set.reps === "" || set.reps == null ? 1 : 0);
+    const isLastOfExercise = doneNow >= work.length;
+    const rec = recordMap.get(exId) ?? null;
+    const nearRecord = !!rec && beatsRecord(slot.ex, committed, rec);
+    const lowRir = committed.rir != null && committed.rir <= 1;
+    if (!(isLastOfExercise || nearRecord || lowRir)) return;
+    coachCallCountRef.current += 1;
+    const p = presc(slot.ex, lastPerf(exId), {
+      lighter,
+      loadMult: readinessScale.loadMult,
+      cap: readinessScale.cap,
+      step: settings.weightStep,
+    });
+    const context = [
+      `Übung: ${slot.ex.name} (${slot.ex.tag}) — Satz ${doneNow}/${work.length}${isLastOfExercise ? " (letzter Satz dieser Übung)" : ""}.`,
+      `Eben: ${committed.weight !== "" && committed.weight != null ? `${committed.weight} kg × ` : "× "}${committed.reps}${committed.rir != null ? `, RIR ${committed.rir}` : ""}.`,
+      `Empfehlung war: ${p.w || "—"} × ${p.r || "—"}.`,
+      rec
+        ? `Bestwert: ${rec.label}.${nearRecord ? " Dieser Satz schlägt ihn!" : ""}`
+        : "Noch kein Bestwert für diese Übung.",
+      `Rest-Session: noch ~${estimateRemainingMin(list, entriesRef.current)} Min geplant, Ziel ${settings.timeBudgetMin} Min.`,
+    ].join("\n");
+    try {
+      const res = await fetch("/api/coach/live", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; call?: CoachCall; configured?: boolean }
+        | null;
+      if (data?.configured === false) {
+        coachLiveOffRef.current = true;
+        return;
+      }
+      if (data?.ok && data.call?.say) {
+        setCoachCall(data.call);
+        say(data.call.say);
+      }
+    } catch {
+      /* Ringecke bleibt still — Training läuft normal */
+    }
+  };
+
+  /** Eingriff aus der Ringecke anwenden (Gewicht des nächsten offenen
+   *  Satzes bzw. Pausenverlängerung). */
+  const applyCoach = () => {
+    const adj = coachCall?.adjustment;
+    if (!adj) return;
+    if (adj.kind === "rest") {
+      setRestLeft((x) => x + adj.value);
+    } else {
+      for (const { ex } of list) {
+        if (ex.pattern === "cardio") continue;
+        const sets = entriesRef.current[ex.id] || [];
+        const idx = sets.findIndex(
+          (st) => !st.warmup && (st.reps === "" || st.reps == null),
+        );
+        if (idx >= 0) {
+          setEntry(ex.id, idx, "weight", String(adj.value));
+          break;
+        }
+      }
+    }
+    tap();
+    setCoachCall(null);
+  };
+
+  // Pause vorbei/übersprungen → Ansage räumen.
+  useEffect(() => {
+    if (!restOn) setCoachCall(null);
+  }, [restOn]);
 
   // Camera hand-off: counted reps fill the set (via onReps → starts the rest timer
   // like manual entry); the ghost/last weight prefills an empty weight cell. The
@@ -1376,6 +1474,17 @@ export default function WorkoutPage() {
                     onIntensity: (v: number) => setEntry(lc.exId, lc.i, "intensity", v),
                   }
                 : undefined;
+            const coach = coachCall
+              ? {
+                  say: coachCall.say,
+                  actionLabel: coachCall.adjustment
+                    ? coachCall.adjustment.kind === "weight"
+                      ? `Auf ${String(coachCall.adjustment.value).replace(".", ",")} kg`
+                      : `+${coachCall.adjustment.value} s Pause`
+                    : undefined,
+                  onApply: coachCall.adjustment ? applyCoach : undefined,
+                }
+              : undefined;
             return (
               <RestTimer
                 left={restLeft}
@@ -1383,6 +1492,7 @@ export default function WorkoutPage() {
                 onAdd={() => setRestLeft((x) => x + 15)}
                 onSkip={() => setRestOn(false)}
                 effort={effort}
+                coach={coach}
               />
             );
           })()}

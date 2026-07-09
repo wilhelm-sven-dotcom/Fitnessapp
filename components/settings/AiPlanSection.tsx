@@ -11,8 +11,15 @@ import { useTraining } from "@/components/providers/TrainingProvider";
  * wöchentliche KI-Planung und ein manueller „Jetzt planen"-Anstoß.
  */
 export function AiPlanSection() {
-  const { settings, setAiPlanning, aiPlan, aiPlanActive, aiPlanLoading, refreshWeekPlan } =
-    useTraining();
+  const {
+    settings,
+    setAiPlanning,
+    setCoachLive,
+    aiPlan,
+    aiPlanActive,
+    aiPlanLoading,
+    refreshWeekPlan,
+  } = useTraining();
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [lastResult, setLastResult] = useState<"ok" | "fail" | null>(null);
 
@@ -48,6 +55,12 @@ export function AiPlanSection() {
           onChange={setAiPlanning}
           label="Wochenplanung durch ATLAS"
           hint="ATLAS plant A/B/C jede Woche neu per Claude-KI — Übungen, Sätze und Schwerpunkte aus deinem Verlauf. Offline oder ohne Schlüssel plant das Regelwerk."
+        />
+        <Toggle
+          checked={settings.coachLive !== false}
+          onChange={setCoachLive}
+          label="Ringecke im Training"
+          hint="An wichtigen Momenten (letzter Satz, Rekordnähe, RIR 0–1) sieht ATLAS die Live-Session und gibt in der Pause EINE taktische Ansage — mit übernehmbarem Vorschlag."
         />
         <div>
           <p className="text-sm font-medium text-fg">
