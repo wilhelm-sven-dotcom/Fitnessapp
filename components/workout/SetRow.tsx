@@ -2,53 +2,17 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Camera, Check, Trophy } from "lucide-react";
+import { INTENSITY_OPTIONS, RIR_OPTIONS, Scale } from "./Scale";
 import { TimedSet } from "./TimedSet";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
 import { SPRING } from "@/lib/motion";
-import { cn } from "@/lib/utils";
 import type { SetEntry, Unit } from "@/lib/types";
 
 export type SetState = "done" | "active" | "upcoming";
 
 const inputClass =
   "min-w-0 flex-1 rounded-pill bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
-
-const RIR_OPTIONS = [0, 1, 2, 3, 4];
-const INTENSITY_OPTIONS = [1, 2, 3, 4, 5];
-
-/** Slim effort selector — RIR (0–4) or felt intensity (1–5). Rated after the set. */
-function Scale({
-  label,
-  options,
-  value,
-  onPick,
-}: {
-  label: string;
-  options: number[];
-  value: number | undefined;
-  onPick: (v: number) => void;
-}) {
-  return (
-    <div className="mt-1.5 flex items-center gap-2 pl-12">
-      <span className="shrink-0 font-mono text-xs uppercase tracking-widest text-faint">{label}</span>
-      <div className="flex flex-1 gap-1">
-        {options.map((o) => (
-          <Pressable
-            key={o}
-            onClick={() => onPick(o)}
-            className={cn(
-              "flex-1 rounded-pill py-1 text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
-              value === o ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
-            )}
-          >
-            {o}
-          </Pressable>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /** One logged set in three states — the focus-logbook: a done set is a compact
  *  ledger line (effort still editable), the active set is the big instrument
@@ -132,9 +96,9 @@ export function SetRow({
         </Pressable>
         {!isWarmup &&
           (timed ? (
-            <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
+            <Scale className="pl-12" label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
           ) : (
-            <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
+            <Scale className="pl-12" label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
           ))}
       </div>
     );
@@ -243,9 +207,9 @@ export function SetRow({
       )}
       {!isWarmup &&
         (timed ? (
-          <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
+          <Scale className="pl-12" label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
         ) : (
-          <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
+          <Scale className="pl-12" label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
         ))}
     </motion.div>
   );

@@ -921,7 +921,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setEntries((prev) => {
       const c = { ...prev };
       const arr = (c[exId] || []).map((s) => ({ ...s }));
+      const before = arr[i]?.weight;
       arr[i] = { ...arr[i], [field]: val };
+      // Gewichts-Kaskade: ein eingetragenes Gewicht zieht unberührte
+      // Folgesätze mit (reps noch offen, Gewicht leer oder noch auf dem
+      // alten Wert dieses Satzes). Warmup-Sätze bleiben unangetastet.
+      if (field === "weight" && typeof val === "string" && val !== "") {
+        for (let j = i + 1; j < arr.length; j++) {
+          const s = arr[j];
+          if (s.warmup) continue;
+          const open = s.reps === "" || s.reps == null;
+          const untouched = s.weight === "" || s.weight == null || s.weight === before;
+          if (open && untouched) arr[j] = { ...s, weight: val };
+        }
+      }
       c[exId] = arr;
       return c;
     });

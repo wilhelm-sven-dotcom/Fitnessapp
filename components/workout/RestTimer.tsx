@@ -1,11 +1,25 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { INTENSITY_OPTIONS, RIR_OPTIONS, Scale } from "@/components/workout/Scale";
 import { Pressable } from "@/components/ui/pressable";
 import { SPRING } from "@/lib/motion";
 
 const R = 26;
 const CIRC = 2 * Math.PI * R;
+
+/** Bewertung des gerade beendeten Satzes — direkt in der Pause, dem
+ *  natürlichen Moment dafür (statt vom Timer-Overlay verdeckt zu werden). */
+export interface RestEffort {
+  /** Zeit-Übung → Intensität (1–5), sonst RIR (0–4). */
+  timed: boolean;
+  name: string;
+  setNo: number;
+  rir?: number;
+  intensity?: number;
+  onRir: (v: number) => void;
+  onIntensity: (v: number) => void;
+}
 
 /** Bottom rest-timer as a live instrument: a depleting countdown ring with the
  *  seconds inside, a breathing accent glow while it runs (faster in the last
@@ -17,11 +31,13 @@ export function RestTimer({
   total,
   onAdd,
   onSkip,
+  effort,
 }: {
   left: number;
   total: number;
   onAdd: () => void;
   onSkip: () => void;
+  effort?: RestEffort;
 }) {
   const reduce = useReducedMotion();
   const frac = Math.max(0, Math.min(1, left / (total || 1))); // remaining
@@ -111,6 +127,30 @@ export function RestTimer({
             </div>
           </div>
         </div>
+        {/* Wie schwer war der Satz? RIR/Intensität für den eben beendeten
+            Satz — hier eintragbar, ohne zur Karte zurückzuscrollen. */}
+        {effort && (
+          <div className="mt-3 border-t border-line pt-2.5">
+            <p className="font-mono text-xs uppercase tracking-widest text-muted">
+              {effort.name} · Satz {effort.setNo} — wie schwer war das?
+            </p>
+            {effort.timed ? (
+              <Scale
+                label="Int"
+                options={INTENSITY_OPTIONS}
+                value={effort.intensity}
+                onPick={effort.onIntensity}
+              />
+            ) : (
+              <Scale
+                label="RIR"
+                options={RIR_OPTIONS}
+                value={effort.rir}
+                onPick={effort.onRir}
+              />
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );

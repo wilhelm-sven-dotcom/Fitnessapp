@@ -177,6 +177,10 @@ export default function WorkoutPage() {
   const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restOn, setRestOn] = useState(false);
+  /** Der zuletzt abgehakte Satz — die Pause trägt seine RIR-/Int-Chips. */
+  const [lastCommitted, setLastCommitted] = useState<{ exId: string; i: number } | null>(
+    null,
+  );
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [poseSupported, setPoseSupported] = useState(false);
@@ -301,7 +305,11 @@ export default function WorkoutPage() {
   };
   const onReps = (exId: string, i: number, oldVal: string, val: string) => {
     setEntry(exId, i, "reps", val);
-    if ((oldVal === "" || oldVal == null) && val !== "" && val != null) startRest();
+    if ((oldVal === "" || oldVal == null) && val !== "" && val != null) {
+      // Den eben beendeten Satz merken — die Pause trägt seine RIR-Chips.
+      setLastCommitted({ exId, i });
+      startRest();
+    }
   };
 
   // Camera hand-off: counted reps fill the set (via onReps → starts the rest timer
@@ -818,7 +826,10 @@ export default function WorkoutPage() {
             slotDone &&
             !isActiveCard &&
             viewSlot !== slotKey &&
-            flashSlot !== slotKey;
+            flashSlot !== slotKey &&
+            // Karenz: solange die Pause zum letzten Satz DIESER Übung läuft,
+            // bleibt die Karte offen (RIR nachtragbar, kein Weg-Kollabieren).
+            !(restOn && lastCommitted?.exId === ex.id);
           const collapsedUpcoming =
             hasStrength && !slotDone && !isActiveCard && viewSlot !== slotKey && !isSsPartner;
           return (
@@ -1331,14 +1342,35 @@ export default function WorkoutPage() {
       />
 
       <AnimatePresence>
-        {restOn && (
-          <RestTimer
-            left={restLeft}
-            total={TIME.restSec}
-            onAdd={() => setRestLeft((x) => x + 15)}
-            onSkip={() => setRestOn(false)}
-          />
-        )}
+        {restOn &&
+          (() => {
+            const lc = lastCommitted;
+            const lcEx = lc ? list.find((s) => s.ex.id === lc.exId)?.ex : undefined;
+            const lcSet = lc ? (entries[lc.exId] || [])[lc.i] : undefined;
+            const effort =
+              lc && lcEx && lcSet && !lcSet.warmup
+                ? {
+                    timed: lcEx.unit === "Sek",
+                    name: lcEx.name,
+                    setNo: (entries[lc.exId] || [])
+                      .slice(0, lc.i + 1)
+                      .filter((s) => !s.warmup).length,
+                    rir: lcSet.rir,
+                    intensity: lcSet.intensity,
+                    onRir: (v: number) => setEntry(lc.exId, lc.i, "rir", v),
+                    onIntensity: (v: number) => setEntry(lc.exId, lc.i, "intensity", v),
+                  }
+                : undefined;
+            return (
+              <RestTimer
+                left={restLeft}
+                total={TIME.restSec}
+                onAdd={() => setRestLeft((x) => x + 15)}
+                onSkip={() => setRestOn(false)}
+                effort={effort}
+              />
+            );
+          })()}
       </AnimatePresence>
     </div>
   );
