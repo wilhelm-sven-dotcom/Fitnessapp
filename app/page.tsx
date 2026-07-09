@@ -80,6 +80,7 @@ export default function HomePage() {
     acceptDeload,
     acceptExam,
     dismissCard,
+    aiPlanActive,
   } = useTraining();
   const tags = [...new Set(recList.map((s) => s.ex?.tag).filter(Boolean))];
   const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
@@ -223,6 +224,7 @@ export default function HomePage() {
 
           <p className="mt-5 font-mono text-xs uppercase tracking-widest text-accent-ink">
             Empfohlen heute — {recTpl.name}
+            {aiPlanActive ? " · ATLAS-Woche" : ""}
           </p>
           <h1 className="mt-1 font-display text-6xl font-bold uppercase leading-none tracking-tight text-fg">
             {focusParts.map((p, i) => (
@@ -416,7 +418,9 @@ export default function HomePage() {
           {/* The one bold moment: today's recommended session. */}
           <Reveal delay={0.14}>
             <Card variant="elevated" className="mb-4 overflow-hidden rounded-card p-6">
-              <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">▸ Empfohlen heute</p>
+              <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">
+                ▸ Empfohlen heute{aiPlanActive ? " · ATLAS-Woche" : ""}
+              </p>
               <h2 className="font-display text-4xl font-bold leading-none tracking-tight">{recTpl.name}</h2>
               <p className="mt-1 text-muted">{recTpl.focus}</p>
               <p className="mb-3 mt-1 font-mono text-xs text-faint">

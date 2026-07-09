@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { CARDIO_DAY, DEFAULT_EQUIP, EXAM_DAY, LIB, TEMPLATE } from "@/lib/exercises";
@@ -23,7 +24,12 @@ import {
   type TrainerState,
 } from "@/lib/trainer";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
-import { presc, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
+import {
+  allowedExercises,
+  buildWeekContext,
+  type WeekPlan,
+} from "@/lib/coach-week";
+import { poolFor, presc, reqOk, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseAffinity } from "@/lib/affinity";
 import {
@@ -241,6 +247,11 @@ interface TrainingContextValue {
   setCardioFinisher: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
+  setAiPlanning: (on: boolean) => void;
+  aiPlan: WeekPlan | null;
+  aiPlanActive: boolean;
+  aiPlanLoading: boolean;
+  refreshWeekPlan: () => Promise<boolean>;
   setUserName: (name: string) => void;
   setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
   completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
@@ -314,6 +325,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [saving, setSaving] = useState(false);
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [aiPlan, setAiPlan] = useState<WeekPlan | null>(null);
+  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+  const aiFetchTried = useRef(false);
   const [entries, setEntries] = useState<Record<string, SetEntry[]>>({});
   const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
   const [note, setNoteState] = useState("");
@@ -610,11 +624,34 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
-    return resolveSession(tpl, idx, choices, has, allLib, {
+    const base = resolveSession(tpl, idx, choices, has, allLib, {
       backSafe,
       injuries: athleteInjuries,
       affinity,
     });
+    // ATLAS-KI-Woche: der Wochenplan überlagert die Übungswahl der
+    // Template-Tage — nur in seiner Woche und nie bei rotem Rücken
+    // (backSafe: dann übernimmt das Regelwerk mit den Schon-Alternativen).
+    // Readiness, Zeitbudget und Deload laufen ohnehin NACH sessionOf.
+    const aiDay =
+      !backSafe && aiPlan && aiPlan.weekKey === weekKeyOf()
+        ? aiPlan.days[key as "A" | "B" | "C"]
+        : undefined;
+    if (aiDay?.slots?.length) {
+      const mapped: ResolvedSlot[] = [];
+      for (let i = 0; i < aiDay.slots.length; i++) {
+        const slot = aiDay.slots[i];
+        const ex = allLib.find((e) => e.id === slot.exerciseId);
+        if (!ex || ex.pattern === "cardio" || !reqOk(ex, has)) continue;
+        mapped.push({
+          ex: { ...ex, sets: slot.sets },
+          slotKey: `${key}:ai${i}`,
+          pool: poolFor(ex.pattern, has, allLib),
+        });
+      }
+      if (mapped.length >= 3) return mapped;
+    }
+    return base;
   };
 
   /** Append an optional Peloton finisher to A/B/C sessions (opt-in, needs a bike). */
@@ -1021,6 +1058,65 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, timeBudgetMin: min });
   const setKeepAwake = (on: boolean) =>
     void saveSettings({ ...settings, keepAwake: on });
+  const setAiPlanning = (on: boolean) =>
+    void saveSettings({ ...settings, aiPlanning: on });
+
+  /** ATLAS-KI-Woche: Plan vom Server holen (Kontext wird clientseitig gebaut). */
+  const refreshWeekPlan = async (): Promise<boolean> => {
+    setAiPlanLoading(true);
+    try {
+      const wk = weekKeyOf();
+      const res = await fetch("/api/coach/week", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          weekKey: wk,
+          budgetMin: settings.timeBudgetMin,
+          exercises: allowedExercises(allLib, has),
+          context: buildWeekContext({
+            log,
+            muscleVolumes,
+            injuries: athleteInjuries,
+            budgetMin: settings.timeBudgetMin,
+          }),
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; plan?: WeekPlan; configured?: boolean }
+        | null;
+      if (data?.ok && data.plan) {
+        setAiPlan(data.plan);
+        await storage.setJSON(KEYS.aiplan, data.plan);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setAiPlanLoading(false);
+    }
+  };
+
+  // Gespeicherten Wochenplan laden (reine Cache-Ableitung — bewusst nicht im
+  // Cloud-Sync: jedes Gerät holt ihn sich selbst frisch).
+  useEffect(() => {
+    void storage.getJSON<WeekPlan | null>(KEYS.aiplan, null).then((pl) => {
+      if (pl && typeof pl === "object" && typeof pl.weekKey === "string") setAiPlan(pl);
+    });
+  }, []);
+
+  // Neue Woche → einmal pro App-Lauf still einen frischen Plan versuchen
+  // (kein Key/offline/Fehler: Regelwerk übernimmt, nichts blinkt).
+  useEffect(() => {
+    if (loading || aiFetchTried.current) return;
+    if (settings.aiPlanning === false) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    if (log.length < 3) return;
+    if (aiPlan?.weekKey === weekKeyOf()) return;
+    aiFetchTried.current = true;
+    void refreshWeekPlan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, settings.aiPlanning, aiPlan, log.length]);
   const setVoiceCues = (on: boolean) =>
     void saveSettings({ ...settings, voiceCues: on });
   const setSuperset = (on: boolean) =>
@@ -1478,6 +1574,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCardioFinisher,
     setCoachMotivation,
     setKeepAwake,
+    setAiPlanning,
+    aiPlan,
+    aiPlanActive: !!(
+      aiPlan &&
+      aiPlan.weekKey === weekKeyOf() &&
+      Object.keys(aiPlan.days).length > 0
+    ),
+    aiPlanLoading,
+    refreshWeekPlan,
     setUserName,
     setAthleteProfile,
     completeOnboarding,

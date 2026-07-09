@@ -62,6 +62,7 @@ export const KEYS = {
   // Eingefrorene Wochen-Mission (ATLAS) — mergeCloudLocal behandelt unbekannte
   // Keys mit "local wins", der Rollover-Check heilt Konflikte beim Öffnen.
   mission: "wilhelm-training-mission",
+  aiplan: "wilhelm-training-aiplan",
 } as const;
 
 export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
