@@ -249,6 +249,7 @@ interface TrainingContextValue {
   setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
+  setCoachLive: (on: boolean) => void;
   aiPlan: WeekPlan | null;
   aiPlanActive: boolean;
   aiPlanLoading: boolean;
@@ -1064,6 +1065,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, keepAwake: on });
   const setAiPlanning = (on: boolean) =>
     void saveSettings({ ...settings, aiPlanning: on });
+  const setCoachLive = (on: boolean) =>
+    void saveSettings({ ...settings, coachLive: on });
   /** Zünd-Check: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
   const addJump = (heightCm: number) => {
     const next = [...jumps, { date: new Date().toISOString(), heightCm }].slice(-60);
@@ -1589,6 +1592,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCoachMotivation,
     setKeepAwake,
     setAiPlanning,
+    setCoachLive,
     aiPlan,
     aiPlanActive: !!(
       aiPlan &&

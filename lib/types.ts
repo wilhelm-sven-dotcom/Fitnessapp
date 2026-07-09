@@ -246,6 +246,8 @@ export interface AppSettings {
   keepAwake?: boolean;
   /** ATLAS plant die Woche per Claude-KI (default an; greift nur mit Server-Key). */
   aiPlanning?: boolean;
+  /** Die Ringecke: ATLAS-Ansagen in der Satzpause (default an; braucht Server-Key). */
+  coachLive?: boolean;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;

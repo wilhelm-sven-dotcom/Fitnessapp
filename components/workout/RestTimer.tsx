@@ -26,18 +26,27 @@ export interface RestEffort {
  *  5 s) and a spring snap (scale pop + accent flash) when it hits 0 — the
  *  parent keeps the card mounted for a beat so the snap is visible. Reduced
  *  motion drops glow and snap; the ring jumps per second. */
+/** Ansage aus der ATLAS-Ringecke — optional mit übernehmbarem Eingriff. */
+export interface RestCoach {
+  say: string;
+  actionLabel?: string;
+  onApply?: () => void;
+}
+
 export function RestTimer({
   left,
   total,
   onAdd,
   onSkip,
   effort,
+  coach,
 }: {
   left: number;
   total: number;
   onAdd: () => void;
   onSkip: () => void;
   effort?: RestEffort;
+  coach?: RestCoach;
 }) {
   const reduce = useReducedMotion();
   const frac = Math.max(0, Math.min(1, left / (total || 1))); // remaining
@@ -148,6 +157,23 @@ export function RestTimer({
                 value={effort.rir}
                 onPick={effort.onRir}
               />
+            )}
+          </div>
+        )}
+        {/* Die Ringecke: ATLAS' taktische Ansage zur laufenden Pause. */}
+        {coach && (
+          <div className="mt-3 border-t border-line pt-2.5" data-testid="ring-corner">
+            <p className="font-mono text-xs uppercase tracking-widest text-accent-ink">
+              Ringecke
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-fg">{coach.say}</p>
+            {coach.actionLabel && coach.onApply && (
+              <Pressable
+                onClick={coach.onApply}
+                className="mt-2 rounded-pill bg-accent-sessions px-4 py-2 text-sm font-semibold text-on-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              >
+                {coach.actionLabel} übernehmen
+              </Pressable>
             )}
           </div>
         )}
