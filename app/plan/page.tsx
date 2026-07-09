@@ -31,6 +31,10 @@ export default function PlanPage() {
     addGym,
     removeGym,
     settings,
+    aiPlan,
+    aiPlanActive,
+    aiPlanLoading,
+    refreshWeekPlan,
   } = useTraining();
   const router = useRouter();
 
@@ -66,6 +70,49 @@ export default function PlanPage() {
   return (
     <div>
       <PageHeader eyebrow="Dein Setup" title="Plan" />
+
+      {/* ATLAS-KI-Woche: der aktuelle Wochenplan (Claude) — oder der Weg dahin. */}
+      {settings.aiPlanning !== false && (
+        <Reveal>
+          <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+                <Sparkles size={13} className="text-accent-ink" /> ATLAS-Wochenplan
+              </p>
+              <Pressable
+                onClick={() => void refreshWeekPlan()}
+                disabled={aiPlanLoading}
+                className="rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions disabled:opacity-50"
+              >
+                {aiPlanLoading ? "Plant…" : "Neu planen"}
+              </Pressable>
+            </div>
+            {aiPlanActive && aiPlan ? (
+              <>
+                {aiPlan.weekNote && (
+                  <p className="mb-3 text-sm leading-relaxed text-fg">{aiPlan.weekNote}</p>
+                )}
+                <div className="space-y-1.5">
+                  {(["A", "B", "C"] as const).map((k) =>
+                    aiPlan.days[k] ? (
+                      <p key={k} className="text-xs leading-relaxed text-muted">
+                        <span className="font-mono text-accent-ink">{k}</span> ·{" "}
+                        {aiPlan.days[k]!.focusNote || `${aiPlan.days[k]!.slots.length} Übungen`}
+                      </p>
+                    ) : null,
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs leading-relaxed text-muted">
+                ATLAS plant deine Woche per Claude-KI, sobald der API-Schlüssel auf dem
+                Server liegt (Einstellungen → ATLAS-KI). Bis dahin plant das bewährte
+                Regelwerk — offline wie immer.
+              </p>
+            )}
+          </section>
+        </Reveal>
+      )}
 
       <Reveal>
         <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">

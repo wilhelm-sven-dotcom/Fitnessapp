@@ -244,6 +244,8 @@ export interface AppSettings {
   coachMotivation?: boolean;
   /** Keep the screen awake while a session is running (Screen Wake Lock, default on). */
   keepAwake?: boolean;
+  /** ATLAS plant die Woche per Claude-KI (default an; greift nur mit Server-Key). */
+  aiPlanning?: boolean;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;
