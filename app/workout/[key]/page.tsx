@@ -322,9 +322,17 @@ export default function WorkoutPage() {
     const cur = entries[exId]?.[i];
     if (r.reps > 0) onReps(exId, i, cur?.reps ?? "", String(r.reps));
     if (ghost && (cur?.weight === "" || cur?.weight == null)) setEntry(exId, i, "weight", ghost);
+    // Kamera-VBT: gemessenes RIR vorbefüllen (in der Pause übersteuerbar).
+    if (r.reps > 0 && r.estRir != null) setEntry(exId, i, "rir", r.estRir);
     setCamFor(null);
     if (r.reps > 0) {
-      say(`${r.reps} ${r.reps === 1 ? "Wiederholung" : "Wiederholungen"} übernommen.`);
+      const vel =
+        r.estRir != null && r.velLossPct != null
+          ? ` Tempoverlust ${r.velLossPct} Prozent — etwa ${r.estRir} im Tank.`
+          : "";
+      say(
+        `${r.reps} ${r.reps === 1 ? "Wiederholung" : "Wiederholungen"} übernommen.${vel}`,
+      );
       if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([40, 40, 60]);
     }
   };
