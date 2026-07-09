@@ -63,6 +63,7 @@ export const KEYS = {
   // Keys mit "local wins", der Rollover-Check heilt Konflikte beim Öffnen.
   mission: "wilhelm-training-mission",
   aiplan: "wilhelm-training-aiplan",
+  jumps: "wilhelm-training-jumps",
 } as const;
 
 export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
