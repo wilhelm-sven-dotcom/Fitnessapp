@@ -4,10 +4,10 @@ import { Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { beep, beepEnd, primeAudio } from "@/lib/beep";
-import { detectJump, jumpBand, type JumpBand, type JumpSample } from "@/lib/jump";
+import { analyzeJump, jumpBand, type JumpBand, type JumpSample, type JumpStats } from "@/lib/jump";
 import { cn } from "@/lib/utils";
 
-const WINDOW_MS = 6000;
+const WINDOW_MS = 8000;
 
 type Phase = "idle" | "measuring" | "done" | "failed" | "unsupported";
 
@@ -33,6 +33,7 @@ export function JumpCheck({
   const [result, setResult] = useState<{ heightCm: number; band: JumpBand | null } | null>(
     null,
   );
+  const [failStats, setFailStats] = useState<JumpStats | null>(null);
   const samples = useRef<JumpSample[]>([]);
   const cleanupRef = useRef<(() => void) | null>(null);
 
@@ -80,11 +81,13 @@ export function JumpCheck({
 
     const finish = window.setTimeout(() => {
       cleanupRef.current?.();
-      const jump = detectJump(samples.current);
+      const { result: jump, stats } = analyzeJump(samples.current);
       if (!jump) {
+        setFailStats(stats);
         setPhase("failed");
         return;
       }
+      setFailStats(null);
       const band = jumpBand(jump.heightCm, baseline);
       setResult({ heightCm: jump.heightCm, band });
       setPhase("done");
@@ -152,9 +155,19 @@ export function JumpCheck({
         </p>
       )}
       {phase === "failed" && (
-        <p className="mt-1.5 text-xs leading-relaxed text-muted">
-          Kein Sprung erkannt — Handy fest an die Brust und beidbeinig abspringen.
-        </p>
+        <div className="mt-1.5">
+          <p className="text-xs leading-relaxed text-muted">
+            {failStats && failStats.samples < 10
+              ? "Keine Sensordaten angekommen — Bewegungszugriff für Safari prüfen (Einstellungen → Safari → Bewegung & Ausrichtung) und nochmal."
+              : "Kein Sprung erkannt — Handy fest an die Brust drücken, kurz ruhig stehen, dann beidbeinig maximal abspringen."}
+          </p>
+          {failStats && failStats.samples >= 10 && (
+            <p className="mt-1 font-mono text-xs text-faint">
+              Diagnose: {failStats.samples} Werte · min {String(failStats.minA).replace(".", ",")} · max{" "}
+              {String(failStats.maxA).replace(".", ",")} m/s² · Fenster {failStats.bestWindowMs} ms
+            </p>
+          )}
+        </div>
       )}
       {phase === "unsupported" && (
         <p className="mt-1.5 text-xs leading-relaxed text-muted">

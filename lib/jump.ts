@@ -2,9 +2,13 @@
  * Der Zünd-Check: Countermovement-Jump per DeviceMotion. Das iPhone wird an
  * die Brust gehalten, ein Strecksprung — im Beschleunigungssignal ist die
  * Flugphase ein Fenster nahe 0 g (freier Fall). Aus der Flugzeit folgt die
- * Sprunghöhe: h = g·t²/8. Die Höhe gegen den eigenen 7-Tage-Schnitt ist ein
- * physiologischer Tagesform-Marker (Profisport-Standard, dort per
- * Kraftmessplatte) und speist die Readiness-Autoregulation.
+ * Sprunghöhe: h = g·t²/8.
+ *
+ * Reale Signale sind ruppig: Zittern und Grip-Wackeln erzeugen Ausreißer
+ * MITTEN in der Flugphase, die ein naives Schwellen-Fenster zerhacken.
+ * Deshalb: 3-Sample-Glättung, großzügigere Schwelle, kurze Lücken werden
+ * überbrückt — und ein harter Beschleunigungs-Spike (Landung) beendet das
+ * Fenster immer sofort.
  */
 
 export interface JumpSample {
@@ -19,40 +23,98 @@ export interface JumpResult {
   flightMs: number;
 }
 
+/** Diagnose fürs Fehlschlag-Feedback (was hat der Sensor gesehen?). */
+export interface JumpStats {
+  samples: number;
+  minA: number;
+  maxA: number;
+  /** Längstes gefundenes Flug-Fenster in ms (auch wenn unplausibel). */
+  bestWindowMs: number;
+}
+
+export interface JumpAnalysis {
+  result: JumpResult | null;
+  stats: JumpStats;
+}
+
 export interface JumpEntry {
   date: string; // ISO
   heightCm: number;
 }
 
-/** Unter dieser Schwelle gilt das Signal als Flugphase (~0 g + Sensorrauschen). */
-const FREEFALL_MS2 = 4;
+/** Unter dieser (geglätteten) Schwelle gilt das Signal als Flugphase. */
+const FREEFALL_MS2 = 6;
+/** Ein Spike darüber ist sicher Landung/Absprung — beendet das Fenster hart. */
+const IMPACT_MS2 = 16;
+/** So lange darf das Signal INNERHALB eines Flug-Fensters über der Schwelle
+ *  zittern, ohne dass das Fenster abbricht. */
+const MAX_GAP_MS = 110;
 const MIN_FLIGHT_MS = 150; // < 2,8 cm — kein echter Sprung
 const MAX_FLIGHT_MS = 800; // > 78 cm — Messartefakt
 const G = 9.81;
 
-/** Längstes plausibles Freifall-Fenster finden und in Sprunghöhe übersetzen. */
-export function detectJump(samples: JumpSample[]): JumpResult | null {
-  if (samples.length < 10) return null;
-  let best: { dur: number } | null = null;
-  let startIdx = -1;
+/** Gleitendes 3er-Mittel gegen Sensor-Rauschen. */
+function smooth(samples: JumpSample[]): JumpSample[] {
+  return samples.map((s, i) => {
+    const a0 = samples[i - 1]?.a ?? s.a;
+    const a1 = samples[i + 1]?.a ?? s.a;
+    return { t: s.t, a: (a0 + s.a + a1) / 3 };
+  });
+}
+
+/** Flugphase finden (glatt + lückentolerant) und in Sprunghöhe übersetzen. */
+export function analyzeJump(raw: JumpSample[]): JumpAnalysis {
+  const stats: JumpStats = {
+    samples: raw.length,
+    minA: raw.length ? Math.round(Math.min(...raw.map((s) => s.a)) * 10) / 10 : 0,
+    maxA: raw.length ? Math.round(Math.max(...raw.map((s) => s.a)) * 10) / 10 : 0,
+    bestWindowMs: 0,
+  };
+  if (raw.length < 10) return { result: null, stats };
+  const samples = smooth(raw);
+
+  let bestDur = 0;
+  let start = -1; // Index des Fensterbeginns
+  let gapSince = -1; // Zeitpunkt, seit dem das Signal über der Schwelle liegt
+
+  const closeWindow = (endT: number) => {
+    if (start < 0) return;
+    const dur = endT - samples[start].t;
+    if (dur > bestDur) bestDur = dur;
+    start = -1;
+    gapSince = -1;
+  };
+
   for (let i = 0; i < samples.length; i++) {
-    const inFree = samples[i].a < FREEFALL_MS2;
-    if (inFree && startIdx < 0) startIdx = i;
-    const atEnd = i === samples.length - 1;
-    if ((!inFree || atEnd) && startIdx >= 0) {
-      const endIdx = inFree && atEnd ? i : i - 1;
-      const dur = samples[endIdx].t - samples[startIdx].t;
-      if (dur >= MIN_FLIGHT_MS && dur <= MAX_FLIGHT_MS && (!best || dur > best.dur)) {
-        best = { dur };
-      }
-      startIdx = -1;
+    const { t, a } = samples[i];
+    if (a < FREEFALL_MS2) {
+      if (start < 0) start = i;
+      gapSince = -1;
+      if (i === samples.length - 1) closeWindow(t);
+      continue;
     }
+    if (start < 0) continue;
+    // Über der Schwelle innerhalb eines Fensters: harter Spike beendet
+    // sofort (Landung), kurzes Zittern wird überbrückt.
+    if (a >= IMPACT_MS2) {
+      closeWindow(t);
+      continue;
+    }
+    if (gapSince < 0) gapSince = t;
+    if (t - gapSince > MAX_GAP_MS) closeWindow(gapSince);
   }
-  if (!best) return null;
-  const tSec = best.dur / 1000;
+
+  stats.bestWindowMs = Math.round(bestDur);
+  if (bestDur < MIN_FLIGHT_MS || bestDur > MAX_FLIGHT_MS) return { result: null, stats };
+  const tSec = bestDur / 1000;
   const heightCm = Math.round(((G * tSec * tSec) / 8) * 1000) / 10;
-  if (heightCm < 3 || heightCm > 80) return null;
-  return { heightCm, flightMs: Math.round(best.dur) };
+  if (heightCm < 3 || heightCm > 80) return { result: null, stats };
+  return { result: { heightCm, flightMs: Math.round(bestDur) }, stats };
+}
+
+/** Kompatibler Kurzweg: nur das Ergebnis. */
+export function detectJump(samples: JumpSample[]): JumpResult | null {
+  return analyzeJump(samples).result;
 }
 
 /** Mittel der letzten 7 Tage (mindestens 2 Messungen, sonst null). */
