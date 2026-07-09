@@ -2,9 +2,11 @@
 
 import { Bike } from "lucide-react";
 import { useState } from "react";
+import { JumpCheck } from "@/components/workout/JumpCheck";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { jumpBaseline } from "@/lib/jump";
 import { readinessScore } from "@/lib/readiness";
 import { cn } from "@/lib/utils";
 import type { Readiness } from "@/lib/types";
@@ -29,7 +31,7 @@ export function ReadinessGate({
   onClose: () => void;
   onSubmit: (r: Readiness) => void;
 }) {
-  const { cardioAdvice } = useTraining();
+  const { cardioAdvice, jumps, addJump } = useTraining();
   const [vals, setVals] = useState<{ sleep?: number; energy?: number; back?: number }>({});
   const complete = !!vals.sleep && !!vals.energy && !!vals.back;
 
@@ -44,6 +46,17 @@ export function ReadinessGate({
       <p className="mb-4 text-sm text-muted">
         Kurz einschätzen — die Einheit passt sich an.
       </p>
+      {/* Zünd-Check: gemessene Tagesform — das Ergebnis setzt die
+          Energie-Ampel automatisch (bleibt von Hand übersteuerbar). */}
+      <JumpCheck
+        baseline={jumpBaseline(jumps)}
+        onResult={(heightCm, jb) => {
+          addJump(heightCm);
+          if (jb) {
+            setVals((v) => ({ ...v, energy: jb === "low" ? 1 : jb === "high" ? 3 : 2 }));
+          }
+        }}
+      />
       {cardioAdvice.level !== "none" && (
         <div className="mb-4 flex items-start gap-2 rounded-card bg-surface-2 p-3">
           <Bike size={15} className="mt-0.5 shrink-0 text-accent-coverage" />

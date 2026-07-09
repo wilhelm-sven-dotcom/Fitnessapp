@@ -29,6 +29,7 @@ import {
   buildWeekContext,
   type WeekPlan,
 } from "@/lib/coach-week";
+import type { JumpEntry } from "@/lib/jump";
 import { poolFor, presc, reqOk, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseAffinity } from "@/lib/affinity";
@@ -252,6 +253,8 @@ interface TrainingContextValue {
   aiPlanActive: boolean;
   aiPlanLoading: boolean;
   refreshWeekPlan: () => Promise<boolean>;
+  jumps: JumpEntry[];
+  addJump: (heightCm: number) => void;
   setUserName: (name: string) => void;
   setAthleteProfile: (patch: Partial<AthleteProfile>) => void;
   completeOnboarding: (name?: string, profile?: Partial<AthleteProfile>) => void;
@@ -326,6 +329,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [aiPlan, setAiPlan] = useState<WeekPlan | null>(null);
+  const [jumps, setJumps] = useState<JumpEntry[]>([]);
   const [aiPlanLoading, setAiPlanLoading] = useState(false);
   const aiFetchTried = useRef(false);
   const [entries, setEntries] = useState<Record<string, SetEntry[]>>({});
@@ -1060,6 +1064,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, keepAwake: on });
   const setAiPlanning = (on: boolean) =>
     void saveSettings({ ...settings, aiPlanning: on });
+  /** Zünd-Check: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
+  const addJump = (heightCm: number) => {
+    const next = [...jumps, { date: new Date().toISOString(), heightCm }].slice(-60);
+    setJumps(next);
+    void storage.setJSON(KEYS.jumps, next);
+  };
 
   /** ATLAS-KI-Woche: Plan vom Server holen (Kontext wird clientseitig gebaut). */
   const refreshWeekPlan = async (): Promise<boolean> => {
@@ -1102,6 +1112,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void storage.getJSON<WeekPlan | null>(KEYS.aiplan, null).then((pl) => {
       if (pl && typeof pl === "object" && typeof pl.weekKey === "string") setAiPlan(pl);
+    });
+    void storage.getJSON<JumpEntry[]>(KEYS.jumps, []).then((js) => {
+      if (Array.isArray(js))
+        setJumps(js.filter((j) => j && typeof j.date === "string" && j.heightCm > 0));
     });
   }, []);
 
@@ -1583,6 +1597,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ),
     aiPlanLoading,
     refreshWeekPlan,
+    jumps,
+    addJump,
     setUserName,
     setAthleteProfile,
     completeOnboarding,
