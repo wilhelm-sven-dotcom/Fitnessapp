@@ -65,6 +65,8 @@ const PATTERN_MUSCLE: Record<Pattern, { primary: Muscle; secondary?: Muscle }> =
 
 const ID_OVERRIDE: Record<string, { primary: Muscle; secondary?: Muscle }> = {
   rdl_db: { primary: "hamstrings", secondary: "glutes" },
+  rdl_bar: { primary: "hamstrings", secondary: "glutes" },
+  deadlift: { primary: "hamstrings", secondary: "back" },
 };
 
 /** Primary (+ optional secondary) muscle — explicit field wins, else derived from pattern/tag. */

@@ -248,6 +248,8 @@ export interface AppSettings {
   aiPlanning?: boolean;
   /** Die Ringecke: ATLAS-Ansagen in der Satzpause (default an; braucht Server-Key). */
   coachLive?: boolean;
+  /** Einmal-Migration gelaufen: Langhantel-Nutzer haben die Hantelbank erhalten. */
+  benchMigrated?: boolean;
   /** Strava connection (official OAuth). Tokens only — refreshed server-side. */
   strava?: {
     accessToken: string;
