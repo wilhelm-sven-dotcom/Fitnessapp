@@ -14,6 +14,8 @@ export const LIB: Exercise[] = [
     steps: ["Gewicht mit beiden Händen vor der Brust halten.", "Gesäß nach hinten und runter, Knie folgen den Zehen.", "Bis Oberschenkel waagerecht, aus den Fersen hoch."], back: "Brust offen, aufrecht, Mitte fest. Grüne Linie gerade.", easier: "Halbe Tiefe oder ohne Gewicht." },
   { id: "squat_bw", name: "Kniebeuge (Körpergewicht)", pattern: "squat", tag: "Beine", req: ["none"], weighted: false, sets: 3, repLow: 15, repHigh: 25, unit: "Wdh", cue: "Aufrecht, langsam runter, Spannung halten.",
     steps: ["Schulterbreiter Stand, Arme vor.", "Tief und kontrolliert beugen, aufrecht bleiben.", "Aus den Fersen hoch."], back: "Rumpf fest, Rücken gerade.", easier: "Weniger tief, an Stuhllehne festhalten." },
+  { id: "squat_bar", name: "Langhantel-Kniebeuge", pattern: "squat", tag: "Beine", req: ["bar"], weighted: true, sets: 3, repLow: 5, repHigh: 8, unit: "Wdh", cue: "Stange auf dem oberen Rücken, Core hart, Brust auf.",
+    steps: ["Stange auf dem Trapez, schulterbreiter Stand.", "Hüfte zurück und runter, Knie über den Zehen.", "Bis Oberschenkel waagerecht, aus den Fersen hoch."], back: "Rumpf hart anspannen, Rücken neutral, nicht rund werden.", easier: "Weniger Gewicht, Kniebeuge zur Box." },
   // LUNGE
   { id: "bss", name: "Bulgarian Split Squat", pattern: "lunge", tag: "Beine", req: ["box"], weighted: true, sets: 3, repLow: 8, repHigh: 10, unit: "Wdh", cue: "Hinterer Fuß erhöht, Rumpf aufrecht. Pro Bein.",
     steps: ["Hinterer Fuß erhöht hinter dir.", "Vorderes Bein beugen, Knie über dem Fuß.", "Aus der Ferse hoch. Seite wechseln."], back: "Aufrecht, nur leicht aus der Hüfte geneigt.", easier: "Ohne Gewicht, kleinere Schrittlänge." },
@@ -28,6 +30,10 @@ export const LIB: Exercise[] = [
     steps: ["Schultern an Box/Sofa anlehnen.", "Gewicht auf der Hüfte.", "Hüfte hoch bis voll gestreckt, oben halten."], back: "Bewegung aus dem Po, Rippen unten lassen.", easier: "Ohne Gewicht oder kleinere Auflage." },
   { id: "rdl_db", name: "Rumänisches KH-Kreuzheben (leicht)", pattern: "hinge", tag: "Beinrückseite", req: ["dumbbell"], weighted: true, sets: 3, repLow: 10, repHigh: 12, unit: "Wdh", cue: "Hüfte zurück, Rücken absolut gerade, leicht bleiben.", backCaution: true,
     steps: ["Leichte Hanteln vor den Oberschenkeln.", "Hüfte nach hinten schieben, Knie leicht gebeugt.", "Bis Dehnung in den Beinrückseiten, dann zurück."], back: "Rücken kompromisslos gerade, nicht rund. Bei Reizung weglassen.", easier: "Sehr leicht, geringere Tiefe." },
+  { id: "deadlift", name: "Kreuzheben (Langhantel)", pattern: "hinge", tag: "Beinrückseite & Rücken", req: ["bar"], weighted: true, sets: 3, repLow: 4, repHigh: 6, unit: "Wdh", cue: "Rücken absolut gerade, Stange nah am Körper, aus den Beinen ziehen.", backCaution: true,
+    steps: ["Mittelfuß unter der Stange, Schienbein nah dran.", "Brust raus, Rücken neutral, Stange greifen.", "Boden wegdrücken, Stange eng hochziehen, oben Hüfte strecken."], back: "Kompromisslos gerader Rücken. Bei Rückenreizung weglassen.", easier: "Leichter oder aus erhöhter Position (Rack Pull)." },
+  { id: "rdl_bar", name: "Rumänisches Kreuzheben (Langhantel)", pattern: "hinge", tag: "Beinrückseite", req: ["bar"], weighted: true, sets: 3, repLow: 6, repHigh: 10, unit: "Wdh", cue: "Hüfte weit zurück, Stange nah, Rücken gerade.", backCaution: true,
+    steps: ["Stange vor den Oberschenkeln, Knie leicht gebeugt.", "Hüfte nach hinten schieben, Stange am Bein entlang.", "Bis Dehnung der Beinrückseite, dann Hüfte nach vorne."], back: "Rücken gerade, nicht rund. Bei Reizung weglassen.", easier: "Kurzhanteln, geringere Tiefe." },
   // HPUSH
   { id: "floorpress", name: "Kurzhantel Floor Press", pattern: "hpush", tag: "Brust", req: ["dumbbell"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", cue: "Rücken flach am Boden, Oberarme tippen auf, kein Hohlkreuz.",
     steps: ["Rücken flach, Knie gebeugt, Füße auf.", "Hanteln über der Brust.", "Absenken bis Oberarme aufsetzen, dann hoch."], back: "Unterer Rücken am Boden, kein Hohlkreuz.", easier: "Leichter, langsamer absenken." },
@@ -35,6 +41,12 @@ export const LIB: Exercise[] = [
     steps: ["Hände schulterbreit, Körper gerade.", "Absenken bis Brust knapp über Boden.", "Hochdrücken."], back: "Po anspannen, Hüfte nicht durchhängen.", easier: "Knie absetzen oder Hände erhöht." },
   { id: "dips", name: "Ring-Dips / Liegestütz", pattern: "hpush", tag: "Brust", req: ["rings"], weighted: false, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", cue: "Schulterblätter stabil, Core fest.",
     steps: ["An den Ringen abstützen.", "Absenken bis Schulter auf Ellbogenhöhe.", "Hochdrücken."], back: "Körper als Einheit, Schultern weg von den Ohren.", easier: "Liegestütz statt Dips." },
+  { id: "bench_bar", name: "Langhantel-Bankdrücken", pattern: "hpush", tag: "Brust", req: ["bar", "bench"], weighted: true, sets: 3, repLow: 5, repHigh: 8, unit: "Wdh", cue: "Schulterblätter zusammen, Füße fest, Stange zur unteren Brust.",
+    steps: ["Flach auf die Bank, Schulterblätter zusammenziehen.", "Stange aus der Ablage, über der Brust halten.", "Kontrolliert zur unteren Brust senken, dann hochdrücken."], back: "Leichte natürliche Rückenspannung, Po bleibt auf der Bank.", easier: "Kurzhanteln oder weniger Gewicht." },
+  { id: "bench_incline", name: "Schrägbankdrücken (Langhantel)", pattern: "hpush", tag: "Obere Brust", req: ["bar", "bench"], weighted: true, sets: 3, repLow: 6, repHigh: 10, unit: "Wdh", cue: "Bank ~30°, Stange zur oberen Brust.",
+    steps: ["Bank auf etwa 30° stellen.", "Schulterblätter zusammen, Stange über der oberen Brust.", "Zur oberen Brust senken, dann hochdrücken."], back: "Fest angelehnt, kein Abheben aus der Bank.", easier: "Kurzhanteln, weniger Neigung." },
+  { id: "bench_db", name: "Kurzhantel-Bankdrücken", pattern: "hpush", tag: "Brust", req: ["dumbbell", "bench"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", cue: "Auf der Bank, Hanteln über der Brust, tiefe Dehnung.",
+    steps: ["Flach auf die Bank, Hanteln über der Brust.", "Kontrolliert bis auf Brusthöhe senken.", "Hochdrücken, oben nicht anschlagen."], back: "Schulterblätter stabil, Po auf der Bank.", easier: "Leichter oder Floor Press am Boden." },
   // VPUSH
   { id: "ohp_seat", name: "Schulterdrücken, sitzend", pattern: "vpush", tag: "Schultern", req: ["dumbbell"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", cue: "Aufrecht sitzen, Bauch fest, kein Hohlkreuz.",
     steps: ["Aufrecht sitzen, Hanteln auf Schulterhöhe.", "Hoch drücken bis fast gestreckt.", "Kontrolliert absenken."], back: "Bauch fest, nicht ins Hohlkreuz drücken.", easier: "Ein Arm abwechselnd, leichter." },
@@ -42,6 +54,8 @@ export const LIB: Exercise[] = [
     steps: ["Stand hüftbreit, Hanteln auf Schulterhöhe.", "Hoch drücken, Rumpf fest.", "Kontrolliert absenken."], back: "Rippen unten, kein Hohlkreuz.", easier: "Sitzend ausführen." },
   { id: "pike_pushup", name: "Pike Liegestütz", pattern: "vpush", tag: "Schultern", req: ["none"], weighted: false, sets: 3, repLow: 6, repHigh: 12, unit: "Wdh", cue: "Hüfte hoch, Kopf Richtung Boden.",
     steps: ["Umgekehrtes V, Hüfte hoch.", "Kopf Richtung Boden absenken.", "Hochdrücken."], back: "Rücken gerade, kontrolliert.", easier: "Hände erhöht." },
+  { id: "ohp_bar", name: "Langhantel-Schulterdrücken", pattern: "vpush", tag: "Schultern", req: ["bar"], weighted: true, sets: 3, repLow: 5, repHigh: 8, unit: "Wdh", cue: "Stange auf den vorderen Schultern, Po und Bauch fest, gerade nach oben.",
+    steps: ["Stange auf den vorderen Schultern, schulterbreit greifen.", "Bauch und Po fest, Stange gerade über den Kopf drücken.", "Kopf leicht durchschieben, kontrolliert absenken."], back: "Kein Hohlkreuz — Rippen unten, Rumpf hart.", easier: "Sitzend mit Kurzhanteln." },
   // HPULL
   { id: "row1", name: "Einarmiges Rudern, abgestützt", pattern: "hpull", tag: "Rücken", req: ["dumbbell"], weighted: true, sets: 3, repLow: 10, repHigh: 12, unit: "Wdh", cue: "Eine Hand abstützen, Rücken gerade. Pro Arm.",
     steps: ["Eine Hand auf Box/Stuhl, Rücken parallel zum Boden.", "Hantel eng zur Hüfte ziehen.", "Kontrolliert absenken. Seite wechseln."], back: "Grüne Linie absolut gerade, nicht rund.", easier: "Höher abstützen, leichter." },
@@ -49,6 +63,8 @@ export const LIB: Exercise[] = [
     steps: ["Unter die Ringe, gestreckt aufhängen, Fersen am Boden.", "Brust zu den Ringen ziehen.", "Kontrolliert ablassen."], back: "Körper bleibt ein gerades Brett.", easier: "Aufrechter stellen." },
   { id: "band_row", name: "Rudern mit Band", pattern: "hpull", tag: "Rücken", req: ["bands"], weighted: false, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", cue: "Band fixieren, eng zum Bauch ziehen.",
     steps: ["Band auf Brusthöhe fixieren.", "Mit geradem Rücken zum Bauch ziehen, Ellbogen eng.", "Kontrolliert zurück."], back: "Aufrecht, nicht aus dem Rücken reißen.", easier: "Weniger Bandspannung." },
+  { id: "row_bar", name: "Langhantelrudern", pattern: "hpull", tag: "Rücken", req: ["bar"], weighted: true, sets: 3, repLow: 6, repHigh: 10, unit: "Wdh", cue: "Oberkörper vorgebeugt, Rücken gerade, zur unteren Brust ziehen.", backCaution: true,
+    steps: ["Hüfte zurück, Oberkörper etwa 45° vorgebeugt, Rücken neutral.", "Stange zum Bauch/zur unteren Brust ziehen, Ellbogen eng.", "Kontrolliert ablassen, Rücken bleibt fest."], back: "Vorgebeugte Position — Rücken bewusst gerade halten. Bei Reizung Einarm-Rudern abgestützt.", easier: "Leichter oder Einarmrudern abgestützt." },
   // VPULL
   { id: "pullup", name: "Klimmzüge", pattern: "vpull", tag: "Rücken", req: ["pullup"], weighted: false, sets: 3, repLow: 6, repHigh: 10, unit: "Wdh", cue: "Schulterblätter runter, sauber hoch. Band als Hilfe.",
     steps: ["Etwas weiter als schulterbreit greifen.", "Hochziehen bis Kinn über die Stange.", "Kontrolliert ablassen."], back: "Hängen entlastet die Wirbelsäule, nicht pendeln.", easier: "Negativ oder mit Band." },
@@ -123,7 +139,7 @@ export const EQUIP_LIST: EquipItem[] = [
   { key: "bike", label: "Peloton / Bike" },
 ];
 
-export const DEFAULT_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "rings", "bands", "box", "bike"];
+export const DEFAULT_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "rings", "bands", "box", "bench", "bike"];
 
 export const PATTERN_LABEL: Record<Pattern, string> = {
   squat: "Kniebeuge", lunge: "Ausfallschritt/Bein", hinge: "Hüfte/Gesäß", hpush: "Druck horizontal", vpush: "Druck über Kopf", hpull: "Zug horizontal", vpull: "Zug vertikal", arm: "Arme", lateral: "Schultern", core: "Core / Rücken-Stabi", cardio: "Cardio / Bike",

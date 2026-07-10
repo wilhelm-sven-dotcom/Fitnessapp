@@ -363,14 +363,33 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     // dürfen den Render nie erreichen (sonst global-error auf jeder Route).
     // Videos bleiben dabei erhalten (nur Nicht-String-Werte fallen raus).
     setLog(sanitizeSessions(l));
-    if (Array.isArray(e)) setEquip(e);
+    let equipLoaded = Array.isArray(e) ? e : DEFAULT_EQUIP;
+    let gymsLoaded = sanitizeGyms(gy);
+    let settingsLoaded =
+      s && typeof s === "object" && !Array.isArray(s)
+        ? { ...DEFAULT_SETTINGS, ...s }
+        : DEFAULT_SETTINGS;
+    // Einmal-Migration: Wer eine Langhantel hat, bekommt die Hantelbank
+    // dazu — sonst blieben die neuen Bank-Übungen unsichtbar. Respektiert
+    // spätere manuelle Abwahl (läuft genau einmal, dann benchMigrated).
+    if (!settingsLoaded.benchMigrated) {
+      const withBench = (arr: EquipKey[]) =>
+        arr.includes("bar") && !arr.includes("bench") ? [...arr, "bench" as EquipKey] : arr;
+      equipLoaded = withBench(equipLoaded);
+      gymsLoaded = gymsLoaded.map((g) => ({ ...g, equip: withBench(g.equip) }));
+      settingsLoaded = { ...settingsLoaded, benchMigrated: true };
+      void storage.setJSON(KEYS.equip, equipLoaded);
+      void storage.setJSON(KEYS.gyms, gymsLoaded);
+      void storage.setJSON(KEYS.settings, settingsLoaded);
+    }
+    setEquip(equipLoaded);
     setChoices(sanitizeStringMap(c));
     setCustom(sanitizeCustom(cu));
     setBody(sanitizeBody(b));
-    if (s && typeof s === "object" && !Array.isArray(s)) setSettings({ ...DEFAULT_SETTINGS, ...s });
+    setSettings(settingsLoaded);
     setCardio(sanitizeCardio(ca));
     setDays(sanitizeDays(da));
-    setGyms(sanitizeGyms(gy));
+    setGyms(gymsLoaded);
     setExerciseVideos(sanitizeVideoMap(ev));
     // Mission nur mit einem echten targets-OBJEKT (der Rollover liest
     // mission.targets.weekKey — ein Nicht-Objekt würfe dort).
