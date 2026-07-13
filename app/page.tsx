@@ -21,6 +21,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
 import { editorialDeck, greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
+import { isoWeek } from "@/lib/format";
 import { tap } from "@/lib/haptics";
 import { band } from "@/lib/readiness";
 import { weeklyAvgRir, weeklyStreak } from "@/lib/stats";
@@ -93,9 +94,9 @@ export default function HomePage() {
   });
   const wkShort = now.toLocaleDateString("de-DE", { weekday: "short" });
   // Calendar week — the magazine masthead's "issue number" (editorial skin).
-  const kw = Math.ceil(
-    ((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7,
-  );
+  // ISO-KW wie überall (ATLAS-Mission, Briefing) — nicht die naive Formel,
+  // sonst stehen zwei verschiedene Wochennummern auf demselben Screen.
+  const kw = isoWeek(now);
   const streak = weeklyStreak(log);
   // New phrase each time the home mounts (client-only, so no SSR/hydration drift).
   const greetingSeed = useMemo(() => Math.floor(Math.random() * 100000), []);

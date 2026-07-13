@@ -1,4 +1,5 @@
 import { buildCoachContext } from "@/lib/coach-context";
+import { isoWeek } from "@/lib/format";
 import { missionReviewFact, type MissionReview } from "@/lib/trainer";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
@@ -34,10 +35,6 @@ export interface Briefing {
 }
 
 const DAY = 86_400_000;
-
-function isoWeek(d: Date): number {
-  return Math.ceil(((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / DAY + 1) / 7);
-}
 
 export function buildBriefing(opts: {
   log: LoggedSession[];

@@ -738,7 +738,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         recTpl.key,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
+    [recTpl, choices, equip, custom, aiPlan, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
   );
   const estimatedMin = useMemo(
     () => estimateSessionMin(recList, { superset: settings.superset }),
@@ -760,7 +760,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         }).list;
     return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, choices, equip, custom, days, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
+  }, [activeKey, choices, equip, custom, days, aiPlan, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate

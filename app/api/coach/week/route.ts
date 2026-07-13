@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         {
           role: "user",
           content:
-            "Plane meine kommende Trainingswoche: die drei Ganzkörper-Einheiten A, B und C — abwechslungsreich, auf meine Daten zugeschnitten, nur mit den verfügbaren Übungen.",
+            "Plane meine Trainingswoche (die laufende Woche): die drei Ganzkörper-Einheiten A, B und C — abwechslungsreich, auf meine Daten zugeschnitten, nur mit den verfügbaren Übungen.",
         },
       ],
     });

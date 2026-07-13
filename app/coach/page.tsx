@@ -28,13 +28,31 @@ const RECAP_PROMPT =
 
 export default function CoachPage() {
   const router = useRouter();
-  const { log, allLib, body, cardio, settings, trainer } = useTraining();
+  const { log, allLib, body, cardio, settings, trainer, recTpl, recList, estimatedMin } =
+    useTraining();
   const context = useMemo(
     () =>
-      buildCoachContext({ log, allLib, body, cardio }) +
+      buildCoachContext({
+        log,
+        allLib,
+        body,
+        cardio,
+        // Der ECHTE Plan der nächsten Einheit — damit Empfehlungen ("nächste
+        // Woche X trainieren") zu den Übungen passen, die der Trainingsstart
+        // dann wirklich zeigt, statt frei erfunden zu werden.
+        nextSession: {
+          name: recTpl.name,
+          focus: recTpl.focus,
+          estimatedMin,
+          exercises: recList.map(({ ex }) => ({
+            name: ex.name,
+            sets: ex.pattern === "cardio" ? 0 : ex.sets,
+          })),
+        },
+      }) +
       "\n\nATLAS-Status:\n" +
       trainerContextBlock(trainer),
-    [log, allLib, body, cardio, trainer],
+    [log, allLib, body, cardio, trainer, recTpl, recList, estimatedMin],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),

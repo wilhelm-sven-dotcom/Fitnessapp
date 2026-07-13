@@ -26,6 +26,26 @@ function fmtDate(iso: string): string {
   });
 }
 
+/** Die tatsächlich geplante nächste Einheit — exakt das, was der Athlet beim
+ *  Trainingsstart sieht (inkl. KI-Wochenplan, Zeitbudget, Readiness). */
+export interface NextSessionInfo {
+  name: string;
+  focus?: string;
+  estimatedMin?: number;
+  /** Übungen in Trainingsreihenfolge; sets ≤ 0 = ohne Satzangabe (Cardio). */
+  exercises: { name: string; sets: number }[];
+}
+
+function nextSessionLines(n: NextSessionInfo): string[] {
+  return [
+    "",
+    `Nächste geplante Einheit: ${n.name}${n.focus ? ` (${n.focus})` : ""}${n.estimatedMin ? ` · ~${n.estimatedMin} Min` : ""}. Übungen in dieser Reihenfolge:`,
+    n.exercises
+      .map((e) => (e.sets > 0 ? `${e.name} (${e.sets} Sätze)` : e.name))
+      .join(", "),
+  ];
+}
+
 /**
  * Compact, token-limited training summary for the KI-Coach system prompt.
  * Pure — derived entirely from the user's own log/body. Kept short (last few
@@ -36,9 +56,15 @@ export function buildCoachContext(opts: {
   allLib: Exercise[];
   body: BodyMetric[];
   cardio: CardioSession[];
+  nextSession?: NextSessionInfo;
 }): string {
-  const { log, allLib, body, cardio } = opts;
-  if (!log.length && !cardio.length) return "Noch keine Einheiten protokolliert.";
+  const { log, allLib, body, cardio, nextSession } = opts;
+  if (!log.length && !cardio.length) {
+    return [
+      "Noch keine Einheiten protokolliert.",
+      ...(nextSession?.exercises.length ? nextSessionLines(nextSession) : []),
+    ].join("\n");
+  }
 
   const lines: string[] = [];
 
@@ -131,6 +157,8 @@ export function buildCoachContext(opts: {
   const ca = cardioAdvice(cardio);
   if (ca.level !== "none")
     lines.push("", `Trainings-Hinweis (Cardio-Interferenz): ${ca.title}.`);
+
+  if (nextSession?.exercises.length) lines.push(...nextSessionLines(nextSession));
 
   return lines.join("\n");
 }

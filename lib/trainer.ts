@@ -692,7 +692,13 @@ export function liveLine(opts: {
       };
     }
     if (lastSet.rir >= 4) {
-      return { text: "Da war mehr drin — plus 2,5 kg?", tone: "push", kind: "rir" };
+      return {
+        text: ex.weighted
+          ? "Da war mehr drin — plus 2,5 kg?"
+          : "Da war mehr drin — nächstes Mal mehr Wiederholungen.",
+        tone: "push",
+        kind: "rir",
+      };
     }
   }
 

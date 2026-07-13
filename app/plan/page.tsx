@@ -105,9 +105,9 @@ export default function PlanPage() {
               </>
             ) : (
               <p className="text-xs leading-relaxed text-muted">
-                ATLAS plant deine Woche per Claude-KI, sobald der API-Schlüssel auf dem
-                Server liegt (Einstellungen → ATLAS-KI). Bis dahin plant das bewährte
-                Regelwerk — offline wie immer.
+                Noch kein KI-Plan für diese Woche — ATLAS holt ihn automatisch, oder
+                tippe „Neu planen“. Ohne Server-Schlüssel plant das bewährte Regelwerk
+                (Status in Einstellungen → ATLAS-KI) — offline wie immer.
               </p>
             )}
           </section>

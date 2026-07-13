@@ -89,7 +89,7 @@ export const PLAN_WEEK_TOOL: Anthropic.Tool = {
 export function buildWeekSystem(exercises: CoachExercise[], budgetMin: number): string {
   const list = exercises.map((e) => `- ${e.id} · ${e.name} · ${e.pattern}`).join("\n");
   return [
-    "Du bist ATLAS, der persönliche Kraft-Coach dieser Trainings-App. Du planst die kommende Trainingswoche: drei Ganzkörper-Einheiten A, B, C.",
+    "Du bist ATLAS, der persönliche Kraft-Coach dieser Trainings-App. Du planst die laufende Trainingswoche: drei Ganzkörper-Einheiten A, B, C.",
     "Regeln:",
     `- Zeitbudget je Einheit: etwa ${budgetMin} Minuten — wähle die Zahl der Übungen entsprechend (4 bis 6).`,
     "- Nutze AUSSCHLIESSLICH Übungen aus der Liste unten, referenziert über ihre exakte id.",
