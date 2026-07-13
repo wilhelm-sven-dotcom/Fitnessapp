@@ -93,14 +93,29 @@ export default function PlanPage() {
                   <p className="mb-3 text-sm leading-relaxed text-fg">{aiPlan.weekNote}</p>
                 )}
                 <div className="space-y-1.5">
-                  {(["A", "B", "C"] as const).map((k) =>
-                    aiPlan.days[k] ? (
+                  {(["A", "B", "C"] as const).map((k) => {
+                    const day = aiPlan.days[k];
+                    if (!day) return null;
+                    // Greift der KI-Tag wirklich? sessionOf verwirft ihn still,
+                    // wenn zu wenige Übungen im aktiven Profil auflösbar sind —
+                    // das darf die Karte nicht verschweigen.
+                    const applied = sessionOf(k).some((s) =>
+                      s.slotKey.startsWith(`${k}:ai`),
+                    );
+                    return (
                       <p key={k} className="text-xs leading-relaxed text-muted">
                         <span className="font-mono text-accent-ink">{k}</span> ·{" "}
-                        {aiPlan.days[k]!.focusNote || `${aiPlan.days[k]!.slots.length} Übungen`}
+                        {day.focusNote || `${day.slots.length} Übungen`}
+                        {!applied && (
+                          <span className="text-status-over">
+                            {" "}
+                            · greift nicht — zu wenige passende Übungen im aktiven
+                            Profil, das Regelwerk übernimmt
+                          </span>
+                        )}
                       </p>
-                    ) : null,
-                  )}
+                    );
+                  })}
                 </div>
               </>
             ) : (

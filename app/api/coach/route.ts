@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { allowRequest, clientKey } from "@/lib/rate-limit";
 import { TRAINING_PRINCIPLES } from "@/lib/training-science";
 
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
@@ -28,6 +29,12 @@ interface CoachBody {
 export async function POST(req: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return Response.json({ configured: false });
+  if (!allowRequest(`coach:${clientKey(req)}`, 20, 60_000)) {
+    return Response.json(
+      { error: "Zu viele Anfragen — kurz warten." },
+      { status: 429 },
+    );
+  }
 
   let body: CoachBody;
   try {

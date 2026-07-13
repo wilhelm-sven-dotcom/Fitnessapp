@@ -175,6 +175,9 @@ export default function WorkoutPage() {
     { slotKey: string; fromId: string; fromName: string; toName: string } | null
   >(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  /** Wechsel-Schutz: Ziel-Key, wenn der Start eine laufende Einheit mit
+   *  protokollierten Sätzen verwerfen würde. */
+  const [switchConfirm, setSwitchConfirm] = useState<string | null>(null);
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
@@ -196,11 +199,33 @@ export default function WorkoutPage() {
   const entriesRef = useRef(entries);
   entriesRef.current = entries;
 
+  /** Fokus-Pin lösen, wenn der gepinnte Satz fertig ist — Auto-Advance auch
+   *  ohne Blur (Kamera/Sprache/Timer) und beim Überspringen der Pause. */
+  const releasePinIfDone = () => {
+    setEditKey((k) => {
+      if (!k) return k;
+      const [exId, iStr] = k.split(":");
+      const s = entriesRef.current[exId]?.[Number(iStr)];
+      return s && s.reps !== "" && s.reps != null ? null : k;
+    });
+  };
+
   useEffect(() => {
     // A just-saved session clears activeKey — we're on the win screen now, so
     // don't treat the null as "fresh arrival" and restart / reopen the gate.
     if (complete) return;
     if (key && activeKey !== key) {
+      // Läuft schon eine Einheit mit protokollierten Arbeitssätzen? Dann nicht
+      // still verwerfen — erst fragen (Aufwärmsätze sind vorbefüllt, zählen nicht).
+      const hasLogged =
+        activeKey != null &&
+        Object.values(entriesRef.current).some((sets) =>
+          sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null),
+        );
+      if (hasLogged) {
+        setSwitchConfirm(key);
+        return;
+      }
       if (settings.autoregOn && !todayReadiness) setGateOpen(true);
       else startSession(key);
     }
@@ -222,12 +247,7 @@ export default function WorkoutPage() {
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
       // Fallback fürs Auto-Advance: Wer die Pause aussitzt (Keyboard offen,
       // kein Blur), rückt spätestens jetzt zum nächsten offenen Satz vor.
-      setEditKey((k) => {
-        if (!k) return k;
-        const [exId, iStr] = k.split(":");
-        const s = entriesRef.current[exId]?.[Number(iStr)];
-        return s && s.reps !== "" && s.reps != null ? null : k;
-      });
+      releasePinIfDone();
       // Keep the card mounted for a beat so the ring's 0-snap (pop + flash) is
       // actually visible before it slides away. A new set mid-linger resets
       // restLeft and the cleanup cancels the hide.
@@ -339,10 +359,20 @@ export default function WorkoutPage() {
   };
   useEffect(() => cancelCoachCall, []);
 
+  // Einmal committete Sätze merken: Wer einen fertigen Satz leert und neu
+  // tippt, KORRIGIERT — das startet weder Pause noch Ringecke erneut.
+  const committedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    committedRef.current.clear();
+  }, [activeKey]);
+
   const onReps = (exId: string, i: number, oldVal: string, val: string) => {
     setEntry(exId, i, "reps", val);
     const pending = coachPendingRef.current;
     if ((oldVal === "" || oldVal == null) && val !== "" && val != null) {
+      const ck = `${exId}:${i}`;
+      if (committedRef.current.has(ck)) return;
+      committedRef.current.add(ck);
       // Den eben beendeten Satz merken — die Pause trägt seine RIR-Chips.
       setLastCommitted({ exId, i });
       startRest();
@@ -643,6 +673,7 @@ export default function WorkoutPage() {
       if (parsed.reps != null) {
         // Wie beim Tippen committen: Die Pause trägt die RIR-Chips DIESES
         // Satzes und die Ringecke sieht ihn — nicht den davor.
+        committedRef.current.add(`${ex.id}:${i}`);
         setLastCommitted({ exId: ex.id, i });
         startRest();
         scheduleCoachCall(ex.id, i);
@@ -1523,6 +1554,48 @@ export default function WorkoutPage() {
         )}
       </Sheet>
 
+      {/* Wechsel-Schutz: laufende Einheit mit Sätzen nicht still verwerfen. */}
+      <Sheet
+        open={!!switchConfirm}
+        onClose={() => {
+          // Abbrechen = zurück zur laufenden Einheit (kein Misch-Zustand
+          // aus neuer Route und alter Session).
+          setSwitchConfirm(null);
+          if (activeKey) router.replace(`/workout/${activeKey}`);
+        }}
+        title="Laufende Einheit ersetzen?"
+      >
+        <p className="mb-4 text-sm text-muted">
+          {activeKey
+            ? `In „${sessionTemplate(activeKey)?.name ?? "deiner laufenden Einheit"}“ sind schon Sätze protokolliert.`
+            : "In deiner laufenden Einheit sind schon Sätze protokolliert."}{" "}
+          Wenn du hier neu startest, gehen sie verloren.
+        </p>
+        <div className="flex flex-col gap-2">
+          <Pressable
+            onClick={() => {
+              setSwitchConfirm(null);
+              if (activeKey) router.replace(`/workout/${activeKey}`);
+            }}
+            className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          >
+            Zur laufenden Einheit
+          </Pressable>
+          <Pressable
+            onClick={() => {
+              const next = switchConfirm;
+              setSwitchConfirm(null);
+              if (!next) return;
+              if (settings.autoregOn && !todayReadiness) setGateOpen(true);
+              else startSession(next);
+            }}
+            className="rounded-card py-2 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          >
+            Neu starten — protokollierte Sätze verwerfen
+          </Pressable>
+        </div>
+      </Sheet>
+
       <GuideSheet open={!!guideSlot} onClose={() => setGuideSlot(null)} ex={guideEx} />
       {camFor && (
         <CameraView
@@ -1577,7 +1650,10 @@ export default function WorkoutPage() {
                 left={restLeft}
                 total={TIME.restSec}
                 onAdd={() => setRestLeft((x) => x + 15)}
-                onSkip={() => setRestOn(false)}
+                onSkip={() => {
+                  releasePinIfDone();
+                  setRestOn(false);
+                }}
                 effort={effort}
                 coach={coach}
               />

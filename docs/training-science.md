@@ -40,9 +40,10 @@ bringt v. a. mehr Ermüdung. Versagen vs. 1–2 RIR: vergleichbarer Muskelzuwach
 67 Kraftstudien) <https://sportrxiv.org/index.php/server/preprint/view/295> · Refalo et al.
 2024, J Sports Sci <https://www.tandfonline.com/doi/full/10.1080/02640414.2024.2321021>
 
-**In der App.** `rirAdjust`/`presc` in `lib/progression.ts`: alle Arbeitssätze RIR 0–1 →
-+Last; ein Satz bei RIR ≥3 → eine Stufe leichter; RIR 2 → Gewicht halten, +1 Wdh. Genau
-das „nah dran, aber nicht stur bis zum Versagen".
+**In der App.** `rirAdjust`/`presc` in `lib/progression.ts`: selbst der härteste Satz
+noch mit ≥3 in Reserve (zu leicht) → +Last; ein Satz am Versagen (RIR 0) → eine Stufe
+leichter; Zone RIR 1–2 → Gewicht halten, +1 Wdh (doppelte Progression). Genau das
+„nah dran, aber nicht stur bis zum Versagen".
 
 ---
 

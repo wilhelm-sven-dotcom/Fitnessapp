@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { buildLiveSystem, COACH_CALL_TOOL, sanitizeCoachCall } from "@/lib/coach-live";
+import { allowRequest, clientKey } from "@/lib/rate-limit";
 
 // Needs the Node runtime for the Anthropic SDK.
 export const runtime = "nodejs";
@@ -12,6 +13,12 @@ interface LiveReqBody {
 export async function POST(req: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return Response.json({ configured: false });
+  if (!allowRequest(`live:${clientKey(req)}`, 12, 60_000)) {
+    return Response.json(
+      { ok: false, error: "Zu viele Anfragen — kurz warten." },
+      { status: 429 },
+    );
+  }
 
   let body: LiveReqBody;
   try {

@@ -29,10 +29,31 @@ export interface ExRecord {
   date: string;
 }
 
-function kindOf(unit: string, sets: SetEntry[]): RecordKind {
-  if (unit === "Sek") return "time";
-  const weighted = sets.some((st) => st.weight !== "" && st.weight != null && Number(st.weight) > 0);
-  return weighted ? "weight" : "reps";
+/**
+ * Record kind per exercise across the WHOLE history. One session with a
+ * forgotten weight must not flip a weighted lift into reps-counting (and a
+ * bare `best` number would then compare kg-e1RM against rep counts — false
+ * "Neuer Rekord" included). Once any session was weighted, the exercise
+ * counts as "weight" for good; weightless sessions of it score 0 and drop out.
+ */
+function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
+  const kinds: Record<string, RecordKind> = {};
+  for (const s of log) {
+    for (const ex of s.exercises || []) {
+      const sets = workSets(ex.sets || []).filter(isFilled);
+      if (!sets.length) continue;
+      if (ex.unit === "Sek") {
+        kinds[ex.id] = "time";
+        continue;
+      }
+      const weighted = sets.some(
+        (st) => st.weight !== "" && st.weight != null && Number(st.weight) > 0,
+      );
+      if (weighted) kinds[ex.id] = "weight";
+      else if (!kinds[ex.id]) kinds[ex.id] = "reps";
+    }
+  }
+  return kinds;
 }
 
 /** Best metric (and its label) of one session's working, filled sets. */
@@ -62,13 +83,14 @@ function weekStartMon(d: Date): Date {
 /** All PR events across history, newest first. */
 export function prTimeline(log: LoggedSession[]): PrEvent[] {
   const sorted = [...log].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const kinds = kindsAcross(sorted);
   const best: Record<string, number> = {};
   const events: PrEvent[] = [];
   for (const s of sorted) {
     for (const ex of s.exercises || []) {
       const sets = workSets(ex.sets || []).filter(isFilled);
       if (!sets.length) continue;
-      const kind = kindOf(ex.unit, sets);
+      const kind = kinds[ex.id] ?? "reps";
       const { value, label } = sessionBest(kind, sets);
       if (value <= 0) continue;
       const prev = best[ex.id] ?? 0;
@@ -85,11 +107,12 @@ export function prTimeline(log: LoggedSession[]): PrEvent[] {
 export function exerciseRecords(log: LoggedSession[]): ExRecord[] {
   const map: Record<string, ExRecord> = {};
   const sorted = [...log].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const kinds = kindsAcross(sorted);
   for (const s of sorted) {
     for (const ex of s.exercises || []) {
       const sets = workSets(ex.sets || []).filter(isFilled);
       if (!sets.length) continue;
-      const kind = kindOf(ex.unit, sets);
+      const kind = kinds[ex.id] ?? "reps";
       const { value, label } = sessionBest(kind, sets);
       if (value <= 0) continue;
       const cur = map[ex.id];
@@ -148,11 +171,17 @@ export function setMetric(ex: Pick<Exercise, "unit" | "weighted">, set: SetEntry
   return r;
 }
 
-/** Whether a (working, filled) set beats the given all-time record. */
+/** Whether a (working, filled) set beats the given all-time record — nur
+ *  innerhalb derselben Metrik: Ein Satz ohne (noch nicht getipptes) Gewicht
+ *  liefert rohe Wiederholungen und darf nie gegen einen kg-Bestwert gewinnen. */
 export function beatsRecord(
   ex: Pick<Exercise, "unit" | "weighted">,
   set: SetEntry,
   rec: ExRecord | null,
 ): boolean {
-  return !!rec && rec.best > 0 && !set.warmup && isFilled(set) && setMetric(ex, set) > rec.best;
+  if (!rec || rec.best <= 0 || set.warmup || !isFilled(set)) return false;
+  const w = Number(set.weight) || 0;
+  const setKind: RecordKind =
+    ex.unit === "Sek" ? "time" : ex.weighted && w > 0 ? "weight" : "reps";
+  return setKind === rec.kind && setMetric(ex, set) > rec.best;
 }

@@ -221,9 +221,11 @@ interface RirResult {
  * Returns null when there is no RIR/intensity signal (old data) so `presc`
  * can fall back to the rep-based heuristic.
  *
- * Weighted: all sets RIR 0–1 → +2.5 kg; any RIR ≥ 3 → one step lighter;
- * otherwise (a set at RIR 2) → hold weight, +1 rep.
- * Timed: felt intensity 1–5 replaces RIR (≤2 → +5 s hold).
+ * RIR = Wiederholungen in Reserve: HOHES RIR heißt "zu leicht", RIR 0 heißt
+ * "am Versagen". Ziel-Zone laut Trainingsprinzipien ist RIR 1–2.
+ * Weighted: alle Sätze mit ≥3 in Reserve → +2.5 kg; ein Satz am Versagen
+ * (RIR 0) → eine Stufe leichter; sonst (Zone 1–2) → Gewicht halten, +1 Wdh.
+ * Timed: gefühlte Intensität 1–5 statt RIR (≤2 = leicht → +5 s halten).
  */
 export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
   const work = sets.filter((s) => !s.warmup);
@@ -247,17 +249,22 @@ export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
 
   const rirs = work.map((s) => s.rir).filter((x): x is number => x != null);
   if (!rirs.length) return null;
-  const maxRir = Math.max(...rirs);
+  // Der härteste Satz bestimmt: minRir 0 = Versagen berührt, minRir ≥ 3 =
+  // selbst der schwerste Satz hatte noch viel Luft.
+  const minRir = Math.min(...rirs);
 
   if (ex.weighted) {
-    if (maxRir >= 3)
+    // Ohne Gewichts-Historie gibt es keine sinnvolle kg-Empfehlung —
+    // Rückfall auf die Wiederholungs-Heuristik in `presc` (nie "@ 0 kg").
+    if (!lastW) return null;
+    if (minRir >= 3)
+      return { weight: round25(lastW + 2.5), repTarget: ex.repLow, reason: "up" };
+    if (minRir === 0)
       return {
-        weight: round25(Math.max(0, lastW - 2.5)),
+        weight: round25(Math.max(2.5, lastW - 2.5)),
         repTarget: ex.repLow,
         reason: "down",
       };
-    if (maxRir <= 1)
-      return { weight: round25(lastW + 2.5), repTarget: ex.repLow, reason: "up" };
     return {
       weight: lastW,
       repTarget: Math.min(ex.repHigh, maxReps + 1),
@@ -266,7 +273,7 @@ export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
   }
 
   // Bodyweight reps: can only progress reps.
-  if (maxRir <= 1)
+  if (minRir >= 3)
     return {
       weight: null,
       repTarget: Math.min(ex.repHigh, maxReps + 1),

@@ -635,12 +635,16 @@ export function liveLine(opts: {
     };
   }
 
-  // ①′ Schattenrennen: der eben gefüllte Satz schlägt den Schatten-Satz
-  //    (gleicher Index in der letzten Leistung dieser Übung).
+  // ①′ Schattenrennen: der eben gefüllte Satz schlägt den Schatten-Satz an
+  //    DERSELBEN Satz-Position der letzten Leistung. Gepaart wird über die
+  //    Position im Satzplan (nicht über die Füll-Reihenfolge) — sonst meldet
+  //    eine Lücke im Protokoll den falschen "Satz N".
   if (opts.lastPerf) {
     const shadow = workSets(opts.lastPerf.sets).filter(isFilled);
-    const i = filled.length - 1;
-    const last = filled[i];
+    const work = (sets ?? []).filter((s) => !s.warmup);
+    let i = -1;
+    for (let k = 0; k < work.length; k++) if (isFilled(work[k])) i = k;
+    const last = i >= 0 ? work[i] : undefined;
     if (last && shadow[i]) {
       const now = setMetric(ex, last);
       const then = setMetric(ex, shadow[i]);
