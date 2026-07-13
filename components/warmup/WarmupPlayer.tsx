@@ -7,7 +7,7 @@ import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
 import { Pressable } from "@/components/ui/pressable";
 import { EASE_OUT } from "@/lib/motion";
-import { beep, beepEnd, primeAudio } from "@/lib/beep";
+import { beep, beepEnd, beepStart, primeAudio } from "@/lib/beep";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 import type { WarmupDrill } from "@/lib/warmup";
@@ -42,6 +42,28 @@ export function WarmupPlayer({
   const current = drills[index];
   const reduce = useReducedMotion();
 
+  // Deep-Link / PWA-Relaunch auf /warmup/[key]: kein Button hat primeAudio()
+  // aufgerufen → der AudioContext ist suspended und tone() no-opt still.
+  // Der ERSTE Tap irgendwo (auch neben den Buttons) entsperrt Audio + Speech.
+  useEffect(() => {
+    const prime = () => {
+      primeAudio();
+      try {
+        window.speechSynthesis?.resume();
+      } catch {
+        /* Speech optional */
+      }
+      document.removeEventListener("pointerdown", prime);
+      document.removeEventListener("keydown", prime);
+    };
+    document.addEventListener("pointerdown", prime);
+    document.addEventListener("keydown", prime);
+    return () => {
+      document.removeEventListener("pointerdown", prime);
+      document.removeEventListener("keydown", prime);
+    };
+  }, []);
+
   // Announce + (re)start the timer whenever the drill changes.
   useEffect(() => {
     if (done) return;
@@ -53,13 +75,23 @@ export function WarmupPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, done]);
 
-  // Akustik: Tick in den letzten 5 s einer Übung, Doppelton am Ende —
-  // hörbar ohne aufs Display zu schauen. (Nur im Drill, nicht im Wechsel.)
+  // Akustik: Drill — Tick in den letzten 5 s, gesprochenes „drei/zwei/eins"
+  // (Gym-Modus), Doppelton abwärts am Ende. Wechsel — Tick in den letzten
+  // 3 s, Doppelton AUFWÄRTS bei 0: die nächste Übung startet, ohne aufs
+  // Display zu schauen. Beeps bewusst ungated, nur die Stimme hängt an
+  // voiceOn. Der beepStart hängt am beobachtbaren left===0-Render der
+  // Wechsel-Phase — der Transition-Effekt unten schaltet erst danach um.
   useEffect(() => {
-    if (paused || done || phase !== "drill") return;
-    if (left <= 5 && left > 0) beep();
-    if (left === 0) beepEnd();
-  }, [left, paused, done, phase]);
+    if (paused || done) return;
+    if (phase === "drill") {
+      if (left <= 5 && left > 0) beep();
+      if (voiceOn && left <= 3 && left >= 1) speak(["", "eins", "zwei", "drei"][left]);
+      if (left === 0) beepEnd();
+    } else {
+      if (left <= 3 && left > 0) beep();
+      if (left === 0) beepStart();
+    }
+  }, [left, paused, done, phase, voiceOn]);
 
   // Countdown; bei 0: Drill → 5-s-Wechselpause → nächster Drill (bzw. Done).
   useEffect(() => {

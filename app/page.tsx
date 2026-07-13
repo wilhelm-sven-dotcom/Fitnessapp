@@ -1,6 +1,6 @@
 "use client";
 
-import { BookMarked, ChevronRight, Newspaper, Play, Trophy } from "lucide-react";
+import { BookMarked, ChevronRight, Newspaper, Play, ShieldAlert, ShieldCheck, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
@@ -82,6 +82,10 @@ export default function HomePage() {
     acceptExam,
     dismissCard,
     aiPlanActive,
+    lastBackRed,
+    backSpareToday,
+    setBackSpareToday,
+    backSafeActive,
   } = useTraining();
   const tags = [...new Set(recList.map((s) => s.ex?.tag).filter(Boolean))];
   const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
@@ -128,6 +132,28 @@ export default function HomePage() {
     trainer.directive.kind === "deload" ||
     trainer.directive.kind === "deload-active" ||
     phase.phase === "entlastung";
+
+  // „Rücken heute schonen": bei roter Ampel erzwungen (nur Status), sonst
+  // Toggle-Pill — die Vorschau (recList) swappt live auf Schon-Alternativen.
+  const spareEl = lastBackRed ? (
+    <p className="mb-3 flex items-center gap-1.5 font-mono text-xs text-status-over">
+      <ShieldAlert size={13} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
+    </p>
+  ) : (
+    <Pressable
+      onClick={() => {
+        tap();
+        setBackSpareToday(!backSpareToday);
+      }}
+      aria-pressed={backSpareToday}
+      className={cn(
+        "mb-3 flex items-center gap-1.5 rounded-pill px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+        backSpareToday ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+      )}
+    >
+      <ShieldCheck size={13} aria-hidden /> Rücken heute schonen
+    </Pressable>
+  );
 
   // Context blocks shared by both heroes (defined once; only the rendered branch mounts).
   const chipsEl =
@@ -225,7 +251,7 @@ export default function HomePage() {
 
           <p className="mt-5 font-mono text-xs uppercase tracking-widest text-accent-ink">
             Empfohlen heute — {recTpl.name}
-            {aiPlanActive ? " · ATLAS-Woche" : ""}
+            {aiPlanActive && !backSafeActive ? " · ATLAS-Woche" : ""}
           </p>
           <h1 className="mt-1 font-display text-6xl font-bold uppercase leading-none tracking-tight text-fg">
             {focusParts.map((p, i) => (
@@ -282,12 +308,13 @@ export default function HomePage() {
 
           <p className="mt-4 font-body text-lg italic leading-snug text-muted">{deck}</p>
 
+          <div className="mt-5">{spareEl}</div>
           <Pressable
             onClick={() => {
               tap();
               start(recTpl.key);
             }}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-accent"
+            className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-accent"
           >
             <Play size={18} strokeWidth={2.5} /> Training starten
           </Pressable>
@@ -420,7 +447,7 @@ export default function HomePage() {
           <Reveal delay={0.14}>
             <Card variant="elevated" className="mb-4 overflow-hidden rounded-card p-6">
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">
-                ▸ Empfohlen heute{aiPlanActive ? " · ATLAS-Woche" : ""}
+                ▸ Empfohlen heute{aiPlanActive && !backSafeActive ? " · ATLAS-Woche" : ""}
               </p>
               <h2 className="font-display text-4xl font-bold leading-none tracking-tight">{recTpl.name}</h2>
               <p className="mt-1 text-muted">{recTpl.focus}</p>
@@ -455,6 +482,7 @@ export default function HomePage() {
                   </span>
                 ))}
               </div>
+              {spareEl}
               <Pressable
                 onClick={() => {
                   tap();

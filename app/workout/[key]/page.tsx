@@ -158,7 +158,7 @@ export default function WorkoutPage() {
     choices,
     allLib,
     body,
-    lastBackRed,
+    backSafeActive,
   } = useTraining();
   const lighter = daysAgo != null && daysAgo > 5;
   const say = (text: string) => {
@@ -734,9 +734,9 @@ export default function WorkoutPage() {
             setGateOpen(false);
             if (key) startSession(key);
           }}
-          onSubmit={(r) => {
+          onSubmit={(r, spareBack) => {
             setGateOpen(false);
-            if (key) startSession(key, r);
+            if (key) startSession(key, r, { spareBack });
           }}
         />
       </>
@@ -787,7 +787,7 @@ export default function WorkoutPage() {
         : bestAlternativeForPattern(ex.pattern, has, allLib, {
             excludeIds: activeList.map((s) => s.ex.id), // current + others → differs, no dup
             affinity,
-            backSafe: lastBackRed,
+            backSafe: backSafeActive,
             injuries,
             seed: swapSeed.current++,
           });

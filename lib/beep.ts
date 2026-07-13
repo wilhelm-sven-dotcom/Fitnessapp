@@ -55,3 +55,9 @@ export function beepEnd(): void {
   tone(660, 140, 0.16);
   tone(440, 200, 0.16, 0.16);
 }
+
+/** Start-Signal — Doppelton aufwärts („nächste Übung läuft"). */
+export function beepStart(): void {
+  tone(440, 140, 0.16);
+  tone(660, 200, 0.16, 0.16);
+}

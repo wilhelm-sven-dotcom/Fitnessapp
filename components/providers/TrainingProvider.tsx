@@ -204,11 +204,20 @@ interface TrainingContextValue {
   daysAgo: number | null;
   lastLabel: string;
   lastBackRed: boolean;
+  /** „Rücken heute schonen" — manueller Tages-Schalter (Session-scoped). */
+  backSpareToday: boolean;
+  setBackSpareToday: (on: boolean) => void;
+  /** Rücken-Schonung heute aktiv — Ampel-rot ODER manueller Tages-Schalter. */
+  backSafeActive: boolean;
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
   sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
   sessionTemplate: (key: string) => Template | null;
-  startSession: (key: string, readiness?: Readiness) => void;
+  startSession: (
+    key: string,
+    readiness?: Readiness,
+    opts?: { spareBack?: boolean },
+  ) => void;
   setEntry: (
     exId: string,
     i: number,
@@ -337,6 +346,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
   const [note, setNoteState] = useState("");
   const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
+  // „Rücken heute schonen" — manueller Tages-Schalter (Session-scoped wie
+  // todayReadiness: nie persistiert, Reset bei Save/Discard).
+  const [backSpareToday, setBackSpareToday] = useState(false);
   // Warm-up phase of the ACTIVE session was completed (player finished or
   // checked off manually). Session-scoped: reset on start/save/discard.
   const [warmupDone, setWarmupDone] = useState(false);
@@ -618,6 +630,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const lastBackRed =
     log.length > 0 && log[log.length - 1].backTraffic === "red";
+  // Schonung greift bei roter Ampel der letzten Einheit ODER wenn der Nutzer
+  // sie heute manuell einschaltet — beide Pfade nutzen dieselbe Mechanik.
+  const backSafeActive = lastBackRed || backSpareToday;
   const seeDoctor =
     log.length >= 2 &&
     log[log.length - 1].backTraffic === "red" &&
@@ -729,8 +744,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     () =>
       withFinisher(
         applyReadiness(
-          fitToBudget(sessionOf(recTpl.key, lastBackRed), settings.timeBudgetMin, {
-            protectCore: lastBackRed,
+          fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
+            protectCore: backSafeActive,
             superset: settings.superset,
           }).list,
           readinessScale,
@@ -738,7 +753,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         recTpl.key,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, aiPlan, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
+    [recTpl, choices, equip, custom, aiPlan, backSafeActive, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
   );
   const estimatedMin = useMemo(
     () => estimateSessionMin(recList, { superset: settings.superset }),
@@ -750,17 +765,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const activeList = useMemo(() => {
     if (!activeKey) return [];
     const noTrim = days.some((d) => d.id === activeKey) || activeKey === CARDIO_DAY.key;
-    const base = sessionOf(activeKey, lastBackRed);
+    const base = sessionOf(activeKey, backSafeActive);
     // Custom/cardio days are trained exactly as built (no budget auto-trim); A/B/C trim.
     const fitted = noTrim
       ? base
       : fitToBudget(base, settings.timeBudgetMin, {
-          protectCore: lastBackRed,
+          protectCore: backSafeActive,
           superset: settings.superset,
         }).list;
     return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, choices, equip, custom, days, aiPlan, lastBackRed, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
+  }, [activeKey, choices, equip, custom, days, aiPlan, backSafeActive, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
@@ -948,22 +963,32 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return [...warmupSets(w5, settings.weightStep), ...working];
   };
 
-  const startSession = (key: string, readiness?: Readiness) => {
+  const startSession = (
+    key: string,
+    readiness?: Readiness,
+    opts?: { spareBack?: boolean },
+  ) => {
     const r = readiness ?? todayReadiness;
     const scale = withDeload(
       settings.autoregOn && r ? scaleFor(band(r.score)) : NEUTRAL_SCALE,
       deloadActive,
     );
     if (readiness) setTodayReadiness(readiness);
+    // Schon-Entscheidung aus dem Gate schlägt den Home-Schalter; ohne Angabe
+    // gilt der aktuelle Tages-Schalter. Closure-sicher lokal rechnen — der
+    // setState wäre in diesem Aufruf noch nicht sichtbar.
+    if (opts?.spareBack !== undefined) setBackSpareToday(opts.spareBack);
+    const spare = opts?.spareBack ?? backSpareToday;
+    const backSafe = lastBackRed || spare;
     const isDay = days.some((d) => d.id === key);
     const isExam = key === EXAM_DAY.key;
-    const base = sessionOf(key, lastBackRed);
+    const base = sessionOf(key, backSafe);
     // Prüfung: nichts wegtrimmen — alle Kernmuster werden getestet.
     const fitted =
       isDay || isExam
         ? base
         : fitToBudget(base, settings.timeBudgetMin, {
-            protectCore: lastBackRed,
+            protectCore: backSafe,
             superset: settings.superset,
           }).list;
     const list = applyReadiness(fitted, scale);
@@ -1377,6 +1402,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setBackTrafficState(null);
       setNoteState("");
       setTodayReadiness(null);
+      setBackSpareToday(false);
       setWarmupDone(false);
       return null;
     }
@@ -1430,6 +1456,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTrafficState(null);
     setNoteState("");
     setTodayReadiness(null);
+    setBackSpareToday(false);
     setWarmupDone(false);
     return summary;
   };
@@ -1442,6 +1469,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBackTrafficState(null);
     setNoteState("");
     setTodayReadiness(null);
+    setBackSpareToday(false);
     setWarmupDone(false);
   };
 
@@ -1571,6 +1599,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     daysAgo,
     lastLabel,
     lastBackRed,
+    backSpareToday,
+    setBackSpareToday,
+    backSafeActive,
     seeDoctor,
     lastPerf,
     sessionOf,

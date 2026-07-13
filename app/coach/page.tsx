@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, KeyRound, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, ChevronRight, Dumbbell, KeyRound, Send, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
@@ -28,8 +28,18 @@ const RECAP_PROMPT =
 
 export default function CoachPage() {
   const router = useRouter();
-  const { log, allLib, body, cardio, settings, trainer, recTpl, recList, estimatedMin } =
-    useTraining();
+  const {
+    log,
+    allLib,
+    body,
+    cardio,
+    settings,
+    trainer,
+    recTpl,
+    recList,
+    estimatedMin,
+    backSafeActive,
+  } = useTraining();
   const context = useMemo(
     () =>
       buildCoachContext({
@@ -51,8 +61,11 @@ export default function CoachPage() {
         },
       }) +
       "\n\nATLAS-Status:\n" +
-      trainerContextBlock(trainer),
-    [log, allLib, body, cardio, trainer, recTpl, recList, estimatedMin],
+      trainerContextBlock(trainer) +
+      (backSafeActive
+        ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Einheit ist bereits rückenschonend aufgelöst."
+        : ""),
+    [log, allLib, body, cardio, trainer, recTpl, recList, estimatedMin, backSafeActive],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),
@@ -64,6 +77,21 @@ export default function CoachPage() {
   const [busy, setBusy] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Brücke vom Reden ins Tun: der bestehende Coach-Tag-Builder macht aus
+  // Zeit + Fokus eine startbare Einheit — Empfehlung wird Training.
+  const buildEl = (
+    <Pressable
+      onClick={() => router.push("/day/neu?coach=1")}
+      className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-coverage"
+    >
+      <span className="flex items-center gap-2">
+        <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
+        Einheit vom Coach bauen lassen
+      </span>
+      <ChevronRight size={15} className="shrink-0 text-faint" />
+    </Pressable>
+  );
 
   const send = async (text: string) => {
     const userText = text.trim();
@@ -165,6 +193,10 @@ export default function CoachPage() {
               </Pressable>
             ))}
           </div>
+          <p className="mb-2 mt-5 px-1 text-xs text-muted">
+            Oder direkt konkret — Zeit + Fokus rein, startbare Einheit raus:
+          </p>
+          {buildEl}
         </Reveal>
       ) : (
         <div className="space-y-3">
@@ -182,6 +214,11 @@ export default function CoachPage() {
             </div>
           ))}
           <div ref={endRef} />
+          {!busy &&
+            messages[messages.length - 1]?.role === "assistant" &&
+            !!messages[messages.length - 1].content && (
+              <div className="pt-1">{buildEl}</div>
+            )}
         </div>
       )}
 

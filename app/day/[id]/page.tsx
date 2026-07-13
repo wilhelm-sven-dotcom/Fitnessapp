@@ -198,7 +198,7 @@ export default function DayBuilderPage() {
     settings,
     has,
     choices,
-    lastBackRed,
+    backSafeActive,
   } = useTraining();
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -246,7 +246,7 @@ export default function DayBuilderPage() {
       ? bestAlternativeForPattern(ex.pattern, has, allLib, {
           excludeIds: items.map((x) => x.exerciseId), // removed one + no duplicates
           affinity,
-          backSafe: lastBackRed,
+          backSafe: backSafeActive,
           injuries,
           seed: swapSeed.current++,
         })

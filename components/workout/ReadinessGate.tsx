@@ -5,6 +5,7 @@ import { useState } from "react";
 import { JumpCheck } from "@/components/workout/JumpCheck";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
+import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { jumpBaseline } from "@/lib/jump";
 import { readinessScore } from "@/lib/readiness";
@@ -29,16 +30,21 @@ export function ReadinessGate({
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (r: Readiness) => void;
+  onSubmit: (r: Readiness, spareBack: boolean) => void;
 }) {
-  const { cardioAdvice, jumps, addJump } = useTraining();
+  const { cardioAdvice, jumps, addJump, backSpareToday } = useTraining();
   const [vals, setVals] = useState<{ sleep?: number; energy?: number; back?: number }>({});
   const complete = !!vals.sleep && !!vals.energy && !!vals.back;
+  // „Rücken heute schonen": abgeleitet vorbelegt (Komponente überlebt das
+  // Schließen des Sheets) — aktiv, wenn schon eingeschaltet (Home-Chip) oder
+  // der Rücken „schlecht" bewertet ist. Hand schlägt Automatik.
+  const [spareOverride, setSpareOverride] = useState<boolean | null>(null);
+  const spareBack = spareOverride ?? (backSpareToday || vals.back === 1);
 
   const submit = () => {
     if (!complete) return;
     const base = { sleep: vals.sleep!, energy: vals.energy!, back: vals.back! };
-    onSubmit({ ...base, score: readinessScore(base) } as Readiness);
+    onSubmit({ ...base, score: readinessScore(base) } as Readiness, spareBack);
   };
 
   return (
@@ -85,6 +91,14 @@ export function ReadinessGate({
             </div>
           </div>
         ))}
+      </div>
+      <div className="mt-4 border-t border-line pt-4">
+        <Toggle
+          checked={spareBack}
+          onChange={setSpareOverride}
+          label="Rücken heute schonen"
+          hint="Heute rückenfreundliche Alternativen: Rumpf stabilisierend statt belastend, keine schweren Hüft- und Beugemuster."
+        />
       </div>
       <Pressable
         onClick={submit}
