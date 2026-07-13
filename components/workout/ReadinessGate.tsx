@@ -1,6 +1,6 @@
 "use client";
 
-import { Bike } from "lucide-react";
+import { Bike, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { JumpCheck } from "@/components/workout/JumpCheck";
 import { Pressable } from "@/components/ui/pressable";
@@ -32,7 +32,7 @@ export function ReadinessGate({
   onClose: () => void;
   onSubmit: (r: Readiness, spareBack: boolean) => void;
 }) {
-  const { cardioAdvice, jumps, addJump, backSpareToday } = useTraining();
+  const { cardioAdvice, jumps, addJump, backSpareToday, lastBackRed } = useTraining();
   const [vals, setVals] = useState<{ sleep?: number; energy?: number; back?: number }>({});
   const complete = !!vals.sleep && !!vals.energy && !!vals.back;
   // „Rücken heute schonen": abgeleitet vorbelegt (Komponente überlebt das
@@ -93,12 +93,20 @@ export function ReadinessGate({
         ))}
       </div>
       <div className="mt-4 border-t border-line pt-4">
-        <Toggle
-          checked={spareBack}
-          onChange={setSpareOverride}
-          label="Rücken heute schonen"
-          hint="Heute rückenfreundliche Alternativen: Rumpf stabilisierend statt belastend, keine schweren Hüft- und Beugemuster."
-        />
+        {lastBackRed ? (
+          // Rote Ampel der letzten Einheit erzwingt die Schonung ohnehin —
+          // ein abschaltbar wirkender Toggle wäre gelogen.
+          <p className="flex items-center gap-1.5 font-mono text-xs text-status-over">
+            <ShieldAlert size={13} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
+          </p>
+        ) : (
+          <Toggle
+            checked={spareBack}
+            onChange={setSpareOverride}
+            label="Rücken heute schonen"
+            hint="Heute rückenfreundliche Alternativen: Rumpf stabilisierend statt belastend, keine schweren Hüft- und Beugemuster."
+          />
+        )}
       </div>
       <Pressable
         onClick={submit}

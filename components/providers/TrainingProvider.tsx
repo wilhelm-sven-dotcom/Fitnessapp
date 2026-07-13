@@ -209,6 +209,8 @@ interface TrainingContextValue {
   setBackSpareToday: (on: boolean) => void;
   /** Rücken-Schonung heute aktiv — Ampel-rot ODER manueller Tages-Schalter. */
   backSafeActive: boolean;
+  /** Beim Start eingefrorene Schon-Entscheidung der LAUFENDEN Einheit. */
+  activeBackSafe: boolean;
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
   sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
@@ -349,6 +351,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // „Rücken heute schonen" — manueller Tages-Schalter (Session-scoped wie
   // todayReadiness: nie persistiert, Reset bei Save/Discard).
   const [backSpareToday, setBackSpareToday] = useState(false);
+  // Die beim Start EINGEFRORENE Schon-Entscheidung der laufenden Einheit.
+  // activeList darf NICHT am live veränderlichen Tages-Schalter hängen —
+  // sonst tauscht ein Toggle-Tap (Home ist per Zurück-Geste erreichbar)
+  // mid-session die Übungen und protokollierte Sätze gehen beim Speichern
+  // still verloren.
+  const [activeBackSafe, setActiveBackSafe] = useState(false);
   // Warm-up phase of the ACTIVE session was completed (player finished or
   // checked off manually). Session-scoped: reset on start/save/discard.
   const [warmupDone, setWarmupDone] = useState(false);
@@ -765,17 +773,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const activeList = useMemo(() => {
     if (!activeKey) return [];
     const noTrim = days.some((d) => d.id === activeKey) || activeKey === CARDIO_DAY.key;
-    const base = sessionOf(activeKey, backSafeActive);
+    const base = sessionOf(activeKey, activeBackSafe);
     // Custom/cardio days are trained exactly as built (no budget auto-trim); A/B/C trim.
     const fitted = noTrim
       ? base
       : fitToBudget(base, settings.timeBudgetMin, {
-          protectCore: backSafeActive,
+          protectCore: activeBackSafe,
           superset: settings.superset,
         }).list;
     return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, choices, equip, custom, days, aiPlan, backSafeActive, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
+  }, [activeKey, choices, equip, custom, days, aiPlan, activeBackSafe, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
@@ -980,6 +988,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (opts?.spareBack !== undefined) setBackSpareToday(opts.spareBack);
     const spare = opts?.spareBack ?? backSpareToday;
     const backSafe = lastBackRed || spare;
+    // Für die Dauer der Einheit einfrieren — spätere Toggle-Taps ändern die
+    // laufende Übungsauswahl nicht mehr (shown == gestartet == gespeichert).
+    setActiveBackSafe(backSafe);
     const isDay = days.some((d) => d.id === key);
     const isExam = key === EXAM_DAY.key;
     const base = sessionOf(key, backSafe);
@@ -1403,6 +1414,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setNoteState("");
       setTodayReadiness(null);
       setBackSpareToday(false);
+      setActiveBackSafe(false);
       setWarmupDone(false);
       return null;
     }
@@ -1457,6 +1469,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setNoteState("");
     setTodayReadiness(null);
     setBackSpareToday(false);
+    setActiveBackSafe(false);
     setWarmupDone(false);
     return summary;
   };
@@ -1470,6 +1483,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setNoteState("");
     setTodayReadiness(null);
     setBackSpareToday(false);
+    setActiveBackSafe(false);
     setWarmupDone(false);
   };
 
@@ -1602,6 +1616,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     backSpareToday,
     setBackSpareToday,
     backSafeActive,
+    activeBackSafe,
     seeDoctor,
     lastPerf,
     sessionOf,

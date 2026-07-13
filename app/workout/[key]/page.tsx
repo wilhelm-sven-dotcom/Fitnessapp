@@ -158,7 +158,7 @@ export default function WorkoutPage() {
     choices,
     allLib,
     body,
-    backSafeActive,
+    activeBackSafe,
   } = useTraining();
   const lighter = daysAgo != null && daysAgo > 5;
   const say = (text: string) => {
@@ -787,7 +787,7 @@ export default function WorkoutPage() {
         : bestAlternativeForPattern(ex.pattern, has, allLib, {
             excludeIds: activeList.map((s) => s.ex.id), // current + others → differs, no dup
             affinity,
-            backSafe: backSafeActive,
+            backSafe: activeBackSafe,
             injuries,
             seed: swapSeed.current++,
           });
