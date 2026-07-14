@@ -55,6 +55,7 @@ import type {
 
 export type DirectiveKind =
   | "back-doctor"
+  | "back-reset"
   | "deload"
   | "deload-active"
   | "readiness"
@@ -128,6 +129,10 @@ export interface TrainerInput {
   phase: PhaseState;
   weekSets: WeeklySetStats;
   seeDoctor: boolean;
+  /** Letzte Einheit mit roter Rücken-Ampel (EIN Signal — zwei = seeDoctor). */
+  lastBackRed?: boolean;
+  /** Manueller „Rücken heute schonen"-Schalter aktiv. */
+  backSpareToday?: boolean;
   todayReadiness: Readiness | null;
   cardioLevel: CardioLevel;
   recTpl: Template;
@@ -223,6 +228,22 @@ function directiveFor(input: TrainerInput, ref: Date, seed: number): TrainerDire
       text: pick(["Stopp — erst abklären.", "Heute kein Zug nach vorn — abklären."], seed),
       reason:
         "Zwei rote Rücken-Signale in Folge. Arzt oder Physio, dann greifen wir wieder an.",
+    };
+  }
+
+  // 1b · Rücken meldet sich (EIN rotes Signal oder Schonmodus, kein Arztfall)
+  //      → gewichtsfreier Reset statt Eisen. Rücken schlägt Deload/Volumen.
+  if (input.lastBackRed || input.backSpareToday) {
+    return {
+      kind: "back-reset",
+      severity: "warn",
+      text: pick(
+        ["Heute Rücken-Reset — Stabilität statt Eisen.", "Reset-Tag: Rumpf arbeiten lassen, Last weglassen."],
+        seed,
+      ),
+      reason: input.lastBackRed
+        ? "Letzte Einheit ‚rot': gewichtsfrei stabilisieren, morgen wieder angreifen."
+        : "Schonmodus aktiv — der Rücken arbeitet heute mit, ohne zu tragen.",
     };
   }
 
@@ -533,6 +554,14 @@ export function sessionDebrief(opts: {
     ? summary.prs > 0
       ? `Prüfung bestanden — ${summary.prs === 1 ? "eine neue Bestmarke" : `${summary.prs} neue Bestmarken`} im Archiv. Deine Prognosen sind neu kalibriert.`
       : "Prüfung abgelegt — Standort vermessen, das Archiv ist aktualisiert. Ab hier zählt der nächste Zyklus."
+    : session.isBackReset
+    ? pick(
+        [
+          `Reset gefahren — ${saetze} Stabilität statt Eisen. Genau richtig, wenn der Rücken meckert.`,
+          `Rücken-Reset im Buch: ${saetze}, null Last auf der Wirbelsäule — kluge Entscheidung.`,
+        ],
+        seed,
+      )
     : session.isDeload
     ? pick(
         [

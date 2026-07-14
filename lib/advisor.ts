@@ -18,6 +18,7 @@ export type CoachKind =
   | "volume-over"
   | "volume-under"
   | "back-doctor"
+  | "back-reset"
   | "cardio"
   | "recomp"
   | "volume-bump"
@@ -30,7 +31,7 @@ export interface CoachCard {
   title: string;
   body: string;
   exId?: string;
-  action?: "deload" | "exam";
+  action?: "deload" | "exam" | "back-reset";
 }
 
 const DAY = 86400000;
@@ -225,6 +226,8 @@ export function coachCards(opts: {
   allLib: Exercise[];
   settings: AppSettings;
   seeDoctor: boolean;
+  /** Letzte Einheit mit roter Rücken-Ampel (ein Signal, kein Arztfall). */
+  lastBackRed?: boolean;
   muscleVolumes: MuscleVolume[];
   cardio: CardioSession[];
   body: BodyMetric[];
@@ -250,6 +253,17 @@ export function coachCards(opts: {
       severity: "urgent",
       title: "Rücken zweimal in Folge gereizt",
       body: "Nimm das ernst — sprich mit Arzt oder Physio, bevor du wieder schwer trainierst. Heute lieber nur Stabis und Mobilität.",
+    });
+
+  // EIN rotes Rücken-Signal (kein Arztfall) → der gewichtsfreie Reset ist
+  // die direkte, startbare Antwort statt einer bloßen Warnung.
+  if (!opts.seeDoctor && opts.lastBackRed)
+    cards.push({
+      kind: "back-reset",
+      severity: "warn",
+      title: "Rücken-Reset statt Eisen",
+      body: "Letzte Einheit ‚rot': Heute gewichtsfrei — Stabilisatoren, Liegestütze, Körpergewicht. Der Rücken arbeitet mit, ohne Last zu tragen.",
+      action: "back-reset",
     });
 
   const d = deloadSignal(opts.log, opts.settings, opts.fatigueBand);

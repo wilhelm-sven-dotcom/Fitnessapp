@@ -1,6 +1,6 @@
 "use client";
 
-import { Bike, Check, ChevronRight, Copy, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Bike, Check, ChevronRight, Copy, Pencil, Plus, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
@@ -201,6 +201,12 @@ export default function PlanPage() {
               <Sparkles size={16} strokeWidth={2.5} /> Coach-Tag
             </Pressable>
           </div>
+          <Pressable
+            onClick={() => router.push("/workout/reset")}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-card border border-surface-3 bg-surface-1 py-2.5 text-sm font-medium text-accent-2 shadow-card focus:outline-none"
+          >
+            <ShieldCheck size={16} strokeWidth={2.5} /> Rücken-Reset starten — ohne Gewichte
+          </Pressable>
           {(equip as string[]).includes("bike") && (
             <Pressable
               onClick={() => router.push("/workout/peloton")}

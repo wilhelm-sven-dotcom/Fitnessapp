@@ -27,10 +27,13 @@ export function ReadinessGate({
   open,
   onClose,
   onSubmit,
+  onReset,
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (r: Readiness, spareBack: boolean) => void;
+  /** Direkt zur gewichtsfreien Reset-Einheit wechseln (Rücken „schlecht"). */
+  onReset?: () => void;
 }) {
   const { cardioAdvice, jumps, addJump, backSpareToday, lastBackRed } = useTraining();
   const [vals, setVals] = useState<{ sleep?: number; energy?: number; back?: number }>({});
@@ -108,6 +111,14 @@ export function ReadinessGate({
           />
         )}
       </div>
+      {onReset && vals.back === 1 && (
+        <Pressable
+          onClick={onReset}
+          className="mt-4 w-full rounded-card bg-surface-2 py-3 text-sm font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        >
+          Stattdessen: Rücken-Reset — ganz ohne Gewichte
+        </Pressable>
+      )}
       <Pressable
         onClick={submit}
         disabled={!complete}

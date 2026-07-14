@@ -147,6 +147,8 @@ export interface LoggedSession {
   isDeload?: boolean;
   /** Session was the guided max-strength test day („Die Prüfung"). */
   isExam?: boolean;
+  /** Gewichtsfreie Stabi-Einheit („Rücken-Reset"). */
+  isBackReset?: boolean;
   /** Pre-session readiness check. */
   readiness?: Readiness;
   /** ATLAS-Debrief: three verdict lines, generated at save time (stable). */

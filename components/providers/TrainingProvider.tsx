@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { CARDIO_DAY, DEFAULT_EQUIP, EXAM_DAY, LIB, TEMPLATE } from "@/lib/exercises";
+import { CARDIO_DAY, DEFAULT_EQUIP, EXAM_DAY, LIB, RESET_DAY, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
@@ -30,7 +30,7 @@ import {
   type WeekPlan,
 } from "@/lib/coach-week";
 import type { JumpEntry } from "@/lib/jump";
-import { poolFor, presc, reqOk, resolveDay, resolveSession, warmupSets } from "@/lib/progression";
+import { poolFor, presc, reqOk, resolveDay, resolveResetSession, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseAffinity } from "@/lib/affinity";
 import {
@@ -657,6 +657,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);
     if (day) return resolveDay(day, allLib, has);
+    // Rücken-Reset: kuratiert und konstruktiv gewichtsfrei — keine
+    // Muster-Rotation, kein KI-Overlay, kein backSafe nötig.
+    if (key === RESET_DAY.key) return resolveResetSession(has, allLib);
     if (key === CARDIO_DAY.key)
       return resolveSession(CARDIO_DAY, log.length, choices, has, allLib, {
         injuries: athleteInjuries,
@@ -704,7 +707,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   /** Append an optional Peloton finisher to A/B/C sessions (opt-in, needs a bike). */
   const withFinisher = (list: ResolvedSlot[], key: string): ResolvedSlot[] => {
     if (!settings.cardioFinisher || !hasBike) return list;
-    if (key === CARDIO_DAY.key || key === EXAM_DAY.key || days.some((d) => d.id === key))
+    if (key === CARDIO_DAY.key || key === EXAM_DAY.key || key === RESET_DAY.key || days.some((d) => d.id === key))
       return list;
     if (list.some((s) => s.ex.pattern === "cardio")) return list;
     const fin = allLib.find((e) => e.id === "bike_finisher");
@@ -724,6 +727,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     }
     if (key === CARDIO_DAY.key) return CARDIO_DAY;
     if (key === EXAM_DAY.key) return EXAM_DAY;
+    if (key === RESET_DAY.key) return RESET_DAY;
     return TEMPLATE.find((t) => t.key === key) ?? null;
   };
 
@@ -772,7 +776,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // Both the workout screen and saveSession read this so shown == saved.
   const activeList = useMemo(() => {
     if (!activeKey) return [];
-    const noTrim = days.some((d) => d.id === activeKey) || activeKey === CARDIO_DAY.key;
+    const noTrim =
+      days.some((d) => d.id === activeKey) ||
+      activeKey === CARDIO_DAY.key ||
+      activeKey === RESET_DAY.key;
     const base = sessionOf(activeKey, activeBackSafe);
     // Custom/cardio days are trained exactly as built (no budget auto-trim); A/B/C trim.
     const fitted = noTrim
@@ -830,12 +837,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         allLib,
         settings,
         seeDoctor,
+        lastBackRed,
         muscleVolumes,
         cardio,
         body,
         fatigueBand: fatigue.band,
       }).filter((c) => !dismissed.includes(c.kind + (c.exId ?? ""))),
-    [log, allLib, settings, seeDoctor, muscleVolumes, cardio, body, dismissed, fatigue],
+    [log, allLib, settings, seeDoctor, lastBackRed, muscleVolumes, cardio, body, dismissed, fatigue],
   );
 
   const cardioTip = useMemo(() => cardioAdvice(cardio), [cardio]);
@@ -855,6 +863,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       phase,
       weekSets: weekSetStats,
       seeDoctor,
+      lastBackRed,
+      backSpareToday,
       todayReadiness,
       cardioLevel: cardioTip.level,
       recTpl,
@@ -866,7 +876,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [log, allLib, settings, cardio, muscleVolumes, fatigue, phase, weekSetStats,
-     seeDoctor, todayReadiness, cardioTip, recTpl, recList, estimatedMin, weekCount, daysAgo, mission],
+     seeDoctor, lastBackRed, backSpareToday, todayReadiness, cardioTip, recTpl, recList, estimatedMin, weekCount, daysAgo, mission],
   );
   const trainer = useMemo<TrainerState>(() => {
     try {
@@ -987,16 +997,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     // setState wäre in diesem Aufruf noch nicht sichtbar.
     if (opts?.spareBack !== undefined) setBackSpareToday(opts.spareBack);
     const spare = opts?.spareBack ?? backSpareToday;
-    const backSafe = lastBackRed || spare;
+    // Der Rücken-Reset ist per Definition Schon-Betrieb — auch Übungs-Tausch
+    // in der Einheit bleibt dann bei rückenfreundlichen Alternativen.
+    const backSafe = key === RESET_DAY.key || lastBackRed || spare;
     // Für die Dauer der Einheit einfrieren — spätere Toggle-Taps ändern die
     // laufende Übungsauswahl nicht mehr (shown == gestartet == gespeichert).
     setActiveBackSafe(backSafe);
     const isDay = days.some((d) => d.id === key);
     const isExam = key === EXAM_DAY.key;
+    const isReset = key === RESET_DAY.key;
     const base = sessionOf(key, backSafe);
     // Prüfung: nichts wegtrimmen — alle Kernmuster werden getestet.
     const fitted =
-      isDay || isExam
+      isDay || isExam || isReset
         ? base
         : fitToBudget(base, settings.timeBudgetMin, {
             protectCore: backSafe,
@@ -1431,6 +1444,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (todayReadiness) newSession.readiness = todayReadiness;
     if (deloadActive) newSession.isDeload = true;
     if (tpl.key === EXAM_DAY.key) newSession.isExam = true;
+    if (tpl.key === RESET_DAY.key) newSession.isBackReset = true;
     const newLog = [...log, newSession];
     // Summary for the completion takeover — computed BEFORE state clears so
     // the celebration can show exactly what this session achieved.

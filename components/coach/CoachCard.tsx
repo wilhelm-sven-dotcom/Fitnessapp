@@ -61,6 +61,14 @@ export function CoachCard({
           Prüfung antreten
         </Pressable>
       )}
+      {card.action === "back-reset" && onAccept && (
+        <Pressable
+          onClick={onAccept}
+          className="mt-3 rounded-card bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+        >
+          Rücken-Reset starten
+        </Pressable>
+      )}
     </Card>
   );
 }

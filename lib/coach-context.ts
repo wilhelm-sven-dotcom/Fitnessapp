@@ -83,8 +83,9 @@ export function buildCoachContext(opts: {
   log.slice(-5).forEach((s) => {
     const back = s.backTraffic ? ` · Rücken ${BACK_DE[s.backTraffic]}` : "";
     const dl = s.isDeload ? " · Entlastung" : "";
+    const rs = s.isBackReset ? " · Rücken-Reset (gewichtsfrei)" : "";
     lines.push(
-      `- ${fmtDate(s.date)} ${s.dayName} (${s.focus})${back}${dl} · Volumen ${Math.round(sessionVolume(s))}`,
+      `- ${fmtDate(s.date)} ${s.dayName} (${s.focus})${back}${dl}${rs} · Volumen ${Math.round(sessionVolume(s))}`,
     );
   });
 

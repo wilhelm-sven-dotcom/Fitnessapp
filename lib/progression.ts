@@ -210,6 +210,27 @@ export function resolveDay(
     .filter((s): s is ResolvedSlot => s !== null);
 }
 
+/**
+ * „Rücken-Reset": kuratierte, gewichtsfreie Stabi-Einheit — feste Reihenfolge
+ * statt Muster-Rotation. Basis braucht KEIN Equipment; ein Zug-Muster wird
+ * eingefügt, wenn Band/Ringe/Stange da sind (Druck ohne Zug bliebe einseitig).
+ */
+export function resolveResetSession(
+  has: (k: string) => boolean,
+  allLib: Exercise[],
+): ResolvedSlot[] {
+  const byId = new Map(allLib.map((e) => [e.id, e]));
+  const pullId = has("bands") ? "band_row" : has("rings") ? "ringrow" : has("pullup") ? "pullup" : null;
+  const ids = ["birddog", "pushup", ...(pullId ? [pullId] : []), "deadbug", "squat_bw", "sideplank", "gb_march"];
+  return ids
+    .map((id, i): ResolvedSlot | null => {
+      const ex = byId.get(id);
+      if (!ex || !reqOk(ex, has)) return null;
+      return { ex, slotKey: `reset:${i}`, pool: poolFor(ex.pattern, has, allLib) };
+    })
+    .filter((s): s is ResolvedSlot => s !== null);
+}
+
 interface RirResult {
   weight: number | null;
   repTarget: number;

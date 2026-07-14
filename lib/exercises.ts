@@ -132,6 +132,16 @@ export const EXAM_DAY: Template = {
   slots: ["squat", "hinge", "hpush", "vpull"],
 };
 
+/** „Rücken-Reset" — gewichtsfreie Stabi-Einheit für Tage, an denen der Rücken
+ *  zwickt. Slots dienen nur Warmup/Anzeige; die Übungsauswahl ist kuratiert
+ *  (resolveResetSession) statt Muster-rotiert. */
+export const RESET_DAY: Template = {
+  key: "reset",
+  name: "Rücken-Reset",
+  focus: "Stabilität ohne Last",
+  slots: ["core", "hpush", "core", "squat", "core", "core"],
+};
+
 export const EQUIP_LIST: EquipItem[] = [
   { key: "db", label: "Kurzhanteln" }, { key: "kb", label: "Kettlebell" }, { key: "bar", label: "Langhantel" },
   { key: "pullup", label: "Klimmzugstange" }, { key: "rings", label: "Turnringe" }, { key: "bands", label: "Bänder" },

@@ -226,7 +226,9 @@ export default function WorkoutPage() {
         setSwitchConfirm(key);
         return;
       }
-      if (settings.autoregOn && !todayReadiness) setGateOpen(true);
+      // Der Rücken-Reset IST die Antwort auf schlechte Tagesform — kein
+      // zweites Gate davor (sonst fragt es direkt nach dem Gate-Wechsel erneut).
+      if (key !== "reset" && settings.autoregOn && !todayReadiness) setGateOpen(true);
       else startSession(key);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -737,6 +739,10 @@ export default function WorkoutPage() {
           onSubmit={(r, spareBack) => {
             setGateOpen(false);
             if (key) startSession(key, r, { spareBack });
+          }}
+          onReset={() => {
+            setGateOpen(false);
+            router.replace("/workout/reset");
           }}
         />
       </>

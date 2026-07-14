@@ -135,24 +135,40 @@ export default function HomePage() {
 
   // „Rücken heute schonen": bei roter Ampel erzwungen (nur Status), sonst
   // Toggle-Pill — die Vorschau (recList) swappt live auf Schon-Alternativen.
-  const spareEl = lastBackRed ? (
-    <p className="mb-3 flex items-center gap-1.5 font-mono text-xs text-status-over">
-      <ShieldAlert size={13} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
-    </p>
-  ) : (
-    <Pressable
-      onClick={() => {
-        tap();
-        setBackSpareToday(!backSpareToday);
-      }}
-      aria-pressed={backSpareToday}
-      className={cn(
-        "mb-3 flex items-center gap-1.5 rounded-pill px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
-        backSpareToday ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+  // Aktiver Schonmodus enthüllt die gewichtsfreie Alternative: den Reset.
+  const spareEl = (
+    <div className="mb-3">
+      {lastBackRed ? (
+        <p className="flex items-center gap-1.5 font-mono text-xs text-status-over">
+          <ShieldAlert size={13} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
+        </p>
+      ) : (
+        <Pressable
+          onClick={() => {
+            tap();
+            setBackSpareToday(!backSpareToday);
+          }}
+          aria-pressed={backSpareToday}
+          className={cn(
+            "flex items-center gap-1.5 rounded-pill px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+            backSpareToday ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+          )}
+        >
+          <ShieldCheck size={13} aria-hidden /> Rücken heute schonen
+        </Pressable>
       )}
-    >
-      <ShieldCheck size={13} aria-hidden /> Rücken heute schonen
-    </Pressable>
+      {backSafeActive && (
+        <Pressable
+          onClick={() => {
+            tap();
+            start("reset");
+          }}
+          className="mt-2 flex items-center gap-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        >
+          <ChevronRight size={13} aria-hidden /> Oder gleich Rücken-Reset starten — ganz ohne Gewichte
+        </Pressable>
+      )}
+    </div>
   );
 
   // Context blocks shared by both heroes (defined once; only the rendered branch mounts).
@@ -200,7 +216,9 @@ export default function HomePage() {
                         acceptExam();
                         router.push("/workout/exam");
                       }
-                    : undefined
+                    : c.action === "back-reset"
+                      ? () => start("reset")
+                      : undefined
               }
               onDismiss={() => dismissCard(c)}
             />
