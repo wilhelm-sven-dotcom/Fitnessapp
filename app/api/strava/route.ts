@@ -141,9 +141,14 @@ export async function POST(req: Request) {
         accessToken = r.tokens.accessToken;
       }
 
-      const res = await fetch(`${STRAVA_API}/athlete/activities?per_page=30&page=1`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      // Nur die letzten 2 Wochen laden — ältere Aktivitäten interessieren den
+      // Coach nicht (Ermüdung/Interferenz sind Kurzzeit-Fenster) und blähen die
+      // Liste auf. `after` = Unix-Sekunden, Strava liefert alles danach.
+      const afterTs = Math.floor((Date.now() - 14 * 86_400_000) / 1000);
+      const res = await fetch(
+        `${STRAVA_API}/athlete/activities?per_page=50&page=1&after=${afterTs}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
       if (res.status === 401)
         return Response.json({
           ok: false,

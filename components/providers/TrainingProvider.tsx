@@ -155,6 +155,16 @@ function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale
     : base;
 }
 
+/** Import-Fenster: nur die letzten 2 Wochen an Strava-Einheiten behalten.
+ *  Manuell Eingetragenes bleibt IMMER (das hat der Nutzer selbst erfasst). */
+const IMPORT_WINDOW_MS = 14 * 86_400_000;
+function pruneOldImports(list: CardioSession[]): CardioSession[] {
+  const cutoff = Date.now() - IMPORT_WINDOW_MS;
+  return list.filter(
+    (c) => c.source === "manual" || new Date(c.date).getTime() >= cutoff,
+  );
+}
+
 /** Apply readiness set-count delta to weighted slots (clamped 2..sets+1). */
 function applyReadiness(list: ResolvedSlot[], scale: ReadinessScale): ResolvedSlot[] {
   if (scale.setDelta === 0) return list;
@@ -411,7 +421,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCustom(sanitizeCustom(cu));
     setBody(sanitizeBody(b));
     setSettings(settingsLoaded);
-    setCardio(sanitizeCardio(ca));
+    // Nur die letzten 2 Wochen behalten — ältere Importe beim Öffnen wegräumen
+    // (und persistieren, wenn wirklich etwas wegfiel), manuelle bleiben.
+    const cleanCardio = pruneOldImports(sanitizeCardio(ca));
+    setCardio(cleanCardio);
+    if (Array.isArray(ca) && cleanCardio.length !== ca.length)
+      void storage.setJSON(KEYS.cardio, cleanCardio);
     setHiddenCardio(Array.isArray(hc) ? hc.filter((x): x is string => typeof x === "string") : []);
     setDays(sanitizeDays(da));
     setGyms(gymsLoaded);
@@ -1294,7 +1309,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           expiresAt: tokens.expiresAt,
         });
         if (s.ok && s.rides)
-          await saveCardio(mergeCardio(cardio, s.rides.filter((r) => !hiddenCardio.includes(r.id))));
+          await saveCardio(
+            pruneOldImports(mergeCardio(cardio, s.rides.filter((r) => !hiddenCardio.includes(r.id)))),
+          );
         return { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
@@ -1315,7 +1332,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         });
         if (!j.ok) return { ok: false, error: j.error };
         if (j.rides)
-          await saveCardio(mergeCardio(cardio, j.rides.filter((r) => !hiddenCardio.includes(r.id))));
+          await saveCardio(
+            pruneOldImports(mergeCardio(cardio, j.rides.filter((r) => !hiddenCardio.includes(r.id)))),
+          );
         // Persist rotated tokens (keep the athlete name we already have).
         if (j.tokens)
           await saveSettings({
