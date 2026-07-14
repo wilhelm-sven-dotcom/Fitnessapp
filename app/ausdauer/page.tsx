@@ -81,6 +81,22 @@ export default function AusdauerPage() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
+  // Mögliche Duplikate: zwei Einheiten, die weniger als 5 Minuten auseinander
+  // starten, sind fast sicher dieselbe Fahrt aus zwei Quellen (z. B. Peloton
+  // nativ UND über HealthFit). Nur ein Hinweis — gelöscht wird von Hand.
+  const dupeIds = new Set<string>();
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      const dt = Math.abs(
+        new Date(sorted[i].date).getTime() - new Date(sorted[j].date).getTime(),
+      );
+      if (dt < 5 * 60 * 1000) {
+        dupeIds.add(sorted[i].id);
+        dupeIds.add(sorted[j].id);
+      }
+    }
+  }
+
   const num = (s: string) => {
     const n = parseFloat(s.replace(",", "."));
     return isFinite(n) && n > 0 ? n : undefined;
@@ -174,8 +190,13 @@ export default function AusdauerPage() {
                   <Icon size={17} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-fg">
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-fg">
                     {c.title || sportLabel(c.sport)}
+                    {dupeIds.has(c.id) && (
+                      <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-status-over">
+                        möglich doppelt
+                      </span>
+                    )}
                   </p>
                   <p className="font-mono text-xs tabular-nums text-muted">{metricsLine(c)}</p>
                 </div>
@@ -183,26 +204,27 @@ export default function AusdauerPage() {
                   <span className="font-mono text-xs tabular-nums text-faint">
                     {fmtDate(c.date)}
                   </span>
-                  {c.source === "manual" &&
-                    (confirmDel === c.id ? (
-                      <button
-                        onClick={() => {
-                          void removeCardio(c.id);
-                          setConfirmDel(null);
-                        }}
-                        className="font-mono text-xs text-status-danger focus:outline-none"
-                      >
-                        Löschen?
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDel(c.id)}
-                        aria-label="Einheit löschen"
-                        className="text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    ))}
+                  {/* Alle Einheiten löschbar — auch Strava-Importe. Der Grabstein
+                      (removeCardio) verhindert, dass der Sync sie zurückholt. */}
+                  {confirmDel === c.id ? (
+                    <button
+                      onClick={() => {
+                        void removeCardio(c.id);
+                        setConfirmDel(null);
+                      }}
+                      className="font-mono text-xs text-status-danger focus:outline-none"
+                    >
+                      Löschen?
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDel(c.id)}
+                      aria-label="Einheit löschen"
+                      className="text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             );

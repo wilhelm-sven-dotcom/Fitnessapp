@@ -331,6 +331,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
   const [cardio, setCardio] = useState<CardioSession[]>([]);
+  // IDs gelöschter Import-Einheiten — der Strava-Sync überspringt sie, sonst
+  // käme eine gelöschte (oder doppelte) Fahrt beim nächsten Sync zurück.
+  const [hiddenCardio, setHiddenCardio] = useState<string[]>([]);
   const [days, setDays] = useState<WorkoutDay[]>([]);
   const [gyms, setGyms] = useState<GymProfile[]>([]);
   const [exerciseVideos, setExerciseVideos] = useState<Record<string, string>>({});
@@ -366,7 +369,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, da, gy, ev, mi] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -374,6 +377,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<BodyMetric[]>(KEYS.body, []),
       storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
       storage.getJSON<CardioSession[]>(KEYS.cardio, []),
+      storage.getJSON<string[]>(KEYS.hiddenCardio, []),
       storage.getJSON<WorkoutDay[]>(KEYS.days, []),
       storage.getJSON<GymProfile[]>(KEYS.gyms, []),
       storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
@@ -408,6 +412,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBody(sanitizeBody(b));
     setSettings(settingsLoaded);
     setCardio(sanitizeCardio(ca));
+    setHiddenCardio(Array.isArray(hc) ? hc.filter((x): x is string => typeof x === "string") : []);
     setDays(sanitizeDays(da));
     setGyms(gymsLoaded);
     setExerciseVideos(sanitizeVideoMap(ev));
@@ -1247,6 +1252,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   };
   const removeCardio = async (id: string) => {
     await saveCardio(cardio.filter((c) => c.id !== id));
+    // Import-Einheiten (nicht-manuell) als Grabstein merken, damit der nächste
+    // Sync sie nicht wieder einspielt. Manuelle IDs kommen nie zurück.
+    if (!id.startsWith("manual-") && !hiddenCardio.includes(id)) {
+      const next = [...hiddenCardio, id];
+      setHiddenCardio(next);
+      await storage.setJSON(KEYS.hiddenCardio, next);
+    }
   };
   type StravaTokens = NonNullable<AppSettings["strava"]>;
   const stravaPost = async (payload: Record<string, unknown>) => {
@@ -1281,7 +1293,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           refreshToken: tokens.refreshToken,
           expiresAt: tokens.expiresAt,
         });
-        if (s.ok && s.rides) await saveCardio(mergeCardio(cardio, s.rides));
+        if (s.ok && s.rides)
+          await saveCardio(mergeCardio(cardio, s.rides.filter((r) => !hiddenCardio.includes(r.id))));
         return { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
@@ -1301,7 +1314,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           expiresAt: t.expiresAt,
         });
         if (!j.ok) return { ok: false, error: j.error };
-        if (j.rides) await saveCardio(mergeCardio(cardio, j.rides));
+        if (j.rides)
+          await saveCardio(mergeCardio(cardio, j.rides.filter((r) => !hiddenCardio.includes(r.id))));
         // Persist rotated tokens (keep the athlete name we already have).
         if (j.tokens)
           await saveSettings({

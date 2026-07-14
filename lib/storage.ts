@@ -56,6 +56,9 @@ export const KEYS = {
   body: "wilhelm-training-body",
   settings: "wilhelm-training-settings",
   cardio: "wilhelm-training-cardio",
+  // Grabsteine gelöschter Import-Einheiten (Strava-IDs) — der Sync spielt sie
+  // sonst beim nächsten Lauf wieder ein. Gelöscht bleibt gelöscht.
+  hiddenCardio: "wilhelm-training-cardio-hidden",
   days: "wilhelm-training-days",
   gyms: "wilhelm-training-gyms",
   exerciseVideos: "wilhelm-training-exercise-videos",
