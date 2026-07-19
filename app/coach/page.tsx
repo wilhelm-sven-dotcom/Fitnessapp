@@ -39,6 +39,7 @@ export default function CoachPage() {
     recList,
     estimatedMin,
     backSafeActive,
+    exerciseNotes,
   } = useTraining();
   const context = useMemo(
     () =>
@@ -47,6 +48,7 @@ export default function CoachPage() {
         allLib,
         body,
         cardio,
+        exerciseNotes,
         // Der ECHTE Plan der nächsten Einheit — damit Empfehlungen ("nächste
         // Woche X trainieren") zu den Übungen passen, die der Trainingsstart
         // dann wirklich zeigt, statt frei erfunden zu werden.
@@ -65,7 +67,7 @@ export default function CoachPage() {
       (backSafeActive
         ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Einheit ist bereits rückenschonend aufgelöst."
         : ""),
-    [log, allLib, body, cardio, trainer, recTpl, recList, estimatedMin, backSafeActive],
+    [log, allLib, body, cardio, exerciseNotes, trainer, recTpl, recList, estimatedMin, backSafeActive],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),

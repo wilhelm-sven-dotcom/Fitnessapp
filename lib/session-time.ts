@@ -127,7 +127,11 @@ const EXTEND_ORDER: Pattern[] = ["vpush", "hpull", "lunge", "arm", "lateral", "c
 export function fitToBudget(
   list: ResolvedSlot[],
   budgetMin: number,
-  opts: { protectCore?: boolean; superset?: boolean } = {},
+  opts: {
+    protectCore?: boolean;
+    superset?: boolean;
+    choices?: Record<string, string>;
+  } = {},
 ): FitResult {
   const slots: ResolvedSlot[] = list.map((s) => ({ ...s, ex: { ...s.ex } }));
   const est0 = () => estimateSessionMin(slots, { superset: opts.superset });
@@ -193,12 +197,21 @@ export function fitToBudget(
       let added = false;
       for (const pat of patternOrder) {
         const donor = slots.find((s) => s.ex.pattern === pat && s.pool.length > 1);
-        const cand = donor?.pool.find((e) => !used.has(e.id));
-        if (!donor || !cand) continue;
+        if (!donor) continue;
+        const slotKey = `${donor.slotKey.split(":")[0]}:x${extraNo + 1}`;
+        // Ein manueller Tausch dieses Zusatz-Slots gewinnt (sofern verfügbar und
+        // noch nicht in der Session), sonst der erste unbenutzte Pool-Eintrag.
+        const chosenId = opts.choices?.[slotKey];
+        const chosen =
+          chosenId && !used.has(chosenId)
+            ? donor.pool.find((e) => e.id === chosenId)
+            : undefined;
+        const cand = chosen ?? donor.pool.find((e) => !used.has(e.id));
+        if (!cand) continue;
         extraNo += 1;
         slots.push({
           ex: { ...cand },
-          slotKey: `${donor.slotKey.split(":")[0]}:x${extraNo}`,
+          slotKey,
           pool: donor.pool,
         });
         adjusted = "extend";

@@ -13,21 +13,20 @@ import {
 const POLL_MS = 8000;
 
 /**
- * Live Spotify state for the workout widget: polls the currently-playing track
- * (refreshing the access token as needed and persisting the rotated token) and
- * exposes playback controls. Everything is best-effort — a free account or no
- * active device simply yields `controlBlocked`, never a throw. Inert unless
- * Spotify is configured AND connected.
+ * Reusable Spotify access-token source: refreshes + persists the rotated token
+ * on demand and reports whether a connection exists at all. Shared by useSpotify
+ * (widget polling) and useSpotifyResume (targeted one-off checks). Inert unless
+ * Spotify is configured AND connected — never throws.
  */
-export function useSpotify() {
+export function useSpotifyToken(): {
+  connected: boolean;
+  validToken: () => Promise<string | null>;
+} {
   const { spotify } = useTraining();
   const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
   const connected = spotify.configured && !!spotify.auth;
 
-  const [now, setNow] = useState<NowPlaying | null>(null);
-  const [controlBlocked, setControlBlocked] = useState(false);
-
-  // Keep the latest auth + persist callback in refs so the polling effect need
+  // Keep the latest auth + persist callback in refs so consumers' effects need
   // not re-subscribe on every token rotation.
   const authRef = useRef(spotify.auth);
   authRef.current = spotify.auth;
@@ -43,6 +42,22 @@ export function useSpotify() {
     await connectRef.current(fresh); // persist rotated token
     return fresh.accessToken;
   }, [clientId]);
+
+  return { connected, validToken };
+}
+
+/**
+ * Live Spotify state for the workout widget: polls the currently-playing track
+ * (refreshing the access token as needed and persisting the rotated token) and
+ * exposes playback controls. Everything is best-effort — a free account or no
+ * active device simply yields `controlBlocked`, never a throw. Inert unless
+ * Spotify is configured AND connected.
+ */
+export function useSpotify() {
+  const { connected, validToken } = useSpotifyToken();
+
+  const [now, setNow] = useState<NowPlaying | null>(null);
+  const [controlBlocked, setControlBlocked] = useState(false);
 
   useEffect(() => {
     if (!connected) {

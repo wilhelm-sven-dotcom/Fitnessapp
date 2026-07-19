@@ -5,6 +5,8 @@
  * hide their mic / cue UI via `isVoiceInputSupported` / `isSpeechSupported`).
  */
 
+import { getCueVolume } from "@/lib/beep";
+
 // --- Text-to-speech ---------------------------------------------------------
 
 export function isSpeechSupported(): boolean {
@@ -20,6 +22,8 @@ export function speak(text: string, opts: { interrupt?: boolean } = {}): void {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
     u.rate = 1;
+    // Leiser drehen wirkt auch auf die Ansage; > 1 bleibt bei TTS Maximum (1).
+    u.volume = Math.min(1, Math.max(0, getCueVolume()));
     synth.speak(u);
   } catch {
     /* speech unavailable — silent no-op */

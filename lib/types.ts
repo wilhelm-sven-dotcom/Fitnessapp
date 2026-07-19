@@ -129,6 +129,10 @@ export interface SessionExercise {
   name: string;
   unit: Unit;
   sets: SetEntry[];
+  /** Hilfsmittel-/Ausführungs-Notiz (z. B. „Unterstützungsband") — Snapshot des
+   *  Werts aus `exerciseNotes` beim Speichern, damit History + Coach sehen, was
+   *  an dem Tag galt. */
+  note?: string;
 }
 
 export interface LoggedSession {
@@ -215,6 +219,9 @@ export interface AppSettings {
   lastExamDate?: string;
   /** Speak rest-timer countdown and PR cues aloud (Gym-Modus, hands-free). */
   voiceCues?: boolean;
+  /** Lautstärke der Signaltöne (Countdown/Ende) als Multiplikator 0.5–3;
+   *  1 = Standard. Lauter stellen, wenn nebenbei Musik läuft. Default 1. */
+  cueVolume?: number;
   /** Pair the last two accessory slots as a superset — saves rest time. */
   superset?: boolean;
   /** Appearance: color theme preference (default 'dark'). */

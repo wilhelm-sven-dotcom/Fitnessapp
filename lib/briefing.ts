@@ -42,6 +42,8 @@ export function buildBriefing(opts: {
   body: BodyMetric[];
   allLib: Exercise[];
   settings: { lastDeloadDate?: string };
+  /** Übungs-Id → Hilfsmittel-Notiz (z. B. „Unterstützungsband"). */
+  exerciseNotes?: Record<string, string>;
   /** Review der Vorwochen-Mission (ATLAS) — fließt in Facts + Fallback-Note. */
   missionReview?: MissionReview;
   ref?: Date;
@@ -94,7 +96,7 @@ export function buildBriefing(opts: {
 
   // Compact facts for the AI editorial prompt.
   const facts = [
-    buildCoachContext({ log, allLib, body, cardio }),
+    buildCoachContext({ log, allLib, body, cardio, exerciseNotes: opts.exerciseNotes }),
     "",
     `Diese Woche: ${weekCount}/3 Einheiten, ${String(volT).replace(".", ",")} t (${
       volDeltaT >= 0 ? "+" : ""
