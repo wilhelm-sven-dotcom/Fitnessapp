@@ -97,6 +97,7 @@ export function buildWeekSystem(exercises: CoachExercise[], budgetMin: number): 
     "- Die drei Tage sollen sich spürbar unterscheiden: gleiche Muster, andere Übungen oder andere Schwerpunkte.",
     "- Adressiere, was die Trainingsdaten zeigen (unterversorgte Muskeln, Plateaus, einseitige Auswahl).",
     "- Verletzungen/Hinweise im Kontext strikt respektieren.",
+    "- Hilfsmittel-Notizen je Übung im Kontext beachten (z. B. Unterstützungsband = assistierte, leichtere Ausführung).",
     "- Sätze pro Übung: 2 bis 5.",
     "",
     "Verfügbare Übungen (id · Name · Muster):",
@@ -120,6 +121,8 @@ export function buildWeekContext(input: {
   muscleVolumes: MuscleVolume[];
   injuries: string[];
   budgetMin: number;
+  /** Übungs-Id → Hilfsmittel-Notiz (z. B. „Unterstützungsband"). */
+  exerciseNotes?: Record<string, string>;
 }): string {
   const recent = input.log.slice(-12);
   const byEx = new Map<string, { name: string; best: number; label: string; times: number }>();
@@ -160,6 +163,12 @@ export function buildWeekContext(input: {
     .slice(0, 8)
     .map((e) => `- ${e.name}: ${e.label}`)
     .join("\n");
+  const noteLines = input.exerciseNotes
+    ? Object.entries(input.exerciseNotes)
+        .filter(([, v]) => v && v.trim())
+        .map(([id, v]) => `- ${byEx.get(id)?.name ?? id}: ${v.trim()}`)
+        .join("\n")
+    : "";
   return [
     `Zeitbudget je Einheit: ~${input.budgetMin} Minuten.`,
     input.injuries.length
@@ -174,6 +183,9 @@ export function buildWeekContext(input: {
     "",
     "Rekorde der letzten 4 Wochen:",
     prs || "- keine",
+    ...(noteLines
+      ? ["", "Hilfsmittel je Übung (vom Athleten hinterlegt, beim Planen beachten):", noteLines]
+      : []),
   ].join("\n");
 }
 

@@ -12,6 +12,7 @@ import {
   Mic,
   Repeat,
   Save,
+  Wrench,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -159,6 +160,7 @@ export default function WorkoutPage() {
     allLib,
     body,
     activeBackSafe,
+    exerciseNotes,
   } = useTraining();
   const lighter = daysAgo != null && daysAgo > 5;
   const say = (text: string) => {
@@ -460,6 +462,9 @@ export default function WorkoutPage() {
         : "";
     const context = [
       `Übung: ${slot.ex.name} (${slot.ex.tag}) — Satz ${doneNow}/${work.length}${isLastOfExercise ? " (letzter Satz dieser Übung)" : ""}.`,
+      ...(exerciseNotes[exId]
+        ? [`Hilfsmittel: Die Übung wird mit ${exerciseNotes[exId]} ausgeführt (leichtere/assistierte Variante — bei Lastvergleichen beachten).`]
+        : []),
       `Eben: ${done}.${rirNote}`,
       `Empfehlung war: ${p.w || "—"} × ${p.r || "—"}.`,
       rec
@@ -1200,6 +1205,16 @@ export default function WorkoutPage() {
                 <p className="mt-1.5 text-xs font-medium text-accent-2">
                   Ziel heute: {recSets} Sätze — noch Raum für +1.
                 </p>
+              )}
+
+              {exerciseNotes[ex.id] && (
+                <Pressable
+                  onClick={() => setGuideSlot(slotKey)}
+                  className="mt-1.5 flex items-center gap-1 text-xs text-muted focus:outline-none"
+                >
+                  <Wrench size={12} className="shrink-0" />
+                  <span className="min-w-0 truncate">Hilfsmittel: {exerciseNotes[ex.id]}</span>
+                </Pressable>
               )}
 
               {ex.pattern !== "cardio" && chips.length > 0 && (

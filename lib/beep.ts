@@ -7,6 +7,21 @@
  */
 let ctx: AudioContext | null = null;
 
+// Globaler Lautstärke-Multiplikator für alle Signaltöne (0 = stumm … 3 = laut).
+// 1 = die ursprünglich fest verdrahtete Lautstärke. Wird aus den App-Settings
+// (`cueVolume`) gespeist, damit der Countdown auch neben lauter Musik hörbar ist.
+let cueVolume = 1;
+
+/** Signalton-Lautstärke setzen (0–3; 1 = Standard). Ungültige Werte → 1. */
+export function setCueVolume(v: number): void {
+  cueVolume = Number.isFinite(v) ? Math.min(3, Math.max(0, v)) : 1;
+}
+
+/** Aktueller Signalton-Multiplikator — auch von `lib/voice.ts` gelesen. */
+export function getCueVolume(): number {
+  return cueVolume;
+}
+
 type AudioContextCtor = typeof AudioContext;
 
 export function primeAudio(): void {
@@ -27,6 +42,9 @@ export function primeAudio(): void {
 
 function tone(freq: number, ms: number, gain: number, delaySec = 0): void {
   if (!ctx || ctx.state !== "running") return;
+  // Nutzer-Lautstärke einrechnen und bei ~0.9 kappen (Clipping-Schutz).
+  const peak = Math.min(0.9, gain * cueVolume);
+  if (peak < 0.0002) return; // Lautstärke 0 → stumm (exp. Ramp kann nicht auf 0)
   try {
     const t0 = ctx.currentTime + delaySec;
     const osc = ctx.createOscillator();
@@ -34,7 +52,7 @@ function tone(freq: number, ms: number, gain: number, delaySec = 0): void {
     osc.type = "sine";
     osc.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + ms / 1000);
     osc.connect(g);
     g.connect(ctx.destination);

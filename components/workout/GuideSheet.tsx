@@ -1,13 +1,15 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
-import { Pencil, Trash2, X, Youtube } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Music, Pencil, Trash2, Wrench, X, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FIG, muscleBones } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { useSpotifyResume } from "@/components/spotify/useSpotifyResume";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
+import { EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import type { Exercise } from "@/lib/types";
@@ -21,7 +23,7 @@ export function GuideSheet({
   onClose: () => void;
   ex: Exercise | null;
 }) {
-  const { exerciseVideos, setExerciseVideo } = useTraining();
+  const { exerciseVideos, setExerciseVideo, exerciseNotes, setExerciseNote } = useTraining();
   const fig = ex ? FIG[ex.id] : undefined;
   const accent = ex ? muscleBones(ex.pattern) : undefined;
 
@@ -30,6 +32,7 @@ export function GuideSheet({
   // mp4), then a drop-in file `/exercise-media/<id>.mp4` (probed per exercise —
   // drop a file in and it appears, no code change).
   const userUrl = ex ? exerciseVideos[ex.id] : undefined;
+  const userNote = ex ? exerciseNotes[ex.id] : undefined;
   // Offline, a YouTube iframe renders an empty block — fall back to the figure
   // (the mp4 HEAD probe below already fails silently on its own).
   const [offline, setOffline] = useState(false);
@@ -52,6 +55,10 @@ export function GuideSheet({
     : ex
       ? (ex.videoUrl ?? `/exercise-media/${ex.id}.mp4`)
       : undefined;
+
+  // Nur ein YouTube-Embed kann die iOS-Audio-Session übernehmen; nach dem
+  // Schließen Spotify wieder anwerfen (der native <video muted> triggert nichts).
+  const { notice: spotifyNotice } = useSpotifyResume(open && !!embedUrl);
 
   const [hasVideo, setHasVideo] = useState(false);
   const [mode, setMode] = useState<"video" | "figure">("figure");
@@ -97,10 +104,15 @@ export function GuideSheet({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [invalid, setInvalid] = useState(false);
+  // Inline editor for the per-exercise aid note (z. B. „Unterstützungsband").
+  const [noteEditing, setNoteEditing] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
   useEffect(() => {
     setEditing(false);
     setDraft("");
     setInvalid(false);
+    setNoteEditing(false);
+    setNoteDraft("");
   }, [ex?.id]);
 
   const saveLink = () => {
@@ -115,8 +127,16 @@ export function GuideSheet({
     setInvalid(false);
   };
 
+  // Leerer Entwurf löscht die Notiz (setExerciseNote trimmt/entfernt bei leer).
+  const saveNote = () => {
+    if (!ex) return;
+    setExerciseNote(ex.id, noteDraft);
+    setNoteEditing(false);
+  };
+
   return (
-    <Sheet open={open} onClose={onClose} title={ex?.name}>
+    <>
+      <Sheet open={open} onClose={onClose} title={ex?.name}>
       {ex && (
         <>
           {hasVideo && (
@@ -303,6 +323,79 @@ export function GuideSheet({
             )}
           </div>
 
+          {/* Hilfsmittel-/Ausführungs-Notiz pro Übung — der Coach berücksichtigt sie. */}
+          <div className="mb-3">
+            {noteEditing ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  autoComplete="off"
+                  autoFocus
+                  maxLength={120}
+                  value={noteDraft}
+                  onChange={(e) => setNoteDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveNote();
+                  }}
+                  placeholder="z. B. Unterstützungsband, Gurte, 20-kg-Band"
+                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+                />
+                <Pressable
+                  type="button"
+                  onClick={saveNote}
+                  className="shrink-0 rounded-card bg-strong px-4 py-2.5 text-sm font-medium text-on-strong"
+                >
+                  Speichern
+                </Pressable>
+                <Pressable
+                  type="button"
+                  onClick={() => setNoteEditing(false)}
+                  aria-label="Abbrechen"
+                  className="shrink-0 rounded-card bg-surface-2 px-3 py-2.5 text-muted"
+                >
+                  <X size={16} />
+                </Pressable>
+              </div>
+            ) : userNote ? (
+              <div className="flex items-center gap-2 text-xs text-muted">
+                <Wrench size={14} className="shrink-0 text-accent-ink" />
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="text-fg">Hilfsmittel:</span> {userNote}
+                </span>
+                <Pressable
+                  type="button"
+                  onClick={() => {
+                    setNoteDraft(userNote);
+                    setNoteEditing(true);
+                  }}
+                  aria-label="Hilfsmittel ändern"
+                  className="shrink-0 rounded-full p-1.5 text-muted"
+                >
+                  <Pencil size={14} />
+                </Pressable>
+                <Pressable
+                  type="button"
+                  onClick={() => setExerciseNote(ex.id, null)}
+                  aria-label="Hilfsmittel entfernen"
+                  className="shrink-0 rounded-full p-1.5 text-muted"
+                >
+                  <Trash2 size={14} />
+                </Pressable>
+              </div>
+            ) : (
+              <Pressable
+                type="button"
+                onClick={() => {
+                  setNoteDraft("");
+                  setNoteEditing(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-pill px-2 py-1 text-xs text-muted"
+              >
+                <Wrench size={14} /> Hilfsmittel notieren
+              </Pressable>
+            )}
+          </div>
+
           {/* Colour legend + worked area. */}
           {mode === "figure" && fig && (
             <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
@@ -356,6 +449,27 @@ export function GuideSheet({
           )}
         </>
       )}
-    </Sheet>
+      </Sheet>
+      {/* Dezenter Hinweis, wenn Spotify nicht automatisch fortgesetzt werden kann
+          (kein Premium / kein aktives Gerät). GuideSheet bleibt gemountet, also
+          überlebt der Toast das Schließen des Sheets. */}
+      <AnimatePresence>
+        {spotifyNotice === "blocked" && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.25, ease: EASE_OUT }}
+            className="fixed inset-x-0 z-50 flex justify-center px-5"
+            style={{ bottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+          >
+            <div className="flex items-center gap-2 rounded-card border border-line bg-surface-1 px-3 py-2 text-xs text-muted shadow-card">
+              <Music size={14} className="shrink-0 text-accent-ink" />
+              <span>Spotify pausiert — Musik in der Spotify-App fortsetzen.</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

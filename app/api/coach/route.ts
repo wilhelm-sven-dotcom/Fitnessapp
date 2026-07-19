@@ -15,6 +15,8 @@ Plan-Treue: Steht im Kontext eine „Nächste geplante Einheit", ist das der ech
 
 Begriffe: RIR heißt „Reps in Reserve" — wie viele Wiederholungen nach dem Satz noch im Tank waren, NICHT die Zahl der gemachten Wiederholungen.
 
+Hilfsmittel: Stehen im Kontext Hilfsmittel-Notizen je Übung (z. B. „Unterstützungsband" = assistierte, leichtere Ausführung), berücksichtige sie bei Empfehlungen und Fortschritt. Gewichte/Leistungen mit und ohne Hilfsmittel sind NICHT 1:1 vergleichbar — ein Ziel kann sein, das Hilfsmittel mit der Zeit zu reduzieren.
+
 Ausdauer/Strava: Wenn unten Ausdauer-Einheiten (Läufe, Intervalle, Rad-/Peloton-Fahrten — inkl. Distanz, Kalorien, Puls) stehen, plane sie aktiv mit ein. Eine harte Einheit in den letzten ~24 h vor einem bein-lastigen Tag (Kniebeuge/Ausfallschritt/Hüfte) → empfiehl, die Beine heute leichter zu nehmen oder den Oberkörper vorzuziehen. Achte auf die Wochenbalance Kraft vs. Ausdauer und auf Erholung; gib bei Bedarf eine klare Empfehlung „heute Ausdauer vs. heben".`;
 
 const DEFAULT_PERSONA = "Profil: erfahrener Hypertrophie-Athlet, empfindlicher unterer Rücken.";

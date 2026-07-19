@@ -180,15 +180,34 @@ export function bestAlternativeForPattern(
 }
 
 /**
+ * Wendet die explizite Nutzer-Wahl für einen Slot an (aus `choices[slotKey]`).
+ * Der Pool ist bereits `reqOk`/musterrein gefiltert — eine Wahl, deren Equipment
+ * weggefallen ist, degradiert still zur Slot-Vorgabe (tote Keys crashen nie).
+ * Die Slot-Satzzahl (KI-Plan / Tages-Override) bleibt erhalten, damit „manuelle
+ * Wahl gewinnt" in ALLEN Auflösungspfaden gilt — nicht nur in `resolveSession`.
+ */
+export function applyChoice(
+  slot: ResolvedSlot,
+  choices: Record<string, string>,
+): ResolvedSlot {
+  const id = choices[slot.slotKey];
+  if (!id || id === slot.ex.id) return slot;
+  const chosen = slot.pool.find((e) => e.id === id);
+  return chosen ? { ...slot, ex: { ...chosen, sets: slot.ex.sets } } : slot;
+}
+
+/**
  * Resolve a user-built day into ResolvedSlot[]. A per-exercise scheme override
  * becomes a cloned Exercise (so presc / estimateSessionMin read it automatically);
  * items whose exercise no longer exists are skipped. `pool` is the same-pattern,
- * equipment-filtered swap pool for in-workout swaps.
+ * equipment-filtered swap pool for in-workout swaps. `choices` overlays explicit
+ * in-workout swaps (slotKey `day:<id>:<i>`).
  */
 export function resolveDay(
   day: WorkoutDay,
   allLib: Exercise[],
   has: (k: string) => boolean,
+  choices: Record<string, string> = {},
 ): ResolvedSlot[] {
   const byId = new Map(allLib.map((e) => [e.id, e]));
   return day.items
@@ -201,11 +220,14 @@ export function resolveDay(
         repLow: it.repLow ?? base.repLow,
         repHigh: it.repHigh ?? base.repHigh,
       };
-      return {
-        ex,
-        slotKey: "day:" + day.id + ":" + i,
-        pool: poolFor(base.pattern, has, allLib),
-      };
+      return applyChoice(
+        {
+          ex,
+          slotKey: "day:" + day.id + ":" + i,
+          pool: poolFor(base.pattern, has, allLib),
+        },
+        choices,
+      );
     })
     .filter((s): s is ResolvedSlot => s !== null);
 }
@@ -218,6 +240,7 @@ export function resolveDay(
 export function resolveResetSession(
   has: (k: string) => boolean,
   allLib: Exercise[],
+  choices: Record<string, string> = {},
 ): ResolvedSlot[] {
   const byId = new Map(allLib.map((e) => [e.id, e]));
   const pullId = has("bands") ? "band_row" : has("rings") ? "ringrow" : has("pullup") ? "pullup" : null;
@@ -226,7 +249,10 @@ export function resolveResetSession(
     .map((id, i): ResolvedSlot | null => {
       const ex = byId.get(id);
       if (!ex || !reqOk(ex, has)) return null;
-      return { ex, slotKey: `reset:${i}`, pool: poolFor(ex.pattern, has, allLib) };
+      return applyChoice(
+        { ex, slotKey: `reset:${i}`, pool: poolFor(ex.pattern, has, allLib) },
+        choices,
+      );
     })
     .filter((s): s is ResolvedSlot => s !== null);
 }

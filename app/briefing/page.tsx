@@ -31,11 +31,19 @@ function Stat({ value, unit, label }: { value: string; unit?: string; label: str
 
 export default function BriefingPage() {
   const router = useRouter();
-  const { log, cardio, body, allLib, settings, mission } = useTraining();
+  const { log, cardio, body, allLib, settings, mission, exerciseNotes } = useTraining();
   const b = useMemo(
     () =>
-      buildBriefing({ log, cardio, body, allLib, settings, missionReview: mission?.lastReview }),
-    [log, cardio, body, allLib, settings, mission],
+      buildBriefing({
+        log,
+        cardio,
+        body,
+        allLib,
+        settings,
+        exerciseNotes,
+        missionReview: mission?.lastReview,
+      }),
+    [log, cardio, body, allLib, settings, exerciseNotes, mission],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),

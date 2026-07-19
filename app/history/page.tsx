@@ -157,7 +157,10 @@ export default function HistoryPage() {
                 <div className="space-y-1 px-4 pb-4 pt-1">
                   {(s.exercises ?? []).map((ex) => (
                     <div key={ex.id} className="log-row flex items-baseline justify-between gap-3">
-                      <span className="text-sm text-muted">{ex.name}</span>
+                      <span className="text-sm text-muted">
+                        {ex.name}
+                        {ex.note && <span className="text-faint"> · {ex.note}</span>}
+                      </span>
                       <span className="text-right font-mono text-xs tabular-nums text-muted">
                         {(ex.sets ?? [])
                           .filter((st) => !st.warmup)

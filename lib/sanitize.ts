@@ -126,6 +126,7 @@ export function repairPersistedData(): void {
     ["wilhelm-training-custom", sanitizeCustom],
     ["wilhelm-training-choices", sanitizeStringMap],
     ["wilhelm-training-exercise-videos", sanitizeVideoMap],
+    ["wilhelm-training-exercise-notes", sanitizeStringMap],
   ];
   for (const [key, fn] of jobs) {
     try {

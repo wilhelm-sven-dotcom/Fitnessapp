@@ -30,7 +30,7 @@ import {
   type WeekPlan,
 } from "@/lib/coach-week";
 import type { JumpEntry } from "@/lib/jump";
-import { poolFor, presc, reqOk, resolveDay, resolveResetSession, resolveSession, warmupSets } from "@/lib/progression";
+import { applyChoice, poolFor, presc, reqOk, resolveDay, resolveResetSession, resolveSession, warmupSets } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseAffinity } from "@/lib/affinity";
 import {
@@ -40,6 +40,7 @@ import {
   type ReadinessScale,
 } from "@/lib/readiness";
 import { estimateSessionMin, fitToBudget } from "@/lib/session-time";
+import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { RING, type RingMetric } from "@/lib/ring-colors";
 import {
   coverageCount,
@@ -94,6 +95,7 @@ import type {
   LoggedSession,
   Pattern,
   ResolvedSlot,
+  SessionExercise,
   SetEntry,
   Template,
   TrafficLight,
@@ -135,6 +137,7 @@ export interface ExportEnvelope {
   days: WorkoutDay[];
   gyms: GymProfile[];
   exerciseVideos: Record<string, string>;
+  exerciseNotes: Record<string, string>;
   settings?: AppSettings;
 }
 
@@ -181,6 +184,7 @@ interface TrainingContextValue {
   choices: Record<string, string>;
   custom: Exercise[];
   exerciseVideos: Record<string, string>;
+  exerciseNotes: Record<string, string>;
   body: BodyMetric[];
   loading: boolean;
   saving: boolean;
@@ -241,6 +245,7 @@ interface TrainingContextValue {
   addCustom: (data: AddCustomData) => void;
   removeCustom: (id: string) => void;
   setExerciseVideo: (exId: string, url: string | null) => void;
+  setExerciseNote: (exId: string, note: string | null) => void;
   days: WorkoutDay[];
   addDay: (day: WorkoutDay) => void;
   updateDay: (day: WorkoutDay) => void;
@@ -257,6 +262,7 @@ interface TrainingContextValue {
   setNote: (v: string) => void;
   setBudget: (min: number) => void;
   setVoiceCues: (on: boolean) => void;
+  setCueVolume: (v: number) => void;
   setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
   setSkin: (skin: SkinId) => void;
@@ -347,6 +353,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [days, setDays] = useState<WorkoutDay[]>([]);
   const [gyms, setGyms] = useState<GymProfile[]>([]);
   const [exerciseVideos, setExerciseVideos] = useState<Record<string, string>>({});
+  const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({});
   const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -379,7 +386,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -392,6 +399,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<GymProfile[]>(KEYS.gyms, []),
       storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
       storage.getJSON<StoredMission | null>(KEYS.mission, null),
+      storage.getJSON<Record<string, string>>(KEYS.exerciseNotes, {}),
     ]);
     // Alles durch die Sanitizer VOR setState — vergiftete Sync-/Legacy-Daten
     // dürfen den Render nie erreichen (sonst global-error auf jeder Route).
@@ -431,6 +439,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setDays(sanitizeDays(da));
     setGyms(gymsLoaded);
     setExerciseVideos(sanitizeVideoMap(ev));
+    setExerciseNotes(sanitizeStringMap(en));
     // Mission nur mit einem echten targets-OBJEKT (der Rollover liest
     // mission.targets.weekKey — ein Nicht-Objekt würfe dort).
     if (mi && typeof mi === "object" && mi.targets && typeof mi.targets === "object") setMission(mi);
@@ -676,10 +685,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const hasBike = (equip as string[]).includes("bike");
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     const day = days.find((d) => d.id === key);
-    if (day) return resolveDay(day, allLib, has);
+    if (day) return resolveDay(day, allLib, has, choices);
     // Rücken-Reset: kuratiert und konstruktiv gewichtsfrei — keine
     // Muster-Rotation, kein KI-Overlay, kein backSafe nötig.
-    if (key === RESET_DAY.key) return resolveResetSession(has, allLib);
+    if (key === RESET_DAY.key) return resolveResetSession(has, allLib, choices);
     if (key === CARDIO_DAY.key)
       return resolveSession(CARDIO_DAY, log.length, choices, has, allLib, {
         injuries: athleteInjuries,
@@ -713,11 +722,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         const slot = aiDay.slots[i];
         const ex = allLib.find((e) => e.id === slot.exerciseId);
         if (!ex || ex.pattern === "cardio" || !reqOk(ex, has)) continue;
-        mapped.push({
-          ex: { ...ex, sets: slot.sets },
-          slotKey: `${key}:ai${i}`,
-          pool: poolFor(ex.pattern, has, allLib),
-        });
+        // Manueller In-Session-Tausch überlagert auch die KI-Wahl.
+        mapped.push(
+          applyChoice(
+            {
+              ex: { ...ex, sets: slot.sets },
+              slotKey: `${key}:ai${i}`,
+              pool: poolFor(ex.pattern, has, allLib),
+            },
+            choices,
+          ),
+        );
       }
       if (mapped.length >= 3) return mapped;
     }
@@ -779,6 +794,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
             protectCore: backSafeActive,
             superset: settings.superset,
+            choices,
           }).list,
           readinessScale,
         ),
@@ -807,6 +823,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       : fitToBudget(base, settings.timeBudgetMin, {
           protectCore: activeBackSafe,
           superset: settings.superset,
+          choices,
         }).list;
     return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1034,6 +1051,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         : fitToBudget(base, settings.timeBudgetMin, {
             protectCore: backSafe,
             superset: settings.superset,
+            choices,
           }).list;
     const list = applyReadiness(fitted, scale);
     const init: Record<string, SetEntry[]> = {};
@@ -1088,6 +1106,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (!trimmed || !youtubeEmbedUrl(trimmed)) delete next[exId];
     else next[exId] = trimmed;
     void saveExerciseVideos(next);
+  };
+  const saveExerciseNotes = async (next: Record<string, string>) => {
+    setExerciseNotes(next);
+    await storage.setJSON(KEYS.exerciseNotes, next);
+  };
+  // Hilfsmittel-/Ausführungs-Notiz je Übung setzen/löschen (z. B. „Unterstützungs-
+  // band"). Dauerhaft je Übungs-Id gemerkt und beim Speichern auf die Einheit
+  // gestempelt; leer → Eintrag entfernen. Cap gegen Prompt-Aufblähung.
+  const setExerciseNote = (exId: string, note: string | null) => {
+    const trimmed = (note ?? "").trim().slice(0, 120);
+    const next = { ...exerciseNotes };
+    if (!trimmed) delete next[exId];
+    else next[exId] = trimmed;
+    void saveExerciseNotes(next);
   };
   const saveEquip = async (next: EquipKey[]) => {
     setEquip(next);
@@ -1179,6 +1211,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
             muscleVolumes,
             injuries: athleteInjuries,
             budgetMin: settings.timeBudgetMin,
+            exerciseNotes,
           }),
         }),
       });
@@ -1188,6 +1221,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       if (data?.ok && data.plan) {
         setAiPlan(data.plan);
         await storage.setJSON(KEYS.aiplan, data.plan);
+        // KI-Slot-Wahlen sind indexbasiert je Wochenplan (`A:ai0`) — ein frischer
+        // Plan macht sie bedeutungslos. Aufräumen, damit eine alte Wahl keinen
+        // neuen Slot fälschlich fixiert. Andere Wahlen (A:0, day:…) bleiben.
+        const pruned = Object.fromEntries(
+          Object.entries(choices).filter(([k]) => !k.includes(":ai")),
+        );
+        if (Object.keys(pruned).length !== Object.keys(choices).length) {
+          await saveChoices(pruned);
+        }
         return true;
       }
       return false;
@@ -1222,8 +1264,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void refreshWeekPlan();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, settings.aiPlanning, aiPlan, log.length]);
+
+  // Signalton-Lautstärke ins Audio-Modul spiegeln — beep() UND speak() lesen sie,
+  // damit WarmupPlayer, JumpCheck und CameraView ohne eigene Änderung profitieren.
+  useEffect(() => {
+    setBeepCueVolume(settings.cueVolume ?? 1);
+  }, [settings.cueVolume]);
+
   const setVoiceCues = (on: boolean) =>
     void saveSettings({ ...settings, voiceCues: on });
+  const setCueVolume = (v: number) =>
+    void saveSettings({ ...settings, cueVolume: v });
   const setSuperset = (on: boolean) =>
     void saveSettings({ ...settings, superset: on });
   const setTheme = (t: ThemePref) =>
@@ -1417,6 +1468,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       delete next[id];
       void saveExerciseVideos(next);
     }
+    if (exerciseNotes[id]) {
+      const next = { ...exerciseNotes };
+      delete next[id];
+      void saveExerciseNotes(next);
+    }
   };
 
   const saveDays = async (next: WorkoutDay[]) => {
@@ -1432,22 +1488,28 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const tpl = activeKey ? sessionTemplate(activeKey) : null;
     if (!tpl) return null;
     const list = activeList;
-    const exercises = list.map(({ ex }) => ({
-      id: ex.id,
-      name: ex.name,
-      unit: ex.unit,
-      sets: (entries[ex.id] || [])
-        .map((s) => {
-          const out: SetEntry = { weight: s.weight, reps: s.reps };
-          if (s.rir != null) out.rir = s.rir;
-          if (s.intensity != null) out.intensity = s.intensity;
-          if (s.warmup) out.warmup = true;
-          return out;
-        })
-        // Only truly filled sets (reps present) — weight-prefilled empty sets
-        // are suggestions, not performed work.
-        .filter((s) => s.reps !== "" && s.reps != null),
-    }))
+    const exercises = list.map(({ ex }) => {
+      const mapped: SessionExercise = {
+        id: ex.id,
+        name: ex.name,
+        unit: ex.unit,
+        sets: (entries[ex.id] || [])
+          .map((s) => {
+            const out: SetEntry = { weight: s.weight, reps: s.reps };
+            if (s.rir != null) out.rir = s.rir;
+            if (s.intensity != null) out.intensity = s.intensity;
+            if (s.warmup) out.warmup = true;
+            return out;
+          })
+          // Only truly filled sets (reps present) — weight-prefilled empty sets
+          // are suggestions, not performed work.
+          .filter((s) => s.reps !== "" && s.reps != null),
+      };
+      // Hilfsmittel-Notiz als Snapshot mitschreiben (was an dem Tag galt).
+      const exNote = exerciseNotes[ex.id];
+      if (exNote) mapped.note = exNote;
+      return mapped;
+    })
     // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
     // auto-prefilled (reps "5") and used to slip through as ghost sessions,
     // inflating streak/XP and corrupting the next prescription.
@@ -1574,6 +1636,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     days,
     gyms,
     exerciseVideos,
+    exerciseNotes,
     settings,
   });
 
@@ -1593,6 +1656,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const nextGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
     const nextExerciseVideos =
       d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
+    const nextExerciseNotes =
+      d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : exerciseNotes;
     const nextSettings =
       d.settings && typeof d.settings === "object"
         ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
@@ -1606,6 +1671,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setDays(nextDays);
     setGyms(nextGyms);
     setExerciseVideos(nextExerciseVideos);
+    setExerciseNotes(nextExerciseNotes);
     setSettings(nextSettings);
     await Promise.all([
       storage.setJSON(KEYS.log, nextLog),
@@ -1617,6 +1683,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.setJSON(KEYS.days, nextDays),
       storage.setJSON(KEYS.gyms, nextGyms),
       storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
+      storage.setJSON(KEYS.exerciseNotes, nextExerciseNotes),
       storage.setJSON(KEYS.settings, nextSettings),
     ]);
     return true;
@@ -1628,6 +1695,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     choices,
     custom,
     exerciseVideos,
+    exerciseNotes,
     body,
     loading,
     saving,
@@ -1675,6 +1743,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     addCustom,
     removeCustom,
     setExerciseVideo,
+    setExerciseNote,
     days,
     addDay,
     updateDay,
@@ -1691,6 +1760,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setNote: (v) => setNoteState(v),
     setBudget,
     setVoiceCues,
+    setCueVolume,
     setSuperset,
     setTheme,
     setSkin,

@@ -57,8 +57,10 @@ export function buildCoachContext(opts: {
   body: BodyMetric[];
   cardio: CardioSession[];
   nextSession?: NextSessionInfo;
+  /** Übungs-Id → Hilfsmittel-Notiz (z. B. „Unterstützungsband"). */
+  exerciseNotes?: Record<string, string>;
 }): string {
-  const { log, allLib, body, cardio, nextSession } = opts;
+  const { log, allLib, body, cardio, nextSession, exerciseNotes } = opts;
   if (!log.length && !cardio.length) {
     return [
       "Noch keine Einheiten protokolliert.",
@@ -125,6 +127,22 @@ export function buildCoachContext(opts: {
   if (tops.length) {
     lines.push("", "Stärkste Schätz-1RM:");
     lines.push(tops.map((t) => `${t.name} ~${Math.round(t.e1rm)} kg`).join(", "));
+  }
+
+  // Vom Athleten hinterlegte Hilfsmittel je Übung — der Coach muss sie kennen
+  // (z. B. „Unterstützungsband" = assistierte, leichtere Ausführung).
+  if (exerciseNotes && Object.keys(exerciseNotes).length) {
+    const nameById = new Map(allLib.map((e) => [e.id, e.name]));
+    const notes = Object.entries(exerciseNotes)
+      .filter(([, v]) => v && v.trim())
+      .map(([id, v]) => `${nameById.get(id) ?? id}: ${v.trim()}`);
+    if (notes.length) {
+      lines.push(
+        "",
+        "Hilfsmittel je Übung (bei Empfehlungen und Lastvergleichen berücksichtigen):",
+        notes.join("; "),
+      );
+    }
   }
 
   const bw = body.filter((b) => b.weightKg != null);

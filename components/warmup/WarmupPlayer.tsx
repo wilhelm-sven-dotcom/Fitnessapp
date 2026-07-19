@@ -1,18 +1,22 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ChevronRight, Pause, Play, X } from "lucide-react";
+import { ChevronRight, Pause, Play, Volume2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
 import { Pressable } from "@/components/ui/pressable";
+import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
-import { beep, beepEnd, beepStart, primeAudio } from "@/lib/beep";
+import { beep, beepEnd, beepStart, primeAudio, setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 import type { WarmupDrill } from "@/lib/warmup";
 
 const SWITCH_SEC = 5;
+/** Umschaltbare Signalton-Stufen (zyklisch per Tap im Player). */
+const VOL_LEVELS = [0.5, 1, 2, 3];
+const VOL_LABEL: Record<number, string> = { 0.5: "Leise", 1: "Normal", 2: "Laut", 3: "Max" };
 
 function vibrate(p: number | number[]) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(p);
@@ -41,6 +45,19 @@ export function WarmupPlayer({
 
   const current = drills[index];
   const reduce = useReducedMotion();
+  const { settings, setCueVolume } = useTraining();
+  const cueVol = settings.cueVolume ?? 1;
+
+  // Signalton-Lautstärke direkt im Player durchschalten — mit sofortigem
+  // Ton-Feedback in der NEUEN Lautstärke (Modul direkt setzen, dann persistieren).
+  const cycleCueVolume = () => {
+    primeAudio();
+    const i = VOL_LEVELS.indexOf(cueVol);
+    const next = VOL_LEVELS[(i + 1) % VOL_LEVELS.length];
+    setBeepCueVolume(next);
+    setCueVolume(next);
+    beep();
+  };
 
   // Deep-Link / PWA-Relaunch auf /warmup/[key]: kein Button hat primeAudio()
   // aufgerufen → der AudioContext ist suspended und tone() no-opt still.
@@ -186,9 +203,19 @@ export function WarmupPlayer({
         >
           <X size={18} /> Beenden
         </Pressable>
-        <span className="font-mono text-xs tabular-nums text-muted">
-          {index + 1}/{total} · Aufwärmen
-        </span>
+        <div className="flex items-center gap-3">
+          <Pressable
+            onClick={cycleCueVolume}
+            aria-label={`Signalton-Lautstärke: ${VOL_LABEL[cueVol] ?? "Normal"} — tippen zum Ändern`}
+            className="flex items-center gap-1 rounded-pill px-2 py-1 text-muted focus:outline-none"
+          >
+            <Volume2 size={16} />
+            <span className="font-mono text-xs tabular-nums">{VOL_LABEL[cueVol] ?? "Normal"}</span>
+          </Pressable>
+          <span className="font-mono text-xs tabular-nums text-muted">
+            {index + 1}/{total} · Aufwärmen
+          </span>
+        </div>
       </div>
 
       {/* progress dots */}

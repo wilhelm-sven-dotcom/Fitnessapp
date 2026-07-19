@@ -199,6 +199,7 @@ export default function DayBuilderPage() {
     has,
     choices,
     backSafeActive,
+    exerciseNotes,
   } = useTraining();
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -356,7 +357,7 @@ export default function DayBuilderPage() {
           minutes: coachMin,
           focus: coachFocus,
           exercises,
-          context: buildCoachContext({ log, allLib, body, cardio }),
+          context: buildCoachContext({ log, allLib, body, cardio, exerciseNotes }),
           persona: athletePersona(effectiveProfile(settings, body), settings.userName),
         }),
       });

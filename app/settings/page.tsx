@@ -1,7 +1,8 @@
 "use client";
 
-import { Camera, Download, Plus, RotateCcw, Trash2, Upload, X } from "lucide-react";
+import { Camera, Download, Plus, RotateCcw, Trash2, Upload, Volume2, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { beepStart, primeAudio } from "@/lib/beep";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -26,6 +27,7 @@ export default function SettingsPage() {
     importData,
     settings,
     setVoiceCues,
+    setCueVolume,
     setSuperset,
     setWeightStep,
     setBikeWarmup,
@@ -273,6 +275,46 @@ export default function SettingsPage() {
                     }
                   >
                     {`${s}`.replace(".", ",")} kg
+                  </Pressable>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-fg">Signalton-Lautstärke</p>
+              <Pressable
+                onClick={() => {
+                  primeAudio();
+                  beepStart();
+                }}
+                className="flex items-center gap-1.5 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-fg focus:outline-none"
+              >
+                <Volume2 size={14} />
+                Probehören
+              </Pressable>
+            </div>
+            <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
+              Countdown-Töne im Aufwärmen und beim Zünd-Check — lauter stellen, wenn nebenbei Musik läuft.
+            </p>
+            <div className="flex gap-1 rounded-card bg-surface-2 p-1">
+              {[
+                { v: 0.5, l: "Leise" },
+                { v: 1, l: "Normal" },
+                { v: 2, l: "Laut" },
+                { v: 3, l: "Max" },
+              ].map((o) => {
+                const active = (settings.cueVolume ?? 1) === o.v;
+                return (
+                  <Pressable
+                    key={o.l}
+                    onClick={() => setCueVolume(o.v)}
+                    className={
+                      "flex-1 rounded-card py-2 text-sm font-medium focus:outline-none " +
+                      (active ? "bg-strong text-on-strong" : "text-muted")
+                    }
+                  >
+                    {o.l}
                   </Pressable>
                 );
               })}

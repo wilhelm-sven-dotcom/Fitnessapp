@@ -62,6 +62,7 @@ export const KEYS = {
   days: "wilhelm-training-days",
   gyms: "wilhelm-training-gyms",
   exerciseVideos: "wilhelm-training-exercise-videos",
+  exerciseNotes: "wilhelm-training-exercise-notes",
   // Eingefrorene Wochen-Mission (ATLAS) — mergeCloudLocal behandelt unbekannte
   // Keys mit "local wins", der Rollover-Check heilt Konflikte beim Öffnen.
   mission: "wilhelm-training-mission",
