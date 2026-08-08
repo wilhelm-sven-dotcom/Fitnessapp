@@ -1266,7 +1266,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [loading, settings.aiPlanning, aiPlan, log.length]);
 
   // Signalton-Lautstärke ins Audio-Modul spiegeln — beep() UND speak() lesen sie,
-  // damit WarmupPlayer, JumpCheck und CameraView ohne eigene Änderung profitieren.
+  // damit WarmupPlayer und JumpCheck ohne eigene Änderung profitieren.
   useEffect(() => {
     setBeepCueVolume(settings.cueVolume ?? 1);
   }, [settings.cueVolume]);

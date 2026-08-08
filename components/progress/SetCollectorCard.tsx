@@ -4,8 +4,6 @@ import { Layers } from "lucide-react";
 import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Readout } from "@/components/ui/Readout";
-import { Reveal } from "@/components/ui/Reveal";
-import { SkinSignature } from "@/components/ui/SkinSignature";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { setCollectorTier, totalSetCount, weeklySetStats } from "@/lib/set-plan";
 
@@ -20,7 +18,7 @@ export function SetCollectorCard() {
   const remaining = Math.max(0, week.target - week.collected);
 
   return (
-    <Reveal>
+    <div>
       <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -58,8 +56,7 @@ export function SetCollectorCard() {
             ? "Wochenziel erreicht — stark!"
             : `Noch ${remaining} ${remaining === 1 ? "Satz" : "Sätze"} bis zum Wochenziel.`}
         </p>
-        <SkinSignature />
       </Card>
-    </Reveal>
+    </div>
   );
 }

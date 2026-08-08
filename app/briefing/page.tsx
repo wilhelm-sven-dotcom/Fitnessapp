@@ -7,7 +7,6 @@ import { FatigueCard } from "@/components/progress/FatigueCard";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { PhaseCard } from "@/components/progress/PhaseCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Reveal } from "@/components/ui/Reveal";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
@@ -141,7 +140,7 @@ export default function BriefingPage() {
           </div>
 
           {/* Coach editorial column */}
-          <Reveal>
+          <div>
             <div className="mt-6 border-t border-line pt-5">
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-accent-ink">
                 Von ATLAS
@@ -160,7 +159,7 @@ export default function BriefingPage() {
                 </div>
               )}
             </div>
-          </Reveal>
+          </div>
 
           {/* Records of the week */}
           <div className="mt-6 border-t border-line pt-5">

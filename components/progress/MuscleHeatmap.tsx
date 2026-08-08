@@ -3,7 +3,6 @@
 import { FIG } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { Card } from "@/components/ui/Card";
-import { Reveal } from "@/components/ui/Reveal";
 import { MUSCLE_LABEL, MUSCLE_ORDER, VOLUME_TARGET, type MuscleVolume } from "@/lib/volume";
 import type { Muscle } from "@/lib/types";
 
@@ -58,7 +57,7 @@ export function MuscleHeatmap({ data }: { data: MuscleVolume[] }) {
   };
 
   return (
-    <Reveal>
+    <div>
       <Card className="mb-3">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="font-semibold leading-tight">Wochen-Heatmap</h3>
@@ -95,6 +94,6 @@ export function MuscleHeatmap({ data }: { data: MuscleVolume[] }) {
           })}
         </div>
       </Card>
-    </Reveal>
+    </div>
   );
 }

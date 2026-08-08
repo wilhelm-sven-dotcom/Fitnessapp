@@ -4,7 +4,6 @@ import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 
 import {
   ArrowLeft,
   Bike,
-  Camera,
   Check,
   ChevronRight,
   Flame,
@@ -15,17 +14,8 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormResult } from "@/components/form-check/CameraView";
-
-// Camera + pose UI is only needed once the user opens a check — keep it out of
-// the workout route's first-load bundle.
-const CameraView = dynamic(
-  () => import("@/components/form-check/CameraView").then((m) => m.CameraView),
-  { ssr: false },
-);
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { LiveDemo } from "@/components/workout/LiveDemo";
@@ -39,7 +29,6 @@ import { SessionComplete } from "@/components/workout/SessionComplete";
 import { AtlasLiveLine } from "@/components/trainer/AtlasLiveLine";
 import { MotivationLine } from "@/components/trainer/MotivationLine";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
-import { FlipbookBoot } from "@/components/layout/FlipbookBoot";
 import { SessionTimeBar } from "@/components/workout/SessionTimeBar";
 import { SetRow } from "@/components/workout/SetRow";
 import { ShadowRace } from "@/components/workout/ShadowRace";
@@ -59,8 +48,6 @@ import { liveLine, motivationLine } from "@/lib/trainer";
 import { recommendedSets } from "@/lib/set-plan";
 import { isFilled } from "@/lib/stats";
 import { SPRING } from "@/lib/motion";
-import { configForPattern } from "@/lib/pose/exercise-pose-config";
-import { isPoseSupported } from "@/lib/pose/landmarker";
 import { warmupFor, warmupTotalMin } from "@/lib/warmup";
 import {
   createRecognizer,
@@ -70,7 +57,7 @@ import {
   type ParsedSet,
 } from "@/lib/voice";
 import { cn } from "@/lib/utils";
-import type { Exercise, Pattern, SetEntry, TrafficLight } from "@/lib/types";
+import type { Exercise, SetEntry, TrafficLight } from "@/lib/types";
 
 // Satzpause: EINE Quelle — TIME.restSec speist Live-Timer UND Zeitschätzung.
 
@@ -194,8 +181,6 @@ export default function WorkoutPage() {
   const coachCallCountRef = useRef(0); // Kosten-Deckel je Session
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const [poseSupported, setPoseSupported] = useState(false);
-  const [camFor, setCamFor] = useState<{ exId: string; i: number; pattern: Pattern; name: string; ghost?: string } | null>(null);
   const announcedRef = useRef<Set<string>>(new Set());
   // Aktuelle entries für Effekte, die nicht pro Tastendruck neu laufen dürfen.
   const entriesRef = useRef(entries);
@@ -242,7 +227,6 @@ export default function WorkoutPage() {
 
   // Probe device support after mount so SSR and first client render agree.
   useEffect(() => setVoiceSupported(isVoiceInputSupported()), []);
-  useEffect(() => setPoseSupported(isPoseSupported()), []);
 
   useEffect(() => {
     if (!restOn) return;
@@ -531,30 +515,6 @@ export default function WorkoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restOn]);
 
-  // Camera hand-off: counted reps fill the set (via onReps → starts the rest timer
-  // like manual entry); the ghost/last weight prefills an empty weight cell. The
-  // form grade is shown via voice but not persisted (SetEntry stays unchanged).
-  const applyFormResult = (r: FormResult) => {
-    if (!camFor) return;
-    const { exId, i, ghost } = camFor;
-    const cur = entries[exId]?.[i];
-    if (r.reps > 0) onReps(exId, i, cur?.reps ?? "", String(r.reps));
-    if (ghost && (cur?.weight === "" || cur?.weight == null)) setEntry(exId, i, "weight", ghost);
-    // Kamera-VBT: gemessenes RIR vorbefüllen (in der Pause übersteuerbar).
-    if (r.reps > 0 && r.estRir != null) setEntry(exId, i, "rir", r.estRir);
-    setCamFor(null);
-    if (r.reps > 0) {
-      const vel =
-        r.estRir != null && r.velLossPct != null
-          ? ` Tempoverlust ${r.velLossPct} Prozent — etwa ${r.estRir} im Tank.`
-          : "";
-      say(
-        `${r.reps} ${r.reps === 1 ? "Wiederholung" : "Wiederholungen"} übernommen.${vel}`,
-      );
-      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([40, 40, 60]);
-    }
-  };
-
   const tpl = sessionTemplate(key ?? "");
   const list = activeList;
   const ssPair = settings.superset ? supersetPair(list) : null;
@@ -728,13 +688,12 @@ export default function WorkoutPage() {
   }
 
   if (activeKey !== key) {
+    // Kein Interstitial: startSession läuft synchron im Effekt — sichtbar ist
+    // hier höchstens ein Frame, oder eines der beiden Sheets (Check-in bzw.
+    // Wechsel-Schutz; Letzterer wurde früher in diesem Zweig gar nicht
+    // gerendert und ließ die Seite beim Wechsel hängen).
     return (
       <>
-        <div className="py-6">
-          {/* Kurzfassung des Boot-Daumenkinos — füllt die Vorbereitungs-Wartezeit. */}
-          <FlipbookBoot compact />
-          <p className="mt-3 text-center font-mono text-sm text-faint">bereite vor…</p>
-        </div>
         <ReadinessGate
           open={gateOpen}
           onClose={() => {
@@ -750,6 +709,44 @@ export default function WorkoutPage() {
             router.replace("/workout/reset");
           }}
         />
+        <Sheet
+          open={!!switchConfirm}
+          onClose={() => {
+            setSwitchConfirm(null);
+            if (activeKey) router.replace(`/workout/${activeKey}`);
+          }}
+          title="Laufende Einheit ersetzen?"
+        >
+          <p className="mb-4 text-sm text-muted">
+            {activeKey
+              ? `In „${sessionTemplate(activeKey)?.name ?? "deiner laufenden Einheit"}“ sind schon Sätze protokolliert.`
+              : "In deiner laufenden Einheit sind schon Sätze protokolliert."}{" "}
+            Wenn du hier neu startest, gehen sie verloren.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Pressable
+              onClick={() => {
+                setSwitchConfirm(null);
+                if (activeKey) router.replace(`/workout/${activeKey}`);
+              }}
+              className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Zur laufenden Einheit
+            </Pressable>
+            <Pressable
+              onClick={() => {
+                const next = switchConfirm;
+                setSwitchConfirm(null);
+                if (!next) return;
+                if (settings.autoregOn && !todayReadiness) setGateOpen(true);
+                else startSession(next);
+              }}
+              className="rounded-card py-2 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            >
+              Neu starten — protokollierte Sätze verwerfen
+            </Pressable>
+          </div>
+        </Sheet>
       </>
     );
   }
@@ -1242,14 +1239,6 @@ export default function WorkoutPage() {
                     <Repeat size={13} /> Übung ändern
                   </Pressable>
                 )}
-                {poseSupported && (
-                  <Pressable
-                    onClick={() => router.push(`/form/${ex.id}`)}
-                    className="flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-2 focus:outline-none"
-                  >
-                    <Camera size={13} /> Kamera-Check
-                  </Pressable>
-                )}
               </div>
 
               {swapNote?.slotKey === slotKey && (
@@ -1415,7 +1404,6 @@ export default function WorkoutPage() {
                           (p.suggestedWeight != null ? String(p.suggestedWeight) : undefined))
                         : undefined;
                       const ghostReps = p.r || String(ex.repHigh);
-                      const canCamera = poseSupported && configForPattern(ex.pattern) != null;
                       const rec = recordMap.get(ex.id) ?? null;
                       return (entries[ex.id] || []).map((s, i) => {
                         const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
@@ -1443,18 +1431,6 @@ export default function WorkoutPage() {
                             }
                             recordLabel={rec?.label}
                             isRecord={beatsRecord(ex, s, rec)}
-                            onCamera={
-                              canCamera && !s.warmup
-                                ? () =>
-                                    setCamFor({
-                                      exId: ex.id,
-                                      i,
-                                      pattern: ex.pattern,
-                                      name: ex.name,
-                                      ghost: ex.weighted ? ghostWeight : undefined,
-                                    })
-                                : undefined
-                            }
                           />
                         );
                       });
@@ -1618,15 +1594,6 @@ export default function WorkoutPage() {
       </Sheet>
 
       <GuideSheet open={!!guideSlot} onClose={() => setGuideSlot(null)} ex={guideEx} />
-      {camFor && (
-        <CameraView
-          exerciseName={camFor.name}
-          pattern={camFor.pattern}
-          voiceOn={!!settings.voiceCues}
-          onClose={() => setCamFor(null)}
-          onComplete={applyFormResult}
-        />
-      )}
       <ExercisePicker
         open={!!pickSlot}
         onClose={() => setPickSlot(null)}

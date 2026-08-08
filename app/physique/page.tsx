@@ -10,7 +10,6 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
-import { Reveal } from "@/components/ui/Reveal";
 import { fmtDateShort } from "@/lib/format";
 import { prTimeline } from "@/lib/records";
 import { weekStartMon } from "@/lib/volume";
@@ -80,7 +79,7 @@ export default function PhysiquePage() {
       />
 
       {photos.length >= 2 && before?.photoId && after?.photoId ? (
-        <Reveal>
+        <div>
           <div className="mb-2">
             <BeforeAfter
               beforeId={before.photoId}
@@ -92,14 +91,14 @@ export default function PhysiquePage() {
           <p className="mb-5 text-center font-mono text-xs tabular-nums text-muted">
             {delta ? `${delta} in ${spanWeeks} Wochen` : `${spanWeeks} Wochen dazwischen`}
           </p>
-        </Reveal>
+        </div>
       ) : photos.length === 1 && photos[0].photoId ? (
-        <Reveal>
+        <div>
           <PhotoImg id={photos[0].photoId} className="mb-2 w-full rounded-card" />
           <p className="mb-5 text-center text-xs text-muted">
             Erstes Foto gesetzt — ab dem zweiten gibt es den Vorher/Nachher-Regler.
           </p>
-        </Reveal>
+        </div>
       ) : (
         <EmptyState
           icon={Camera}

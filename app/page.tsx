@@ -1,6 +1,6 @@
 "use client";
 
-import { BookMarked, ChevronRight, Newspaper, Play, ShieldAlert, ShieldCheck, Trophy } from "lucide-react";
+import { ChevronRight, Newspaper, Play, ShieldAlert, ShieldCheck, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
@@ -11,11 +11,9 @@ import { CoachCard } from "@/components/coach/CoachCard";
 import { AtlasCard } from "@/components/trainer/AtlasCard";
 import { AtlasCore } from "@/components/trainer/AtlasCore";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
-import { TypedLine } from "@/components/trainer/TypedLine";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { StreakFlame } from "@/components/ui/StreakFlame";
-import { Reveal } from "@/components/ui/Reveal";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
@@ -184,7 +182,7 @@ export default function HomePage() {
     ) : null;
 
   const activeEl = activeKey ? (
-    <Reveal delay={0.06}>
+    <div>
       <Pressable
         onClick={() => router.push(`/workout/${activeKey}`)}
         className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
@@ -194,7 +192,7 @@ export default function HomePage() {
           Fortsetzen <ChevronRight size={16} />
         </span>
       </Pressable>
-    </Reveal>
+    </div>
   ) : null;
 
   // ATLAS absorbiert das Info-Geplauder (Plateau/Volumen/Recomp) in Mission +
@@ -202,7 +200,7 @@ export default function HomePage() {
   const actionCards = coach.filter((c) => c.severity !== "info" || c.action);
   const coachEl =
     actionCards.length > 0 ? (
-      <Reveal delay={0.12}>
+      <div>
         <div className="mb-4 space-y-2">
           {actionCards.map((c, i) => (
             <CoachCard
@@ -224,11 +222,11 @@ export default function HomePage() {
             />
           ))}
         </div>
-      </Reveal>
+      </div>
     ) : null;
 
   const atlasEl = (
-    <Reveal delay={0.08}>
+    <div>
       <AtlasCard
         trainer={trainer}
         readinessBand={readinessBand}
@@ -236,7 +234,7 @@ export default function HomePage() {
         deload={coreDeload}
         className="mb-4"
       />
-    </Reveal>
+    </div>
   );
 
   return (
@@ -298,10 +296,9 @@ export default function HomePage() {
             </span>
             <span className="mt-2 flex items-start gap-4">
               <span className="min-w-0 flex-1">
-                <TypedLine
-                  text={trainer.directive.text}
-                  className="font-body text-xl italic leading-snug text-fg"
-                />
+                <span className="block font-body text-xl italic leading-snug text-fg">
+                  {trainer.directive.text}
+                </span>
                 <p className="mt-1 font-mono text-xs text-faint">{trainer.directive.reason}</p>
               </span>
               {/* Der Kern, flach: Haarlinien-Bögen — Magazin-tauglich, ohne Glow. */}
@@ -462,7 +459,7 @@ export default function HomePage() {
           {atlasEl}
 
           {/* The one bold moment: today's recommended session. */}
-          <Reveal delay={0.14}>
+          <div>
             <Card variant="elevated" className="mb-4 overflow-hidden rounded-card p-6">
               <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">
                 ▸ Empfohlen heute{aiPlanActive && !backSafeActive ? " · ATLAS-Woche" : ""}
@@ -511,11 +508,11 @@ export default function HomePage() {
                 <Play size={18} strokeWidth={2.5} /> Training starten
               </Pressable>
             </Card>
-          </Reveal>
+          </div>
 
           {/* Instrumente kompakt: Tonnage-Strip + Kernzahlen (leer = verborgen). */}
           {log.length > 0 && (
-            <Reveal delay={0.18}>
+            <div>
               <Card className="mb-4 p-4">
                 <VolumeGauge valueT={volT} targetT={volTargetT} compact />
                 <div className="mt-3 flex items-center gap-5 border-t border-line pt-3 font-mono text-xs">
@@ -531,14 +528,14 @@ export default function HomePage() {
                   </span>
                 </div>
               </Card>
-            </Reveal>
+            </div>
           )}
 
           {coachEl}
         </>
       )}
 
-      <Reveal delay={0.2}>
+      <div>
         <Pressable
           onClick={() => router.push("/briefing")}
           className="mb-2 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
@@ -550,24 +547,9 @@ export default function HomePage() {
             KW {kw} <ChevronRight size={16} />
           </span>
         </Pressable>
-      </Reveal>
+      </div>
 
-      {/* Das Magazin: jeder Trainingsmonat eine eigene Ausgabe — von ATLAS. */}
-      <Reveal delay={0.24}>
-        <Pressable
-          onClick={() => router.push("/magazin")}
-          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium text-fg">
-            <BookMarked size={17} className="text-accent-ink" /> Das Magazin
-          </span>
-          <span className="flex items-center gap-1 font-mono text-xs text-muted">
-            Deine Ausgaben <ChevronRight size={16} />
-          </span>
-        </Pressable>
-      </Reveal>
-
-      <Reveal delay={0.28}>
+      <div>
         <p className="mb-2 px-1 font-mono text-xs uppercase tracking-widest text-faint">Oder andere Einheit</p>
         <div className="grid grid-cols-3 gap-2">
           {TEMPLATE.map((t) => {
@@ -607,13 +589,13 @@ export default function HomePage() {
             </Pressable>
           )}
         </div>
-      </Reveal>
+      </div>
 
-      <Reveal delay={0.34}>
+      <div>
         <div className="mt-5">
           <StreakCalendar log={log} />
         </div>
-      </Reveal>
+      </div>
     </div>
   );
 }

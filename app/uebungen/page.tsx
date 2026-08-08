@@ -3,7 +3,6 @@
 import { ChevronRight, Search, Youtube } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Reveal } from "@/components/ui/Reveal";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
@@ -84,8 +83,8 @@ export default function ExerciseCatalogPage() {
           Nichts gefunden für &bdquo;{q}&ldquo;
         </p>
       ) : (
-        groups.map((g, gi) => (
-          <Reveal key={g.pat} delay={0.04 + gi * 0.03}>
+        groups.map((g) => (
+          <div key={g.pat}>
             <section className="mb-4 overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card">
               <p className="border-b border-line px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted">
                 {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>
@@ -120,7 +119,7 @@ export default function ExerciseCatalogPage() {
                 })}
               </div>
             </section>
-          </Reveal>
+          </div>
         ))
       )}
 

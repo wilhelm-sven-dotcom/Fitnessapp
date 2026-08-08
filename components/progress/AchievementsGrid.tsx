@@ -3,26 +3,17 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, Medal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  PLATE_FAINT,
-  PLATE_INK,
-  PLATE_RED,
-  PlateFrame,
-  romanNumeral,
-} from "@/components/flipbook/PlateFrame";
-import { AchievementVignette } from "@/components/flipbook/vignettes";
 import { Card } from "@/components/ui/Card";
-import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { evaluateAchievements, type Tier } from "@/lib/achievements";
 import { success } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
-// Tier färbt die „Taf."-Nummer der Sammel-Tafel (bronze/silber/gold).
-const TIER_MARK: Record<Tier, string> = {
-  bronze: PLATE_FAINT,
-  silber: PLATE_INK,
-  gold: PLATE_RED,
+// Tier färbt das Abzeichen (bronze/silber/gold) — Token-Klassen, kein Roh-Hex.
+const TIER_TONE: Record<Tier, string> = {
+  bronze: "text-muted",
+  silber: "text-fg",
+  gold: "text-accent-ink",
 };
 
 export function AchievementsGrid() {
@@ -59,11 +50,11 @@ export function AchievementsGrid() {
   const count = items.filter((i) => i.unlocked).length;
 
   return (
-    <Reveal>
+    <div>
       <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
-            <Medal size={13} className="text-accent-ink" /> Erfolge · Das Sammelalbum
+            <Medal size={13} className="text-accent-ink" /> Erfolge
           </span>
           <span className="font-mono text-xs tabular-nums text-faint">
             {count}/{items.length}
@@ -71,24 +62,29 @@ export function AchievementsGrid() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {items.map((a, i) => {
+          {items.map((a) => {
             const isFresh = fresh.has(a.id);
+            const Icon = a.icon;
             return (
               <motion.div
                 key={a.id}
                 initial={isFresh && !reduce ? { scale: 0.7, opacity: 0 } : false}
                 animate={isFresh && !reduce ? { scale: [0.7, 1.15, 1], opacity: 1 } : undefined}
                 transition={{ duration: 0.5 }}
+                className={cn(
+                  "rounded-card border border-line bg-surface-1 p-3",
+                  !a.unlocked && "opacity-70",
+                )}
               >
-                {/* Eingeklebte Sammel-Tafel: frei = voll entwickelt, gesperrt =
-                    vergilbter Umriss. Die Tafel-Nummer trägt die Tier-Farbe. */}
-                <PlateFrame
-                  mark={`Taf. ${romanNumeral(i + 1)}`}
-                  markColor={a.unlocked ? TIER_MARK[a.tier] : PLATE_FAINT}
-                  tone={a.unlocked ? "full" : "muted"}
+                <div
+                  aria-hidden
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-full bg-surface-2",
+                    a.unlocked ? TIER_TONE[a.tier] : "text-faint",
+                  )}
                 >
-                  <AchievementVignette id={a.id} muted={!a.unlocked} />
-                </PlateFrame>
+                  <Icon size={19} />
+                </div>
                 <p
                   className={cn(
                     "mt-2 truncate text-sm font-medium",
@@ -118,6 +114,6 @@ export function AchievementsGrid() {
           })}
         </div>
       </Card>
-    </Reveal>
+    </div>
   );
 }

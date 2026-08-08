@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Camera, Check, Trophy } from "lucide-react";
+import { Check, Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
 import { INTENSITY_OPTIONS, RIR_OPTIONS, Scale } from "./Scale";
 import { TimedSet } from "./TimedSet";
 import { Pressable } from "@/components/ui/pressable";
@@ -32,7 +33,6 @@ export function SetRow({
   onIntensity,
   onActivate,
   onDeactivate,
-  onCamera,
   recordLabel,
   isRecord,
 }: {
@@ -59,11 +59,27 @@ export function SetRow({
   /** Commit-Release: Blur auf einem GEFÜLLTEN Satz löst den Fokus-Pin, damit
    *  der nächste leere Satz automatisch aktiv wird (Auto-Advance). */
   onDeactivate?: () => void;
-  /** Open the camera to auto-count reps for this set (rep-countable lifts only). */
-  onCamera?: () => void;
 }) {
   const reduce = useReducedMotion();
   const timed = unit === "Sek";
+
+  // Eingaben sind LOKAL gepuffert und werden erst beim Verlassen des Felds
+  // (Blur/Enter) in den Provider committet. Vorher löste jeder einzelne
+  // Tastendruck einen App-weiten Re-Render samt Gewichts-Kaskade aus — das
+  // war der „Ladebildschirm nach jedem Tastendruck".
+  const [w, setW] = useState(set.weight);
+  const [r, setR] = useState(set.reps);
+  useEffect(() => setW(set.weight), [set.weight]);
+  useEffect(() => setR(set.reps), [set.reps]);
+  const commitWeight = () => {
+    if (w !== set.weight) onWeight(w);
+  };
+  const commitReps = () => {
+    if (r !== set.reps) onReps(set.reps, r);
+  };
+  const blurOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") e.currentTarget.blur();
+  };
 
   // ── DONE — compact ledger line; effort stays editable. ──
   if (state === "done") {
@@ -127,8 +143,8 @@ export function SetRow({
   }
 
   // ── ACTIVE — the instrument. ──
-  const dbHint = isDumbbell && !timed ? dumbbellHint(Number(set.weight) || 0) : null;
-  const showGhostFill = !timed && !!ghostWeight && (set.weight === "" || set.weight == null);
+  const dbHint = isDumbbell && !timed ? dumbbellHint(Number(w) || 0) : null;
+  const showGhostFill = !timed && !!ghostWeight && (w === "" || w == null);
   return (
     <motion.div
       className="set-row set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
@@ -160,24 +176,28 @@ export function SetRow({
               type="number"
               inputMode="decimal"
               step="0.5"
-              value={set.weight}
+              value={w}
               onFocus={onActivate}
               onBlur={() => {
-                if (set.reps !== "" && set.reps != null) onDeactivate?.();
+                commitWeight();
+                if (r !== "" && r != null) onDeactivate?.();
               }}
-              onChange={(e) => onWeight(e.target.value)}
+              onKeyDown={blurOnEnter}
+              onChange={(e) => setW(e.target.value)}
               placeholder={ghostWeight ?? "kg"}
               className={inputClass}
             />
             <input
               type="number"
               inputMode="numeric"
-              value={set.reps}
+              value={r}
               onFocus={onActivate}
               onBlur={() => {
-                if (set.reps !== "" && set.reps != null) onDeactivate?.();
+                commitReps();
+                if (r !== "" && r != null) onDeactivate?.();
               }}
-              onChange={(e) => onReps(set.reps, e.target.value)}
+              onKeyDown={blurOnEnter}
+              onChange={(e) => setR(e.target.value)}
               placeholder={ghostReps ?? "Wdh"}
               className={inputClass}
             />
@@ -185,22 +205,17 @@ export function SetRow({
         )}
       </div>
       {dbHint && <p className="pl-12 font-mono text-xs text-muted">{dbHint}</p>}
-      {(showGhostFill || (onCamera && !timed)) && (
+      {showGhostFill && (
         <div className="flex flex-wrap items-center gap-2 pl-12">
           {showGhostFill && (
             <Pressable
-              onClick={() => onWeight(ghostWeight!)}
+              onClick={() => {
+                setW(ghostWeight!);
+                onWeight(ghostWeight!);
+              }}
               className="inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
             >
               Vorschlag {ghostWeight} kg
-            </Pressable>
-          )}
-          {onCamera && !timed && (
-            <Pressable
-              onClick={onCamera}
-              className="inline-flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1 text-xs font-medium text-accent-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-            >
-              <Camera size={12} /> Mit Kamera
             </Pressable>
           )}
         </div>

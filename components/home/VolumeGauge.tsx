@@ -1,8 +1,7 @@
 "use client";
 
 import { animate, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useBooted } from "@/components/providers/booted";
+import { useEffect, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/motion";
 
 /**
@@ -41,25 +40,23 @@ export function VolumeGauge({ valueT, targetT, compact = false }: Props) {
   const max = targetT > 0 ? targetT : Math.max(valueT, 1);
   const frac = Math.max(0, Math.min(1, valueT / max));
 
-  // The instrument "powers on": one animated value sweeps 0 → frac on mount and
-  // drives every skin variant (marker / arc + needle / bar) plus the count-up.
-  // Reduced-motion renders the final position instantly (no sweep, no loop).
+  // Ruhiges Instrument: beim Mount steht der Zeiger sofort auf dem Wert —
+  // animiert wird nur, wenn sich der Wert DANACH ändert (kein Sweep bei jeder
+  // Navigation). Reduced-motion springt immer direkt.
   const reduce = useReducedMotion();
-  const booted = useBooted();
-  const [a, setA] = useState(reduce ? frac : 0);
+  const [a, setA] = useState(frac);
+  const prev = useRef(frac);
   useEffect(() => {
+    if (prev.current === frac) return;
+    const from = prev.current;
+    prev.current = frac;
     if (reduce) {
       setA(frac);
       return;
     }
-    // Hold at 0 under the splash; sweep once the shell is actually visible.
-    if (!booted) {
-      setA(0);
-      return;
-    }
-    const controls = animate(0, frac, { duration: 1.0, ease: EASE_OUT, onUpdate: setA });
+    const controls = animate(from, frac, { duration: 0.6, ease: EASE_OUT, onUpdate: setA });
     return () => controls.stop();
-  }, [frac, reduce, booted]);
+  }, [frac, reduce]);
 
   const pct = Math.round(a * 100);
   const value = (a * max).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
@@ -175,7 +174,7 @@ export default function CoachPage() {
       </div>
 
       {messages.length === 0 ? (
-        <Reveal>
+        <div>
           <Pressable
             onClick={() => send(RECAP_PROMPT)}
             className="mb-5 flex w-full items-center justify-center gap-2 rounded-card bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none"
@@ -199,7 +198,7 @@ export default function CoachPage() {
             Oder direkt konkret — Zeit + Fokus rein, startbare Einheit raus:
           </p>
           {buildEl}
-        </Reveal>
+        </div>
       ) : (
         <div className="space-y-3">
           {messages.map((m, i) => (

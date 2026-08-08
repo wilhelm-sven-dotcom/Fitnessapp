@@ -9,7 +9,6 @@ import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Readout } from "@/components/ui/Readout";
-import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDate } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
@@ -35,7 +34,7 @@ export default function HistoryPage() {
       <PageHeader eyebrow="Logbuch" title="Verlauf" />
 
       {log.length > 0 && (
-        <Reveal>
+        <div>
           <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
             <Readout
               eyebrow="Aufgezeichnet"
@@ -45,7 +44,7 @@ export default function HistoryPage() {
               hint={`${totalT} t insgesamt bewegt`}
             />
           </Card>
-        </Reveal>
+        </div>
       )}
 
       {cardio.length > 0 && (

@@ -48,11 +48,11 @@ export default function SpotifyCallbackPage() {
           : "Kein gültiger Code von Spotify.",
       );
       setDone(true);
-      const t = setTimeout(() => router.replace("/settings"), 2600);
+      const t = setTimeout(() => router.replace("/settings"), 2000);
       return () => clearTimeout(t);
     }
 
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     void (async () => {
       const auth = await exchangeCode(
         clientId as string,
@@ -68,12 +68,13 @@ export default function SpotifyCallbackPage() {
       }
       if (auth) {
         await spotify.connect(auth);
-        setMsg("Verbunden! Spotify ist jetzt im Training dabei.");
-      } else {
-        setMsg("Verbindung fehlgeschlagen — bitte erneut versuchen.");
+        // Erfolg braucht keine Show — sofort zurück in die Einstellungen.
+        router.replace("/settings");
+        return;
       }
+      setMsg("Verbindung fehlgeschlagen — bitte erneut versuchen.");
       setDone(true);
-      timer = setTimeout(() => router.replace("/settings"), auth ? 1300 : 3000);
+      timer = setTimeout(() => router.replace("/settings"), 2000);
     })();
     return () => clearTimeout(timer);
   }, [spotify, router]);

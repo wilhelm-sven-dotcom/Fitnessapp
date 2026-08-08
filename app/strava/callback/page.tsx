@@ -29,20 +29,21 @@ export default function StravaCallbackPage() {
           : "Kein Code von Strava erhalten.",
       );
       setDone(true);
-      const t = setTimeout(() => router.replace("/settings"), 2600);
+      const t = setTimeout(() => router.replace("/settings"), 2000);
       return () => clearTimeout(t);
     }
 
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     void (async () => {
       const r = await strava.connect(code);
-      setMsg(
-        r.ok
-          ? "Verbunden! Deine Fahrten werden geladen…"
-          : `Fehler: ${r.error ?? "unbekannt"}`,
-      );
+      if (r.ok) {
+        // Erfolg braucht keine Show — sofort zurück in die Einstellungen.
+        router.replace("/settings");
+        return;
+      }
+      setMsg(`Fehler: ${r.error ?? "unbekannt"}`);
       setDone(true);
-      timer = setTimeout(() => router.replace("/settings"), r.ok ? 1300 : 3000);
+      timer = setTimeout(() => router.replace("/settings"), 2000);
     })();
     return () => clearTimeout(timer);
   }, [strava, router]);

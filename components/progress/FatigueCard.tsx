@@ -2,7 +2,6 @@
 
 import { Activity } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Reveal } from "@/components/ui/Reveal";
 import { fatigueState, type FatigueBand } from "@/lib/fatigue";
 import type { CardioSession, LoggedSession } from "@/lib/types";
 
@@ -20,7 +19,7 @@ export function FatigueCard({ log, cardio }: { log: LoggedSession[]; cardio: Car
   const activeIdx = BANDS.findIndex((b) => b.id === f.band);
 
   return (
-    <Reveal>
+    <div>
       <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -44,6 +43,6 @@ export function FatigueCard({ log, cardio }: { log: LoggedSession[]; cardio: Car
         <p className="mt-3 font-display text-2xl font-bold tracking-tight text-fg">{f.title}</p>
         <p className="mt-1 text-sm text-muted">{f.message}</p>
       </Card>
-    </Reveal>
+    </div>
   );
 }

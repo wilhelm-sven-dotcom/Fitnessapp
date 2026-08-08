@@ -1,19 +1,14 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { EASE_OUT } from "@/lib/motion";
+import { useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 /**
- * Mechanisches Zählwerk (ersetzt den früheren CountUp): jede Ziffer ist ein
- * 1em-Fenster mit einer 0–9-Walze, die zur Zielziffer rollt — die rechten
- * Walzen rasten zuerst ein, wie bei einem echten Zähler.
- *
- * Aufbau: ein unsichtbarer Metrik-Anker (der fertige Text) definiert Breite
- * und Baseline exakt wie normaler Text; die Walzen liegen als Overlay
- * darüber. Ziffern-Fenster sind `1ch` breit — deckungsgleich mit dem Anker,
- * solange der Kontext `tabular-nums` setzt (wie überall bei Readouts).
- * Formatierung de-DE (Komma, Tausenderpunkt), Separatoren stehen still,
- * das Layout steht sofort in Endbreite. Reduced motion → statischer Text.
+ * Ruhiges Zählwerk: beim Mount steht sofort der fertige Wert (kein Hochrollen
+ * bei jeder Navigation). Ändert sich der Wert DANACH — z. B. weil ein Satz
+ * gespeichert wurde — rollt jede Ziffer als 1em-Fenster mit 0–9-Walze zur
+ * neuen Ziffer. Formatierung de-DE; Kontext sollte `tabular-nums` setzen.
+ * Reduced motion → immer statischer Text.
  */
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -22,18 +17,20 @@ function Wheel({ digit, delay, duration }: { digit: number; delay: number; durat
     <span
       style={{ display: "inline-block", overflow: "hidden", height: "1em", width: "1ch" }}
     >
-      <motion.span
-        style={{ display: "flex", flexDirection: "column" }}
-        initial={{ y: 0 }}
-        animate={{ y: `${-digit}em` }}
-        transition={{ duration, ease: EASE_OUT, delay }}
+      <span
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          transform: `translateY(${-digit}em)`,
+          transition: `transform ${duration}s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s`,
+        }}
       >
         {DIGITS.map((d) => (
           <span key={d} style={{ height: "1em", lineHeight: 1 }}>
             {d}
           </span>
         ))}
-      </motion.span>
+      </span>
     </span>
   );
 }
@@ -50,12 +47,19 @@ export function Odometer({
   className?: string;
 }) {
   const reduce = useReducedMotion();
+  // Erst nach einer echten Wertänderung im gemounteten Zustand wird gerollt.
+  const [live, setLive] = useState(false);
+  const first = useRef(value);
+  useEffect(() => {
+    if (value !== first.current) setLive(true);
+  }, [value]);
+
   const text = value.toLocaleString("de-DE", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
-  if (reduce) {
+  if (!live || reduce) {
     return <span className={className}>{text}</span>;
   }
 

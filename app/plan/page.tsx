@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
-import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EQUIP_LIST, PATTERN_LABEL, TEMPLATE } from "@/lib/exercises";
 import { reqOk } from "@/lib/progression";
@@ -73,7 +72,7 @@ export default function PlanPage() {
 
       {/* ATLAS-KI-Woche: der aktuelle Wochenplan (Claude) — oder der Weg dahin. */}
       {settings.aiPlanning !== false && (
-        <Reveal>
+        <div>
           <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
             <div className="mb-3 flex items-center justify-between">
               <p className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -126,10 +125,10 @@ export default function PlanPage() {
               </p>
             )}
           </section>
-        </Reveal>
+        </div>
       )}
 
-      <Reveal>
+      <div>
         <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
           <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
             Eigene Tage
@@ -216,7 +215,7 @@ export default function PlanPage() {
             </Pressable>
           )}
         </section>
-      </Reveal>
+      </div>
 
       <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
@@ -401,10 +400,10 @@ export default function PlanPage() {
         Wirbelsäule, halte sie gerade.
       </p>
 
-      {TEMPLATE.map((t, ti) => {
+      {TEMPLATE.map((t) => {
         const list = sessionOf(t.key);
         return (
-          <Reveal key={t.key} delay={0.08 + ti * 0.05}>
+          <div key={t.key}>
             <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
             <div className="mb-3 flex items-baseline justify-between gap-2">
               <div className="flex min-w-0 items-baseline gap-2">
@@ -437,7 +436,7 @@ export default function PlanPage() {
               ))}
             </div>
             </section>
-          </Reveal>
+          </div>
         );
       })}
 
