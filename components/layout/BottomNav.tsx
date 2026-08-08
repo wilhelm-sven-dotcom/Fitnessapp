@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
   Dumbbell,
   Flame,
   History as HistoryIcon,
@@ -15,7 +14,6 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/", label: "Heute", Icon: Flame },
-  { href: "/plan", label: "Plan", Icon: CalendarDays },
   { href: "/uebungen", label: "Übungen", Icon: Dumbbell },
   { href: "/progress", label: "Trends", Icon: TrendingUp },
   { href: "/history", label: "Verlauf", Icon: HistoryIcon },

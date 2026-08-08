@@ -1,112 +1,181 @@
 "use client";
 
-import { ChevronRight, Newspaper, Play, ShieldAlert, ShieldCheck, Trophy } from "lucide-react";
+import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
-import { AmbientGlow } from "@/components/home/AmbientGlow";
-import { VolumeGauge } from "@/components/home/VolumeGauge";
-import { DurationBadge } from "@/components/home/DurationBadge";
+import { SessionCard } from "@/components/home/SessionCard";
+import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { CoachCard } from "@/components/coach/CoachCard";
-import { AtlasCard } from "@/components/trainer/AtlasCard";
+import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { StreakFlame } from "@/components/ui/StreakFlame";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
+import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { greeting, homeChips } from "@/lib/coaching";
-import { TEMPLATE } from "@/lib/exercises";
 import { isoWeek } from "@/lib/format";
 import { tap } from "@/lib/haptics";
-import { band } from "@/lib/readiness";
+import { generateFallbackSession } from "@/lib/session-fallback";
+import {
+  resolveDailySession,
+  todayKey,
+  type DailySession,
+  type SessionVariant,
+} from "@/lib/session-model";
+import { estimateSessionMin } from "@/lib/session-time";
 import { weeklyStreak } from "@/lib/stats";
-import { coverageCount, weeklyVolume } from "@/lib/volume";
+import { requestAtlasSession } from "@/lib/today-session";
 import { cn } from "@/lib/utils";
-
-const BUDGETS = [20, 25, 30, 45, 60, 75, 90];
 
 export default function HomePage() {
   const router = useRouter();
   const {
-    recTpl,
-    recList,
+    todaySession,
+    setTodaySession,
     activeKey,
     sessionTemplate,
     lastLabel,
     log,
-    days,
     equip,
+    body,
+    cardio,
+    exerciseNotes,
     daysAgo,
     weekCount,
-    ringMetrics,
-    muscleVolumes,
-    estimatedMin,
     settings,
     setBudget,
     coach,
     trainer,
     todayReadiness,
-    fatigue,
-    phase,
     allLib,
     acceptDeload,
     acceptExam,
     dismissCard,
-    aiPlanActive,
     lastBackRed,
     backSpareToday,
     setBackSpareToday,
     backSafeActive,
   } = useTraining();
-  const tags = [...new Set(recList.map((s) => s.ex?.tag).filter(Boolean))];
-  const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
+
+  const has = useMemo(
+    () => (k: string) => (equip as string[]).includes(k),
+    [equip],
+  );
+  const level = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
   const chips = homeChips({ daysAgo, weekCount });
+  const streak = weeklyStreak(log);
   const now = new Date();
   const today = now.toLocaleDateString("de-DE", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  // Calendar week — the magazine masthead's "issue number" (editorial skin).
-  // ISO-KW wie überall (ATLAS-Mission, Briefing) — nicht die naive Formel,
-  // sonst stehen zwei verschiedene Wochennummern auf demselben Screen.
   const kw = isoWeek(now);
-  const streak = weeklyStreak(log);
-  // New phrase each time the home mounts (client-only, so no SSR/hydration drift).
   const greetingSeed = useMemo(() => Math.floor(Math.random() * 100000), []);
-  const volT = Math.round(weeklyVolume(log) / 100) / 10;
-  const volTargetT = (ringMetrics.find((m) => m.id === "exercise")?.target ?? 1000) / 1000;
-  const cov = coverageCount(muscleVolumes);
+
+  const [editing, setEditing] = useState(false);
+  const [composing, setComposing] = useState(false);
+
+  // Laufende Referenzen für die asynchrone KI-Antwort: nur eine unveränderte
+  // Fallback-Session desselben Kompositions-Laufs darf ersetzt werden.
+  const genRef = useRef(0);
+  const sessionRef = useRef<DailySession | null>(null);
+  sessionRef.current = todaySession;
+  const activeRef = useRef<string | null>(null);
+  activeRef.current = activeKey;
+
+  const sessionLocked = activeKey === "today" || !!todaySession?.completedAt;
+
+  /** Frisch komponieren: Fallback sofort, ATLAS ersetzt still, wenn möglich. */
+  const compose = (opts: { wish?: string; variant?: SessionVariant } = {}) => {
+    const gen = ++genRef.current;
+    const variant = opts.variant ?? "normal";
+    const fallback = generateFallbackSession({
+      allLib,
+      has,
+      log,
+      budgetMin: settings.timeBudgetMin,
+      backSafe: backSafeActive,
+      injuries: effectiveProfile(settings, body).injuries,
+      variant,
+    });
+    setTodaySession(opts.wish ? { ...fallback, wish: opts.wish } : fallback);
+    setComposing(true);
+
+    // KI abgeschaltet → beim Fallback bleiben (bewusste Nutzer-Entscheidung).
+    if (settings.aiPlanning === false) {
+      setComposing(false);
+      return;
+    }
+    const readinessLine = todayReadiness
+      ? `Tagesform (Check-in): Schlaf ${todayReadiness.sleep}/3, Energie ${todayReadiness.energy}/3, Rücken ${todayReadiness.back}/3.`
+      : "";
+    void requestAtlasSession({
+      allLib,
+      has,
+      log,
+      body,
+      cardio,
+      exerciseNotes,
+      budgetMin: settings.timeBudgetMin,
+      wish: opts.wish,
+      variant,
+      backSafe: backSafeActive,
+      persona: athletePersona(effectiveProfile(settings, body), settings.userName),
+      readinessLine,
+    }).then((s) => {
+      setComposing(false);
+      if (!s || genRef.current !== gen) return;
+      const cur = sessionRef.current;
+      // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
+      // editierte oder bereits gestartete Einheit.
+      if (activeRef.current === "today") return;
+      if (cur && cur.date === s.date && cur.source === "fallback" && !cur.edited) {
+        setTodaySession(s);
+      }
+    });
+  };
+
+  // Beim ersten Öffnen des Tages (oder nach Mitternacht) frisch komponieren.
+  const needsCompose = !todaySession || todaySession.date !== todayKey();
+  useEffect(() => {
+    if (needsCompose) compose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsCompose]);
+
+  const resolved = useMemo(
+    () => (todaySession ? resolveDailySession(todaySession, allLib, has) : []),
+    [todaySession, allLib, has],
+  );
+  const estimatedMin = useMemo(() => estimateSessionMin(resolved), [resolved]);
 
   const start = (key: string) => router.push(`/workout/${key}`);
+  const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
 
-  const level = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
+  // „Rücken heute schonen”: Umschalten komponiert neu (solange nicht gestartet).
+  const toggleSpare = () => {
+    tap();
+    const next = !backSpareToday;
+    setBackSpareToday(next);
+    if (activeKey !== "today" && todaySession && !todaySession.completedAt) {
+      // Recompose mit neuem Schon-Status — der Effekt sieht backSafeActive
+      // erst nächsten Render, deshalb hier explizit.
+      setTimeout(() => compose(), 0);
+    }
+  };
 
-  // Der Kern liest den Trainer-Zustand: Atem-Tempo aus der Readiness,
-  // Flackern bei heißer Ermüdung, gedimmt im Deload.
-  const readinessBand = todayReadiness ? band(todayReadiness.score) : null;
-  const fatigueHot = fatigue.enough && fatigue.band === "hoch";
-  const coreDeload =
-    trainer.directive.kind === "deload" ||
-    trainer.directive.kind === "deload-active" ||
-    phase.phase === "entlastung";
-
-  // „Rücken heute schonen": bei roter Ampel erzwungen (nur Status), sonst
-  // Toggle-Pill — die Vorschau (recList) swappt live auf Schon-Alternativen.
-  // Aktiver Schonmodus enthüllt die gewichtsfreie Alternative: den Reset.
   const spareEl = (
-    <div className="mb-3">
+    <div>
       {lastBackRed ? (
         <p className="flex items-center gap-1.5 font-mono text-xs text-status-over">
           <ShieldAlert size={13} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
         </p>
       ) : (
         <Pressable
-          onClick={() => {
-            tap();
-            setBackSpareToday(!backSpareToday);
-          }}
+          onClick={toggleSpare}
           aria-pressed={backSpareToday}
           className={cn(
             "flex items-center gap-1.5 rounded-pill px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
@@ -116,52 +185,153 @@ export default function HomePage() {
           <ShieldCheck size={13} aria-hidden /> Rücken heute schonen
         </Pressable>
       )}
-      {backSafeActive && (
+      {backSafeActive && !sessionLocked && (
         <Pressable
           onClick={() => {
             tap();
-            start("reset");
+            compose({ variant: "reset" });
           }}
           className="mt-2 flex items-center gap-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         >
-          <ChevronRight size={13} aria-hidden /> Oder gleich Rücken-Reset starten — ganz ohne Gewichte
+          <ChevronRight size={13} aria-hidden /> Oder: Rücken-Reset komponieren — ganz ohne Gewichte
         </Pressable>
       )}
     </div>
   );
 
-  // Context blocks shared by both heroes (defined once; only the rendered branch mounts).
-  const chipsEl =
-    chips.length > 0 ? (
-      <div className="mb-4 flex flex-wrap gap-2">
-        {chips.map((c, i) => (
-          <Chip key={i} tone={c.tone}>
-            {c.text}
-          </Chip>
-        ))}
-      </div>
-    ) : null;
+  const actionCards = coach.filter((c) => c.severity !== "info" || c.action);
 
-  const activeEl = activeKey ? (
-    <div>
+  return (
+    <div className="relative">
+      <header className="mb-4">
+        <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+          {today} · KW {kw}
+        </p>
+        <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-fg">
+          {greeting({ name: settings.userName, seed: greetingSeed })}
+        </h1>
+        <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {streak > 0 && (
+            <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
+              <StreakFlame size={14} className="text-accent-ink" />
+              <span className="font-display text-sm font-bold tabular-nums text-fg">{streak}</span>
+              <span className="text-xs text-muted">Wo</span>
+            </span>
+          )}
+          <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
+            <Trophy size={13} className="text-accent-ink" aria-hidden />
+            <span className="font-display text-sm font-bold tabular-nums text-fg">
+              Lv {level.level}
+            </span>
+          </span>
+          <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
+            <span className="font-display text-sm font-bold tabular-nums text-fg">
+              {weekCount}/3
+            </span>
+            <span className="text-xs text-muted">Woche</span>
+          </span>
+        </div>
+      </header>
+
+      {chips.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {chips.map((c, i) => (
+            <Chip key={i} tone={c.tone}>
+              {c.text}
+            </Chip>
+          ))}
+        </div>
+      )}
+
+      {activeKey && (
+        <Pressable
+          onClick={() => router.push(`/workout/${activeKey}`)}
+          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
+        >
+          <span className="min-w-0 truncate text-sm text-accent-ink">
+            Einheit läuft · {activeName}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-ink">
+            Fortsetzen <ChevronRight size={16} />
+          </span>
+        </Pressable>
+      )}
+
+      {/* ATLAS-Status: die Tages-Direktive als ruhige Zeile — Details im Coach. */}
       <Pressable
-        onClick={() => router.push(`/workout/${activeKey}`)}
-        className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
+        onClick={() => router.push("/coach")}
+        aria-label="ATLAS öffnen"
+        className="mb-4 block w-full rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
       >
-        <span className="min-w-0 truncate text-sm text-accent-ink">Einheit läuft · {activeName}</span>
-        <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-ink">
-          Fortsetzen <ChevronRight size={16} />
+        <span className="flex items-center gap-2">
+          <AtlasMark size={15} className="shrink-0 text-fg" />
+          <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
+            ATLAS
+          </span>
+          <span className="ml-auto font-mono text-xs tabular-nums text-faint">
+            Mission {Math.round(trainer.mission.pct * 100)} %
+          </span>
+        </span>
+        <span className="mt-1.5 flex items-start justify-between gap-2">
+          <span className="min-w-0 text-sm leading-snug text-fg">
+            {trainer.directive.text}
+          </span>
+          <ChevronRight size={15} className="mt-0.5 shrink-0 text-faint" />
         </span>
       </Pressable>
-    </div>
-  ) : null;
 
-  // ATLAS absorbiert das Info-Geplauder (Plateau/Volumen/Recomp) in Mission +
-  // Wache; als Karten bleiben nur handlungsrelevante Fälle mit eigenem CTA.
-  const actionCards = coach.filter((c) => c.severity !== "info" || c.action);
-  const coachEl =
-    actionCards.length > 0 ? (
-      <div>
+      {/* Die heutige Einheit — das eine Herzstück der Seite. */}
+      {todaySession?.completedAt ? (
+        <Card variant="elevated" className="mb-4 rounded-card p-6">
+          <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-accent-2">
+            <CheckCircle2 size={14} className="text-status-in" /> Heute erledigt
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-fg">
+            {todaySession.name}
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Stark. Erholung ist jetzt Teil des Trainings — morgen komponiert
+            ATLAS die nächste Einheit.
+          </p>
+          <Pressable
+            onClick={() => compose()}
+            className="mt-4 flex items-center gap-1.5 rounded-pill bg-surface-2 px-3 py-2 text-xs font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          >
+            <RefreshCw size={13} /> Noch eine Einheit komponieren
+          </Pressable>
+        </Card>
+      ) : todaySession && todaySession.items.length > 0 ? (
+        <SessionCard
+          session={todaySession}
+          allLib={allLib}
+          estimatedMin={estimatedMin}
+          budgetMin={settings.timeBudgetMin}
+          onBudget={(min) => {
+            setBudget(min);
+            if (!sessionLocked && !todaySession.edited) {
+              setTimeout(() => compose({ wish: todaySession.wish }), 0);
+            }
+          }}
+          onStart={() => start("today")}
+          onEdit={() => setEditing(true)}
+          onRegenerate={(wish) => compose({ wish })}
+          regenerating={composing}
+          locked={activeKey === "today"}
+          spareSlot={spareEl}
+        />
+      ) : (
+        <Card variant="elevated" className="mb-4 rounded-card p-6">
+          <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+            Deine Einheit heute
+          </p>
+          <p className="mt-2 text-sm text-muted">
+            ATLAS stellt deine Einheit zusammen…
+          </p>
+        </Card>
+      )}
+
+      {actionCards.length > 0 && (
         <div className="mb-4 space-y-2">
           {actionCards.map((c, i) => (
             <CoachCard
@@ -173,210 +343,30 @@ export default function HomePage() {
                   : c.action === "exam"
                     ? () => {
                         acceptExam();
-                        router.push("/workout/exam");
+                        compose({ variant: "exam" });
                       }
                     : c.action === "back-reset"
-                      ? () => start("reset")
+                      ? () => compose({ variant: "reset" })
                       : undefined
               }
               onDismiss={() => dismissCard(c)}
             />
           ))}
         </div>
-      </div>
-    ) : null;
+      )}
 
-  const atlasEl = (
-    <div>
-      <AtlasCard
-        trainer={trainer}
-        readinessBand={readinessBand}
-        fatigueHot={fatigueHot}
-        deload={coreDeload}
-        className="mb-4"
-      />
-    </div>
-  );
+      <StreakCalendar log={log} />
 
-  return (
-    <div className="relative">
-      <AmbientGlow />
-      <>
-          <header className="mb-4">
-            <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-              {today} · KW {kw}
-            </p>
-            <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-fg">
-              {greeting({ name: settings.userName, seed: greetingSeed })}
-            </h1>
-            <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
-            {/* Status-Pills: Serie · Level · Einheiten — der Puls auf einen Blick. */}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {streak > 0 && (
-                <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-                  <StreakFlame size={14} className="text-accent-ink" />
-                  <span className="font-display text-sm font-bold tabular-nums text-fg">{streak}</span>
-                  <span className="text-xs text-muted">Wo</span>
-                </span>
-              )}
-              <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-                <Trophy size={13} className="text-accent-ink" aria-hidden />
-                <span className="font-display text-sm font-bold tabular-nums text-fg">
-                  Lv {level.level}
-                </span>
-              </span>
-              <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-                <span className="font-display text-sm font-bold tabular-nums text-fg">
-                  {weekCount}/3
-                </span>
-                <span className="text-xs text-muted">Woche</span>
-              </span>
-            </div>
-          </header>
-
-          {chipsEl}
-          {activeEl}
-
-          {/* ATLAS führt: die Direktive ist das Erste, was der Trainer sagt. */}
-          {atlasEl}
-
-          {/* The one bold moment: today's recommended session. */}
-          <div>
-            <Card variant="elevated" className="mb-4 overflow-hidden rounded-card p-6">
-              <p className="mb-2 font-mono text-xs uppercase tracking-widest text-live">
-                ▸ Empfohlen heute{aiPlanActive && !backSafeActive ? " · ATLAS-Woche" : ""}
-              </p>
-              <h2 className="font-display text-4xl font-bold leading-none tracking-tight">{recTpl.name}</h2>
-              <p className="mt-1 text-muted">{recTpl.focus}</p>
-              <p className="mb-3 mt-1 font-mono text-xs text-faint">
-                {recList.length} Übungen · ~{estimatedMin} Min
-              </p>
-              <div className="mb-4 flex items-start gap-2">
-                <DurationBadge min={estimatedMin} />
-                <div className="ml-auto flex flex-wrap justify-end gap-1.5">
-                  {BUDGETS.map((b) => (
-                    <Pressable
-                      key={b}
-                      onClick={() => setBudget(b)}
-                      aria-label={`Zeitbudget ${b} Minuten`}
-                      aria-pressed={settings.timeBudgetMin === b}
-                      className={cn(
-                        "rounded-pill px-3 py-2 text-xs font-medium tabular-nums",
-                        settings.timeBudgetMin === b
-                          ? "bg-accent-sessions text-on-accent"
-                          : "bg-surface-2 text-muted",
-                      )}
-                    >
-                      {b}
-                    </Pressable>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-5 flex flex-wrap gap-1.5">
-                {tags.slice(0, 3).map((t) => (
-                  <span key={t} className="rounded-pill bg-surface-2 px-2 py-1 text-xs text-muted">
-                    {t}
-                  </span>
-                ))}
-              </div>
-              {spareEl}
-              <Pressable
-                onClick={() => {
-                  tap();
-                  start(recTpl.key);
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-accent shadow-card-lg"
-              >
-                <Play size={18} strokeWidth={2.5} /> Training starten
-              </Pressable>
-            </Card>
-          </div>
-
-          {/* Instrumente kompakt: Tonnage-Strip + Kernzahlen (leer = verborgen). */}
-          {log.length > 0 && (
-            <div>
-              <Card className="mb-4 p-4">
-                <VolumeGauge valueT={volT} targetT={volTargetT} compact />
-                <div className="mt-3 flex items-center gap-5 border-t border-line pt-3 font-mono text-xs">
-                  <span>
-                    <span className="text-accent-2">EINH.</span>{" "}
-                    <span className="tabular-nums text-fg">{weekCount}/3</span>
-                  </span>
-                  <span>
-                    <span className="text-accent-2">ABDECKUNG</span>{" "}
-                    <span className="tabular-nums text-fg">
-                      {cov.hit}/{cov.total}
-                    </span>
-                  </span>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {coachEl}
-      </>
-
-      <div>
-        <Pressable
-          onClick={() => router.push("/briefing")}
-          className="mb-2 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium text-fg">
-            <Newspaper size={17} className="text-accent-ink" /> ATLAS-Rapport
-          </span>
-          <span className="flex items-center gap-1 font-mono text-xs text-muted">
-            KW {kw} <ChevronRight size={16} />
-          </span>
-        </Pressable>
-      </div>
-
-      <div>
-        <p className="mb-2 px-1 font-mono text-xs uppercase tracking-widest text-faint">Oder andere Einheit</p>
-        <div className="grid grid-cols-3 gap-2">
-          {TEMPLATE.map((t) => {
-            const isRec = t.key === recTpl.key;
-            return (
-              <Pressable
-                key={t.key}
-                onClick={() => start(t.key)}
-                aria-label={isRec ? `${t.focus} · empfohlen` : t.focus}
-                className="rounded-card border border-line bg-surface-1 px-3 py-3 text-left shadow-card"
-              >
-                <span className={cn("font-mono text-xs", isRec ? "text-accent-ink" : "text-muted")}>
-                  {isRec && <span aria-hidden>• </span>}
-                  {t.key}
-                </span>
-                <p className="mt-1 text-sm font-medium leading-tight">{t.focus}</p>
-              </Pressable>
-            );
-          })}
-          {days.map((d) => (
-            <Pressable
-              key={d.id}
-              onClick={() => start(d.id)}
-              className="rounded-card border border-line bg-surface-1 px-3 py-3 text-left shadow-card"
-            >
-              <span className="font-mono text-xs text-accent-coverage">Eigen</span>
-              <p className="mt-1 truncate text-sm font-medium leading-tight">{d.name}</p>
-            </Pressable>
-          ))}
-          {(equip as string[]).includes("bike") && (
-            <Pressable
-              onClick={() => start("peloton")}
-              className="rounded-card border border-line bg-surface-1 px-3 py-3 text-left shadow-card"
-            >
-              <span className="font-mono text-xs text-accent-coverage">Bike</span>
-              <p className="mt-1 truncate text-sm font-medium leading-tight">Peloton</p>
-            </Pressable>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <div className="mt-5">
-          <StreakCalendar log={log} />
-        </div>
-      </div>
+      {todaySession && (
+        <SessionEditSheet
+          open={editing}
+          onClose={() => setEditing(false)}
+          session={todaySession}
+          allLib={allLib}
+          has={has}
+          onChange={setTodaySession}
+        />
+      )}
     </div>
   );
 }

@@ -25,10 +25,10 @@ export default function WorkoutError({ reset }: { error: Error & { digest?: stri
           Nochmal versuchen
         </button>
         <button
-          onClick={() => router.push("/plan")}
+          onClick={() => router.push("/")}
           className="rounded-pill bg-surface-2 px-5 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         >
-          Zum Plan
+          Zur Startseite
         </button>
       </div>
     </div>

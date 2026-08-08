@@ -79,16 +79,16 @@ export default function CoachPage() {
   const [notConfigured, setNotConfigured] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Brücke vom Reden ins Tun: der bestehende Coach-Tag-Builder macht aus
-  // Zeit + Fokus eine startbare Einheit — Empfehlung wird Training.
+  // Brücke vom Reden ins Tun: die heutige Einheit komponiert ATLAS auf der
+  // Startseite — mit Wunsch-Feld für genau solche Anliegen.
   const buildEl = (
     <Pressable
-      onClick={() => router.push("/day/neu?coach=1")}
+      onClick={() => router.push("/")}
       className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-coverage"
     >
       <span className="flex items-center gap-2">
         <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
-        Einheit vom Coach bauen lassen
+        Zur heutigen Einheit
       </span>
       <ChevronRight size={15} className="shrink-0 text-faint" />
     </Pressable>

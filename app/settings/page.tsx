@@ -9,7 +9,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { StravaSection } from "@/components/settings/StravaSection";
 import { SpotifySection } from "@/components/settings/SpotifySection";
-import { AiPlanSection } from "@/components/settings/AiPlanSection";
+import { AtlasSection } from "@/components/settings/AtlasSection";
+import { EquipmentSection } from "@/components/settings/EquipmentSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { AppIconSection } from "@/components/settings/AppIconSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
@@ -118,7 +119,8 @@ export default function SettingsPage() {
 
       <ProfileSection />
 
-      <AiPlanSection />
+      <AtlasSection />
+      <EquipmentSection />
 
       <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
