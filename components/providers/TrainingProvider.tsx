@@ -70,13 +70,10 @@ import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import {
   accentInk,
-  applySkin,
   applyTheme,
   DEFAULT_ACCENT,
-  DEFAULT_SKIN,
   onAccent,
   resolveTheme,
-  type SkinId,
   type ThemePref,
 } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
@@ -147,7 +144,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceCues: false,
   superset: false,
   theme: "dark",
-  skin: DEFAULT_SKIN,
   accentColor: DEFAULT_ACCENT,
 };
 
@@ -265,10 +261,8 @@ interface TrainingContextValue {
   setCueVolume: (v: number) => void;
   setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
-  setSkin: (skin: SkinId) => void;
   setIcon: (icon: IconConfig | undefined) => void;
   setAccentOverride: (hex: string | undefined) => void;
-  setTextTone: (hex: string | undefined) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
@@ -450,13 +444,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void loadAll();
   }, [loadAll]);
 
-  // Apply theme + skin to <html>; follow system changes when theme is "system".
-  // Skip while loading so the default (tactile) never overrides the pre-paint
-  // data-skin before the saved settings arrive — otherwise the splash and a
-  // first-paint flash would show the wrong skin.
+  // Apply theme to <html>; follow system changes when theme is "system".
+  // Skip while loading so the pre-paint script's result never flashes over.
   useEffect(() => {
     if (loading) return;
-    // Optional accent override wins over the skin's --accent (inline > CSS).
+    // Optional accent override wins over the design's --accent (inline > CSS).
     const applyAccent = () => {
       const root = document.documentElement;
       if (settings.accentOverride) {
@@ -470,31 +462,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         root.style.removeProperty("--accent-ink");
       }
     };
-    // Optional text tone replaces the skin's --fg — DARK mode only; in light
-    // mode ink stays (a light tone would be unreadable on paper).
-    const applyTextTone = () => {
-      const root = document.documentElement;
-      if (settings.textTone && resolveTheme(settings.theme) !== "light") {
-        root.style.setProperty("--fg", settings.textTone);
-      } else {
-        root.style.removeProperty("--fg");
-      }
-    };
     applyTheme(settings.theme);
-    applySkin(settings.skin);
     applyAccent();
-    applyTextTone();
     if (settings.theme !== "system" || typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
     const onChange = () => {
       applyTheme(settings.theme);
-      applySkin(settings.skin);
       applyAccent();
-      applyTextTone();
     };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [loading, settings.theme, settings.skin, settings.accentOverride, settings.textTone]);
+  }, [loading, settings.theme, settings.accentOverride]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -1279,14 +1257,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, superset: on });
   const setTheme = (t: ThemePref) =>
     void saveSettings({ ...settings, theme: t });
-  const setSkin = (skin: SkinId) =>
-    void saveSettings({ ...settings, skin });
   const setIcon = (icon: IconConfig | undefined) =>
     void saveSettings({ ...settings, icon });
   const setAccentOverride = (hex: string | undefined) =>
     void saveSettings({ ...settings, accentOverride: hex });
-  const setTextTone = (hex: string | undefined) =>
-    void saveSettings({ ...settings, textTone: hex });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
@@ -1763,10 +1737,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setCueVolume,
     setSuperset,
     setTheme,
-    setSkin,
     setIcon,
     setAccentOverride,
-    setTextTone,
     setAccent,
     setWeightStep,
     setBikeWarmup,

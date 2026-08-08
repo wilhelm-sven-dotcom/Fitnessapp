@@ -10,20 +10,12 @@ import { useTraining, type SessionSummary } from "@/components/providers/Trainin
 import { success } from "@/lib/haptics";
 import { EASE_OUT } from "@/lib/motion";
 import { speak } from "@/lib/voice";
-import { cn } from "@/lib/utils";
-
-// The stamp headline speaks each skin's voice (mirrors the Splash boots).
-const HEADLINE: Record<string, string> = {
-  tactile: "Stark gemacht!",
-  blueprint: "EINHEIT ERFASST",
-  editorial: "SCHICHT BEENDET",
-};
 
 /**
  * "Sieger-Moment" — the full-screen receipt after saving a workout. Replaces
  * the old silent teleport home: count-ups for what was achieved, the XP bar
- * filling live (with a level-up flip), a per-skin particle burst and a success
- * haptic. Reduced motion renders the final numbers as a static card.
+ * filling live (with a level-up flip), a particle burst and a success haptic.
+ * Reduced motion renders the final numbers as a static card.
  */
 export function SessionComplete({
   summary,
@@ -34,7 +26,6 @@ export function SessionComplete({
 }) {
   const { settings } = useTraining();
   const reduce = useReducedMotion();
-  const skin = settings.skin as string;
   const levelUp = summary.levelAfter > summary.levelBefore;
   const [pct, setPct] = useState(reduce ? summary.xpPctTo : summary.xpPctFrom);
   const [lvl, setLvl] = useState(reduce || !levelUp ? summary.levelAfter : summary.levelBefore);
@@ -62,7 +53,7 @@ export function SessionComplete({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-surface-0 px-6 text-center">
-      {!reduce && <Burst variant={skin as "tactile" | "blueprint" | "editorial"} />}
+      {!reduce && <Burst />}
 
       <motion.p
         initial={reduce ? false : { opacity: 0, y: 6 }}
@@ -76,22 +67,10 @@ export function SessionComplete({
         initial={reduce ? false : { opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={stagger(1)}
-        className={cn(
-          "font-display font-semibold tracking-tight text-fg",
-          skin === "editorial" ? "text-4xl uppercase" : "text-3xl",
-          skin === "blueprint" && "uppercase tracking-widest",
-        )}
+        className="font-display text-3xl font-semibold tracking-tight text-fg"
       >
-        {HEADLINE[skin] ?? HEADLINE.tactile}
+        Stark gemacht!
       </motion.h1>
-      {skin === "editorial" && (
-        <motion.div
-          initial={reduce ? false : { scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={stagger(2)}
-          className="mt-2 h-px w-40 origin-center bg-line"
-        />
-      )}
 
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 10 }}

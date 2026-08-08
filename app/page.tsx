@@ -9,47 +9,22 @@ import { VolumeGauge } from "@/components/home/VolumeGauge";
 import { DurationBadge } from "@/components/home/DurationBadge";
 import { CoachCard } from "@/components/coach/CoachCard";
 import { AtlasCard } from "@/components/trainer/AtlasCard";
-import { AtlasCore } from "@/components/trainer/AtlasCore";
-import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { StreakFlame } from "@/components/ui/StreakFlame";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
-import { editorialDeck, greeting, homeChips } from "@/lib/coaching";
+import { greeting, homeChips } from "@/lib/coaching";
 import { TEMPLATE } from "@/lib/exercises";
 import { isoWeek } from "@/lib/format";
 import { tap } from "@/lib/haptics";
 import { band } from "@/lib/readiness";
-import { weeklyAvgRir, weeklyStreak } from "@/lib/stats";
+import { weeklyStreak } from "@/lib/stats";
 import { coverageCount, weeklyVolume } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 
 const BUDGETS = [20, 25, 30, 45, 60, 75, 90];
-
-/** Editorial "DIE WOCHE" stat cell — big Anton number, mono caption. */
-function MagStat({
-  value,
-  unit,
-  label,
-  className,
-}: {
-  value: string;
-  unit?: string;
-  label: string;
-  className?: string;
-}) {
-  return (
-    <div className={cn("py-3", className)}>
-      <p className="font-display text-4xl font-bold leading-none tracking-tight text-fg">
-        {value}
-        {unit && <span className="ml-1 font-mono text-sm font-normal text-muted">{unit}</span>}
-      </p>
-      <p className="mt-1 font-mono text-xs uppercase tracking-widest text-faint">{label}</p>
-    </div>
-  );
-}
 
 export default function HomePage() {
   const router = useRouter();
@@ -75,7 +50,6 @@ export default function HomePage() {
     fatigue,
     phase,
     allLib,
-    cardioAdvice,
     acceptDeload,
     acceptExam,
     dismissCard,
@@ -94,7 +68,6 @@ export default function HomePage() {
     day: "numeric",
     month: "long",
   });
-  const wkShort = now.toLocaleDateString("de-DE", { weekday: "short" });
   // Calendar week — the magazine masthead's "issue number" (editorial skin).
   // ISO-KW wie überall (ATLAS-Mission, Briefing) — nicht die naive Formel,
   // sonst stehen zwei verschiedene Wochennummern auf demselben Screen.
@@ -105,21 +78,9 @@ export default function HomePage() {
   const volT = Math.round(weeklyVolume(log) / 100) / 10;
   const volTargetT = (ringMetrics.find((m) => m.id === "exercise")?.target ?? 1000) / 1000;
   const cov = coverageCount(muscleVolumes);
-  const rirAvg = weeklyAvgRir(log);
 
   const start = (key: string) => router.push(`/workout/${key}`);
 
-  // Editorial skin renders a magazine spread instead of the gauge hero. The home
-  // only mounts after the provider finishes loading (AppShell gates on it), so
-  // branching on the resolved skin here is hydration-safe (home isn't in SSR).
-  const isEditorial = settings.skin === "editorial";
-  const deck = editorialDeck({
-    exCount: recList.length,
-    minutes: estimatedMin,
-    cardioLevel: cardioAdvice?.level,
-    seed: greetingSeed,
-  });
-  const focusParts = recTpl.focus.split(" & ");
   const level = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
 
   // Der Kern liest den Trainer-Zustand: Atem-Tempo aus der Readiness,
@@ -240,186 +201,7 @@ export default function HomePage() {
   return (
     <div className="relative">
       <AmbientGlow />
-      {isEditorial ? (
-        /* ── Editorial: a magazine spread — nameplate, cover-line, headline,
-           serif deck, the week as a stat block, and the coach's pull-quote. ── */
-        <section className="relative mb-6">
-          {/* Passermarken — Druck-Eckmarken wie auf einem frisch gedruckten
-              Bogen (Teil des Archiv-Looks; nur Editorial rendert diesen Zweig). */}
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            {[
-              { top: -6, left: -6, borderTop: "1.5px solid var(--accent)", borderLeft: "1.5px solid var(--accent)" },
-              { top: -6, right: -6, borderTop: "1.5px solid var(--accent)", borderRight: "1.5px solid var(--accent)" },
-              { bottom: -6, left: -6, borderBottom: "1.5px solid var(--accent)", borderLeft: "1.5px solid var(--accent)" },
-              { bottom: -6, right: -6, borderBottom: "1.5px solid var(--accent)", borderRight: "1.5px solid var(--accent)" },
-            ].map((s, i) => (
-              <span key={i} className="absolute h-3 w-3 opacity-70" style={s} />
-            ))}
-          </div>
-          <div className="flex items-baseline justify-between border-b-2 border-fg pb-2">
-            <span className="font-display text-3xl font-bold uppercase tracking-tight text-fg">
-              Training
-            </span>
-            <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
-              Nr. {kw} · {wkShort}
-            </span>
-          </div>
-
-          <p className="mt-5 font-mono text-xs uppercase tracking-widest text-accent-ink">
-            Empfohlen heute — {recTpl.name}
-            {aiPlanActive && !backSafeActive ? " · ATLAS-Woche" : ""}
-          </p>
-          <h1 className="mt-1 font-display text-6xl font-bold uppercase leading-none tracking-tight text-fg">
-            {focusParts.map((p, i) => (
-              <span key={i}>
-                {i > 0 && <span className="text-accent-ink">{" & "}</span>}
-                {p}
-              </span>
-            ))}
-          </h1>
-
-          {/* „Der Trainer" — ATLAS als Magazin-Leader: Hairline, Kursiv-Direktive,
-              Mission als Mono-Datenzeile. Kein Karten-Wrapper — der Spread bleibt flach. */}
-          <Pressable
-            onClick={() => {
-              tap();
-              router.push("/coach");
-            }}
-            aria-label="ATLAS öffnen"
-            className="mt-4 block w-full border-t border-line pt-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-          >
-            <span className="flex items-center gap-2">
-              <AtlasMark size={16} live className="text-fg" />
-              <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
-                Der Trainer — ATLAS
-              </span>
-            </span>
-            <span className="mt-2 flex items-start gap-4">
-              <span className="min-w-0 flex-1">
-                <span className="block font-body text-xl italic leading-snug text-fg">
-                  {trainer.directive.text}
-                </span>
-                <p className="mt-1 font-mono text-xs text-faint">{trainer.directive.reason}</p>
-              </span>
-              {/* Der Kern, flach: Haarlinien-Bögen — Magazin-tauglich, ohne Glow. */}
-              <AtlasCore
-                flat
-                size={72}
-                missionPct={trainer.mission.pct}
-                readinessBand={readinessBand}
-                fatigueHot={fatigueHot}
-                deload={coreDeload}
-                className="mt-1 shrink-0"
-              />
-            </span>
-            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs tabular-nums text-muted">
-              {trainer.mission.meters.map((m) => (
-                <span key={m.id}>
-                  {m.current}/{m.target} {m.label.toUpperCase()}
-                </span>
-              ))}
-            </p>
-          </Pressable>
-
-          <p className="mt-4 font-body text-lg italic leading-snug text-muted">{deck}</p>
-
-          <div className="mt-5">{spareEl}</div>
-          <Pressable
-            onClick={() => {
-              tap();
-              start(recTpl.key);
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-accent"
-          >
-            <Play size={18} strokeWidth={2.5} /> Training starten
-          </Pressable>
-          <div className="mt-3 flex items-start gap-2">
-            <DurationBadge min={estimatedMin} />
-            <div className="ml-auto flex flex-wrap justify-end gap-1.5">
-              {BUDGETS.map((b) => (
-                <Pressable
-                  key={b}
-                  onClick={() => setBudget(b)}
-                  aria-label={`Zeitbudget ${b} Minuten`}
-                  aria-pressed={settings.timeBudgetMin === b}
-                  className={cn(
-                    "rounded-pill px-3 py-2 text-xs font-medium tabular-nums",
-                    settings.timeBudgetMin === b
-                      ? "bg-accent-sessions text-on-accent"
-                      : "bg-surface-2 text-muted",
-                  )}
-                >
-                  {b}
-                </Pressable>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-7">
-            <div className="flex items-baseline justify-between border-b border-line pb-1.5">
-              <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
-                Die Woche
-              </span>
-              <span className="font-body text-sm italic text-faint">{weekCount} von 3 Einheiten</span>
-            </div>
-            <div className="grid grid-cols-2">
-              <MagStat
-                value={String(volT).replace(".", ",")}
-                unit="t"
-                label="Volumen ges."
-                className="border-b border-r border-line pr-4"
-              />
-              <MagStat
-                value={`${cov.hit}/${cov.total}`}
-                label="Muskelgruppen"
-                className="border-b border-line pl-4"
-              />
-              <MagStat
-                value={rirAvg != null ? rirAvg.toFixed(1).replace(".", ",") : "–"}
-                unit="RIR"
-                label="Anstrengung Ø"
-                className="border-r border-line pr-4"
-              />
-              <MagStat value={String(estimatedMin)} unit="min" label="Heute geplant" className="pl-4" />
-            </div>
-          </div>
-
-          <figure className="mt-7 border-t border-line pt-5">
-            <div className="flex gap-2">
-              <span aria-hidden className="font-display text-5xl leading-none text-accent-ink">
-                „
-              </span>
-              <p className="font-body text-xl italic leading-snug text-fg">{trainer.statusLine}</p>
-            </div>
-            <figcaption className="mt-2 text-right font-mono text-xs uppercase tracking-widest text-accent-2">
-              — ATLAS
-            </figcaption>
-          </figure>
-
-          <div className="mt-6">
-            {chipsEl}
-            {activeEl}
-            {coachEl}
-            {/* Die Wache als Magazin-Fußzeile. */}
-            <p className="flex flex-wrap gap-x-3 gap-y-1 border-t border-line pt-3 font-mono text-xs text-muted">
-              {trainer.watch.map((w) => (
-                <span
-                  key={w.id}
-                  className={cn(
-                    w.tone === "alert" && "text-status-danger",
-                    w.tone === "watch" && "text-status-over",
-                  )}
-                >
-                  {w.label.toUpperCase()} {w.value}
-                </span>
-              ))}
-            </p>
-          </div>
-        </section>
-      ) : (
-        /* ── Blueprint / Tactile: Kommandozentrale — ATLAS führt, die
-           Empfehlung ist das eine fette Visual, Instrumente kompakt. ── */
-        <>
+      <>
           <header className="mb-4">
             <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
               {today} · KW {kw}
@@ -532,8 +314,7 @@ export default function HomePage() {
           )}
 
           {coachEl}
-        </>
-      )}
+      </>
 
       <div>
         <Pressable

@@ -3,57 +3,13 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────────────────────
-   Two design skins as a token axis on <html data-skin>:
-     · blueprint — engineering schematic: measurement grid, hairlines, steel +
-       red, Archivo display, sharp corners. (default)
-     · tactile   — machined instrument: raised panels, amber, soft depth,
-       Sora display, rounded corners.
-   Orthogonal to data-theme (dark default / light). Skins set the full token
-   contract; the [data-theme="light"] block (placed AFTER skins) overrides the
-   neutral palette so light mode works under either skin.
-   Fonts come from layout.tsx (next/font → --font-archivo/--font-sora/--font-jbmono).
+   EIN Design: „Ruhig & fokussiert" — geschliffenes Instrument in Bernstein.
+   Dunkel ist der Grundzustand; [data-theme="light"] überschreibt nur die
+   Neutralwerte (Identität — Akzent, Fonts, Radius, Panels — bleibt).
+   Fonts kommen aus layout.tsx (next/font → --font-sora/--font-jbmono).
    ─────────────────────────────────────────────────────────────────────────── */
-
-/* :root = blueprint values as the JS-off fallback. The active skin is set on
-   <html data-skin> (SSR default "tactile" + pre-paint script), so a [data-skin]
-   block always wins in practice — these :root values are rarely seen. */
 :root {
   color-scheme: dark;
-  --base: #0c0e12;
-  --card: #11141a;
-  --surface-2: #171b22;
-  --line: #222b38;
-  --fg: #e8ecf2;
-  --muted: #8a93a3;
-  --faint: #566173;
-  --strong: #e8ecf2;
-  --on-strong: #0c0e12;
-  --glass: rgba(12, 14, 18, 0.72);
-
-  --accent: #ff375f; /* primary / CTA / signature */
-  --accent-2: #6e90be; /* steel — labels, structure, schematic ink */
-  --live: #ff375f; /* "today / recommended" highlight */
-  --on-accent: #0c0e12; /* ink on an accent-filled surface (dark reads best on the red, 5.5:1) */
-  --accent-ink: var(--accent); /* accent as a foreground mark (icon/text/indicator); overridden when illegible on the page */
-
-  --font-display: var(--font-archivo);
-  --font-body: var(--font-archivo);
-  --font-mono: var(--font-jbmono);
-
-  --radius-card: 4px;
-  --radius-pill: 5px;
-  --panel-bg: linear-gradient(0deg, #11141a, #11141a);
-  --panel-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
-  --panel-shadow-lg: 0 1px 0 rgba(0, 0, 0, 0.5);
-  --hero-sheen: linear-gradient(135deg, rgba(110, 144, 190, 0.07), transparent 42%);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.22), transparent 62%);
-  --page-bg: linear-gradient(rgba(110, 144, 190, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(110, 144, 190, 0.06) 1px, transparent 1px);
-  --page-bg-size: 28px 28px;
-  --page-bg-repeat: repeat;
-}
-
-[data-skin="tactile"] {
   --base: #0e0f12;
   --card: #16181d;
   --surface-2: #1b1e24;
@@ -65,11 +21,11 @@
   --on-strong: #0e0f12;
   --glass: rgba(14, 15, 18, 0.72);
 
-  --accent: #ff9f0a; /* amber instrument */
-  --accent-2: #9aa1ac; /* neutral — labels stay quiet */
-  --live: #ff375f;
-  --on-accent: #0e0f12; /* dark ink reads on the bright amber */
-  --accent-ink: var(--accent); /* amber reads as a mark on dark; light theme deepens it below */
+  --accent: #ff9f0a; /* Bernstein — CTA, Signatur, der EINE Akzent */
+  --accent-2: #9aa1ac; /* neutral — Labels bleiben ruhig */
+  --live: #ff375f; /* „heute/empfohlen"-Marker */
+  --on-accent: #0e0f12; /* dunkle Tinte auf Bernstein */
+  --accent-ink: var(--accent); /* Akzent als Vordergrund-Marke */
 
   --font-display: var(--font-sora);
   --font-body: var(--font-sora);
@@ -81,50 +37,15 @@
   --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 22px rgba(0, 0, 0, 0.45);
   --panel-shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.55);
   --hero-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 42%);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.20), transparent 62%);
+  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.2), transparent 62%);
   --page-bg: radial-gradient(120% 80% at 50% -10%, #15171c, #0e0f12 60%);
   --page-bg-size: 100% 100%;
   --page-bg-repeat: no-repeat;
+
+  --stage-glow: rgba(255, 159, 10, 0.22);
 }
 
-[data-skin="editorial"] {
-  --base: #0f0f10;
-  --card: #16161a;
-  --surface-2: #1e1e22;
-  --line: #2c2b27;
-  --fg: #e8e2d6; /* Knochen */
-  --muted: #b9b2a4;
-  --faint: #6e695f;
-  --strong: #e8e2d6;
-  --on-strong: #0f0f10;
-  --glass: rgba(15, 15, 16, 0.72);
-
-  --accent: #ff375f; /* Rot */
-  --accent-2: #b9b2a4; /* warmes Knochen-Grau — Labels */
-  --live: #ff375f;
-  --on-accent: #0f0f10; /* dunkle Tinte auf Rot — höchster Kontrast (5,5:1) */
-  --accent-ink: var(--accent); /* Rot als Vordergrund-Marke; Override-Fallback im Provider */
-
-  --font-display: var(--font-anton); /* kondensierte Schlagzeile */
-  --font-body: var(--font-newsreader); /* Serif */
-  --font-mono: var(--font-inter); /* getrackte Labels/Zahlen */
-
-  --radius-card: 2px; /* fast scharf — Haarlinien tragen */
-  --radius-pill: 999px;
-  --panel-bg: linear-gradient(0deg, #16161a, #16161a);
-  --panel-shadow: none;
-  --panel-shadow-lg: none;
-  --hero-sheen: linear-gradient(135deg, rgba(232, 226, 214, 0.05), transparent 42%);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.18), transparent 62%);
-  --page-bg: radial-gradient(120% 75% at 50% -10%, #15151a, #0f0f10 62%);
-  --page-bg-size: 100% 100%;
-  --page-bg-repeat: no-repeat;
-  /* Papierkorn — sehr subtiles helles Rauschen, wie Druckpapier (Tafel-Look). */
-  --page-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Light theme overrides the neutral palette under either skin (identity tokens
-   — accent, fonts, radius, panel treatment — persist from the skin). */
+/* Hell: Neutralwerte wechseln, die Identität bleibt. */
 [data-theme="light"] {
   color-scheme: light;
   --base: #f2f3f5;
@@ -133,50 +54,18 @@
   --line: #d8dce3;
   --fg: #14171c;
   --muted: #54606e;
-  --faint: #6b7280; /* ≥4.5:1 auf Weiß — #9aa3af (~2.5:1) war unlesbar für Hinweise/Placeholder */
+  --faint: #6b7280; /* ≥4.5:1 auf Weiß — Hinweise/Placeholder lesbar */
   --strong: #14171c;
   --on-strong: #ffffff;
   --glass: rgba(255, 255, 255, 0.72);
+  --accent-ink: #b3700a; /* Bernstein vertieft — als Marke lesbar auf Hell */
   --panel-bg: linear-gradient(0deg, #ffffff, #ffffff);
   --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 24px -16px rgba(0, 0, 0, 0.25);
   --panel-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.08), 0 22px 48px -22px rgba(0, 0, 0, 0.3);
   --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.04), transparent 42%);
-}
-[data-theme="light"][data-skin="blueprint"] {
-  /* Blaupause-Papier: flach + Stahl-Raster. */
-  --panel-shadow: 0 1px 0 rgba(34, 43, 56, 0.06);
-  --panel-shadow-lg: 0 1px 0 rgba(34, 43, 56, 0.08);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.12), transparent 62%);
-  --page-bg: linear-gradient(rgba(110, 144, 190, 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(110, 144, 190, 0.16) 1px, transparent 1px);
-}
-[data-theme="light"][data-skin="tactile"] {
-  /* Helles, geschliffenes Instrument (erhabene Panels bleiben). */
-  --accent-ink: #b3700a; /* Bernstein vertieft — als Marke lesbar auf Hell (~3,5:1) */
   --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.16), transparent 62%);
   --page-bg: radial-gradient(120% 80% at 50% -10%, #ffffff, #eef0f3 60%);
-}
-[data-theme="light"][data-skin="editorial"] {
-  /* Creme-Papier — echtes Magazin im Hellmodus. */
-  --base: #f4f1e8;
-  --card: #faf8f1;
-  --surface-2: #ece7da;
-  --line: #c9bfa6; /* Magazin-Haarlinie: deutlich sichtbar auf Creme (Footer-Regel, Card-Outlines) */
-  --fg: #1a1813;
-  --muted: #5b5547;
-  --faint: #6e6759; /* warmes Grau, ≥4.5:1 auf Creme — vorher zu blass */
-  --strong: #1a1813;
-  --on-strong: #faf8f1;
-  --glass: rgba(250, 248, 241, 0.72);
-  --accent-2: #8a8270;
-  --panel-bg: linear-gradient(0deg, #faf8f1, #faf8f1);
-  --panel-shadow: none;
-  --panel-shadow-lg: none;
-  --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.03), transparent 42%);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 55, 95, 0.10), transparent 62%);
-  --page-bg: radial-gradient(120% 75% at 50% -10%, #f7f4ec, #f1ede1 62%);
-  /* Papierkorn hell — dunkles Rauschen auf Creme-Papier. */
-  --page-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  --stage-glow: rgba(255, 159, 10, 0.15);
 }
 
 html {
@@ -188,11 +77,9 @@ html {
   body {
     @apply font-sans antialiased;
     background-color: var(--base);
-    /* Zwei Ebenen: optionales Papierkorn (Editorial) über dem Seiten-Verlauf.
-       --page-texture defaultet auf none — andere Skins bleiben unverändert. */
-    background-image: var(--page-texture, none), var(--page-bg);
-    background-size: auto, var(--page-bg-size);
-    background-repeat: repeat, var(--page-bg-repeat);
+    background-image: var(--page-bg);
+    background-size: var(--page-bg-size);
+    background-repeat: var(--page-bg-repeat);
     background-attachment: fixed;
     color: var(--fg);
     text-rendering: optimizeLegibility;
@@ -211,8 +98,7 @@ html {
   }
 }
 
-/* Skin page background (grid / radial / near-black) — same as <body>, reusable
-   for full-screen overlays (splash) so they carry the skin's atmosphere. */
+/* Seiten-Hintergrund — wie <body>, wiederverwendbar für Vollbild-Overlays. */
 .app-bg {
   background-color: var(--base);
   background-image: var(--page-bg);
@@ -227,7 +113,7 @@ html {
   backdrop-filter: saturate(160%) blur(20px);
 }
 
-/* The one bold accent moment — depth + a charged glow in the skin accent.
+/* The one bold accent moment — depth + a charged glow in the accent.
    Use INSTEAD of shadow-card (it carries its own elevation). */
 .glow-accent {
   box-shadow:
@@ -252,8 +138,8 @@ html {
   pointer-events: none;
 }
 
-/* Horizontal scroller without a visible scrollbar (phase rail etc.) —
-   the row's own nodes communicate the overflow. */
+/* Horizontal scroller without a visible scrollbar — the row's own nodes
+   communicate the overflow. */
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -262,74 +148,13 @@ html {
   display: none;
 }
 
-/* Skin-scoped visibility — a component ships all signature variants and reveals
-   the active one with zero JS / no hydration flash (data-skin is set pre-paint).
-   Default-hide all three, then show the one matching the active skin. */
-.only-blueprint,
-.only-tactile,
-.only-editorial {
-  display: none;
-}
-[data-skin="blueprint"] .only-blueprint,
-[data-skin="tactile"] .only-tactile,
-[data-skin="editorial"] .only-editorial {
-  display: revert;
-}
-/* Gegenstück: sichtbar in Blueprint/Tactile, ausgeblendet im Editorial —
-   für Elemente, die im Editorial durch eine Tafel-Variante ersetzt werden. */
-[data-skin="editorial"] .not-editorial {
-  display: none;
-}
-/* Editorial: Untertitel in Serif-Kursive — wie die Bildunterschriften der Tafeln. */
-[data-skin="editorial"] .page-subtitle {
-  font-style: italic;
-}
-
-/* Set-logger ("Fokus-Logbuch") — one signature per skin on the ledger rows.
-   Editorial = ruled scorecard, Blueprint = dashed measurement baselines,
-   Tactile = the active set lifts as a machined chip. The active set keeps its
-   accent ring in every skin, so it's excluded from the divider rules. */
-/* `.log-row` shares the same signature on Verlauf/Plan ledgers. */
-[data-skin="editorial"] .set-row:not(.set-active),
-[data-skin="editorial"] .log-row + .log-row {
-  border-top: 1px solid var(--line);
-  padding-top: 0.375rem;
-}
-[data-skin="editorial"] .set-row:not(.set-active):first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-[data-skin="blueprint"] .set-row:not(.set-active),
-[data-skin="blueprint"] .log-row:not(:last-child) {
-  border-bottom: 1px dashed var(--line);
-  padding-bottom: 0.375rem;
-}
-[data-skin="tactile"] .set-active {
+/* Satz-Logbuch: der aktive Satz hebt sich als geschliffener Chip. */
+.set-active {
   background: var(--panel-bg);
   box-shadow: var(--panel-shadow);
 }
 
-/* ── Gym-Modus „Die Bühne": im Live-Training tritt die aktive Übung ins
-   Licht, alles Erledigte/Kommende tritt zurück. Reine visuelle Schicht. ── */
-[data-skin="blueprint"] {
-  --stage-glow: rgba(255, 55, 95, 0.26);
-}
-[data-skin="tactile"] {
-  --stage-glow: rgba(255, 159, 10, 0.22);
-}
-[data-skin="editorial"] {
-  --stage-glow: rgba(255, 55, 95, 0.2);
-}
-[data-skin="blueprint"][data-theme="light"] {
-  --stage-glow: rgba(255, 55, 95, 0.16);
-}
-[data-skin="tactile"][data-theme="light"] {
-  --stage-glow: rgba(255, 159, 10, 0.15);
-}
-[data-skin="editorial"][data-theme="light"] {
-  --stage-glow: rgba(193, 58, 44, 0.14);
-}
-
+/* Fokuslicht der aktiven Übungskarte im Live-Training. */
 .stage-dim {
   opacity: 0.55;
   filter: saturate(0.72);
@@ -337,8 +162,6 @@ html {
     opacity 0.3s ease,
     filter 0.3s ease;
 }
-/* Fokuslicht: Außen-Schein (führt den Karten-Schatten mit, damit die
-   Tiefe erhalten bleibt) + sanftes Licht von oben in der Karte. */
 .stage-light {
   box-shadow:
     0 0 56px -10px var(--stage-glow),

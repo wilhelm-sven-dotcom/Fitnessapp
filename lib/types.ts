@@ -226,17 +226,12 @@ export interface AppSettings {
   superset?: boolean;
   /** Appearance: color theme preference (default 'dark'). */
   theme?: "dark" | "light" | "system";
-  /** Appearance: design skin — drives palette, fonts, surfaces, signature. */
-  skin?: "blueprint" | "tactile" | "editorial";
   /** Appearance: legacy brand accent (id from lib/theme ACCENTS) — fallback icon only. */
   accentColor?: string;
   /** App-icon design (custom home-screen icon). Unset = generated default. */
   icon?: IconConfig;
-  /** Optional accent override (hex) — replaces the skin's accent app-wide. */
+  /** Optional accent override (hex) — replaces the design's amber app-wide. */
   accentOverride?: string;
-  /** Optional text-color override (hex) — replaces the skin's --fg in DARK mode
-   *  only (light mode keeps ink for readability). Unset = skin default. */
-  textTone?: string;
   /** Display name for the personalized greeting ("Guten Abend, Sven"). */
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */

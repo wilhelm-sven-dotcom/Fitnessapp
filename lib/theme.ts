@@ -1,10 +1,8 @@
 /**
- * Appearance helpers. Two orthogonal axes drive the look, both on <html>:
- *   · data-theme — dark (default) / light ; "system" resolved at runtime.
- *   · data-skin  — blueprint (default) / tactile ; carries its own accent,
- *     fonts, surfaces and signature (see globals.css). The skin owns --accent,
- *     so theme no longer sets it.
- * The legacy ACCENTS palette is retained only for the app-icon art.
+ * Appearance helpers. EINE Design-Identität; nur data-theme auf <html> steuert
+ * dunkel/hell ("system" wird zur Laufzeit aufgelöst). Der Akzent (Bernstein)
+ * gehört dem Design (globals.css); `accentOverride` kann ihn ersetzen.
+ * Die ACCENTS/PALETTE-Listen speisen den App-Icon-Designer.
  */
 
 export type ThemePref = "dark" | "light" | "system";
@@ -65,9 +63,9 @@ function contrastRatio(a: string, b: string): number {
  * `onAccent`, which colours text ON an accent-filled surface.
  */
 export function accentInk(hex: string, baseIsLight: boolean): string {
-  const base = baseIsLight ? "#f4f1e8" : "#0f0f10";
+  const base = baseIsLight ? "#f2f3f5" : "#0e0f12";
   if (contrastRatio(hex, base) >= 3) return hex;
-  return baseIsLight ? "#1a1813" : "#f4f1e8";
+  return baseIsLight ? "#14171c" : "#eceef2";
 }
 
 /**
@@ -92,42 +90,10 @@ export const PALETTE = [
   "#0c0e12", // Schwarz
 ] as const;
 
-/* ── Skins ────────────────────────────────────────────────────────────────── */
-
-export type SkinId = "blueprint" | "tactile" | "editorial";
-
-export const SKINS: { id: SkinId; label: string; hint: string }[] = [
-  { id: "blueprint", label: "Blueprint", hint: "Messraster, Stahl & Rot — technisch, präzise." },
-  { id: "tactile", label: "Tactile", hint: "Tacho & Bernstein — geschliffenes Instrument." },
-  { id: "editorial", label: "Editorial", hint: "Magazin — Anton-Schlagzeile, Serif, Knochen auf Schwarz." },
-];
-
-export const DEFAULT_SKIN: SkinId = "tactile";
-
-const SKIN_BASE: Record<SkinId, string> = {
-  blueprint: "#0c0e12",
-  tactile: "#0e0f12",
-  editorial: "#0f0f10",
-};
-const LIGHT_BG = "#f2f3f5";
-
-export function resolveSkin(skin: string | undefined): SkinId {
-  return skin === "blueprint" || skin === "editorial" ? skin : "tactile";
-}
-
-/** Apply the skin to <html> and match the status-bar color (dark only). */
-export function applySkin(skin: SkinId | undefined): void {
-  if (typeof document === "undefined") return;
-  const s = resolveSkin(skin);
-  const root = document.documentElement;
-  root.setAttribute("data-skin", s);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta && root.getAttribute("data-theme") !== "light") {
-    meta.setAttribute("content", SKIN_BASE[s]);
-  }
-}
-
 /* ── Theme (dark / light) ────────────────────────────────────────────────── */
+
+const DARK_BG = "#0e0f12";
+const LIGHT_BG = "#f2f3f5";
 
 export function resolveTheme(pref: ThemePref | undefined): "dark" | "light" {
   if (pref === "light") return "light";
@@ -137,13 +103,11 @@ export function resolveTheme(pref: ThemePref | undefined): "dark" | "light" {
   return "dark";
 }
 
-/** Apply theme to <html>; the skin sets --accent and (in dark) the bar color. */
+/** Apply theme to <html> and match the status-bar color. */
 export function applyTheme(pref: ThemePref | undefined): void {
   if (typeof document === "undefined") return;
   const resolved = resolveTheme(pref);
   document.documentElement.setAttribute("data-theme", resolved);
-  if (resolved === "light") {
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", LIGHT_BG);
-  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", resolved === "light" ? LIGHT_BG : DARK_BG);
 }
