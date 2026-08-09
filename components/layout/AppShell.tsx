@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Cloud, CloudOff, Settings, Sparkles } from "lucide-react";
+import { Cloud, CloudOff, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/brand/BrandMark";
@@ -56,20 +56,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <CloudOff size={20} />
                       </Link>
                     ))}
-                  <Link
-                    href="/ausdauer"
-                    aria-label="Ausdauer"
-                    className="rounded-full p-2.5 text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-                  >
-                    <Activity size={20} />
-                  </Link>
-                  <Link
-                    href="/coach"
-                    aria-label="KI-Coach"
-                    className="rounded-full p-2.5 text-accent-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-                  >
-                    <Sparkles size={20} />
-                  </Link>
                   <Link
                     href="/settings"
                     aria-label="Einstellungen"

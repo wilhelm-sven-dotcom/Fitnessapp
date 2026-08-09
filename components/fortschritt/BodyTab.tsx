@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { BeforeAfter } from "@/components/progress/BeforeAfter";
 import { PhotoImg } from "@/components/progress/PhotoImg";
+import { TrendChart } from "@/components/progress/TrendChart";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { Readout } from "@/components/ui/Readout";
 import { Pressable } from "@/components/ui/pressable";
 import { fmtDateShort } from "@/lib/format";
 import { prTimeline } from "@/lib/records";
@@ -25,9 +26,56 @@ function kgDelta(a?: number, b?: number): string | null {
   return `${d > 0 ? "+" : ""}${fmtKg(d)} kg`;
 }
 
-export default function PhysiquePage() {
+function BodyCard({
+  label,
+  unit,
+  values,
+}: {
+  label: string;
+  unit: string;
+  values: number[];
+}) {
+  const latest = values[values.length - 1];
+  const delta = values.length > 1 ? latest - values[0] : 0;
+  return (
+    <Card>
+      <div className="flex items-end justify-between">
+        <div>
+          <Readout
+            value={latest}
+            unit={unit}
+            decimals={unit === "kg" ? 1 : 0}
+            count={false}
+            size="md"
+          />
+          <p className="mt-0.5 text-xs text-muted">{label}</p>
+        </div>
+        {values.length > 1 && (
+          <span className="text-xs tabular-nums text-muted">
+            {delta > 0 ? "+" : ""}
+            {delta.toFixed(1)} {unit}
+          </span>
+        )}
+      </div>
+      <div className="mt-2">
+        <TrendChart values={values} />
+      </div>
+    </Card>
+  );
+}
+
+/** Körper: Gewicht & Bauchumfang als Kurven, Fortschrittsfotos als
+ *  Vorher/Nachher-Regler und die Timeline mit den Meilensteinen dazwischen. */
+export function BodyTab() {
   const { body, log } = useTraining();
   const router = useRouter();
+
+  const weightSeries = body
+    .filter((m) => m.weightKg != null)
+    .map((m) => m.weightKg as number);
+  const waistSeries = body
+    .filter((m) => m.waistCm != null)
+    .map((m) => m.waistCm as number);
 
   // Aufsteigend (Provider sortiert so); Fotos sind die Timeline-Anker.
   const photos = useMemo(() => body.filter((b) => b.photoId), [body]);
@@ -72,11 +120,16 @@ export default function PhysiquePage() {
 
   return (
     <div>
-      <PageHeader
-        eyebrow="Körper"
-        title="Physique"
-        subtitle="Deine Verwandlung — Foto für Foto, mit den Meilensteinen dazwischen."
-      />
+      {(weightSeries.length > 0 || waistSeries.length > 0) && (
+        <div className="mb-4 space-y-3">
+          {weightSeries.length > 0 && (
+            <BodyCard label="Körpergewicht" unit="kg" values={weightSeries} />
+          )}
+          {waistSeries.length > 0 && (
+            <BodyCard label="Bauchumfang" unit="cm" values={waistSeries} />
+          )}
+        </div>
+      )}
 
       {photos.length >= 2 && before?.photoId && after?.photoId ? (
         <div>
@@ -99,21 +152,21 @@ export default function PhysiquePage() {
             Erstes Foto gesetzt — ab dem zweiten gibt es den Vorher/Nachher-Regler.
           </p>
         </div>
-      ) : (
+      ) : body.length === 0 ? (
         <EmptyState
           icon={Camera}
-          title="Noch keine Fortschrittsfotos"
-          description="Halte deinen Ausgangspunkt fest — künftige Vergleiche machen den Fortschritt sichtbar, den die Waage verschweigt."
+          title="Noch keine Körperdaten"
+          description="Halte Gewicht, Bauchumfang und ein Ausgangsfoto fest — künftige Vergleiche zeigen den Fortschritt, den die Waage verschweigt."
           action={
             <Pressable
               onClick={() => router.push("/settings")}
               className="rounded-pill bg-accent-sessions px-5 py-2.5 text-sm font-semibold text-on-accent focus:outline-none"
             >
-              Foto hinzufügen
+              In den Einstellungen erfassen
             </Pressable>
           }
         />
-      )}
+      ) : null}
 
       {body.length > 0 && (
         <Card className="mb-3">
@@ -179,7 +232,9 @@ export default function PhysiquePage() {
                         aria-label="Als Nachher-Bild setzen"
                         className={cn(
                           "h-7 w-7 rounded-full font-mono text-xs font-bold focus:outline-none",
-                          pIdx === aIdx ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+                          pIdx === aIdx
+                            ? "bg-accent-sessions text-on-accent"
+                            : "bg-surface-2 text-muted",
                         )}
                       >
                         B
@@ -195,7 +250,7 @@ export default function PhysiquePage() {
 
       <p className="mt-4 text-center text-xs leading-relaxed text-faint">
         Fotos bleiben auf deinem Gerät — und in deiner privaten Cloud, wenn du
-        angemeldet bist. Neue Fotos: Einstellungen → Körperdaten.
+        angemeldet bist. Neue Daten: Einstellungen → Körperdaten.
       </p>
     </div>
   );

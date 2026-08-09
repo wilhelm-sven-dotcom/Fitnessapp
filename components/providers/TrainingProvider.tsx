@@ -255,7 +255,6 @@ interface TrainingContextValue {
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
-  setCardioFinisher: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
@@ -645,7 +644,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     [settings, body],
   );
   const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
-  const hasBike = (equip as string[]).includes("bike");
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
     // DAS Trainingsmodell: die heutige, frisch komponierte Einheit.
     if (key === "today")
@@ -676,16 +674,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  /** Append an optional Peloton finisher to A/B/C sessions (opt-in, needs a bike). */
-  const withFinisher = (list: ResolvedSlot[], key: string): ResolvedSlot[] => {
-    if (!settings.cardioFinisher || !hasBike) return list;
-    if (key === "today" || key === CARDIO_DAY.key || key === EXAM_DAY.key || key === RESET_DAY.key || days.some((d) => d.id === key))
-      return list;
-    if (list.some((s) => s.ex.pattern === "cardio")) return list;
-    const fin = allLib.find((e) => e.id === "bike_finisher");
-    return fin ? [...list, { ex: fin, slotKey: "finisher", pool: [] }] : list;
-  };
-
   const nextIndex = useMemo(() => {
     if (!log.length) return 0;
     const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1]?.dayKey);
@@ -709,18 +697,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const recTpl = TEMPLATE[nextIndex];
   const recList = useMemo(
     () =>
-      withFinisher(
-        applyReadiness(
-          fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
-            protectCore: backSafeActive,
-            choices,
-          }).list,
-          readinessScale,
-        ),
-        recTpl.key,
+      applyReadiness(
+        fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
+          protectCore: backSafeActive,
+          choices,
+        }).list,
+        readinessScale,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, backSafeActive, settings.timeBudgetMin, settings.cardioFinisher, readinessScale],
+    [recTpl, choices, equip, custom, backSafeActive, settings.timeBudgetMin, readinessScale],
   );
   const estimatedMin = useMemo(() => estimateSessionMin(recList), [recList]);
 
@@ -938,8 +923,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, weightStep: step });
   const setBikeWarmup = (on: boolean) =>
     void saveSettings({ ...settings, bikeWarmup: on });
-  const setCardioFinisher = (on: boolean) =>
-    void saveSettings({ ...settings, cardioFinisher: on });
   const setCoachMotivation = (on: boolean) =>
     void saveSettings({ ...settings, coachMotivation: on });
 
@@ -1484,7 +1467,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setAccent,
     setWeightStep,
     setBikeWarmup,
-    setCardioFinisher,
     setCoachMotivation,
     setKeepAwake,
     setAiPlanning,

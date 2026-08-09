@@ -31,7 +31,6 @@ export default function SettingsPage() {
     setCueVolume,
     setWeightStep,
     setBikeWarmup,
-    setCardioFinisher,
     setCoachMotivation,
     setKeepAwake,
   } = useTraining();
@@ -233,12 +232,6 @@ export default function SettingsPage() {
             onChange={setBikeWarmup}
             label="Auf dem Bike aufwärmen"
             hint="Stellt jeder Einheit ein lockeres 3-Minuten-Einrollen auf dem Peloton voran (Bike muss im Gym aktiv sein)."
-          />
-          <Toggle
-            checked={!!settings.cardioFinisher}
-            onChange={setCardioFinisher}
-            label="Cardio-Finisher"
-            hint="Hängt an A/B/C einen kurzen Peloton-Sprintblock ans Ende — extra Kondition, jederzeit abschaltbar."
           />
           <Toggle
             checked={settings.coachMotivation !== false}
