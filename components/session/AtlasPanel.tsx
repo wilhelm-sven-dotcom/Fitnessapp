@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
+import { Pressable } from "@/components/ui/pressable";
 import { liveLine, motivationLine } from "@/lib/trainer";
 import type { ExRecord } from "@/lib/records";
 import type { ReadinessScale } from "@/lib/readiness";
@@ -28,6 +29,7 @@ export function AtlasPanel({
   isExam,
   motivateOn,
   voiceOn,
+  override,
 }: {
   ex: Exercise;
   item: PlannedExercise;
@@ -39,6 +41,9 @@ export function AtlasPanel({
   isExam: boolean;
   motivateOn: boolean;
   voiceOn: boolean;
+  /** KI-Reaktion (gesprochen vom Runner) — ersetzt die deterministische Zeile,
+   *  optional mit übernehmbarem Eingriff. */
+  override?: { text: string; actionLabel?: string; onApply?: () => void } | null;
 }) {
   const done = sets.filter((s) => !s.warmup && isFilled(s)).length;
 
@@ -76,22 +81,32 @@ export function AtlasPanel({
     speak(line.text);
   }, [line, voiceOn, item.id, done]);
 
-  if (!line) return null;
+  if (!override && !line) return null;
 
   return (
     <section
       className={cn(
         "rounded-card border border-line bg-surface-1 px-4 py-3 shadow-card",
-        line.tone === "push" && "border-l-2 border-l-accent-sessions",
+        (override || line?.tone === "push") && "border-l-2 border-l-accent-sessions",
       )}
     >
       <p className="flex items-center gap-2">
-        <AtlasMark size={13} className="shrink-0 text-fg" />
+        <AtlasMark size={13} live={!!override} className="shrink-0 text-fg" />
         <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
           ATLAS
         </span>
       </p>
-      <p className="mt-1 text-sm leading-snug text-fg">{line.text}</p>
+      <p className="mt-1 text-sm leading-snug text-fg">
+        {override ? override.text : line!.text}
+      </p>
+      {override?.actionLabel && override.onApply && (
+        <Pressable
+          onClick={override.onApply}
+          className="mt-2 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+        >
+          {override.actionLabel}
+        </Pressable>
+      )}
     </section>
   );
 }

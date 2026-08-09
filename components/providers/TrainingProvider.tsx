@@ -240,6 +240,8 @@ interface TrainingContextValue {
   removeGym: (id: string) => void;
   /** Den Live-State des Runners als LoggedSession speichern (leer → null). */
   saveActiveSession: (state: ActiveSessionState) => Promise<SessionSummary | null>;
+  /** KI-Debrief nachträglich an die zuletzt gespeicherte Einheit schreiben. */
+  amendLastDebrief: (lines: string[]) => void;
   /** Laufende Einheit verwerfen: lokalen Live-State und Tages-Flags räumen. */
   discardActive: () => void;
   deleteSession: (realIdx: number) => Promise<void>;
@@ -1302,6 +1304,21 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return summary;
   };
 
+  /** Das gestreamte KI-Debrief nachträglich an die eben gespeicherte Einheit
+   *  schreiben — Verlauf und Cloud zeigen dann dauerhaft dieselben Zeilen wie
+   *  der Sieger-Moment. */
+  const amendLastDebrief = (lines: string[]) => {
+    const clean = lines.map((l) => l.trim()).filter(Boolean).slice(0, 3);
+    if (!clean.length) return;
+    setLog((prev) => {
+      if (!prev.length) return prev;
+      const next = [...prev];
+      next[next.length - 1] = { ...next[next.length - 1], debrief: clean };
+      void storage.setJSON(KEYS.log, next);
+      return next;
+    });
+  };
+
   // Leave an active session WITHOUT saving — clears the persisted live state
   // so a discarded workout isn't silently resumed or logged.
   const discardActive = () => {
@@ -1454,6 +1471,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     addGym,
     removeGym,
     saveActiveSession,
+    amendLastDebrief,
     discardActive,
     deleteSession,
     resetAll,

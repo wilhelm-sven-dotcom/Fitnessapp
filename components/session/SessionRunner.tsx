@@ -35,9 +35,12 @@ import {
   type ActiveSessionState,
   type PrefillOpts,
 } from "@/lib/active-session";
+import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
+import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
+import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { dailyToTemplate, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
-import { presc } from "@/lib/progression";
+import { presc, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
@@ -54,6 +57,16 @@ interface RestState {
   total: number;
 }
 
+/** ATLAS' Live-Reaktion (KI) — ersetzt die deterministische Zeile im Panel. */
+interface LiveCoachCall {
+  itemId: string;
+  say: string;
+  adjustment?: CoachReactAdjustment;
+}
+
+/** Kosten-Deckel: mehr Live-Reaktionen braucht keine Einheit. */
+const COACH_CALL_CAP = 40;
+
 /**
  * Der Fokus-Stepper: EINE Übung auf der Bühne, Check-in → Aufwärmen →
  * Übungen → Abschluss als Phasen. Jeder Commit persistiert lokal
@@ -67,6 +80,7 @@ export function SessionRunner() {
     allLib,
     has,
     log,
+    body,
     lastPerf,
     daysAgo,
     settings,
@@ -76,6 +90,7 @@ export function SessionRunner() {
     backSpareToday,
     setBackSpareToday,
     saveActiveSession,
+    amendLastDebrief,
     discardActive,
     saving,
     exerciseNotes,
@@ -94,6 +109,16 @@ export function SessionRunner() {
   const activeRef = useRef<ActiveSessionState | null>(null);
   const committedRef = useRef<Set<string>>(new Set());
   const recordCelebratedRef = useRef<Set<string>>(new Set());
+
+  // ── ATLAS live: KI-Reaktion pro Satz (deterministische Zeile sofort, die
+  //    KI ersetzt sie). Debounce lässt RIR/Gewichts-Nachträge einfließen; die
+  //    Generation invalidiert wartende UND laufende Anfragen. ──
+  const [coachCall, setCoachCall] = useState<LiveCoachCall | null>(null);
+  const coachGenRef = useRef(0);
+  const coachTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coachPendingRef = useRef<{ itemId: string; setIdx: number } | null>(null);
+  const coachCountRef = useRef(0);
+  const coachOffRef = useRef(false); // Route meldete configured:false
 
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
   const recordMap = useMemo(
@@ -263,6 +288,149 @@ export function SessionRunner() {
     });
   };
 
+  /* ── ATLAS live: KI-Reaktion je Satz (Cap, Debounce, Generation) ── */
+
+  const persona = useMemo(
+    () => athletePersona(effectiveProfile(settings, body), settings.userName),
+    [settings, body],
+  );
+
+  const cancelCoachCall = () => {
+    coachGenRef.current += 1;
+    if (coachTimerRef.current) clearTimeout(coachTimerRef.current);
+    coachTimerRef.current = null;
+    coachPendingRef.current = null;
+  };
+
+  /** Eingriff härten: Gewicht nur für die Übung der Ansage, nur wenn dort noch
+   *  ein Satz offen ist, gerundet und höchstens ±10 % (mind. ein Schritt) um
+   *  das eben bewegte Gewicht — das Versprechen aus dem Prompt, hier erzwungen. */
+  const vetAdjustment = (
+    adj: CoachReactAdjustment | undefined,
+    itemId: string,
+    lastSet: SetEntry,
+  ): CoachReactAdjustment | undefined => {
+    if (!adj) return undefined;
+    if (adj.kind === "rest") return adj;
+    const st = activeRef.current;
+    if (!st) return undefined;
+    const item = st.session.items.find((it) => it.id === itemId);
+    const ex = item ? byId.get(item.exerciseId) : undefined;
+    if (!ex?.weighted) return undefined;
+    const sets = st.entries[itemId] ?? [];
+    if (!sets.some((x) => !x.warmup && (x.reps === "" || x.reps == null)))
+      return undefined;
+    const ref = Number(lastSet.weight);
+    if (!Number.isFinite(ref) || ref <= 0) return undefined;
+    const step = settings.weightStep || 2.5;
+    const bound = Math.max(ref * 0.1, step);
+    const clamped = Math.min(ref + bound, Math.max(ref - bound, adj.value));
+    const rounded = roundStep(clamped, step);
+    return rounded > 0 ? { kind: "weight", value: rounded } : undefined;
+  };
+
+  const requestCoachCall = async (itemId: string, setIdx: number) => {
+    const st = activeRef.current;
+    if (!st) return;
+    if (settings.coachLive === false || coachOffRef.current) return;
+    if (coachCountRef.current >= COACH_CALL_CAP) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    const item = st.session.items.find((it) => it.id === itemId);
+    const ex = item ? byId.get(item.exerciseId) : undefined;
+    const set = st.entries[itemId]?.[setIdx];
+    if (!item || !ex || !set || set.warmup || ex.pattern === "cardio") return;
+    if (set.reps === "" || set.reps == null) return;
+    coachCountRef.current += 1;
+    const transcript = buildSessionTranscript({
+      state: st,
+      allLib,
+      itemId,
+      setIdx,
+      records: recordMap,
+      exerciseNotes,
+      budgetMin: settings.timeBudgetMin,
+    });
+    const gen = coachGenRef.current;
+    try {
+      const res = await fetch("/api/atlas/set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript, persona }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; call?: { say?: string; adjustment?: CoachReactAdjustment }; configured?: boolean }
+        | null;
+      if (data?.configured === false) {
+        coachOffRef.current = true;
+        return;
+      }
+      // Inzwischen neuer Satz/Sprung? Dann verfällt die Antwort.
+      if (gen !== coachGenRef.current) return;
+      if (!data?.ok || !data.call?.say) return;
+      const call: LiveCoachCall = {
+        itemId,
+        say: data.call.say,
+        adjustment: vetAdjustment(data.call.adjustment, itemId, set),
+      };
+      setCoachCall(call);
+      if (settings.voiceCues) speak(call.say);
+    } catch {
+      /* Panel bleibt bei der deterministischen Zeile */
+    }
+  };
+
+  /** Nach einem Satz-Commit die KI-Reaktion planen — der Debounce lässt
+   *  RIR-/Gewichts-Nachträge desselben Satzes noch einfließen. */
+  const scheduleCoachCall = (itemId: string, setIdx: number) => {
+    setCoachCall(null);
+    cancelCoachCall();
+    coachPendingRef.current = { itemId, setIdx };
+    coachTimerRef.current = setTimeout(() => {
+      coachTimerRef.current = null;
+      coachPendingRef.current = null;
+      void requestCoachCall(itemId, setIdx);
+    }, 2000);
+  };
+
+  /** RIR/Intensität/Gewicht auf einen Satz mit wartender Anfrage → schieben. */
+  const setFieldEffort = (
+    itemId: string,
+    i: number,
+    field: keyof SetEntry,
+    val: string | number | boolean | undefined,
+  ) => {
+    setField(itemId, i, field, val);
+    const p = coachPendingRef.current;
+    if (p && p.itemId === itemId && p.setIdx === i) scheduleCoachCall(itemId, i);
+  };
+
+  /** Eingriff übernehmen: Gewicht → nächster offener Satz der Übung (Kaskade
+   *  zieht Folgesätze mit); Pause → laufender Countdown wird verlängert. */
+  const applyCoach = () => {
+    const call = coachCall;
+    if (!call?.adjustment) return;
+    const adj = call.adjustment;
+    if (adj.kind === "rest") {
+      setRest((r) =>
+        r ? { ...r, left: r.left + adj.value, total: r.total + adj.value } : r,
+      );
+    } else {
+      const st = activeRef.current;
+      const sets = st?.entries[call.itemId] ?? [];
+      const idx = sets.findIndex((x) => !x.warmup && (x.reps === "" || x.reps == null));
+      if (idx >= 0) setField(call.itemId, idx, "weight", String(adj.value));
+    }
+    tap();
+    setCoachCall(null);
+  };
+
+  // Aufräumen beim Verlassen; Bühnenwechsel macht die alte Ansage gegenstandslos.
+  useEffect(() => cancelCoachCall, []);
+  useEffect(() => {
+    setCoachCall(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.currentIndex]);
+
   const onReps = (itemId: string, i: number, oldVal: string, val: string) => {
     setField(itemId, i, "reps", val);
     if ((oldVal !== "" && oldVal != null) || val === "" || val == null) return;
@@ -284,6 +452,7 @@ export function SessionRunner() {
       tap();
     }
     setRest({ itemId, setIdx: i, left: TIME.restSec, total: TIME.restSec });
+    scheduleCoachCall(itemId, i);
   };
 
   /* ── Navigation ── */
@@ -326,16 +495,58 @@ export function SessionRunner() {
 
   /* ── Abschluss ── */
 
+  /** ATLAS-Debrief streamen: ersetzt die deterministischen Zeilen im
+   *  Sieger-Moment und wird nach Abschluss an die gespeicherte Einheit
+   *  geschrieben (bleibt so für Verlauf + Cloud stabil). */
+  const streamDebrief = async (state: ActiveSessionState, summary: SessionSummary) => {
+    if (settings.coachLive === false) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    try {
+      const facts = buildDebriefFacts({ state, allLib, summary });
+      const res = await fetch("/api/atlas/debrief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ facts, persona }),
+      });
+      if (res.headers.get("content-type")?.includes("application/json")) return;
+      const reader = res.body?.getReader();
+      if (!reader) return;
+      const dec = new TextDecoder();
+      let acc = "";
+      const toLines = (s: string) =>
+        s
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l && !l.startsWith("("))
+          .slice(0, 3);
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += dec.decode(value, { stream: true });
+        const lines = toLines(acc);
+        if (lines.length) setComplete((c) => (c ? { ...c, debrief: lines } : c));
+      }
+      const lines = toLines(acc);
+      if (lines.length >= 2) amendLastDebrief(lines);
+    } catch {
+      /* deterministisches Debrief bleibt stehen */
+    }
+  };
+
   const doSave = async (backTraffic: TrafficLight | null, note: string) => {
     const st = activeRef.current;
     if (!st) return;
+    cancelCoachCall();
+    setCoachCall(null);
     const final: ActiveSessionState = { ...st, backTraffic, note };
     commit(final);
     const summary = await saveActiveSession(final);
     activeRef.current = null;
     setActive(null);
-    if (summary) setComplete(summary);
-    else router.replace("/");
+    if (summary) {
+      setComplete(summary);
+      void streamDebrief(final, summary);
+    } else router.replace("/");
   };
 
   const doDiscard = () => {
@@ -480,10 +691,10 @@ export function SessionRunner() {
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
         onOpenGuide={() => setGuideOpen(true)}
-        onWeight={(i, val) => setField(item.id, i, "weight", val)}
+        onWeight={(i, val) => setFieldEffort(item.id, i, "weight", val)}
         onReps={(i, oldVal, val) => onReps(item.id, i, oldVal, val)}
-        onRir={(i, val) => setField(item.id, i, "rir", val)}
-        onIntensity={(i, val) => setField(item.id, i, "intensity", val)}
+        onRir={(i, val) => setFieldEffort(item.id, i, "rir", val)}
+        onIntensity={(i, val) => setFieldEffort(item.id, i, "intensity", val)}
         onCardioToggle={(done) => setField(item.id, 0, "reps", done ? "1" : "")}
       />
 
@@ -500,9 +711,9 @@ export function SessionRunner() {
                   .filter((s) => !s.warmup).length
               : 0
           }
-          onRir={(v) => rest && setField(rest.itemId, rest.setIdx, "rir", v)}
+          onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
           onIntensity={(v) =>
-            rest && setField(rest.itemId, rest.setIdx, "intensity", v)
+            rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
           }
           onAdd={() => setRest((r) => (r ? { ...r, left: r.left + 15 } : r))}
           onSkip={() => setRest(null)}
@@ -520,6 +731,21 @@ export function SessionRunner() {
         isExam={isExam}
         motivateOn={settings.coachMotivation !== false}
         voiceOn={!!settings.voiceCues}
+        override={
+          coachCall && coachCall.itemId === item.id
+            ? {
+                text: coachCall.say,
+                actionLabel: coachCall.adjustment
+                  ? coachCall.adjustment.kind === "weight"
+                    ? `Auf ${String(coachCall.adjustment.value).replace(".", ",")} kg`
+                    : rest
+                      ? `+${coachCall.adjustment.value} s Pause`
+                      : undefined
+                  : undefined,
+                onApply: applyCoach,
+              }
+            : null
+        }
       />
 
       <div className="flex items-center gap-2 pt-1">
