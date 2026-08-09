@@ -152,6 +152,8 @@ export const FIGURE_ALIAS: Record<string, string> = {
   face_pull_cable: "face_pull", rear_delt_row: "row1",
   // Core
   hollow_hold: "deadbug", hanging_knee_raise: "pullup", cable_chop: "pallof",
+  db_chop: "pallof", around_world: "ohp_stand", wipers: "deadbug",
+  reverse_crunch: "deadbug", crunch: "deadbug",
   russian_twist: "pallof", mountain_climbers: "plank", superman: "birddog",
   farmer_carry: "suitcase",
   // Waden
