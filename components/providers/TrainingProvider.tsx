@@ -25,13 +25,12 @@ import {
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import {
   resolveDailySession,
-  dailyToTemplate,
-  swapItem as swapDailyItem,
   todayKey,
   type DailySession,
 } from "@/lib/session-model";
+import type { ActiveSessionState } from "@/lib/active-session";
 import type { JumpEntry } from "@/lib/jump";
-import { presc, resolveDay, resolveResetSession, resolveSession, warmupSets } from "@/lib/progression";
+import { resolveDay, resolveResetSession, resolveSession } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseAffinity } from "@/lib/affinity";
 import {
@@ -96,7 +95,6 @@ import type {
   SessionExercise,
   SetEntry,
   Template,
-  TrafficLight,
   Unit,
   WorkoutDay,
 } from "@/lib/types";
@@ -185,22 +183,13 @@ interface TrainingContextValue {
   body: BodyMetric[];
   loading: boolean;
   saving: boolean;
-  activeKey: string | null;
-  entries: Record<string, SetEntry[]>;
-  backTraffic: TrafficLight | null;
-  note: string;
   allLib: Exercise[];
   has: (k: string) => boolean;
-  nextIndex: number;
   recTpl: Template;
   recList: ResolvedSlot[];
-  activeList: ResolvedSlot[];
   estimatedMin: number;
   settings: AppSettings;
   todayReadiness: Readiness | null;
-  /** Warm-up phase of the active session completed (guided flow). */
-  warmupDone: boolean;
-  setWarmupDone: (done: boolean) => void;
   readinessScale: ReadinessScale;
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
@@ -220,24 +209,8 @@ interface TrainingContextValue {
   setBackSpareToday: (on: boolean) => void;
   /** Rücken-Schonung heute aktiv — Ampel-rot ODER manueller Tages-Schalter. */
   backSafeActive: boolean;
-  /** Beim Start eingefrorene Schon-Entscheidung der LAUFENDEN Einheit. */
-  activeBackSafe: boolean;
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
-  sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
-  sessionTemplate: (key: string) => Template | null;
-  startSession: (
-    key: string,
-    readiness?: Readiness,
-    opts?: { spareBack?: boolean },
-  ) => void;
-  setEntry: (
-    exId: string,
-    i: number,
-    field: keyof SetEntry,
-    val: string | number | boolean | undefined,
-  ) => void;
-  swapExercise: (slotKey: string, newId: string) => void;
   toggleEquip: (k: EquipKey) => void;
   addCustom: (data: AddCustomData) => void;
   removeCustom: (id: string) => void;
@@ -251,16 +224,15 @@ interface TrainingContextValue {
   switchGym: (id: string) => void;
   addGym: (name: string) => void;
   removeGym: (id: string) => void;
-  saveSession: () => Promise<SessionSummary | null>;
-  discardSession: () => void;
+  /** Den Live-State des Runners als LoggedSession speichern (leer → null). */
+  saveActiveSession: (state: ActiveSessionState) => Promise<SessionSummary | null>;
+  /** Laufende Einheit verwerfen: lokalen Live-State und Tages-Flags räumen. */
+  discardActive: () => void;
   deleteSession: (realIdx: number) => Promise<void>;
   resetAll: () => Promise<void>;
-  setBackTraffic: (v: TrafficLight | null) => void;
-  setNote: (v: string) => void;
   setBudget: (min: number) => void;
   setVoiceCues: (on: boolean) => void;
   setCueVolume: (v: number) => void;
-  setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
   setIcon: (icon: IconConfig | undefined) => void;
   setAccentOverride: (hex: string | undefined) => void;
@@ -354,25 +326,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [todaySession, setTodaySessionState] = useState<DailySession | null>(null);
   const [jumps, setJumps] = useState<JumpEntry[]>([]);
-  const [entries, setEntries] = useState<Record<string, SetEntry[]>>({});
-  const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
-  const [note, setNoteState] = useState("");
   const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
   // „Rücken heute schonen" — manueller Tages-Schalter (Session-scoped wie
   // todayReadiness: nie persistiert, Reset bei Save/Discard).
   const [backSpareToday, setBackSpareToday] = useState(false);
-  // Die beim Start EINGEFRORENE Schon-Entscheidung der laufenden Einheit.
-  // activeList darf NICHT am live veränderlichen Tages-Schalter hängen —
-  // sonst tauscht ein Toggle-Tap (Home ist per Zurück-Geste erreichbar)
-  // mid-session die Übungen und protokollierte Sätze gehen beim Speichern
-  // still verloren.
-  const [activeBackSafe, setActiveBackSafe] = useState(false);
-  // Warm-up phase of the ACTIVE session was completed (player finished or
-  // checked off manually). Session-scoped: reset on start/save/discard.
-  const [warmupDone, setWarmupDone] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   // Read every key from the local cache into state. Reused after a cloud pull.
@@ -711,25 +670,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return fin ? [...list, { ex: fin, slotKey: "finisher", pool: [] }] : list;
   };
 
-  // Real template, or a synthesized one for a custom day (slots = its patterns),
-  // so workout / warmup / saveSession treat days exactly like A/B/C.
-  const sessionTemplate = (key: string): Template | null => {
-    if (key === "today")
-      return todaySession ? dailyToTemplate(todaySession, allLib) : null;
-    const day = days.find((d) => d.id === key);
-    if (day) {
-      const byId = new Map(allLib.map((e) => [e.id, e]));
-      const slots = day.items
-        .map((it) => byId.get(it.exerciseId)?.pattern)
-        .filter((p): p is Pattern => !!p);
-      return { key: day.id, name: day.name, focus: day.focus, slots };
-    }
-    if (key === CARDIO_DAY.key) return CARDIO_DAY;
-    if (key === EXAM_DAY.key) return EXAM_DAY;
-    if (key === RESET_DAY.key) return RESET_DAY;
-    return TEMPLATE.find((t) => t.key === key) ?? null;
-  };
-
   const nextIndex = useMemo(() => {
     if (!log.length) return 0;
     const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1]?.dayKey);
@@ -757,7 +697,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         applyReadiness(
           fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
             protectCore: backSafeActive,
-            superset: settings.superset,
             choices,
           }).list,
           readinessScale,
@@ -765,34 +704,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         recTpl.key,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, backSafeActive, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
+    [recTpl, choices, equip, custom, backSafeActive, settings.timeBudgetMin, settings.cardioFinisher, readinessScale],
   );
-  const estimatedMin = useMemo(
-    () => estimateSessionMin(recList, { superset: settings.superset }),
-    [recList, settings.superset],
-  );
-
-  // The session actually being trained — budget-trimmed, back-safe, readiness-scaled.
-  // Both the workout screen and saveSession read this so shown == saved.
-  const activeList = useMemo(() => {
-    if (!activeKey) return [];
-    const noTrim =
-      activeKey === "today" ||
-      days.some((d) => d.id === activeKey) ||
-      activeKey === CARDIO_DAY.key ||
-      activeKey === RESET_DAY.key;
-    const base = sessionOf(activeKey, activeBackSafe);
-    // Heute/custom/cardio werden exakt wie komponiert trainiert (kein Auto-Trim).
-    const fitted = noTrim
-      ? base
-      : fitToBudget(base, settings.timeBudgetMin, {
-          protectCore: activeBackSafe,
-          superset: settings.superset,
-          choices,
-        }).list;
-    return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, todaySession, choices, equip, custom, days, activeBackSafe, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
+  const estimatedMin = useMemo(() => estimateSessionMin(recList), [recList]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
@@ -932,131 +846,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ];
   }, [log, weekCount, muscleVolumes]);
 
-  const initEntryFor = (
-    ex: Exercise,
-    scale: ReadinessScale = readinessScale,
-  ): SetEntry[] => {
-    const p = presc(ex, lastPerf(ex.id), {
-      lighter: daysAgo != null && daysAgo > 5,
-      loadMult: scale.loadMult,
-      cap: scale.cap,
-      step: settings.weightStep,
-    });
-    const working: SetEntry[] = Array.from({ length: ex.sets }, () => ({
-      weight: p.w,
-      reps: "",
-    }));
-    const warm =
-      ex.weighted && p.w && Number(p.w) > 0
-        ? warmupSets(Number(p.w), settings.weightStep)
-        : [];
-    return [...warm, ...working];
-  };
-
-  // „Die Prüfung": aufsteigende Rampe 5 → 4 → 3 zum schweren Test-Satz,
-  // ausgehend von der letzten Leistung. Ohne belastbare Historie (oder ohne
-  // Gewicht) fällt die Übung auf den normalen Plan zurück — getestet wird nur,
-  // was eine Basis hat.
-  const examEntryFor = (ex: Exercise, scale: ReadinessScale): SetEntry[] => {
-    const lp = lastPerf(ex.id);
-    const best = lp
-      ? Math.max(
-          0,
-          ...lp.sets
-            .filter((s) => !s.warmup && s.reps !== "" && s.weight !== "")
-            .map((s) => Number(s.weight) || 0),
-        )
-      : 0;
-    if (!ex.weighted || !isFinite(best) || best <= 0) return initEntryFor(ex, scale);
-    const step = settings.weightStep ?? 2.5;
-    // Strikt aufsteigend, Rundung darf die Stufen nicht kollabieren lassen;
-    // der Test-Satz liegt einen Schritt ÜBER der letzten Bestleistung.
-    const base = Math.max(step, Math.round(best / step) * step);
-    const w5 = Math.max(step, Math.round((base * 0.85) / step) * step);
-    const w4 = Math.max(w5 + step, Math.round((base * 0.95) / step) * step);
-    const w3 = Math.max(w4 + step, base + step);
-    const working: SetEntry[] = [
-      { weight: String(w5), reps: "" },
-      { weight: String(w4), reps: "" },
-      { weight: String(w3), reps: "" },
-    ];
-    return [...warmupSets(w5, settings.weightStep), ...working];
-  };
-
-  const startSession = (
-    key: string,
-    readiness?: Readiness,
-    opts?: { spareBack?: boolean },
-  ) => {
-    const r = readiness ?? todayReadiness;
-    const scale = withDeload(
-      settings.autoregOn && r ? scaleFor(band(r.score)) : NEUTRAL_SCALE,
-      deloadActive,
-    );
-    if (readiness) setTodayReadiness(readiness);
-    // Schon-Entscheidung aus dem Gate schlägt den Home-Schalter; ohne Angabe
-    // gilt der aktuelle Tages-Schalter. Closure-sicher lokal rechnen — der
-    // setState wäre in diesem Aufruf noch nicht sichtbar.
-    if (opts?.spareBack !== undefined) setBackSpareToday(opts.spareBack);
-    const spare = opts?.spareBack ?? backSpareToday;
-    // Der Rücken-Reset ist per Definition Schon-Betrieb — auch Übungs-Tausch
-    // in der Einheit bleibt dann bei rückenfreundlichen Alternativen.
-    const backSafe = key === RESET_DAY.key || lastBackRed || spare;
-    // Für die Dauer der Einheit einfrieren — spätere Toggle-Taps ändern die
-    // laufende Übungsauswahl nicht mehr (shown == gestartet == gespeichert).
-    setActiveBackSafe(backSafe);
-    const isDay = days.some((d) => d.id === key);
-    const isExam = key === EXAM_DAY.key;
-    const isReset = key === RESET_DAY.key;
-    const base = sessionOf(key, backSafe);
-    // Prüfung: nichts wegtrimmen — alle Kernmuster werden getestet.
-    const fitted =
-      isDay || isExam || isReset
-        ? base
-        : fitToBudget(base, settings.timeBudgetMin, {
-            protectCore: backSafe,
-            superset: settings.superset,
-            choices,
-          }).list;
-    const list = applyReadiness(fitted, scale);
-    const init: Record<string, SetEntry[]> = {};
-    list.forEach(({ ex }) => {
-      init[ex.id] = isExam ? examEntryFor(ex, scale) : initEntryFor(ex, scale);
-    });
-    setEntries(init);
-    setActiveKey(key);
-    setBackTrafficState(null);
-    setNoteState("");
-    setWarmupDone(false);
-  };
-
-  const setEntry: TrainingContextValue["setEntry"] = (exId, i, field, val) => {
-    setEntries((prev) => {
-      const c = { ...prev };
-      const arr = (c[exId] || []).map((s) => ({ ...s }));
-      const before = arr[i]?.weight;
-      arr[i] = { ...arr[i], [field]: val };
-      // Gewichts-Kaskade: ein eingetragenes Gewicht zieht unberührte
-      // Folgesätze mit (reps noch offen, Gewicht leer oder noch auf dem
-      // alten Wert dieses Satzes). Warmup-Sätze bleiben unangetastet.
-      if (field === "weight" && typeof val === "string" && val !== "") {
-        for (let j = i + 1; j < arr.length; j++) {
-          const s = arr[j];
-          if (s.warmup) continue;
-          const open = s.reps === "" || s.reps == null;
-          const untouched = s.weight === "" || s.weight == null || s.weight === before;
-          if (open && untouched) arr[j] = { ...s, weight: val };
-        }
-      }
-      c[exId] = arr;
-      return c;
-    });
-  };
-
-  const saveChoices = async (next: Record<string, string>) => {
-    setChoices(next);
-    await storage.setJSON(KEYS.choices, next);
-  };
   const saveExerciseVideos = async (next: Record<string, string>) => {
     setExerciseVideos(next);
     await storage.setJSON(KEYS.exerciseVideos, next);
@@ -1184,8 +973,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, voiceCues: on });
   const setCueVolume = (v: number) =>
     void saveSettings({ ...settings, cueVolume: v });
-  const setSuperset = (on: boolean) =>
-    void saveSettings({ ...settings, superset: on });
   const setTheme = (t: ThemePref) =>
     void saveSettings({ ...settings, theme: t });
   const setIcon = (icon: IconConfig | undefined) =>
@@ -1328,24 +1115,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const dismissCard = (card: CoachCard) =>
     setDismissed((d) => [...d, card.kind + (card.exId ?? "")]);
 
-  const swapExercise = (slotKey: string, newId: string) => {
-    const ex = allLib.find((e) => e.id === newId);
-    // Heute-Session: der Tausch gehört ins Session-Modell, nicht in die
-    // globale choices-Map (die dort nicht mehr gelesen wird — und deren
-    // stille Dauerhaftigkeit genau das alte Verwirr-Problem war).
-    if (slotKey.startsWith("today:")) {
-      const itemId = slotKey.slice("today:".length);
-      if (todaySession && ex) setTodaySession(swapDailyItem(todaySession, itemId, ex));
-    } else {
-      const next = { ...choices, [slotKey]: newId };
-      void saveChoices(next);
-    }
-    if (ex)
-      setEntries((prev) =>
-        prev[newId] ? prev : { ...prev, [newId]: initEntryFor(ex) },
-      );
-  };
-
   const toggleEquip = (k: EquipKey) => {
     const next = equip.includes(k) ? equip.filter((x) => x !== k) : [...equip, k];
     void saveEquip(next);
@@ -1397,69 +1166,61 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveDays(days.map((d) => (d.id === day.id ? day : d)));
   const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
 
-  const saveSession = async (): Promise<SessionSummary | null> => {
-    const tpl = activeKey ? sessionTemplate(activeKey) : null;
-    if (!tpl) return null;
-    const list = activeList;
-    const exercises = list.map(({ ex }) => {
-      const mapped: SessionExercise = {
-        id: ex.id,
-        name: ex.name,
-        unit: ex.unit,
-        sets: (entries[ex.id] || [])
-          .map((s) => {
-            const out: SetEntry = { weight: s.weight, reps: s.reps };
-            if (s.rir != null) out.rir = s.rir;
-            if (s.intensity != null) out.intensity = s.intensity;
-            if (s.warmup) out.warmup = true;
-            return out;
-          })
-          // Only truly filled sets (reps present) — weight-prefilled empty sets
-          // are suggestions, not performed work.
-          .filter((s) => s.reps !== "" && s.reps != null),
-      };
+  /** Den Live-State des Runners als LoggedSession speichern. Items × Item-
+   *  Protokoll werden zu Übungs-Snapshots; die Heute-Einheit bekommt ihren
+   *  Erledigt-Stempel (in der real trainierten, ggf. umgebauten Fassung). */
+  const saveActiveSession = async (
+    state: ActiveSessionState,
+  ): Promise<SessionSummary | null> => {
+    const s = state.session;
+    const byId = new Map(allLib.map((e) => [e.id, e]));
+    const exercises: SessionExercise[] = [];
+    for (const it of s.items) {
+      const ex = byId.get(it.exerciseId);
+      if (!ex) continue;
+      const sets = (state.entries[it.id] || [])
+        .map((x) => {
+          const out: SetEntry = { weight: x.weight, reps: x.reps };
+          if (x.rir != null) out.rir = x.rir;
+          if (x.intensity != null) out.intensity = x.intensity;
+          if (x.warmup) out.warmup = true;
+          return out;
+        })
+        // Only truly filled sets (reps present) — weight-prefilled empty sets
+        // are suggestions, not performed work.
+        .filter((x) => x.reps !== "" && x.reps != null);
+      // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
+      // auto-prefilled (reps "5") and used to slip through as ghost sessions,
+      // inflating streak/XP and corrupting the next prescription.
+      if (!sets.some((x) => !x.warmup)) continue;
+      const mapped: SessionExercise = { id: ex.id, name: ex.name, unit: ex.unit, sets };
       // Hilfsmittel-Notiz als Snapshot mitschreiben (was an dem Tag galt).
       const exNote = exerciseNotes[ex.id];
       if (exNote) mapped.note = exNote;
-      return mapped;
-    })
-    // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
-    // auto-prefilled (reps "5") and used to slip through as ghost sessions,
-    // inflating streak/XP and corrupting the next prescription.
-    .filter((ex) => ex.sets.some((s) => !s.warmup));
+      exercises.push(mapped);
+    }
     if (!exercises.length) {
       // Nothing real was performed → don't log a session; still clear state.
-      setActiveKey(null);
-      setEntries({});
-      setBackTrafficState(null);
-      setNoteState("");
+      void storage.remove(KEYS.active);
       setTodayReadiness(null);
       setBackSpareToday(false);
-      setActiveBackSafe(false);
-      setWarmupDone(false);
       return null;
     }
     const newSession: LoggedSession = {
       date: new Date().toISOString(),
-      dayKey: tpl.key,
-      dayName: tpl.name,
-      focus: tpl.focus,
+      dayKey: "today",
+      dayName: s.name,
+      focus: s.focus,
       exercises,
-      estimatedMin: estimateSessionMin(activeList, { superset: settings.superset }),
+      estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
     };
-    if (backTraffic) newSession.backTraffic = backTraffic;
-    if (note.trim()) newSession.note = note.trim();
-    if (todayReadiness) newSession.readiness = todayReadiness;
+    if (state.backTraffic) newSession.backTraffic = state.backTraffic;
+    const noteText = (state.note ?? "").trim();
+    if (noteText) newSession.note = noteText;
+    if (state.readiness) newSession.readiness = state.readiness;
     if (deloadActive) newSession.isDeload = true;
-    if (tpl.key === EXAM_DAY.key || (activeKey === "today" && todaySession?.variant === "exam"))
-      newSession.isExam = true;
-    if (tpl.key === RESET_DAY.key || (activeKey === "today" && todaySession?.variant === "reset"))
-      newSession.isBackReset = true;
-    // Heute-Einheit als erledigt stempeln — die Startseite zeigt dann Ruhe
-    // statt eines abgearbeiteten Plans.
-    if (activeKey === "today" && todaySession) {
-      setTodaySession({ ...todaySession, completedAt: new Date().toISOString() });
-    }
+    if (s.variant === "exam") newSession.isExam = true;
+    if (s.variant === "reset") newSession.isBackReset = true;
     const newLog = [...log, newSession];
     // Summary for the completion takeover — computed BEFORE state clears so
     // the celebration can show exactly what this session achieved.
@@ -1467,7 +1228,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const lvlAfter = trainingLevel({ log: newLog, allLib, settings });
     const week = weeklySetStats(newLog);
     const core = {
-      sets: exercises.reduce((a, ex) => a + ex.sets.filter((s) => !s.warmup).length, 0),
+      sets: exercises.reduce((a, ex) => a + ex.sets.filter((x) => !x.warmup).length, 0),
       tonnage: sessionVolume(newSession),
       prs: prTimeline(newLog).filter((e) => e.date === newSession.date).length,
       levelBefore: lvlBefore.level,
@@ -1484,7 +1245,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       log: newLog,
       allLib,
       summary: core,
-      readiness: todayReadiness,
+      readiness: state.readiness ?? null,
     });
     newSession.debrief = debrief;
     const summary: SessionSummary = { ...core, debrief };
@@ -1492,28 +1253,21 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.log, newLog);
     setLog(newLog);
     setSaving(false);
-    setActiveKey(null);
-    setEntries({});
-    setBackTrafficState(null);
-    setNoteState("");
+    // Heute-Einheit als erledigt stempeln — die Startseite zeigt dann Ruhe
+    // statt eines abgearbeiteten Plans.
+    setTodaySession({ ...s, completedAt: new Date().toISOString() });
+    void storage.remove(KEYS.active);
     setTodayReadiness(null);
     setBackSpareToday(false);
-    setActiveBackSafe(false);
-    setWarmupDone(false);
     return summary;
   };
 
-  // Leave an active session WITHOUT saving — clears the in-progress state so a
-  // discarded workout isn't silently resumed or logged.
-  const discardSession = () => {
-    setActiveKey(null);
-    setEntries({});
-    setBackTrafficState(null);
-    setNoteState("");
+  // Leave an active session WITHOUT saving — clears the persisted live state
+  // so a discarded workout isn't silently resumed or logged.
+  const discardActive = () => {
+    void storage.remove(KEYS.active);
     setTodayReadiness(null);
     setBackSpareToday(false);
-    setActiveBackSafe(false);
-    setWarmupDone(false);
   };
 
   const deleteSession = async (realIdx: number) => {
@@ -1619,21 +1373,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     body,
     loading,
     saving,
-    activeKey,
-    entries,
-    backTraffic,
-    note,
     allLib,
     has,
-    nextIndex,
     recTpl,
     recList,
-    activeList,
     estimatedMin,
     settings,
     todayReadiness,
-    warmupDone,
-    setWarmupDone,
     readinessScale,
     ringMetrics,
     muscleVolumes,
@@ -1651,14 +1397,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     backSpareToday,
     setBackSpareToday,
     backSafeActive,
-    activeBackSafe,
     seeDoctor,
     lastPerf,
-    sessionOf,
-    sessionTemplate,
-    startSession,
-    setEntry,
-    swapExercise,
     toggleEquip,
     addCustom,
     removeCustom,
@@ -1672,16 +1412,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     switchGym,
     addGym,
     removeGym,
-    saveSession,
-    discardSession,
+    saveActiveSession,
+    discardActive,
     deleteSession,
     resetAll,
-    setBackTraffic: (v) => setBackTrafficState(v),
-    setNote: (v) => setNoteState(v),
     setBudget,
     setVoiceCues,
     setCueVolume,
-    setSuperset,
     setTheme,
     setIcon,
     setAccentOverride,

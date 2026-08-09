@@ -18,6 +18,7 @@ import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { greeting, homeChips } from "@/lib/coaching";
 import { isoWeek } from "@/lib/format";
 import { tap } from "@/lib/haptics";
+import { loadActiveState } from "@/lib/active-session";
 import { generateFallbackSession } from "@/lib/session-fallback";
 import {
   resolveDailySession,
@@ -35,8 +36,6 @@ export default function HomePage() {
   const {
     todaySession,
     setTodaySession,
-    activeKey,
-    sessionTemplate,
     lastLabel,
     log,
     equip,
@@ -79,15 +78,28 @@ export default function HomePage() {
   const [editing, setEditing] = useState(false);
   const [composing, setComposing] = useState(false);
 
+  // Läuft gerade eine Einheit? Der Live-State lebt gerätelokal (KEYS.active) —
+  // hier nur lesen, der Runner verwaltet ihn.
+  const [running, setRunning] = useState<{ name: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void loadActiveState().then((st) => {
+      if (alive) setRunning(st ? { name: st.session.name } : null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   // Laufende Referenzen für die asynchrone KI-Antwort: nur eine unveränderte
   // Fallback-Session desselben Kompositions-Laufs darf ersetzt werden.
   const genRef = useRef(0);
   const sessionRef = useRef<DailySession | null>(null);
   sessionRef.current = todaySession;
-  const activeRef = useRef<string | null>(null);
-  activeRef.current = activeKey;
+  const runningRef = useRef(false);
+  runningRef.current = !!running;
 
-  const sessionLocked = activeKey === "today" || !!todaySession?.completedAt;
+  const sessionLocked = !!running || !!todaySession?.completedAt;
 
   /** Frisch komponieren: Fallback sofort, ATLAS ersetzt still, wenn möglich. */
   const compose = (opts: { wish?: string; variant?: SessionVariant } = {}) => {
@@ -132,7 +144,7 @@ export default function HomePage() {
       const cur = sessionRef.current;
       // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
       // editierte oder bereits gestartete Einheit.
-      if (activeRef.current === "today") return;
+      if (runningRef.current) return;
       if (cur && cur.date === s.date && cur.source === "fallback" && !cur.edited) {
         setTodaySession(s);
       }
@@ -152,15 +164,19 @@ export default function HomePage() {
   );
   const estimatedMin = useMemo(() => estimateSessionMin(resolved), [resolved]);
 
-  const start = (key: string) => router.push(`/workout/${key}`);
-  const activeName = activeKey ? sessionTemplate(activeKey)?.name : undefined;
+  const start = () => {
+    // Ab jetzt keine späte KI-Antwort mehr übernehmen — der Runner friert
+    // seine eigene Fassung ein.
+    runningRef.current = true;
+    router.push("/workout");
+  };
 
   // „Rücken heute schonen”: Umschalten komponiert neu (solange nicht gestartet).
   const toggleSpare = () => {
     tap();
     const next = !backSpareToday;
     setBackSpareToday(next);
-    if (activeKey !== "today" && todaySession && !todaySession.completedAt) {
+    if (!running && todaySession && !todaySession.completedAt) {
       // Recompose mit neuem Schon-Status — der Effekt sieht backSafeActive
       // erst nächsten Render, deshalb hier explizit.
       setTimeout(() => compose(), 0);
@@ -244,13 +260,13 @@ export default function HomePage() {
         </div>
       )}
 
-      {activeKey && (
+      {running && (
         <Pressable
-          onClick={() => router.push(`/workout/${activeKey}`)}
+          onClick={() => router.push("/workout")}
           className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
         >
           <span className="min-w-0 truncate text-sm text-accent-ink">
-            Einheit läuft · {activeName}
+            Einheit läuft · {running.name}
           </span>
           <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-ink">
             Fortsetzen <ChevronRight size={16} />
@@ -313,11 +329,11 @@ export default function HomePage() {
               setTimeout(() => compose({ wish: todaySession.wish }), 0);
             }
           }}
-          onStart={() => start("today")}
+          onStart={start}
           onEdit={() => setEditing(true)}
           onRegenerate={(wish) => compose({ wish })}
           regenerating={composing}
-          locked={activeKey === "today"}
+          locked={!!running}
           spareSlot={spareEl}
         />
       ) : (

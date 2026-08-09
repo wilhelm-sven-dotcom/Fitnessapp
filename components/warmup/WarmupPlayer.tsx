@@ -59,7 +59,7 @@ export function WarmupPlayer({
     beep();
   };
 
-  // Deep-Link / PWA-Relaunch auf /warmup/[key]: kein Button hat primeAudio()
+  // Deep-Link / PWA-Relaunch mitten ins Training: kein Button hat primeAudio()
   // aufgerufen → der AudioContext ist suspended und tone() no-opt still.
   // Der ERSTE Tap irgendwo (auch neben den Buttons) entsperrt Audio + Speech.
   useEffect(() => {

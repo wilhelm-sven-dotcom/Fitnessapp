@@ -29,7 +29,6 @@ export default function SettingsPage() {
     settings,
     setVoiceCues,
     setCueVolume,
-    setSuperset,
     setWeightStep,
     setBikeWarmup,
     setCardioFinisher,
@@ -228,12 +227,6 @@ export default function SettingsPage() {
             onChange={setVoiceCues}
             label="Sprach-Ansagen"
             hint="Sagt Satzpause-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
-          />
-          <Toggle
-            checked={!!settings.superset}
-            onChange={setSuperset}
-            label="Supersätze"
-            hint="Die letzten zwei Übungen im Wechsel — spart Pausenzeit, mehr passt ins Zeitfenster."
           />
           <Toggle
             checked={!!settings.bikeWarmup}

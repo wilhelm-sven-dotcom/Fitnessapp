@@ -136,8 +136,8 @@ export function setItemSets(
 /* ── Brücken in die bestehende Engine (Warmup, Zeit, Workout-Seite). ── */
 
 /**
- * Auflösung in ResolvedSlot[] — dieselbe Form, die Workout-Seite, fitToBudget
- * und saveSession sprechen. Slot-Key = `today:<itemId>`; der Pool ist der
+ * Auflösung in ResolvedSlot[] — dieselbe Form, die fitToBudget und die
+ * Zeitschätzung sprechen. Slot-Key = `today:<itemId>`; der Pool ist der
  * musterreine, equipment-gefilterte Tausch-Pool.
  */
 export function resolveDailySession(
