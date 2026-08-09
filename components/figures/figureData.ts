@@ -99,6 +99,9 @@ export function muscleBones(pattern?: string): Set<string> {
     case "hinge":
       add("sh>hip", "hip>knee", "hip>kneeL", "hip>kneeR"); // Hüfte/Rücken/Beine
       break;
+    case "calf":
+      add("knee>foot", "knee2>foot2", "kneeL>footL", "kneeR>footR"); // Waden
+      break;
     case "push":
     case "pull":
       add("sh>elbow", "elbow>hand", "sh>elbow2", "elbow2>hand2", "sh>elbowL", "elbowL>handL", "sh>elbowR", "elbowR>handR", "sh>hip");
@@ -108,6 +111,68 @@ export function muscleBones(pattern?: string): Set<string> {
       add("sh>hip");
   }
   return s;
+}
+
+/**
+ * Neue Übungs-Id → nächstliegende bestehende Figur. Statt 80 neue Zeichnungen
+ * zeigt der Katalog die verwandte Bewegung; `PATTERN_FIGURE` fängt den Rest
+ * (auch eigene Übungen) mit einer Muster-Default-Figur ab.
+ */
+export const FIGURE_ALIAS: Record<string, string> = {
+  // Squat-Familie
+  squat_bar: "squat_bw", front_squat: "goblet", squat_db: "goblet", box_squat: "squat_bw",
+  leg_press: "squat_bw", hack_squat: "squat_bw", leg_extension: "squat_bw", wall_sit: "squat_bw",
+  // Lunge-Familie
+  walking_lunge: "reverse_lunge", split_squat: "bss", side_lunge: "reverse_lunge",
+  cossack: "reverse_lunge", pistol_box: "stepup",
+  // Hinge-Familie
+  deadlift: "rdl_db", rdl_bar: "rdl_db", kb_swing: "rdl_db", good_morning: "rdl_db",
+  rdl_single: "rdl_db", sumo_deadlift: "rdl_db", leg_curl: "glutebridge",
+  back_ext: "glutebridge", pull_through: "rdl_db",
+  // Druck horizontal
+  bench_bar: "floorpress", bench_incline: "floorpress", bench_db: "floorpress",
+  incline_db: "floorpress", chest_press_machine: "floorpress", cable_fly: "floorpress",
+  db_fly: "floorpress", pec_deck: "floorpress", pushup_deficit: "pushup",
+  // Druck über Kopf
+  ohp_bar: "ohp_stand", arnold_press: "ohp_seat", shoulder_press_machine: "ohp_seat",
+  push_press: "ohp_stand", ohp_kb: "ohp_stand",
+  // Zug horizontal
+  row_bar: "row1", cable_row: "band_row", chest_row_db: "row1", row_machine: "band_row",
+  kb_row: "row1", renegade_row: "row1", shrug_db: "lateral",
+  // Zug vertikal
+  lat_pulldown: "band_pulldown", straight_arm_pulldown: "band_pulldown",
+  pullup_negative: "pullup", scap_pullup: "pullup", pullover_db: "tri_oh",
+  // Arme
+  incline_curl: "curl", concentration_curl: "curl", cable_curl: "curl", curl_bar: "curl",
+  skull_crusher: "tri_oh", pushdown: "tri_oh", tri_cable_oh: "tri_oh",
+  diamond_pushup: "pushup", bench_dips: "dips", wrist_curl: "curl", reverse_curl: "curl",
+  // Schultern
+  cable_lateral: "lateral", band_lateral: "lateral", reverse_fly_db: "face_pull",
+  reverse_fly_machine: "face_pull", front_raise: "lateral", upright_row: "lateral",
+  face_pull_cable: "face_pull", rear_delt_row: "row1",
+  // Core
+  hollow_hold: "deadbug", hanging_knee_raise: "pullup", cable_chop: "pallof",
+  russian_twist: "pallof", mountain_climbers: "plank", superman: "birddog",
+  farmer_carry: "suitcase",
+  // Waden
+  calf_raise_bw: "squat_bw", calf_raise_db: "squat_bw", calf_single: "stepup",
+  calf_seated: "squat_bw",
+};
+
+/** Muster → Default-Figur (letzte Rückfallebene, z. B. für eigene Übungen). */
+export const PATTERN_FIGURE: Record<string, string> = {
+  squat: "squat_bw", lunge: "reverse_lunge", hinge: "rdl_db", hpush: "pushup",
+  vpush: "ohp_stand", hpull: "row1", vpull: "pullup", arm: "curl",
+  lateral: "lateral", core: "plank", calf: "stepup", cardio: "bike_easy",
+};
+
+/** Figur für eine Übung: eigene Zeichnung → Alias → Muster-Default. */
+export function figFor(ex: { id: string; pattern?: string }): FigureDef | undefined {
+  return (
+    FIG[ex.id] ??
+    FIG[FIGURE_ALIAS[ex.id] ?? ""] ??
+    (ex.pattern ? FIG[PATTERN_FIGURE[ex.pattern] ?? ""] : undefined)
+  );
 }
 
 export const FIG: Record<string, FigureDef> = {

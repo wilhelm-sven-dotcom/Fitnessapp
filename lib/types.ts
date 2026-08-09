@@ -13,6 +13,7 @@ export type Pattern =
   | "arm"
   | "lateral"
   | "core"
+  | "calf"
   | "cardio";
 
 export type EquipKey =
@@ -24,6 +25,8 @@ export type EquipKey =
   | "bands"
   | "box"
   | "bench"
+  | "cable"
+  | "machine"
   | "bike";
 
 export type TrafficLight = "green" | "yellow" | "red";
@@ -37,6 +40,8 @@ export type Muscle =
   | "quads"
   | "hamstrings"
   | "glutes"
+  | "calves"
+  | "forearms"
   | "core";
 
 export interface Exercise {
@@ -44,7 +49,7 @@ export interface Exercise {
   name: string;
   pattern: Pattern;
   tag: string;
-  /** Requirement tokens: none | weight | dumbbell | kettlebell | bar | pullup | rings | bands | box | bench */
+  /** Requirement tokens: none | weight | EquipKey (Alt-Tokens dumbbell/kettlebell = db/kb). */
   req: string[];
   weighted: boolean;
   sets: number;

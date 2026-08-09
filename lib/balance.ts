@@ -1,16 +1,18 @@
 import { MUSCLE_LABEL, VOLUME_TARGET, type MuscleVolume } from "@/lib/volume";
 import type { Muscle } from "@/lib/types";
 
-/** Short labels so all nine spokes fit around the radar. */
+/** Short labels so all spokes fit around the radar. */
 const SHORT_LABEL: Record<Muscle, string> = {
   chest: "Brust",
   back: "Rücken",
   shoulders: "Schultern",
   biceps: "Bizeps",
   triceps: "Trizeps",
+  forearms: "Unterarme",
   quads: "Quad",
   hamstrings: "Beinr.",
   glutes: "Gesäß",
+  calves: "Waden",
   core: "Core",
 };
 
@@ -87,8 +89,8 @@ const PAIRS: {
     label: "Oberkörper / Beine",
     aLabel: "Oben",
     bLabel: "Beine",
-    a: ["chest", "back", "shoulders", "biceps", "triceps"],
-    b: ["quads", "hamstrings", "glutes"],
+    a: ["chest", "back", "shoulders", "biceps", "triceps", "forearms"],
+    b: ["quads", "hamstrings", "glutes", "calves"],
   },
 ];
 

@@ -23,6 +23,7 @@ const COMPOUND: Pattern[] = [
 const isCompound = (p: Pattern) => COMPOUND.includes(p);
 // Trim priority: accessories first, compounds late, core last.
 const TRIM_ORDER: Pattern[] = [
+  "calf",
   "arm",
   "lateral",
   "vpush",

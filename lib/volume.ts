@@ -60,6 +60,7 @@ const PATTERN_MUSCLE: Record<Pattern, { primary: Muscle; secondary?: Muscle }> =
   arm: { primary: "biceps" },
   lateral: { primary: "shoulders" },
   core: { primary: "core" },
+  calf: { primary: "calves" },
   cardio: { primary: "core" },
 };
 
@@ -92,15 +93,35 @@ export const VOLUME_TARGET = {
   max: VOLUME_LANDMARKS.mav,
 } as const;
 
+/** Kleine Muskeln brauchen weniger direkte Sätze — sie arbeiten bei den
+ *  Grundübungen ohnehin mit. Ziel-Band je Muskel statt Einheitsziel. */
+const SMALL_MUSCLES: ReadonlySet<Muscle> = new Set([
+  "biceps",
+  "triceps",
+  "calves",
+  "forearms",
+]);
+
+export function volumeTargetFor(m: Muscle): { min: number; max: number } {
+  return SMALL_MUSCLES.has(m)
+    ? {
+        min: Math.round(VOLUME_LANDMARKS.target * 0.6),
+        max: Math.round(VOLUME_LANDMARKS.mav * 0.7),
+      }
+    : VOLUME_TARGET;
+}
+
 export const MUSCLE_ORDER: Muscle[] = [
   "chest",
   "back",
   "shoulders",
   "biceps",
   "triceps",
+  "forearms",
   "quads",
   "hamstrings",
   "glutes",
+  "calves",
   "core",
 ];
 
@@ -110,9 +131,11 @@ export const MUSCLE_LABEL: Record<Muscle, string> = {
   shoulders: "Schultern",
   biceps: "Bizeps",
   triceps: "Trizeps",
+  forearms: "Unterarme",
   quads: "Quadrizeps",
   hamstrings: "Beinrückseite",
   glutes: "Gesäß",
+  calves: "Waden",
   core: "Core",
 };
 
@@ -152,8 +175,9 @@ export function weeklyMuscleVolume(
     );
   return MUSCLE_ORDER.map((muscle) => {
     const sets = Math.round((acc[muscle] ?? 0) * 10) / 10;
+    const t = volumeTargetFor(muscle);
     const status: VolumeStatus =
-      sets < VOLUME_TARGET.min ? "under" : sets > VOLUME_TARGET.max ? "over" : "in";
+      sets < t.min ? "under" : sets > t.max ? "over" : "in";
     return { muscle, sets, status };
   });
 }
@@ -193,8 +217,9 @@ export function exerciseMuscleVolume(
   }
   return MUSCLE_ORDER.map((muscle) => {
     const sets = Math.round((acc[muscle] ?? 0) * 10) / 10;
+    const t = volumeTargetFor(muscle);
     const status: VolumeStatus =
-      sets < VOLUME_TARGET.min ? "under" : sets > VOLUME_TARGET.max ? "over" : "in";
+      sets < t.min ? "under" : sets > t.max ? "over" : "in";
     return { muscle, sets, status };
   });
 }

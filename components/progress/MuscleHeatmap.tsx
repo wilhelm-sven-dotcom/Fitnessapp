@@ -34,8 +34,8 @@ export function MuscleHeatmap({ data }: { data: MuscleVolume[] }) {
   // A region's tint follows its most-worked muscle (the legend keeps the detail).
   const hottest = (ms: Muscle[]) =>
     ms.map((m) => S[m]).reduce((a, b) => ((b?.sets ?? 0) > (a?.sets ?? 0) ? b : a));
-  const armC = heat(hottest(["shoulders", "biceps", "triceps"]));
-  const legC = heat(hottest(["quads", "hamstrings", "glutes"]));
+  const armC = heat(hottest(["shoulders", "biceps", "triceps", "forearms"]));
+  const legC = heat(hottest(["quads", "hamstrings", "glutes", "calves"]));
 
   const front: Record<string, string> = {
     "sh>hip": heat(S.chest),

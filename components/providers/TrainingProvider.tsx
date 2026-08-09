@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { CARDIO_DAY, DEFAULT_EQUIP, EXAM_DAY, LIB, RESET_DAY, TEMPLATE } from "@/lib/exercises";
+import { CARDIO_DAY, DEFAULT_EQUIP, EQUIP_LIST, EXAM_DAY, LIB, RESET_DAY, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
@@ -90,6 +90,7 @@ import type {
   IconConfig,
   LastPerf,
   LoggedSession,
+  Muscle,
   Pattern,
   ResolvedSlot,
   SessionExercise,
@@ -99,11 +100,23 @@ import type {
   WorkoutDay,
 } from "@/lib/types";
 
-export interface AddCustomData {
+/** Editor-Eingabe für eine eigene Übung — wird im Provider gehärtet. */
+export interface CustomExerciseInput {
   name: string;
   pattern: Pattern;
   unit: Unit;
   weighted: boolean;
+  req: string[];
+  muscle?: Muscle;
+  muscleSecondary?: Muscle;
+  sets?: number;
+  repLow?: number;
+  repHigh?: number;
+  cue?: string;
+  steps?: string[];
+  back?: string;
+  easier?: string;
+  backCaution?: boolean;
 }
 
 /** What a just-saved session achieved — feeds the "Sieger-Moment" takeover. */
@@ -212,7 +225,8 @@ interface TrainingContextValue {
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
   toggleEquip: (k: EquipKey) => void;
-  addCustom: (data: AddCustomData) => void;
+  addCustom: (data: CustomExerciseInput) => void;
+  updateCustom: (id: string, data: CustomExerciseInput) => void;
   removeCustom: (id: string) => void;
   setExerciseVideo: (exId: string, url: string | null) => void;
   setExerciseNote: (exId: string, note: string | null) => void;
@@ -222,7 +236,7 @@ interface TrainingContextValue {
   removeDay: (id: string) => void;
   gyms: GymProfile[];
   switchGym: (id: string) => void;
-  addGym: (name: string) => void;
+  addGym: (name: string, equipPreset?: EquipKey[]) => void;
   removeGym: (id: string) => void;
   /** Den Live-State des Runners als LoggedSession speichern (leer → null). */
   saveActiveSession: (state: ActiveSessionState) => Promise<SessionSummary | null>;
@@ -898,14 +912,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveEquip(g.equip);
     void saveSettings({ ...settings, activeGymId: id });
   };
-  const addGym = (name: string) => {
+  const addGym = (name: string, equipPreset?: EquipKey[]) => {
     const g: GymProfile = {
       id: "gym_" + Date.now(),
       name: name.trim() || "Neues Gym",
-      equip: [...equip],
+      equip: equipPreset ? [...equipPreset] : [...equip],
     };
     void saveGyms([...gyms, g]);
     void saveSettings({ ...settings, activeGymId: g.id });
+    // Preset-Profile (z. B. Studio) schalten die Geräteliste direkt um.
+    if (equipPreset) void saveEquip([...equipPreset]);
   };
   const removeGym = (id: string) => {
     if (gyms.length <= 1) return;
@@ -1122,26 +1138,50 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (aid) void saveGyms(gyms.map((g) => (g.id === aid ? { ...g, equip: next } : g)));
   };
 
-  const addCustom = (data: AddCustomData) => {
-    const id = "custom_" + Date.now();
+  /** Eingaben des Editors härten und in eine vollwertige Übung gießen —
+   *  eigene Übungen sind erstklassig (Muskel, Equipment, Content) und fließen
+   *  über `allLib` automatisch in Pools, Volumen und den ATLAS-Katalog. */
+  const buildCustom = (id: string, data: CustomExerciseInput): Exercise => {
+    const unit: Unit = data.unit === "Sek" ? "Sek" : "Wdh";
+    const clampInt = (v: unknown, lo: number, hi: number, dflt: number) => {
+      const n = Math.round(Number(v));
+      return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+    };
+    const repLow = clampInt(data.repLow, 1, 180, unit === "Sek" ? 20 : 8);
+    const repHigh = clampInt(data.repHigh, repLow, 180, Math.max(repLow, unit === "Sek" ? 45 : 12));
+    const validReq = new Set<string>([...EQUIP_LIST.map((e) => e.key), "weight"]);
+    const req = (data.req ?? []).filter((t) => validReq.has(t));
     const ex: Exercise = {
       id,
-      name: data.name,
+      name: data.name.trim().slice(0, 60) || "Eigene Übung",
       pattern: data.pattern,
       tag: "Eigene",
-      req: ["none"],
+      req: req.length ? req : ["none"],
       weighted: !!data.weighted,
-      sets: 3,
-      repLow: data.unit === "Sek" ? 20 : 8,
-      repHigh: data.unit === "Sek" ? 45 : 12,
-      unit: data.unit,
-      cue: "Eigene Übung.",
-      steps: [],
-      back: "",
-      easier: "",
+      sets: clampInt(data.sets, 1, 6, 3),
+      repLow,
+      repHigh,
+      unit,
+      cue: (data.cue ?? "").trim().slice(0, 160) || "Eigene Übung — sauber und kontrolliert ausführen.",
+      steps: (data.steps ?? [])
+        .map((s) => s.trim().slice(0, 160))
+        .filter(Boolean)
+        .slice(0, 4),
+      back: (data.back ?? "").trim().slice(0, 160),
+      easier: (data.easier ?? "").trim().slice(0, 160),
       custom: true,
     };
-    void saveCustom([...custom, ex]);
+    if (data.muscle) ex.muscle = data.muscle;
+    if (data.muscleSecondary && data.muscleSecondary !== data.muscle)
+      ex.muscleSecondary = data.muscleSecondary;
+    if (data.backCaution) ex.backCaution = true;
+    return ex;
+  };
+  const addCustom = (data: CustomExerciseInput) => {
+    void saveCustom([...custom, buildCustom("custom_" + Date.now(), data)]);
+  };
+  const updateCustom = (id: string, data: CustomExerciseInput) => {
+    void saveCustom(custom.map((e) => (e.id === id ? buildCustom(id, data) : e)));
   };
   const removeCustom = (id: string) => {
     void saveCustom(custom.filter((e) => e.id !== id));
@@ -1401,6 +1441,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     lastPerf,
     toggleEquip,
     addCustom,
+    updateCustom,
     removeCustom,
     setExerciseVideo,
     setExerciseNote,

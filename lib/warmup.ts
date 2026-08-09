@@ -84,7 +84,7 @@ const D = {
   },
 } satisfies Record<string, WarmupDrill>;
 
-const LOWER: Pattern[] = ["squat", "lunge", "hinge"];
+const LOWER: Pattern[] = ["squat", "lunge", "hinge", "calf"];
 const UPPER: Pattern[] = ["hpush", "vpush", "hpull", "vpull", "lateral", "arm"];
 
 /**

@@ -43,9 +43,11 @@ const MUSCLE_PATTERNS: Record<Muscle, Pattern[]> = {
   shoulders: ["vpush", "lateral"],
   biceps: ["arm", "vpull"],
   triceps: ["arm", "hpush"],
+  forearms: ["arm"],
   quads: ["squat", "lunge"],
   hamstrings: ["hinge"],
   glutes: ["hinge", "lunge"],
+  calves: ["calf"],
   core: ["core"],
 };
 

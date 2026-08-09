@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { EQUIP_LIST } from "@/lib/exercises";
+import { EQUIP_LIST, STUDIO_EQUIP } from "@/lib/exercises";
 import { reqOk } from "@/lib/progression";
 import { muscleOf, MUSCLE_ORDER } from "@/lib/volume";
 import { cn } from "@/lib/utils";
@@ -87,6 +87,14 @@ export function EquipmentSection() {
           Anlegen
         </Pressable>
       </div>
+      {!gyms.some((g) => g.name.toLowerCase().includes("studio")) && (
+        <Pressable
+          onClick={() => addGym("Studio", STUDIO_EQUIP)}
+          className="mb-4 flex items-center gap-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        >
+          + Studio-Profil anlegen — voll ausgestattet inkl. Kabelzug & Geräten
+        </Pressable>
+      )}
 
       <p className="mb-2 text-xs leading-relaxed text-muted">
         Tippe an, was im aktiven Profil verfügbar ist — ATLAS und die
