@@ -4,7 +4,6 @@ import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AtlasCore } from "@/components/trainer/AtlasCore";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
-import { TypedLine } from "@/components/trainer/TypedLine";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { tap } from "@/lib/haptics";
@@ -26,9 +25,8 @@ const chipTone: Record<WatchSignal["tone"], string> = {
 
 /**
  * „Der Kern" — ATLAS als Hero-Karte der Startseite: der lebende Energie-Kern
- * (AtlasCore) über der Tages-Direktive, die sich Zeichen für Zeichen tippt,
- * darunter die Wochen-Mission als Mikro-Meter und die Wache als Chips.
- * Die Karte trägt das eine bold Visual der Seite und führt zum Trainer-Chat.
+ * (AtlasCore) über der Tages-Direktive, darunter die Wochen-Mission als
+ * Mikro-Meter und die Wache als Chips. Führt zum Trainer-Chat.
  */
 export function AtlasCard({
   trainer,
@@ -97,10 +95,9 @@ export function AtlasCard({
           </span>
         </div>
 
-        <TypedLine
-          text={directive.text}
-          className="font-display text-xl font-bold leading-snug tracking-tight text-fg"
-        />
+        <p className="font-display text-xl font-bold leading-snug tracking-tight text-fg">
+          {directive.text}
+        </p>
         <p className="mt-1 text-xs leading-relaxed text-muted">{directive.reason}</p>
 
         <div className="mt-4 space-y-1.5">

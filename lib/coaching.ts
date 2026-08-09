@@ -118,32 +118,6 @@ export function greeting(opts: { name?: string; now?: Date; seed?: number } = {}
 export type CardioLevel = "none" | "ease" | "spare";
 
 /**
- * Magazine "deck" (standfirst) for the editorial home: exercise count + planned
- * minutes, plus a context-aware coaching tail (cardio interference, else a
- * rotating cue). Rendered in Newsreader italic.
- */
-export function editorialDeck(opts: {
-  exCount: number;
-  minutes: number;
-  cardioLevel?: CardioLevel;
-  seed?: number;
-}): string {
-  const { exCount, minutes, cardioLevel, seed = 0 } = opts;
-  const head = `${exCount} ${exCount === 1 ? "Übung" : "Übungen"}, rund ${minutes} Minuten.`;
-  if (cardioLevel === "spare")
-    return `${head} Nach harter Fahrt heute bewusst leichter — sauber statt schwer.`;
-  if (cardioLevel === "ease")
-    return `${head} Heute kontrolliert einsteigen, Qualität vor Last.`;
-  const tails = [
-    "Sauber starten, kontrolliert steigern.",
-    "Jede Wiederholung mit Absicht.",
-    "Technik führt, das Gewicht folgt.",
-    "Erst die Form, dann die Last.",
-  ];
-  return `${head} ${tails[((seed % tails.length) + tails.length) % tails.length]}`;
-}
-
-/**
  * A coach-voiced pull-quote — the editorial "Spruch". Context-aware after hard
  * cardio, else a rotating line. Render with a quote mark + "— Dein Coach".
  */

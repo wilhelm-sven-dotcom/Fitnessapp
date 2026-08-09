@@ -1,15 +1,19 @@
 "use client";
 
-import { ArrowLeft, ChevronRight, Dumbbell, KeyRound, Send, Sparkles } from "lucide-react";
+import { ChevronRight, Dumbbell, KeyRound, Send, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Reveal } from "@/components/ui/Reveal";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
+import { buildBriefing } from "@/lib/briefing";
 import { buildCoachContext } from "@/lib/coach-context";
+import { isoWeek } from "@/lib/format";
+import { resolveDailySession } from "@/lib/session-model";
+import { estimateSessionMin } from "@/lib/session-time";
+import { KEYS, storage } from "@/lib/storage";
 import { trainerContextBlock } from "@/lib/trainer";
 import { cn } from "@/lib/utils";
 
@@ -18,82 +22,127 @@ interface Msg {
   content: string;
 }
 
+const CHAT_CAP = 40;
+
 const SUGGESTIONS = [
   "Wie läuft meine Mission?",
-  "Warum diese Direktive heute?",
-  "Worauf soll ich die nächste Einheit achten?",
+  "Warum sieht meine heutige Einheit so aus?",
+  "Worauf soll ich diese Woche achten?",
 ];
-const RECAP_PROMPT =
-  "Gib mir ein kurzes Wochen-Recap: 2–3 Sätze, was gut lief, plus 1–2 konkrete Fokus-Punkte für nächste Woche.";
 
+/**
+ * ATLAS' Zimmer: Status + Direktive oben, der Wochen-Rapport auf Abruf, und
+ * darunter das Gespräch — der Verlauf überlebt Navigation und Geräte
+ * (KEYS.chat, auf 40 Nachrichten gekappt).
+ */
 export default function CoachPage() {
   const router = useRouter();
   const {
     log,
     allLib,
+    has,
     body,
     cardio,
     settings,
     trainer,
+    mission,
+    todaySession,
     recTpl,
     recList,
     estimatedMin,
     backSafeActive,
     exerciseNotes,
   } = useTraining();
+
+  // Die ECHTE nächste Einheit: heute komponiert (todaySession), sonst die
+  // Rotation-Empfehlung — damit Empfehlungen zu dem passen, was der Start zeigt.
+  const nextSession = useMemo(() => {
+    if (todaySession && !todaySession.completedAt && todaySession.items.length) {
+      const resolved = resolveDailySession(todaySession, allLib, has);
+      return {
+        name: todaySession.name,
+        focus: todaySession.focus,
+        estimatedMin: estimateSessionMin(resolved),
+        exercises: resolved.map(({ ex }) => ({
+          name: ex.name,
+          sets: ex.pattern === "cardio" ? 0 : ex.sets,
+        })),
+      };
+    }
+    return {
+      name: recTpl.name,
+      focus: recTpl.focus,
+      estimatedMin,
+      exercises: recList.map(({ ex }) => ({
+        name: ex.name,
+        sets: ex.pattern === "cardio" ? 0 : ex.sets,
+      })),
+    };
+  }, [todaySession, allLib, has, recTpl, recList, estimatedMin]);
+
   const context = useMemo(
     () =>
-      buildCoachContext({
-        log,
-        allLib,
-        body,
-        cardio,
-        exerciseNotes,
-        // Der ECHTE Plan der nächsten Einheit — damit Empfehlungen ("nächste
-        // Woche X trainieren") zu den Übungen passen, die der Trainingsstart
-        // dann wirklich zeigt, statt frei erfunden zu werden.
-        nextSession: {
-          name: recTpl.name,
-          focus: recTpl.focus,
-          estimatedMin,
-          exercises: recList.map(({ ex }) => ({
-            name: ex.name,
-            sets: ex.pattern === "cardio" ? 0 : ex.sets,
-          })),
-        },
-      }) +
+      buildCoachContext({ log, allLib, body, cardio, exerciseNotes, nextSession }) +
       "\n\nATLAS-Status:\n" +
       trainerContextBlock(trainer) +
       (backSafeActive
         ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Einheit ist bereits rückenschonend aufgelöst."
         : ""),
-    [log, allLib, body, cardio, exerciseNotes, trainer, recTpl, recList, estimatedMin, backSafeActive],
+    [log, allLib, body, cardio, exerciseNotes, trainer, nextSession, backSafeActive],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),
     [settings, body],
   );
 
+  const briefing = useMemo(
+    () =>
+      buildBriefing({
+        log,
+        cardio,
+        body,
+        allLib,
+        settings,
+        exerciseNotes,
+        missionReview: mission?.lastReview,
+      }),
+    [log, cardio, body, allLib, settings, exerciseNotes, mission],
+  );
+
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
+  const [rapport, setRapport] = useState("");
+  const [rapportBusy, setRapportBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Brücke vom Reden ins Tun: der bestehende Coach-Tag-Builder macht aus
-  // Zeit + Fokus eine startbare Einheit — Empfehlung wird Training.
-  const buildEl = (
-    <Pressable
-      onClick={() => router.push("/day/neu?coach=1")}
-      className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-coverage"
-    >
-      <span className="flex items-center gap-2">
-        <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
-        Einheit vom Coach bauen lassen
-      </span>
-      <ChevronRight size={15} className="shrink-0 text-faint" />
-    </Pressable>
-  );
+  // Verlauf laden/persistieren — überlebt Navigation und synct mit.
+  useEffect(() => {
+    let alive = true;
+    void storage.getJSON<Msg[]>(KEYS.chat, []).then((m) => {
+      if (!alive) return;
+      if (Array.isArray(m))
+        setMessages(
+          m.filter(
+            (x) =>
+              x &&
+              (x.role === "user" || x.role === "assistant") &&
+              typeof x.content === "string",
+          ),
+        );
+      setLoaded(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const persistChat = (next: Msg[]) => {
+    const capped = next.slice(-CHAT_CAP);
+    setMessages(capped);
+    void storage.setJSON(KEYS.chat, capped);
+  };
 
   const send = async (text: string) => {
     const userText = text.trim();
@@ -103,10 +152,10 @@ export default function CoachPage() {
     setMessages([...base, { role: "assistant", content: "" }]);
     setBusy(true);
     try {
-      const res = await fetch("/api/coach", {
+      const res = await fetch("/api/atlas/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: base, context, persona }),
+        body: JSON.stringify({ messages: base.slice(-12), context, persona }),
       });
       if (res.headers.get("content-type")?.includes("application/json")) {
         const j = (await res.json()) as { configured?: boolean };
@@ -131,6 +180,7 @@ export default function CoachPage() {
         });
         endRef.current?.scrollIntoView({ block: "end" });
       }
+      persistChat([...base, { role: "assistant", content: acc }]);
     } catch {
       setMessages((prev) => {
         const copy = prev.slice();
@@ -146,19 +196,63 @@ export default function CoachPage() {
     }
   };
 
+  const loadRapport = async () => {
+    if (rapportBusy) return;
+    setRapportBusy(true);
+    setRapport("");
+    try {
+      const res = await fetch("/api/atlas/briefing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ facts: briefing.facts, persona }),
+      });
+      if (res.headers.get("content-type")?.includes("application/json")) {
+        const j = (await res.json().catch(() => null)) as { configured?: boolean } | null;
+        if (j?.configured === false) setNotConfigured(true);
+        return;
+      }
+      const reader = res.body?.getReader();
+      if (!reader) return;
+      const dec = new TextDecoder();
+      let acc = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        acc += dec.decode(value, { stream: true });
+        setRapport(acc);
+      }
+    } catch {
+      setRapport("");
+    } finally {
+      setRapportBusy(false);
+    }
+  };
+
+  const buildEl = (
+    <Pressable
+      onClick={() => router.push("/")}
+      className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-coverage"
+    >
+      <span className="flex items-center gap-2">
+        <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
+        Zur heutigen Einheit
+      </span>
+      <ChevronRight size={15} className="shrink-0 text-faint" />
+    </Pressable>
+  );
+
   if (notConfigured) {
     return (
       <div>
-        <BackRow onBack={() => router.push("/")} />
         <EmptyState
           icon={KeyRound}
-          title="Coach noch nicht eingerichtet"
+          title="ATLAS noch nicht eingerichtet"
           description={
             <>
-              Damit der KI-Coach antwortet, muss in Vercel der Schlüssel
+              Damit die KI antwortet, muss serverseitig der Schlüssel
               <span className="font-mono"> ANTHROPIC_API_KEY </span>
-              hinterlegt sein. Danach läuft alles serverseitig — dein Schlüssel
-              bleibt geheim.
+              hinterlegt sein. Komposition und Coaching laufen bis dahin über
+              den eingebauten Basis-Planer.
             </>
           }
         />
@@ -168,21 +262,49 @@ export default function CoachPage() {
 
   return (
     <div>
-      <BackRow onBack={() => router.push("/")} />
-      <div className="mb-5 flex items-center gap-2">
-        <AtlasMark size={22} live className="text-fg" />
-        <h2 className="text-2xl font-semibold tracking-tight">ATLAS</h2>
+      {/* Status-Kopf: Mission + Tages-Direktive. */}
+      <div className="mb-4 rounded-card border border-line bg-panel p-4 shadow-card">
+        <div className="flex items-center gap-2">
+          <AtlasMark size={20} live className="text-fg" />
+          <h1 className="font-display text-xl font-semibold tracking-tight text-fg">
+            ATLAS
+          </h1>
+          <span className="ml-auto font-mono text-xs tabular-nums text-faint">
+            Mission {Math.round(trainer.mission.pct * 100)} %
+          </span>
+        </div>
+        <p className="mt-2 text-sm font-medium leading-snug text-fg">
+          {trainer.directive.text}
+        </p>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted">
+          {trainer.directive.reason}
+        </p>
       </div>
 
-      {messages.length === 0 ? (
-        <Reveal>
+      {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
+      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 p-4 shadow-card">
+        <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+          Wochen-Rapport · KW {isoWeek(new Date())}
+        </p>
+        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-fg">
+          {rapport || briefing.coachNote}
+        </p>
+        {!rapport && (
           <Pressable
-            onClick={() => send(RECAP_PROMPT)}
-            className="mb-5 flex w-full items-center justify-center gap-2 rounded-card bg-accent-coverage py-3.5 text-base font-semibold text-on-strong focus:outline-none"
+            onClick={() => void loadRapport()}
+            disabled={rapportBusy}
+            className="mt-3 flex items-center gap-1.5 rounded-pill bg-surface-2 px-3 py-2 text-xs font-medium text-accent-ink focus:outline-none disabled:opacity-50"
           >
-            <Sparkles size={18} strokeWidth={2.5} /> Wochen-Recap
+            <Sparkles size={13} />
+            {rapportBusy ? "ATLAS schreibt…" : "Ausführlicher Rapport von ATLAS"}
           </Pressable>
-          <p className="mb-2 px-1 text-xs text-muted">Oder frag direkt:</p>
+        )}
+      </section>
+
+      {/* Gespräch. */}
+      {loaded && messages.length === 0 ? (
+        <div>
+          <p className="mb-2 px-1 text-xs text-muted">Frag ATLAS:</p>
           <div className="space-y-2">
             {SUGGESTIONS.map((s) => (
               <Pressable
@@ -196,10 +318,10 @@ export default function CoachPage() {
             ))}
           </div>
           <p className="mb-2 mt-5 px-1 text-xs text-muted">
-            Oder direkt konkret — Zeit + Fokus rein, startbare Einheit raus:
+            Oder direkt konkret — Wunsch rein, startbare Einheit raus:
           </p>
           {buildEl}
-        </Reveal>
+        </div>
       ) : (
         <div className="space-y-3">
           {messages.map((m, i) => (
@@ -216,11 +338,18 @@ export default function CoachPage() {
             </div>
           ))}
           <div ref={endRef} />
-          {!busy &&
-            messages[messages.length - 1]?.role === "assistant" &&
-            !!messages[messages.length - 1].content && (
-              <div className="pt-1">{buildEl}</div>
-            )}
+          {!busy && messages.length > 0 && (
+            <div className="flex items-center justify-between pt-1">
+              {buildEl}
+              <Pressable
+                onClick={() => persistChat([])}
+                aria-label="Verlauf löschen"
+                className="ml-2 shrink-0 rounded-full p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+              >
+                <Trash2 size={15} />
+              </Pressable>
+            </div>
+          )}
         </div>
       )}
 
@@ -249,16 +378,5 @@ export default function CoachPage() {
         </Pressable>
       </div>
     </div>
-  );
-}
-
-function BackRow({ onBack }: { onBack: () => void }) {
-  return (
-    <Pressable
-      onClick={onBack}
-      className="mb-4 flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
-    >
-      <ArrowLeft size={18} /> Zurück
-    </Pressable>
   );
 }

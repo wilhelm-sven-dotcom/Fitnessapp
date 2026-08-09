@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Music, Pencil, Trash2, Wrench, X, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FIG, muscleBones } from "@/components/figures/figureData";
+import { figFor, muscleBones } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { useSpotifyResume } from "@/components/spotify/useSpotifyResume";
@@ -24,7 +24,7 @@ export function GuideSheet({
   ex: Exercise | null;
 }) {
   const { exerciseVideos, setExerciseVideo, exerciseNotes, setExerciseNote } = useTraining();
-  const fig = ex ? FIG[ex.id] : undefined;
+  const fig = ex ? figFor(ex) : undefined;
   const accent = ex ? muscleBones(ex.pattern) : undefined;
 
   // Clip resolution, highest priority first: a user-pasted YouTube link (shown

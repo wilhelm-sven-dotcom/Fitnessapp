@@ -6,10 +6,9 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
-import { CARDIO_DAY, DEFAULT_EQUIP, EXAM_DAY, LIB, RESET_DAY, TEMPLATE } from "@/lib/exercises";
+import { CARDIO_DAY, DEFAULT_EQUIP, EQUIP_LIST, EXAM_DAY, LIB, RESET_DAY, TEMPLATE } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
@@ -25,12 +24,13 @@ import {
 } from "@/lib/trainer";
 import { cardioAdvice, type CardioAdvice } from "@/lib/cardio-advice";
 import {
-  allowedExercises,
-  buildWeekContext,
-  type WeekPlan,
-} from "@/lib/coach-week";
+  resolveDailySession,
+  todayKey,
+  type DailySession,
+} from "@/lib/session-model";
+import type { ActiveSessionState } from "@/lib/active-session";
 import type { JumpEntry } from "@/lib/jump";
-import { applyChoice, poolFor, presc, reqOk, resolveDay, resolveResetSession, resolveSession, warmupSets } from "@/lib/progression";
+import { resolveDay, resolveResetSession, resolveSession } from "@/lib/progression";
 import { effectiveProfile } from "@/lib/athlete";
 import { exerciseAffinity } from "@/lib/affinity";
 import {
@@ -70,13 +70,10 @@ import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import {
   accentInk,
-  applySkin,
   applyTheme,
   DEFAULT_ACCENT,
-  DEFAULT_SKIN,
   onAccent,
   resolveTheme,
-  type SkinId,
   type ThemePref,
 } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
@@ -93,21 +90,33 @@ import type {
   IconConfig,
   LastPerf,
   LoggedSession,
+  Muscle,
   Pattern,
   ResolvedSlot,
   SessionExercise,
   SetEntry,
   Template,
-  TrafficLight,
   Unit,
   WorkoutDay,
 } from "@/lib/types";
 
-export interface AddCustomData {
+/** Editor-Eingabe für eine eigene Übung — wird im Provider gehärtet. */
+export interface CustomExerciseInput {
   name: string;
   pattern: Pattern;
   unit: Unit;
   weighted: boolean;
+  req: string[];
+  muscle?: Muscle;
+  muscleSecondary?: Muscle;
+  sets?: number;
+  repLow?: number;
+  repHigh?: number;
+  cue?: string;
+  steps?: string[];
+  back?: string;
+  easier?: string;
+  backCaution?: boolean;
 }
 
 /** What a just-saved session achieved — feeds the "Sieger-Moment" takeover. */
@@ -147,7 +156,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceCues: false,
   superset: false,
   theme: "dark",
-  skin: DEFAULT_SKIN,
   accentColor: DEFAULT_ACCENT,
 };
 
@@ -188,22 +196,13 @@ interface TrainingContextValue {
   body: BodyMetric[];
   loading: boolean;
   saving: boolean;
-  activeKey: string | null;
-  entries: Record<string, SetEntry[]>;
-  backTraffic: TrafficLight | null;
-  note: string;
   allLib: Exercise[];
   has: (k: string) => boolean;
-  nextIndex: number;
   recTpl: Template;
   recList: ResolvedSlot[];
-  activeList: ResolvedSlot[];
   estimatedMin: number;
   settings: AppSettings;
   todayReadiness: Readiness | null;
-  /** Warm-up phase of the active session completed (guided flow). */
-  warmupDone: boolean;
-  setWarmupDone: (done: boolean) => void;
   readinessScale: ReadinessScale;
   ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
@@ -223,26 +222,11 @@ interface TrainingContextValue {
   setBackSpareToday: (on: boolean) => void;
   /** Rücken-Schonung heute aktiv — Ampel-rot ODER manueller Tages-Schalter. */
   backSafeActive: boolean;
-  /** Beim Start eingefrorene Schon-Entscheidung der LAUFENDEN Einheit. */
-  activeBackSafe: boolean;
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
-  sessionOf: (key: string, backSafe?: boolean) => ResolvedSlot[];
-  sessionTemplate: (key: string) => Template | null;
-  startSession: (
-    key: string,
-    readiness?: Readiness,
-    opts?: { spareBack?: boolean },
-  ) => void;
-  setEntry: (
-    exId: string,
-    i: number,
-    field: keyof SetEntry,
-    val: string | number | boolean | undefined,
-  ) => void;
-  swapExercise: (slotKey: string, newId: string) => void;
   toggleEquip: (k: EquipKey) => void;
-  addCustom: (data: AddCustomData) => void;
+  addCustom: (data: CustomExerciseInput) => void;
+  updateCustom: (id: string, data: CustomExerciseInput) => void;
   removeCustom: (id: string) => void;
   setExerciseVideo: (exId: string, url: string | null) => void;
   setExerciseNote: (exId: string, note: string | null) => void;
@@ -252,35 +236,33 @@ interface TrainingContextValue {
   removeDay: (id: string) => void;
   gyms: GymProfile[];
   switchGym: (id: string) => void;
-  addGym: (name: string) => void;
+  addGym: (name: string, equipPreset?: EquipKey[]) => void;
   removeGym: (id: string) => void;
-  saveSession: () => Promise<SessionSummary | null>;
-  discardSession: () => void;
+  /** Den Live-State des Runners als LoggedSession speichern (leer → null). */
+  saveActiveSession: (state: ActiveSessionState) => Promise<SessionSummary | null>;
+  /** KI-Debrief nachträglich an die zuletzt gespeicherte Einheit schreiben. */
+  amendLastDebrief: (lines: string[]) => void;
+  /** Laufende Einheit verwerfen: lokalen Live-State und Tages-Flags räumen. */
+  discardActive: () => void;
   deleteSession: (realIdx: number) => Promise<void>;
   resetAll: () => Promise<void>;
-  setBackTraffic: (v: TrafficLight | null) => void;
-  setNote: (v: string) => void;
   setBudget: (min: number) => void;
   setVoiceCues: (on: boolean) => void;
   setCueVolume: (v: number) => void;
-  setSuperset: (on: boolean) => void;
   setTheme: (t: ThemePref) => void;
-  setSkin: (skin: SkinId) => void;
   setIcon: (icon: IconConfig | undefined) => void;
   setAccentOverride: (hex: string | undefined) => void;
-  setTextTone: (hex: string | undefined) => void;
   setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
-  setCardioFinisher: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
   setCoachLive: (on: boolean) => void;
-  aiPlan: WeekPlan | null;
-  aiPlanActive: boolean;
-  aiPlanLoading: boolean;
-  refreshWeekPlan: () => Promise<boolean>;
+  /** Die heutige, frisch komponierte Einheit (ATLAS / Fallback / manuell). */
+  todaySession: DailySession | null;
+  /** Persistiert mit (KEYS.today). `null` löscht die heutige Einheit. */
+  setTodaySession: (s: DailySession | null) => void;
   jumps: JumpEntry[];
   addJump: (heightCm: number) => void;
   setUserName: (name: string) => void;
@@ -359,34 +341,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [activeKey, setActiveKey] = useState<string | null>(null);
-  const [aiPlan, setAiPlan] = useState<WeekPlan | null>(null);
+  const [todaySession, setTodaySessionState] = useState<DailySession | null>(null);
   const [jumps, setJumps] = useState<JumpEntry[]>([]);
-  const [aiPlanLoading, setAiPlanLoading] = useState(false);
-  const aiFetchTried = useRef(false);
-  const [entries, setEntries] = useState<Record<string, SetEntry[]>>({});
-  const [backTraffic, setBackTrafficState] = useState<TrafficLight | null>(null);
-  const [note, setNoteState] = useState("");
   const [todayReadiness, setTodayReadiness] = useState<Readiness | null>(null);
   // „Rücken heute schonen" — manueller Tages-Schalter (Session-scoped wie
   // todayReadiness: nie persistiert, Reset bei Save/Discard).
   const [backSpareToday, setBackSpareToday] = useState(false);
-  // Die beim Start EINGEFRORENE Schon-Entscheidung der laufenden Einheit.
-  // activeList darf NICHT am live veränderlichen Tages-Schalter hängen —
-  // sonst tauscht ein Toggle-Tap (Home ist per Zurück-Geste erreichbar)
-  // mid-session die Übungen und protokollierte Sätze gehen beim Speichern
-  // still verloren.
-  const [activeBackSafe, setActiveBackSafe] = useState(false);
-  // Warm-up phase of the ACTIVE session was completed (player finished or
-  // checked off manually). Session-scoped: reset on start/save/discard.
-  const [warmupDone, setWarmupDone] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   // Read every key from the local cache into state. Reused after a cloud pull.
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en, td] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -400,6 +367,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
       storage.getJSON<StoredMission | null>(KEYS.mission, null),
       storage.getJSON<Record<string, string>>(KEYS.exerciseNotes, {}),
+      storage.getJSON<DailySession | null>(KEYS.today, null),
     ]);
     // Alles durch die Sanitizer VOR setState — vergiftete Sync-/Legacy-Daten
     // dürfen den Render nie erreichen (sonst global-error auf jeder Route).
@@ -443,6 +411,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     // Mission nur mit einem echten targets-OBJEKT (der Rollover liest
     // mission.targets.weekKey — ein Nicht-Objekt würfe dort).
     if (mi && typeof mi === "object" && mi.targets && typeof mi.targets === "object") setMission(mi);
+    // Heutige Einheit: nur übernehmen, wenn sie wirklich von HEUTE ist —
+    // eine gestrige komponiert die Startseite frisch.
+    if (
+      td &&
+      typeof td === "object" &&
+      td.schemaVersion === 1 &&
+      td.date === todayKey() &&
+      Array.isArray(td.items)
+    )
+      setTodaySessionState(td);
     setLoading(false);
   }, []);
 
@@ -450,13 +428,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void loadAll();
   }, [loadAll]);
 
-  // Apply theme + skin to <html>; follow system changes when theme is "system".
-  // Skip while loading so the default (tactile) never overrides the pre-paint
-  // data-skin before the saved settings arrive — otherwise the splash and a
-  // first-paint flash would show the wrong skin.
+  // Apply theme to <html>; follow system changes when theme is "system".
+  // Skip while loading so the pre-paint script's result never flashes over.
   useEffect(() => {
     if (loading) return;
-    // Optional accent override wins over the skin's --accent (inline > CSS).
+    // Optional accent override wins over the design's --accent (inline > CSS).
     const applyAccent = () => {
       const root = document.documentElement;
       if (settings.accentOverride) {
@@ -470,31 +446,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         root.style.removeProperty("--accent-ink");
       }
     };
-    // Optional text tone replaces the skin's --fg — DARK mode only; in light
-    // mode ink stays (a light tone would be unreadable on paper).
-    const applyTextTone = () => {
-      const root = document.documentElement;
-      if (settings.textTone && resolveTheme(settings.theme) !== "light") {
-        root.style.setProperty("--fg", settings.textTone);
-      } else {
-        root.style.removeProperty("--fg");
-      }
-    };
     applyTheme(settings.theme);
-    applySkin(settings.skin);
     applyAccent();
-    applyTextTone();
     if (settings.theme !== "system" || typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
     const onChange = () => {
       applyTheme(settings.theme);
-      applySkin(settings.skin);
       applyAccent();
-      applyTextTone();
     };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [loading, settings.theme, settings.skin, settings.accentOverride, settings.textTone]);
+  }, [loading, settings.theme, settings.accentOverride]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -682,12 +644,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     [settings, body],
   );
   const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
-  const hasBike = (equip as string[]).includes("bike");
   const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
+    // DAS Trainingsmodell: die heutige, frisch komponierte Einheit.
+    if (key === "today")
+      return todaySession ? resolveDailySession(todaySession, allLib, has) : [];
     const day = days.find((d) => d.id === key);
     if (day) return resolveDay(day, allLib, has, choices);
     // Rücken-Reset: kuratiert und konstruktiv gewichtsfrei — keine
-    // Muster-Rotation, kein KI-Overlay, kein backSafe nötig.
+    // Muster-Rotation, kein backSafe nötig.
     if (key === RESET_DAY.key) return resolveResetSession(has, allLib, choices);
     if (key === CARDIO_DAY.key)
       return resolveSession(CARDIO_DAY, log.length, choices, has, allLib, {
@@ -703,67 +667,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const tpl = TEMPLATE.find((t) => t.key === key);
     if (!tpl) return [];
     const idx = TEMPLATE.findIndex((t) => t.key === key);
-    const base = resolveSession(tpl, idx, choices, has, allLib, {
+    return resolveSession(tpl, idx, choices, has, allLib, {
       backSafe,
       injuries: athleteInjuries,
       affinity,
     });
-    // ATLAS-KI-Woche: der Wochenplan überlagert die Übungswahl der
-    // Template-Tage — nur in seiner Woche und nie bei rotem Rücken
-    // (backSafe: dann übernimmt das Regelwerk mit den Schon-Alternativen).
-    // Readiness, Zeitbudget und Deload laufen ohnehin NACH sessionOf.
-    const aiDay =
-      !backSafe && aiPlan && aiPlan.weekKey === weekKeyOf()
-        ? aiPlan.days[key as "A" | "B" | "C"]
-        : undefined;
-    if (aiDay?.slots?.length) {
-      const mapped: ResolvedSlot[] = [];
-      for (let i = 0; i < aiDay.slots.length; i++) {
-        const slot = aiDay.slots[i];
-        const ex = allLib.find((e) => e.id === slot.exerciseId);
-        if (!ex || ex.pattern === "cardio" || !reqOk(ex, has)) continue;
-        // Manueller In-Session-Tausch überlagert auch die KI-Wahl.
-        mapped.push(
-          applyChoice(
-            {
-              ex: { ...ex, sets: slot.sets },
-              slotKey: `${key}:ai${i}`,
-              pool: poolFor(ex.pattern, has, allLib),
-            },
-            choices,
-          ),
-        );
-      }
-      if (mapped.length >= 3) return mapped;
-    }
-    return base;
-  };
-
-  /** Append an optional Peloton finisher to A/B/C sessions (opt-in, needs a bike). */
-  const withFinisher = (list: ResolvedSlot[], key: string): ResolvedSlot[] => {
-    if (!settings.cardioFinisher || !hasBike) return list;
-    if (key === CARDIO_DAY.key || key === EXAM_DAY.key || key === RESET_DAY.key || days.some((d) => d.id === key))
-      return list;
-    if (list.some((s) => s.ex.pattern === "cardio")) return list;
-    const fin = allLib.find((e) => e.id === "bike_finisher");
-    return fin ? [...list, { ex: fin, slotKey: "finisher", pool: [] }] : list;
-  };
-
-  // Real template, or a synthesized one for a custom day (slots = its patterns),
-  // so workout / warmup / saveSession treat days exactly like A/B/C.
-  const sessionTemplate = (key: string): Template | null => {
-    const day = days.find((d) => d.id === key);
-    if (day) {
-      const byId = new Map(allLib.map((e) => [e.id, e]));
-      const slots = day.items
-        .map((it) => byId.get(it.exerciseId)?.pattern)
-        .filter((p): p is Pattern => !!p);
-      return { key: day.id, name: day.name, focus: day.focus, slots };
-    }
-    if (key === CARDIO_DAY.key) return CARDIO_DAY;
-    if (key === EXAM_DAY.key) return EXAM_DAY;
-    if (key === RESET_DAY.key) return RESET_DAY;
-    return TEMPLATE.find((t) => t.key === key) ?? null;
   };
 
   const nextIndex = useMemo(() => {
@@ -789,45 +697,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const recTpl = TEMPLATE[nextIndex];
   const recList = useMemo(
     () =>
-      withFinisher(
-        applyReadiness(
-          fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
-            protectCore: backSafeActive,
-            superset: settings.superset,
-            choices,
-          }).list,
-          readinessScale,
-        ),
-        recTpl.key,
+      applyReadiness(
+        fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
+          protectCore: backSafeActive,
+          choices,
+        }).list,
+        readinessScale,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, aiPlan, backSafeActive, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale],
+    [recTpl, choices, equip, custom, backSafeActive, settings.timeBudgetMin, readinessScale],
   );
-  const estimatedMin = useMemo(
-    () => estimateSessionMin(recList, { superset: settings.superset }),
-    [recList, settings.superset],
-  );
-
-  // The session actually being trained — budget-trimmed, back-safe, readiness-scaled.
-  // Both the workout screen and saveSession read this so shown == saved.
-  const activeList = useMemo(() => {
-    if (!activeKey) return [];
-    const noTrim =
-      days.some((d) => d.id === activeKey) ||
-      activeKey === CARDIO_DAY.key ||
-      activeKey === RESET_DAY.key;
-    const base = sessionOf(activeKey, activeBackSafe);
-    // Custom/cardio days are trained exactly as built (no budget auto-trim); A/B/C trim.
-    const fitted = noTrim
-      ? base
-      : fitToBudget(base, settings.timeBudgetMin, {
-          protectCore: activeBackSafe,
-          superset: settings.superset,
-          choices,
-        }).list;
-    return withFinisher(applyReadiness(fitted, readinessScale), activeKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, choices, equip, custom, days, aiPlan, activeBackSafe, settings.timeBudgetMin, settings.superset, settings.cardioFinisher, readinessScale]);
+  const estimatedMin = useMemo(() => estimateSessionMin(recList), [recList]);
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
@@ -967,131 +847,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ];
   }, [log, weekCount, muscleVolumes]);
 
-  const initEntryFor = (
-    ex: Exercise,
-    scale: ReadinessScale = readinessScale,
-  ): SetEntry[] => {
-    const p = presc(ex, lastPerf(ex.id), {
-      lighter: daysAgo != null && daysAgo > 5,
-      loadMult: scale.loadMult,
-      cap: scale.cap,
-      step: settings.weightStep,
-    });
-    const working: SetEntry[] = Array.from({ length: ex.sets }, () => ({
-      weight: p.w,
-      reps: "",
-    }));
-    const warm =
-      ex.weighted && p.w && Number(p.w) > 0
-        ? warmupSets(Number(p.w), settings.weightStep)
-        : [];
-    return [...warm, ...working];
-  };
-
-  // „Die Prüfung": aufsteigende Rampe 5 → 4 → 3 zum schweren Test-Satz,
-  // ausgehend von der letzten Leistung. Ohne belastbare Historie (oder ohne
-  // Gewicht) fällt die Übung auf den normalen Plan zurück — getestet wird nur,
-  // was eine Basis hat.
-  const examEntryFor = (ex: Exercise, scale: ReadinessScale): SetEntry[] => {
-    const lp = lastPerf(ex.id);
-    const best = lp
-      ? Math.max(
-          0,
-          ...lp.sets
-            .filter((s) => !s.warmup && s.reps !== "" && s.weight !== "")
-            .map((s) => Number(s.weight) || 0),
-        )
-      : 0;
-    if (!ex.weighted || !isFinite(best) || best <= 0) return initEntryFor(ex, scale);
-    const step = settings.weightStep ?? 2.5;
-    // Strikt aufsteigend, Rundung darf die Stufen nicht kollabieren lassen;
-    // der Test-Satz liegt einen Schritt ÜBER der letzten Bestleistung.
-    const base = Math.max(step, Math.round(best / step) * step);
-    const w5 = Math.max(step, Math.round((base * 0.85) / step) * step);
-    const w4 = Math.max(w5 + step, Math.round((base * 0.95) / step) * step);
-    const w3 = Math.max(w4 + step, base + step);
-    const working: SetEntry[] = [
-      { weight: String(w5), reps: "" },
-      { weight: String(w4), reps: "" },
-      { weight: String(w3), reps: "" },
-    ];
-    return [...warmupSets(w5, settings.weightStep), ...working];
-  };
-
-  const startSession = (
-    key: string,
-    readiness?: Readiness,
-    opts?: { spareBack?: boolean },
-  ) => {
-    const r = readiness ?? todayReadiness;
-    const scale = withDeload(
-      settings.autoregOn && r ? scaleFor(band(r.score)) : NEUTRAL_SCALE,
-      deloadActive,
-    );
-    if (readiness) setTodayReadiness(readiness);
-    // Schon-Entscheidung aus dem Gate schlägt den Home-Schalter; ohne Angabe
-    // gilt der aktuelle Tages-Schalter. Closure-sicher lokal rechnen — der
-    // setState wäre in diesem Aufruf noch nicht sichtbar.
-    if (opts?.spareBack !== undefined) setBackSpareToday(opts.spareBack);
-    const spare = opts?.spareBack ?? backSpareToday;
-    // Der Rücken-Reset ist per Definition Schon-Betrieb — auch Übungs-Tausch
-    // in der Einheit bleibt dann bei rückenfreundlichen Alternativen.
-    const backSafe = key === RESET_DAY.key || lastBackRed || spare;
-    // Für die Dauer der Einheit einfrieren — spätere Toggle-Taps ändern die
-    // laufende Übungsauswahl nicht mehr (shown == gestartet == gespeichert).
-    setActiveBackSafe(backSafe);
-    const isDay = days.some((d) => d.id === key);
-    const isExam = key === EXAM_DAY.key;
-    const isReset = key === RESET_DAY.key;
-    const base = sessionOf(key, backSafe);
-    // Prüfung: nichts wegtrimmen — alle Kernmuster werden getestet.
-    const fitted =
-      isDay || isExam || isReset
-        ? base
-        : fitToBudget(base, settings.timeBudgetMin, {
-            protectCore: backSafe,
-            superset: settings.superset,
-            choices,
-          }).list;
-    const list = applyReadiness(fitted, scale);
-    const init: Record<string, SetEntry[]> = {};
-    list.forEach(({ ex }) => {
-      init[ex.id] = isExam ? examEntryFor(ex, scale) : initEntryFor(ex, scale);
-    });
-    setEntries(init);
-    setActiveKey(key);
-    setBackTrafficState(null);
-    setNoteState("");
-    setWarmupDone(false);
-  };
-
-  const setEntry: TrainingContextValue["setEntry"] = (exId, i, field, val) => {
-    setEntries((prev) => {
-      const c = { ...prev };
-      const arr = (c[exId] || []).map((s) => ({ ...s }));
-      const before = arr[i]?.weight;
-      arr[i] = { ...arr[i], [field]: val };
-      // Gewichts-Kaskade: ein eingetragenes Gewicht zieht unberührte
-      // Folgesätze mit (reps noch offen, Gewicht leer oder noch auf dem
-      // alten Wert dieses Satzes). Warmup-Sätze bleiben unangetastet.
-      if (field === "weight" && typeof val === "string" && val !== "") {
-        for (let j = i + 1; j < arr.length; j++) {
-          const s = arr[j];
-          if (s.warmup) continue;
-          const open = s.reps === "" || s.reps == null;
-          const untouched = s.weight === "" || s.weight == null || s.weight === before;
-          if (open && untouched) arr[j] = { ...s, weight: val };
-        }
-      }
-      c[exId] = arr;
-      return c;
-    });
-  };
-
-  const saveChoices = async (next: Record<string, string>) => {
-    setChoices(next);
-    await storage.setJSON(KEYS.choices, next);
-  };
   const saveExerciseVideos = async (next: Record<string, string>) => {
     setExerciseVideos(next);
     await storage.setJSON(KEYS.exerciseVideos, next);
@@ -1144,14 +899,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveEquip(g.equip);
     void saveSettings({ ...settings, activeGymId: id });
   };
-  const addGym = (name: string) => {
+  const addGym = (name: string, equipPreset?: EquipKey[]) => {
     const g: GymProfile = {
       id: "gym_" + Date.now(),
       name: name.trim() || "Neues Gym",
-      equip: [...equip],
+      equip: equipPreset ? [...equipPreset] : [...equip],
     };
     void saveGyms([...gyms, g]);
     void saveSettings({ ...settings, activeGymId: g.id });
+    // Preset-Profile (z. B. Studio) schalten die Geräteliste direkt um.
+    if (equipPreset) void saveEquip([...equipPreset]);
   };
   const removeGym = (id: string) => {
     if (gyms.length <= 1) return;
@@ -1166,8 +923,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, weightStep: step });
   const setBikeWarmup = (on: boolean) =>
     void saveSettings({ ...settings, bikeWarmup: on });
-  const setCardioFinisher = (on: boolean) =>
-    void saveSettings({ ...settings, cardioFinisher: on });
   const setCoachMotivation = (on: boolean) =>
     void saveSettings({ ...settings, coachMotivation: on });
 
@@ -1194,79 +949,23 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void storage.setJSON(KEYS.jumps, next);
   };
 
-  /** ATLAS-KI-Woche: Plan vom Server holen (Kontext wird clientseitig gebaut). */
-  const refreshWeekPlan = async (): Promise<boolean> => {
-    setAiPlanLoading(true);
-    try {
-      const wk = weekKeyOf();
-      const res = await fetch("/api/coach/week", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          weekKey: wk,
-          budgetMin: settings.timeBudgetMin,
-          exercises: allowedExercises(allLib, has),
-          context: buildWeekContext({
-            log,
-            muscleVolumes,
-            injuries: athleteInjuries,
-            budgetMin: settings.timeBudgetMin,
-            exerciseNotes,
-          }),
-        }),
-      });
-      const data = (await res.json().catch(() => null)) as
-        | { ok?: boolean; plan?: WeekPlan; configured?: boolean }
-        | null;
-      if (data?.ok && data.plan) {
-        setAiPlan(data.plan);
-        await storage.setJSON(KEYS.aiplan, data.plan);
-        // KI-Slot-Wahlen sind indexbasiert je Wochenplan (`A:ai0`) — ein frischer
-        // Plan macht sie bedeutungslos. Aufräumen, damit eine alte Wahl keinen
-        // neuen Slot fälschlich fixiert. Andere Wahlen (A:0, day:…) bleiben.
-        const pruned = Object.fromEntries(
-          Object.entries(choices).filter(([k]) => !k.includes(":ai")),
-        );
-        if (Object.keys(pruned).length !== Object.keys(choices).length) {
-          await saveChoices(pruned);
-        }
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    } finally {
-      setAiPlanLoading(false);
-    }
+  /** Heutige Einheit setzen + persistieren (KEYS.today, synct mit). */
+  const setTodaySession = (s: DailySession | null) => {
+    setTodaySessionState(s);
+    if (s) void storage.setJSON(KEYS.today, s);
+    else void storage.remove(KEYS.today);
   };
 
-  // Gespeicherten Wochenplan laden (reine Cache-Ableitung — bewusst nicht im
-  // Cloud-Sync: jedes Gerät holt ihn sich selbst frisch).
+  // Sprungtests laden (unkritisch fürs erste Rendern — darf nachladen).
   useEffect(() => {
-    void storage.getJSON<WeekPlan | null>(KEYS.aiplan, null).then((pl) => {
-      if (pl && typeof pl === "object" && typeof pl.weekKey === "string") setAiPlan(pl);
-    });
     void storage.getJSON<JumpEntry[]>(KEYS.jumps, []).then((js) => {
       if (Array.isArray(js))
         setJumps(js.filter((j) => j && typeof j.date === "string" && j.heightCm > 0));
     });
   }, []);
 
-  // Neue Woche → einmal pro App-Lauf still einen frischen Plan versuchen
-  // (kein Key/offline/Fehler: Regelwerk übernimmt, nichts blinkt).
-  useEffect(() => {
-    if (loading || aiFetchTried.current) return;
-    if (settings.aiPlanning === false) return;
-    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
-    if (log.length < 3) return;
-    if (aiPlan?.weekKey === weekKeyOf()) return;
-    aiFetchTried.current = true;
-    void refreshWeekPlan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, settings.aiPlanning, aiPlan, log.length]);
-
   // Signalton-Lautstärke ins Audio-Modul spiegeln — beep() UND speak() lesen sie,
-  // damit WarmupPlayer, JumpCheck und CameraView ohne eigene Änderung profitieren.
+  // damit WarmupPlayer und JumpCheck ohne eigene Änderung profitieren.
   useEffect(() => {
     setBeepCueVolume(settings.cueVolume ?? 1);
   }, [settings.cueVolume]);
@@ -1275,18 +974,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, voiceCues: on });
   const setCueVolume = (v: number) =>
     void saveSettings({ ...settings, cueVolume: v });
-  const setSuperset = (on: boolean) =>
-    void saveSettings({ ...settings, superset: on });
   const setTheme = (t: ThemePref) =>
     void saveSettings({ ...settings, theme: t });
-  const setSkin = (skin: SkinId) =>
-    void saveSettings({ ...settings, skin });
   const setIcon = (icon: IconConfig | undefined) =>
     void saveSettings({ ...settings, icon });
   const setAccentOverride = (hex: string | undefined) =>
     void saveSettings({ ...settings, accentOverride: hex });
-  const setTextTone = (hex: string | undefined) =>
-    void saveSettings({ ...settings, textTone: hex });
   const setAccent = (id: string) =>
     void saveSettings({ ...settings, accentColor: id });
   const setUserName = (name: string) =>
@@ -1423,16 +1116,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const dismissCard = (card: CoachCard) =>
     setDismissed((d) => [...d, card.kind + (card.exId ?? "")]);
 
-  const swapExercise = (slotKey: string, newId: string) => {
-    const next = { ...choices, [slotKey]: newId };
-    void saveChoices(next);
-    const ex = allLib.find((e) => e.id === newId);
-    if (ex)
-      setEntries((prev) =>
-        prev[newId] ? prev : { ...prev, [newId]: initEntryFor(ex) },
-      );
-  };
-
   const toggleEquip = (k: EquipKey) => {
     const next = equip.includes(k) ? equip.filter((x) => x !== k) : [...equip, k];
     void saveEquip(next);
@@ -1440,26 +1123,50 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (aid) void saveGyms(gyms.map((g) => (g.id === aid ? { ...g, equip: next } : g)));
   };
 
-  const addCustom = (data: AddCustomData) => {
-    const id = "custom_" + Date.now();
+  /** Eingaben des Editors härten und in eine vollwertige Übung gießen —
+   *  eigene Übungen sind erstklassig (Muskel, Equipment, Content) und fließen
+   *  über `allLib` automatisch in Pools, Volumen und den ATLAS-Katalog. */
+  const buildCustom = (id: string, data: CustomExerciseInput): Exercise => {
+    const unit: Unit = data.unit === "Sek" ? "Sek" : "Wdh";
+    const clampInt = (v: unknown, lo: number, hi: number, dflt: number) => {
+      const n = Math.round(Number(v));
+      return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+    };
+    const repLow = clampInt(data.repLow, 1, 180, unit === "Sek" ? 20 : 8);
+    const repHigh = clampInt(data.repHigh, repLow, 180, Math.max(repLow, unit === "Sek" ? 45 : 12));
+    const validReq = new Set<string>([...EQUIP_LIST.map((e) => e.key), "weight"]);
+    const req = (data.req ?? []).filter((t) => validReq.has(t));
     const ex: Exercise = {
       id,
-      name: data.name,
+      name: data.name.trim().slice(0, 60) || "Eigene Übung",
       pattern: data.pattern,
       tag: "Eigene",
-      req: ["none"],
+      req: req.length ? req : ["none"],
       weighted: !!data.weighted,
-      sets: 3,
-      repLow: data.unit === "Sek" ? 20 : 8,
-      repHigh: data.unit === "Sek" ? 45 : 12,
-      unit: data.unit,
-      cue: "Eigene Übung.",
-      steps: [],
-      back: "",
-      easier: "",
+      sets: clampInt(data.sets, 1, 6, 3),
+      repLow,
+      repHigh,
+      unit,
+      cue: (data.cue ?? "").trim().slice(0, 160) || "Eigene Übung — sauber und kontrolliert ausführen.",
+      steps: (data.steps ?? [])
+        .map((s) => s.trim().slice(0, 160))
+        .filter(Boolean)
+        .slice(0, 4),
+      back: (data.back ?? "").trim().slice(0, 160),
+      easier: (data.easier ?? "").trim().slice(0, 160),
       custom: true,
     };
-    void saveCustom([...custom, ex]);
+    if (data.muscle) ex.muscle = data.muscle;
+    if (data.muscleSecondary && data.muscleSecondary !== data.muscle)
+      ex.muscleSecondary = data.muscleSecondary;
+    if (data.backCaution) ex.backCaution = true;
+    return ex;
+  };
+  const addCustom = (data: CustomExerciseInput) => {
+    void saveCustom([...custom, buildCustom("custom_" + Date.now(), data)]);
+  };
+  const updateCustom = (id: string, data: CustomExerciseInput) => {
+    void saveCustom(custom.map((e) => (e.id === id ? buildCustom(id, data) : e)));
   };
   const removeCustom = (id: string) => {
     void saveCustom(custom.filter((e) => e.id !== id));
@@ -1484,62 +1191,61 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveDays(days.map((d) => (d.id === day.id ? day : d)));
   const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
 
-  const saveSession = async (): Promise<SessionSummary | null> => {
-    const tpl = activeKey ? sessionTemplate(activeKey) : null;
-    if (!tpl) return null;
-    const list = activeList;
-    const exercises = list.map(({ ex }) => {
-      const mapped: SessionExercise = {
-        id: ex.id,
-        name: ex.name,
-        unit: ex.unit,
-        sets: (entries[ex.id] || [])
-          .map((s) => {
-            const out: SetEntry = { weight: s.weight, reps: s.reps };
-            if (s.rir != null) out.rir = s.rir;
-            if (s.intensity != null) out.intensity = s.intensity;
-            if (s.warmup) out.warmup = true;
-            return out;
-          })
-          // Only truly filled sets (reps present) — weight-prefilled empty sets
-          // are suggestions, not performed work.
-          .filter((s) => s.reps !== "" && s.reps != null),
-      };
+  /** Den Live-State des Runners als LoggedSession speichern. Items × Item-
+   *  Protokoll werden zu Übungs-Snapshots; die Heute-Einheit bekommt ihren
+   *  Erledigt-Stempel (in der real trainierten, ggf. umgebauten Fassung). */
+  const saveActiveSession = async (
+    state: ActiveSessionState,
+  ): Promise<SessionSummary | null> => {
+    const s = state.session;
+    const byId = new Map(allLib.map((e) => [e.id, e]));
+    const exercises: SessionExercise[] = [];
+    for (const it of s.items) {
+      const ex = byId.get(it.exerciseId);
+      if (!ex) continue;
+      const sets = (state.entries[it.id] || [])
+        .map((x) => {
+          const out: SetEntry = { weight: x.weight, reps: x.reps };
+          if (x.rir != null) out.rir = x.rir;
+          if (x.intensity != null) out.intensity = x.intensity;
+          if (x.warmup) out.warmup = true;
+          return out;
+        })
+        // Only truly filled sets (reps present) — weight-prefilled empty sets
+        // are suggestions, not performed work.
+        .filter((x) => x.reps !== "" && x.reps != null);
+      // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
+      // auto-prefilled (reps "5") and used to slip through as ghost sessions,
+      // inflating streak/XP and corrupting the next prescription.
+      if (!sets.some((x) => !x.warmup)) continue;
+      const mapped: SessionExercise = { id: ex.id, name: ex.name, unit: ex.unit, sets };
       // Hilfsmittel-Notiz als Snapshot mitschreiben (was an dem Tag galt).
       const exNote = exerciseNotes[ex.id];
       if (exNote) mapped.note = exNote;
-      return mapped;
-    })
-    // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
-    // auto-prefilled (reps "5") and used to slip through as ghost sessions,
-    // inflating streak/XP and corrupting the next prescription.
-    .filter((ex) => ex.sets.some((s) => !s.warmup));
+      exercises.push(mapped);
+    }
     if (!exercises.length) {
       // Nothing real was performed → don't log a session; still clear state.
-      setActiveKey(null);
-      setEntries({});
-      setBackTrafficState(null);
-      setNoteState("");
+      void storage.remove(KEYS.active);
       setTodayReadiness(null);
       setBackSpareToday(false);
-      setActiveBackSafe(false);
-      setWarmupDone(false);
       return null;
     }
     const newSession: LoggedSession = {
       date: new Date().toISOString(),
-      dayKey: tpl.key,
-      dayName: tpl.name,
-      focus: tpl.focus,
+      dayKey: "today",
+      dayName: s.name,
+      focus: s.focus,
       exercises,
-      estimatedMin: estimateSessionMin(activeList, { superset: settings.superset }),
+      estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
     };
-    if (backTraffic) newSession.backTraffic = backTraffic;
-    if (note.trim()) newSession.note = note.trim();
-    if (todayReadiness) newSession.readiness = todayReadiness;
+    if (state.backTraffic) newSession.backTraffic = state.backTraffic;
+    const noteText = (state.note ?? "").trim();
+    if (noteText) newSession.note = noteText;
+    if (state.readiness) newSession.readiness = state.readiness;
     if (deloadActive) newSession.isDeload = true;
-    if (tpl.key === EXAM_DAY.key) newSession.isExam = true;
-    if (tpl.key === RESET_DAY.key) newSession.isBackReset = true;
+    if (s.variant === "exam") newSession.isExam = true;
+    if (s.variant === "reset") newSession.isBackReset = true;
     const newLog = [...log, newSession];
     // Summary for the completion takeover — computed BEFORE state clears so
     // the celebration can show exactly what this session achieved.
@@ -1547,7 +1253,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const lvlAfter = trainingLevel({ log: newLog, allLib, settings });
     const week = weeklySetStats(newLog);
     const core = {
-      sets: exercises.reduce((a, ex) => a + ex.sets.filter((s) => !s.warmup).length, 0),
+      sets: exercises.reduce((a, ex) => a + ex.sets.filter((x) => !x.warmup).length, 0),
       tonnage: sessionVolume(newSession),
       prs: prTimeline(newLog).filter((e) => e.date === newSession.date).length,
       levelBefore: lvlBefore.level,
@@ -1564,7 +1270,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       log: newLog,
       allLib,
       summary: core,
-      readiness: todayReadiness,
+      readiness: state.readiness ?? null,
     });
     newSession.debrief = debrief;
     const summary: SessionSummary = { ...core, debrief };
@@ -1572,28 +1278,36 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.log, newLog);
     setLog(newLog);
     setSaving(false);
-    setActiveKey(null);
-    setEntries({});
-    setBackTrafficState(null);
-    setNoteState("");
+    // Heute-Einheit als erledigt stempeln — die Startseite zeigt dann Ruhe
+    // statt eines abgearbeiteten Plans.
+    setTodaySession({ ...s, completedAt: new Date().toISOString() });
+    void storage.remove(KEYS.active);
     setTodayReadiness(null);
     setBackSpareToday(false);
-    setActiveBackSafe(false);
-    setWarmupDone(false);
     return summary;
   };
 
-  // Leave an active session WITHOUT saving — clears the in-progress state so a
-  // discarded workout isn't silently resumed or logged.
-  const discardSession = () => {
-    setActiveKey(null);
-    setEntries({});
-    setBackTrafficState(null);
-    setNoteState("");
+  /** Das gestreamte KI-Debrief nachträglich an die eben gespeicherte Einheit
+   *  schreiben — Verlauf und Cloud zeigen dann dauerhaft dieselben Zeilen wie
+   *  der Sieger-Moment. */
+  const amendLastDebrief = (lines: string[]) => {
+    const clean = lines.map((l) => l.trim()).filter(Boolean).slice(0, 3);
+    if (!clean.length) return;
+    setLog((prev) => {
+      if (!prev.length) return prev;
+      const next = [...prev];
+      next[next.length - 1] = { ...next[next.length - 1], debrief: clean };
+      void storage.setJSON(KEYS.log, next);
+      return next;
+    });
+  };
+
+  // Leave an active session WITHOUT saving — clears the persisted live state
+  // so a discarded workout isn't silently resumed or logged.
+  const discardActive = () => {
+    void storage.remove(KEYS.active);
     setTodayReadiness(null);
     setBackSpareToday(false);
-    setActiveBackSafe(false);
-    setWarmupDone(false);
   };
 
   const deleteSession = async (realIdx: number) => {
@@ -1699,21 +1413,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     body,
     loading,
     saving,
-    activeKey,
-    entries,
-    backTraffic,
-    note,
     allLib,
     has,
-    nextIndex,
     recTpl,
     recList,
-    activeList,
     estimatedMin,
     settings,
     todayReadiness,
-    warmupDone,
-    setWarmupDone,
     readinessScale,
     ringMetrics,
     muscleVolumes,
@@ -1731,16 +1437,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     backSpareToday,
     setBackSpareToday,
     backSafeActive,
-    activeBackSafe,
     seeDoctor,
     lastPerf,
-    sessionOf,
-    sessionTemplate,
-    startSession,
-    setEntry,
-    swapExercise,
     toggleEquip,
     addCustom,
+    updateCustom,
     removeCustom,
     setExerciseVideo,
     setExerciseNote,
@@ -1752,37 +1453,26 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     switchGym,
     addGym,
     removeGym,
-    saveSession,
-    discardSession,
+    saveActiveSession,
+    amendLastDebrief,
+    discardActive,
     deleteSession,
     resetAll,
-    setBackTraffic: (v) => setBackTrafficState(v),
-    setNote: (v) => setNoteState(v),
     setBudget,
     setVoiceCues,
     setCueVolume,
-    setSuperset,
     setTheme,
-    setSkin,
     setIcon,
     setAccentOverride,
-    setTextTone,
     setAccent,
     setWeightStep,
     setBikeWarmup,
-    setCardioFinisher,
     setCoachMotivation,
     setKeepAwake,
     setAiPlanning,
     setCoachLive,
-    aiPlan,
-    aiPlanActive: !!(
-      aiPlan &&
-      aiPlan.weekKey === weekKeyOf() &&
-      Object.keys(aiPlan.days).length > 0
-    ),
-    aiPlanLoading,
-    refreshWeekPlan,
+    todaySession,
+    setTodaySession,
     jumps,
     addJump,
     setUserName,

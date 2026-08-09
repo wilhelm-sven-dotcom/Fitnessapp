@@ -9,7 +9,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { StravaSection } from "@/components/settings/StravaSection";
 import { SpotifySection } from "@/components/settings/SpotifySection";
-import { AiPlanSection } from "@/components/settings/AiPlanSection";
+import { AtlasSection } from "@/components/settings/AtlasSection";
+import { EquipmentSection } from "@/components/settings/EquipmentSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { AppIconSection } from "@/components/settings/AppIconSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
@@ -28,10 +29,8 @@ export default function SettingsPage() {
     settings,
     setVoiceCues,
     setCueVolume,
-    setSuperset,
     setWeightStep,
     setBikeWarmup,
-    setCardioFinisher,
     setCoachMotivation,
     setKeepAwake,
   } = useTraining();
@@ -118,7 +117,8 @@ export default function SettingsPage() {
 
       <ProfileSection />
 
-      <AiPlanSection />
+      <AtlasSection />
+      <EquipmentSection />
 
       <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
@@ -228,22 +228,10 @@ export default function SettingsPage() {
             hint="Sagt Satzpause-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
           />
           <Toggle
-            checked={!!settings.superset}
-            onChange={setSuperset}
-            label="Supersätze"
-            hint="Die letzten zwei Übungen im Wechsel — spart Pausenzeit, mehr passt ins Zeitfenster."
-          />
-          <Toggle
             checked={!!settings.bikeWarmup}
             onChange={setBikeWarmup}
             label="Auf dem Bike aufwärmen"
             hint="Stellt jeder Einheit ein lockeres 3-Minuten-Einrollen auf dem Peloton voran (Bike muss im Gym aktiv sein)."
-          />
-          <Toggle
-            checked={!!settings.cardioFinisher}
-            onChange={setCardioFinisher}
-            label="Cardio-Finisher"
-            hint="Hängt an A/B/C einen kurzen Peloton-Sprintblock ans Ende — extra Kondition, jederzeit abschaltbar."
           />
           <Toggle
             checked={settings.coachMotivation !== false}

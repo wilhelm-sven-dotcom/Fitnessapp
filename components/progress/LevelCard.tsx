@@ -4,8 +4,6 @@ import { Trophy } from "lucide-react";
 import { useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Readout } from "@/components/ui/Readout";
-import { Reveal } from "@/components/ui/Reveal";
-import { SkinSignature } from "@/components/ui/SkinSignature";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
 
@@ -18,7 +16,7 @@ export function LevelCard() {
   const remaining = Math.max(0, lvl.xpForNext - lvl.xp);
 
   return (
-    <Reveal>
+    <div>
       <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -40,8 +38,7 @@ export function LevelCard() {
             ? "Erste Einheit starten und Level 2 freischalten."
             : `Noch ${remaining} XP bis Level ${lvl.level + 1}.`}
         </p>
-        <SkinSignature />
       </Card>
-    </Reveal>
+    </div>
   );
 }

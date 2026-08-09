@@ -2,8 +2,6 @@
 
 import { Trophy } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Reveal } from "@/components/ui/Reveal";
-import { SkinSignature } from "@/components/ui/SkinSignature";
 import { fmtDateShort } from "@/lib/format";
 import { prStreakWeeks, prTimeline, recordUnit } from "@/lib/records";
 import type { LoggedSession } from "@/lib/types";
@@ -16,7 +14,7 @@ export function RecordsBoard({ log }: { log: LoggedSession[] }) {
   const recent = events.slice(0, 6);
 
   return (
-    <Reveal>
+    <div>
       <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -44,8 +42,7 @@ export function RecordsBoard({ log }: { log: LoggedSession[] }) {
             </li>
           ))}
         </ul>
-        <SkinSignature />
       </Card>
-    </Reveal>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import type { Exercise, Pattern, ResolvedSlot, SetEntry } from "@/lib/types";
 
-/** Per-set timing model (seconds). restSec == the live RestTimer duration —
+/** Per-set timing model (seconds). restSec == the live rest duration —
  *  ONE source of truth (they diverged 75 vs 90 before, skewing estimates). */
 export const TIME = {
   restSec: 90,
@@ -23,6 +23,7 @@ const COMPOUND: Pattern[] = [
 const isCompound = (p: Pattern) => COMPOUND.includes(p);
 // Trim priority: accessories first, compounds late, core last.
 const TRIM_ORDER: Pattern[] = [
+  "calf",
   "arm",
   "lateral",
   "vpush",
@@ -50,47 +51,20 @@ export function estimateSlotMin(ex: Exercise): number {
   return sec / 60;
 }
 
-/**
- * The two accessory slots paired in superset mode — the last two non-core
- * slots, performed im Wechsel. Null when there aren't two accessories.
- */
-export function supersetPair(list: ResolvedSlot[]): [number, number] | null {
-  const acc = list
-    .map((s, i) => ({ pattern: s.ex?.pattern, i }))
-    .filter((x) => x.pattern && x.pattern !== "core");
-  if (acc.length < 2) return null;
-  return [acc[acc.length - 2].i, acc[acc.length - 1].i];
-}
-
-export function estimateSessionMin(
-  list: ResolvedSlot[],
-  opts: { superset?: boolean } = {},
-): number {
-  let min = list.reduce((s, { ex }) => s + estimateSlotMin(ex), 0);
-  if (opts.superset) {
-    const pair = supersetPair(list);
-    if (pair) {
-      // Paired exercises share rest (one rest per round) — save the rest of
-      // the shorter slot of the two.
-      const saved = Math.min(list[pair[0]].ex.sets, list[pair[1]].ex.sets);
-      min -= (saved * TIME.restSec) / 60;
-    }
-  }
-  return Math.round(min);
+export function estimateSessionMin(list: ResolvedSlot[]): number {
+  return Math.round(list.reduce((s, { ex }) => s + estimateSlotMin(ex), 0));
 }
 
 /**
  * Remaining minutes in a RUNNING session: open working sets × (work + rest),
- * plus planned minutes of untouched cardio blocks. Feeds the workout HUD.
+ * plus planned minutes of untouched cardio blocks. Feeds the runner header.
  */
 export function estimateRemainingMin(
-  list: ResolvedSlot[],
-  entries: Record<string, SetEntry[]>,
+  pairs: { ex: Exercise; sets: SetEntry[] }[],
 ): number {
   let sec = 0;
-  for (const { ex } of list) {
+  for (const { ex, sets } of pairs) {
     if (!ex?.pattern) continue;
-    const sets = entries[ex.id] ?? [];
     if (ex.pattern === "cardio") {
       const done = sets.some((s) => s.reps !== "" && s.reps != null);
       if (!done) sec += ex.repHigh * 60;
@@ -129,12 +103,11 @@ export function fitToBudget(
   budgetMin: number,
   opts: {
     protectCore?: boolean;
-    superset?: boolean;
     choices?: Record<string, string>;
   } = {},
 ): FitResult {
   const slots: ResolvedSlot[] = list.map((s) => ({ ...s, ex: { ...s.ex } }));
-  const est0 = () => estimateSessionMin(slots, { superset: opts.superset });
+  const est0 = () => estimateSessionMin(slots);
   let est = est0();
   let adjusted: FitResult["adjusted"] = "none";
 

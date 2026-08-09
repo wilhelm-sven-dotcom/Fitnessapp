@@ -1,18 +1,12 @@
 "use client";
 
 import { animate, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useBooted } from "@/components/providers/booted";
+import { useEffect, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/motion";
 
 /**
- * The home signature — weekly tonnage as a calibrated instrument. Ships both
- * skin variants and reveals one via the global .only-blueprint/.only-tactile
- * toggle (data-skin, set pre-paint → no JS branch, no hydration flash):
- *   · blueprint — a machinist's measuring ruler with a red index marker.
- *   · tactile   — a machined half-dial with an amber needle.
- * Colours come from --accent / --accent-2 / token classes, so each variant
- * also respects light/dark.
+ * The home signature — weekly tonnage as a machined half-dial with an amber
+ * needle. Colours come from --accent / token classes (light/dark folgen).
  */
 
 interface Props {
@@ -41,25 +35,23 @@ export function VolumeGauge({ valueT, targetT, compact = false }: Props) {
   const max = targetT > 0 ? targetT : Math.max(valueT, 1);
   const frac = Math.max(0, Math.min(1, valueT / max));
 
-  // The instrument "powers on": one animated value sweeps 0 → frac on mount and
-  // drives every skin variant (marker / arc + needle / bar) plus the count-up.
-  // Reduced-motion renders the final position instantly (no sweep, no loop).
+  // Ruhiges Instrument: beim Mount steht der Zeiger sofort auf dem Wert —
+  // animiert wird nur, wenn sich der Wert DANACH ändert (kein Sweep bei jeder
+  // Navigation). Reduced-motion springt immer direkt.
   const reduce = useReducedMotion();
-  const booted = useBooted();
-  const [a, setA] = useState(reduce ? frac : 0);
+  const [a, setA] = useState(frac);
+  const prev = useRef(frac);
   useEffect(() => {
+    if (prev.current === frac) return;
+    const from = prev.current;
+    prev.current = frac;
     if (reduce) {
       setA(frac);
       return;
     }
-    // Hold at 0 under the splash; sweep once the shell is actually visible.
-    if (!booted) {
-      setA(0);
-      return;
-    }
-    const controls = animate(0, frac, { duration: 1.0, ease: EASE_OUT, onUpdate: setA });
+    const controls = animate(from, frac, { duration: 0.6, ease: EASE_OUT, onUpdate: setA });
     return () => controls.stop();
-  }, [frac, reduce, booted]);
+  }, [frac, reduce]);
 
   const pct = Math.round(a * 100);
   const value = (a * max).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -84,32 +76,11 @@ export function VolumeGauge({ valueT, targetT, compact = false }: Props) {
           <span className="text-sm text-muted">t</span>
           <span className="ml-auto font-mono text-xs text-faint">{goal} t · Ziel</span>
         </div>
-        {/* Blueprint: Mini-Lineal */}
-        <div className="only-blueprint relative mt-2 h-4 border-t border-line">
-          {Array.from({ length: 11 }).map((_, i) => (
-            <span
-              key={i}
-              aria-hidden
-              className={i % 5 === 0 ? "absolute top-0 w-px bg-accent-2" : "absolute top-0 w-px bg-line"}
-              style={{ left: `${i * 10}%`, height: i % 5 === 0 ? 8 : 4 }}
-            />
-          ))}
-          <span
-            aria-hidden
-            className="absolute -top-0.5 w-0.5 bg-accent-sessions"
-            style={{ left: `${pct}%`, height: 12 }}
-          />
-        </div>
-        {/* Tactile: Pill-Balken */}
-        <div className="only-tactile mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-2">
+        <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-2">
           <div
             className="h-1.5 rounded-pill bg-accent-sessions"
             style={{ width: `${pct}%`, boxShadow: "0 0 8px -1px var(--accent)" }}
           />
-        </div>
-        {/* Editorial: Haarlinien-Baseline */}
-        <div className="only-editorial mt-2 h-0.5 w-full bg-line">
-          <div className="h-0.5 bg-accent-sessions" style={{ width: `${pct}%` }} />
         </div>
       </div>
     );
@@ -126,44 +97,8 @@ export function VolumeGauge({ valueT, targetT, compact = false }: Props) {
         </p>
       </div>
 
-      {/* ── Blueprint: measuring ruler ─────────────────────────────────── */}
-      <div className="only-blueprint">
-        <div className="mt-1.5 flex items-baseline gap-2">
-          <span className="font-display text-6xl font-extrabold leading-none tracking-tight text-fg tabular-nums">
-            {value}
-          </span>
-          <span className="text-lg text-muted">t</span>
-        </div>
-        <div className="relative mt-5 h-6 border-t border-line">
-          {Array.from({ length: 21 }).map((_, i) => (
-            <span
-              key={i}
-              aria-hidden
-              className={i % 5 === 0 ? "absolute top-0 w-px bg-accent-2" : "absolute top-0 w-px bg-line"}
-              style={{ left: `${i * 5}%`, height: i % 5 === 0 ? 10 : 5 }}
-            />
-          ))}
-          <span
-            aria-hidden
-            className="absolute -top-0.5 w-0.5 bg-accent-sessions"
-            style={{ left: `${pct}%`, height: 16 }}
-          />
-          <span
-            aria-hidden
-            className="absolute -top-2.5 -translate-x-1/2 text-xs text-accent-ink"
-            style={{ left: `${pct}%` }}
-          >
-            ▼
-          </span>
-          <span className="absolute top-3 left-0 font-mono text-xs text-faint">0</span>
-          <span className="absolute top-3 right-0 font-mono text-xs text-faint">
-            {goal} t · Ziel
-          </span>
-        </div>
-      </div>
-
-      {/* ── Tactile: machined half-dial ────────────────────────────────── */}
-      <div className="only-tactile">
+      {/* Der geschliffene Halbkreis-Tacho — die eine Signatur der Startseite. */}
+      <div>
         <svg viewBox="0 0 264 140" className="mt-1 block w-full">
           <path d={arcPath(0, 1, R)} fill="none" stroke="var(--surface-2)" strokeWidth={10} strokeLinecap="round" />
           {a > 0.005 && (
@@ -195,23 +130,6 @@ export function VolumeGauge({ valueT, targetT, compact = false }: Props) {
           <span className="ml-1 text-base text-muted">t</span>
         </div>
         <div className="flex justify-between font-mono text-xs text-faint">
-          <span>0</span>
-          <span>{goal} t · Ziel</span>
-        </div>
-      </div>
-
-      {/* ── Editorial: typografische Statzeile (kein Dial) ──────────────── */}
-      <div className="only-editorial">
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-7xl leading-none tracking-tight text-fg tabular-nums">
-            {value}
-          </span>
-          <span className="text-xl text-muted">t</span>
-        </div>
-        <div className="mt-4 h-0.5 w-full bg-line">
-          <div className="h-0.5 bg-accent-sessions" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="mt-2 flex justify-between font-mono text-xs uppercase tracking-widest text-faint">
           <span>0</span>
           <span>{goal} t · Ziel</span>
         </div>

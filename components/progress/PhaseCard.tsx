@@ -2,7 +2,6 @@
 
 import { CalendarRange } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Reveal } from "@/components/ui/Reveal";
 import { fatigueState } from "@/lib/fatigue";
 import { phaseState } from "@/lib/periodization";
 import type { AppSettings, CardioSession, LoggedSession } from "@/lib/types";
@@ -26,7 +25,7 @@ export function PhaseCard({
   const p = phaseState(settings, band, historyWeeks);
 
   return (
-    <Reveal>
+    <div>
       <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
@@ -66,6 +65,6 @@ export function PhaseCard({
         </div>
         <p className="mt-1 text-sm text-muted">{p.focus}</p>
       </Card>
-    </Reveal>
+    </div>
   );
 }

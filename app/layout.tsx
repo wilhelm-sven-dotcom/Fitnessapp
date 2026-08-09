@@ -1,20 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Sora, JetBrains_Mono, Anton, Newsreader, Inter } from "next/font/google";
+import { Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { AppIconInstaller } from "@/components/pwa/AppIconInstaller";
 
-// Skin display/body faces. The active skin maps --font-display/--font-body to
-// one of these (blueprint → Archivo, tactile → Sora); JetBrains Mono is the
-// shared data/label face. Self-hosted at build by next/font (no runtime fetch).
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-archivo",
-  display: "swap",
-});
+// Zwei Schriften, ein Design: Sora für Display/Body, JetBrains Mono für
+// Labels/Daten. Self-hosted at build by next/font (no runtime fetch).
 const sora = Sora({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -27,20 +20,10 @@ const jbmono = JetBrains_Mono({
   variable: "--font-jbmono",
   display: "swap",
 });
-// Editorial skin: condensed poster display + editorial serif body + clean labels.
-const anton = Anton({ subsets: ["latin"], weight: ["400"], variable: "--font-anton", display: "swap" });
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600"],
-  variable: "--font-newsreader",
-  display: "swap",
-});
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Training",
-  description: "Dein persönlicher Trainingsplan — Muskelaufbau, 3× pro Woche.",
+  description: "Dein persönlicher Trainingsplan — Muskelaufbau mit ATLAS.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black",
@@ -50,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0c0e12",
+  themeColor: "#0e0f12",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -64,20 +47,18 @@ export default function RootLayout({
     <html
       lang="de"
       data-theme="dark"
-      data-skin="tactile"
-      // The pre-paint script below rewrites data-theme/data-skin/--accent on
-      // <html> from localStorage before hydration, so React would flag an
-      // attribute mismatch on this element. Suppress it (scoped to <html>'s own
+      // The pre-paint script below rewrites data-theme/--accent on <html> from
+      // localStorage before hydration, so React would flag an attribute
+      // mismatch on this element. Suppress it (scoped to <html>'s own
       // attributes only; descendant mismatches still surface).
       suppressHydrationWarning
-      className={`${archivo.variable} ${sora.variable} ${jbmono.variable} ${anton.variable} ${newsreader.variable} ${inter.variable}`}
+      className={`${sora.variable} ${jbmono.variable}`}
     >
       <body>
-        {/* Apply saved theme + skin before paint (no flash of the wrong look).
-            --accent is owned by the skin's CSS, so nothing is set inline here. */}
+        {/* Apply saved theme before paint (no flash of the wrong look). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'dark';var r=t==='light'?'light':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.setAttribute('data-theme',r);var sk=s.skin;d.setAttribute('data-skin',sk==='blueprint'||sk==='editorial'?sk:'tactile');if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);if(s.textTone&&r!=='light')d.style.setProperty('--fg',s.textTone);}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'dark';var r=t==='light'?'light':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.setAttribute('data-theme',r);if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);}catch(e){}})();`,
           }}
         />
         <TrainingProvider>

@@ -33,13 +33,14 @@ export function warmupSets(workingWeight: number, step = 2.5): SetEntry[] {
   ];
 }
 
+/** Alt-Token → EquipKey (Bestandsdaten und eigene Übungen bleiben gültig). */
+const REQ_ALIAS: Record<string, string> = { dumbbell: "db", kettlebell: "kb" };
+
 export function reqOk(ex: Exercise, has: (k: string) => boolean): boolean {
   return (ex.req || ["none"]).every((tok) => {
     if (tok === "none") return true;
     if (tok === "weight") return has("db") || has("kb") || has("bar");
-    if (tok === "dumbbell") return has("db");
-    if (tok === "kettlebell") return has("kb");
-    return has(tok);
+    return has(REQ_ALIAS[tok] ?? tok);
   });
 }
 

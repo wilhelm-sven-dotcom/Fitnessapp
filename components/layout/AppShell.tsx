@@ -1,62 +1,30 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
-import { Activity, Cloud, CloudOff, Settings, Sparkles } from "lucide-react";
+import { Cloud, CloudOff, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { BootedContext } from "@/components/providers/booted";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
-import { Splash } from "./Splash";
 import { Welcome } from "@/components/onboarding/Welcome";
-
-// Deckt das Daumenkino ab: 16 Tafeln × 130 ms (~2,1 s) + ein Atemzug fürs
-// Finale, bevor die Ausblendung beginnt (Svens Wunsch: gemächlicherer Start).
-const SPLASH_MIN_MS = 2600;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loading, cloud, settings, log, body } = useTraining();
   const pathname = usePathname();
-  const [minElapsed, setMinElapsed] = useState(false);
 
-  useEffect(() => {
-    const t = setTimeout(() => setMinElapsed(true), SPLASH_MIN_MS);
-    return () => clearTimeout(t);
-  }, []);
-
-  const hideChrome =
-    pathname?.startsWith("/workout") ||
-    pathname?.startsWith("/form") ||
-    pathname?.startsWith("/warmup") ||
-    false;
-  const showSplash = loading || !minElapsed;
+  const hideChrome = pathname?.startsWith("/workout") || false;
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
-  // "Booted" once the splash has fully lifted — home animations wait for this so
-  // the user actually sees them (the page mounts UNDER the splash on a cold open,
-  // so a mount-time sweep would finish unseen). Set on the splash's exit-complete;
-  // a timeout backs it up if that never fires (e.g. reduced motion). AppShell is
-  // the persistent layout, so once true it stays true → in-app navigations sweep
-  // immediately.
-  const [booted, setBooted] = useState(false);
-  useEffect(() => {
-    // Fallback NACH dem regulären Splash-Ende (SPLASH_MIN_MS + Exit-Fade) —
-    // sonst starten die Home-Animationen unsichtbar unter dem Splash.
-    const t = setTimeout(() => setBooted(true), SPLASH_MIN_MS + 1000);
-    return () => clearTimeout(t);
-  }, []);
+  // Kein Splash: localStorage ist in Millisekunden gelesen — die App rendert,
+  // sobald die Daten da sind. `loading` deckt nur diesen einen Frame ab.
+  if (loading) return null;
 
   return (
-    <BootedContext.Provider value={booted}>
-      <AnimatePresence onExitComplete={() => setBooted(true)}>
-        {showSplash && <Splash key="splash" />}
-      </AnimatePresence>
-      {!loading && firstRun && <Welcome />}
-      {!loading && !firstRun && (
+    <>
+      {firstRun && <Welcome />}
+      {!firstRun && (
         <div className="min-h-screen overflow-x-hidden">
           {!hideChrome && (
             <header
@@ -89,20 +57,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </Link>
                     ))}
                   <Link
-                    href="/ausdauer"
-                    aria-label="Ausdauer"
-                    className="rounded-full p-2.5 text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-                  >
-                    <Activity size={20} />
-                  </Link>
-                  <Link
-                    href="/coach"
-                    aria-label="KI-Coach"
-                    className="rounded-full p-2.5 text-accent-ink transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-                  >
-                    <Sparkles size={20} />
-                  </Link>
-                  <Link
                     href="/settings"
                     aria-label="Einstellungen"
                     className="rounded-full p-2.5 text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
@@ -119,6 +73,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {!hideChrome && <BottomNav />}
         </div>
       )}
-    </BootedContext.Provider>
+    </>
   );
 }

@@ -66,9 +66,18 @@ export const KEYS = {
   // Eingefrorene Wochen-Mission (ATLAS) — mergeCloudLocal behandelt unbekannte
   // Keys mit "local wins", der Rollover-Check heilt Konflikte beim Öffnen.
   mission: "wilhelm-training-mission",
-  aiplan: "wilhelm-training-aiplan",
   jumps: "wilhelm-training-jumps",
+  // Die heutige, von ATLAS komponierte Einheit (synct mit).
+  today: "wilhelm-training-today",
+  // Laufende Live-Session (crash-sicheres Resume) — bewusst NUR lokal:
+  // ein Sync mitten im Training würde Geräte gegenseitig überschreiben.
+  active: "wilhelm-training-active",
+  // ATLAS-Chatverlauf (gekappt, synct mit).
+  chat: "wilhelm-training-chat",
 } as const;
+
+/** Keys, die NIE in die Cloud gespiegelt werden (gerätelokaler Live-State). */
+export const LOCAL_ONLY_KEYS: ReadonlySet<string> = new Set([KEYS.active]);
 
 export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
 
@@ -91,6 +100,14 @@ export const storage = {
       /* ignore */
     }
     void cloudPush(key, str); // write-through; no-op if cloud off / signed out
+  },
+  /** Wie setJSON, aber OHNE Cloud-Spiegelung — für gerätelokalen Live-State. */
+  async setJSONLocal<T>(key: string, value: T): Promise<void> {
+    try {
+      await adapter.set(key, JSON.stringify(value));
+    } catch {
+      /* ignore */
+    }
   },
   remove(key: string): Promise<void> {
     return adapter.remove(key);
@@ -117,6 +134,7 @@ async function currentUserId(): Promise<string | null> {
 
 /** Mirror one key to the cloud. Silent no-op when not configured / signed out. */
 export async function cloudPush(key: string, value: string): Promise<void> {
+  if (LOCAL_ONLY_KEYS.has(key)) return;
   if (!isCloudConfigured()) return;
   const sb = getSupabase();
   if (!sb) return;

@@ -1,14 +1,17 @@
 "use client";
 
-import { ChevronRight, Search, Youtube } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Search, Youtube } from "lucide-react";
 import { useMemo, useState } from "react";
+import { CustomExerciseEditor } from "@/components/exercises/CustomExerciseEditor";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Reveal } from "@/components/ui/Reveal";
+import { Pressable } from "@/components/ui/pressable";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
+import { reqOk } from "@/lib/progression";
+import { MUSCLE_LABEL, MUSCLE_ORDER, muscleOf } from "@/lib/volume";
 import { cn } from "@/lib/utils";
-import type { Exercise, Pattern } from "@/lib/types";
+import type { Exercise, Muscle, Pattern } from "@/lib/types";
 
 // Muscle-logical order for the catalog groups (matches PATTERN_LABEL).
 const PATTERN_ORDER: Pattern[] = [
@@ -22,86 +25,184 @@ const PATTERN_ORDER: Pattern[] = [
   "lateral",
   "arm",
   "core",
+  "calf",
   "cardio",
 ];
 
-export default function ExerciseCatalogPage() {
-  const { allLib, exerciseVideos } = useTraining();
-  const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<Exercise | null>(null);
-
-  const withVideo = useMemo(
-    () => allLib.filter((e) => exerciseVideos[e.id]).length,
-    [allLib, exerciseVideos],
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onClick={onClick}
+      className={cn(
+        "shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
+        active ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+      )}
+    >
+      {children}
+    </Pressable>
   );
+}
 
-  // Filter by name / tag / pattern label, then group by movement pattern.
+export default function ExerciseCatalogPage() {
+  const { allLib, exerciseVideos, has } = useTraining();
+  const [q, setQ] = useState("");
+  const [patFilter, setPatFilter] = useState<Pattern | null>(null);
+  const [muscleFilter, setMuscleFilter] = useState<Muscle | null>(null);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [selected, setSelected] = useState<Exercise | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<Exercise | null>(null);
+
+  const customCount = useMemo(() => allLib.filter((e) => e.custom).length, [allLib]);
+
+  // Suche + Muster-/Muskel-/Equipment-Filter, dann nach Muster gruppieren.
   const groups = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const match = (e: Exercise) =>
-      !needle ||
-      e.name.toLowerCase().includes(needle) ||
-      (e.tag ?? "").toLowerCase().includes(needle) ||
-      (PATTERN_LABEL[e.pattern] ?? "").toLowerCase().includes(needle);
+    const match = (e: Exercise) => {
+      if (needle) {
+        const hit =
+          e.name.toLowerCase().includes(needle) ||
+          (e.tag ?? "").toLowerCase().includes(needle) ||
+          (PATTERN_LABEL[e.pattern] ?? "").toLowerCase().includes(needle) ||
+          MUSCLE_LABEL[muscleOf(e).primary].toLowerCase().includes(needle);
+        if (!hit) return false;
+      }
+      if (patFilter && e.pattern !== patFilter) return false;
+      if (muscleFilter) {
+        const m = muscleOf(e);
+        if (m.primary !== muscleFilter && m.secondary !== muscleFilter) return false;
+      }
+      if (onlyAvailable && !reqOk(e, has)) return false;
+      return true;
+    };
     return PATTERN_ORDER.map((pat) => ({
       pat,
       list: allLib
         .filter((e) => e.pattern === pat && match(e))
         .sort((a, b) => a.name.localeCompare(b.name, "de")),
     })).filter((g) => g.list.length > 0);
-  }, [allLib, q]);
+  }, [allLib, q, patFilter, muscleFilter, onlyAvailable, has]);
 
-  const anyResults = groups.length > 0;
+  const shown = groups.reduce((a, g) => a + g.list.length, 0);
 
   return (
     <div>
       <PageHeader
         eyebrow="Katalog"
         title="Übungen"
-        subtitle={`${allLib.length} Übungen · ${withVideo} mit Video`}
+        subtitle={`${allLib.length} Übungen${customCount ? ` · ${customCount} eigene` : ""}`}
       />
 
-      <div className="relative mb-4">
-        <Search
-          size={16}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
-          aria-hidden
-        />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          type="search"
-          inputMode="search"
-          autoCapitalize="off"
-          placeholder="Übung suchen…"
-          aria-label="Übung suchen"
-          className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
-        />
+      <div className="mb-3 flex gap-2">
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+            aria-hidden
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            type="search"
+            inputMode="search"
+            autoCapitalize="off"
+            placeholder="Übung suchen…"
+            aria-label="Übung suchen"
+            className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          />
+        </div>
+        <Pressable
+          onClick={() => {
+            setEditing(null);
+            setEditorOpen(true);
+          }}
+          aria-label="Eigene Übung anlegen"
+          className="flex shrink-0 items-center gap-1.5 rounded-card bg-strong px-3.5 text-sm font-semibold text-on-strong focus:outline-none"
+        >
+          <Plus size={16} strokeWidth={2.5} /> Neu
+        </Pressable>
       </div>
 
-      {!anyResults ? (
+      {/* Filter: Muster · Muskel · nur verfügbare Geräte. */}
+      <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
+        <FilterChip active={!patFilter} onClick={() => setPatFilter(null)}>
+          Alle Muster
+        </FilterChip>
+        {PATTERN_ORDER.map((p) => (
+          <FilterChip
+            key={p}
+            active={patFilter === p}
+            onClick={() => setPatFilter((cur) => (cur === p ? null : p))}
+          >
+            {PATTERN_LABEL[p]}
+          </FilterChip>
+        ))}
+      </div>
+      <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
+        <FilterChip active={!muscleFilter} onClick={() => setMuscleFilter(null)}>
+          Alle Muskeln
+        </FilterChip>
+        {MUSCLE_ORDER.map((m) => (
+          <FilterChip
+            key={m}
+            active={muscleFilter === m}
+            onClick={() => setMuscleFilter((cur) => (cur === m ? null : m))}
+          >
+            {MUSCLE_LABEL[m]}
+          </FilterChip>
+        ))}
+      </div>
+      <div className="mb-4 flex items-center gap-1.5">
+        <FilterChip active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
+          Nur mit deinen Geräten
+        </FilterChip>
+        <span className="ml-auto font-mono text-xs tabular-nums text-faint">
+          {shown} Treffer
+        </span>
+      </div>
+
+      {groups.length === 0 ? (
         <p className="px-1 py-8 text-center text-sm text-muted">
-          Nichts gefunden für &bdquo;{q}&ldquo;
+          Nichts gefunden — Filter lockern oder eine eigene Übung anlegen.
         </p>
       ) : (
-        groups.map((g, gi) => (
-          <Reveal key={g.pat} delay={0.04 + gi * 0.03}>
-            <section className="mb-4 overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card">
-              <p className="border-b border-line px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted">
-                {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>
-              </p>
-              <div className="px-2 py-1">
-                {g.list.map((ex) => {
-                  const hasVideo = !!exerciseVideos[ex.id];
-                  return (
+        groups.map((g) => (
+          <section
+            key={g.pat}
+            className="mb-4 overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card"
+          >
+            <p className="border-b border-line px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted">
+              {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>
+            </p>
+            <div className="px-2 py-1">
+              {g.list.map((ex) => {
+                const hasVideo = !!exerciseVideos[ex.id];
+                const available = reqOk(ex, has);
+                const m = muscleOf(ex);
+                return (
+                  <div key={ex.id} className="log-row flex items-center gap-1">
                     <button
-                      key={ex.id}
                       type="button"
                       onClick={() => setSelected(ex)}
-                      className="log-row flex w-full items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                      className="flex min-w-0 flex-1 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                     >
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm text-fg">{ex.name}</span>
+                        <span
+                          className={cn(
+                            "truncate text-sm",
+                            available ? "text-fg" : "text-faint",
+                          )}
+                        >
+                          {ex.name}
+                        </span>
                         {ex.custom && (
                           <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 text-xs text-accent-2">
                             Eigene
@@ -109,26 +210,49 @@ export default function ExerciseCatalogPage() {
                         )}
                       </span>
                       <span className="flex shrink-0 items-center gap-2">
-                        <span className="text-xs text-muted">{ex.tag}</span>
+                        <span className="text-xs text-muted">
+                          {ex.pattern === "cardio" ? ex.tag : MUSCLE_LABEL[m.primary]}
+                        </span>
                         {hasVideo && (
-                          <Youtube size={15} className="text-accent-ink" aria-label="Video verknüpft" />
+                          <Youtube
+                            size={15}
+                            className="text-accent-ink"
+                            aria-label="Video verknüpft"
+                          />
                         )}
                         <ChevronRight size={15} className="text-faint" aria-hidden />
                       </span>
                     </button>
-                  );
-                })}
-              </div>
-            </section>
-          </Reveal>
+                    {ex.custom && (
+                      <Pressable
+                        onClick={() => {
+                          setEditing(ex);
+                          setEditorOpen(true);
+                        }}
+                        aria-label={`${ex.name} bearbeiten`}
+                        className="shrink-0 rounded-full p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      >
+                        <Pencil size={14} />
+                      </Pressable>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         ))
       )}
 
-      <p className={cn("mt-1 px-1 text-xs text-faint", !anyResults && "hidden")}>
-        Übung antippen → Ausführung ansehen und ein YouTube-Video hinzufügen.
+      <p className={cn("mt-1 px-1 text-xs text-faint", groups.length === 0 && "hidden")}>
+        Ausgegraut = Equipment fehlt. Übung antippen → Ausführung, Video und Notizen.
       </p>
 
       <GuideSheet open={!!selected} onClose={() => setSelected(null)} ex={selected} />
+      <CustomExerciseEditor
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        initial={editing}
+      />
     </div>
   );
 }
