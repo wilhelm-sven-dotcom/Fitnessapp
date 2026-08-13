@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -26,12 +27,14 @@ import {
   type SessionVariant,
 } from "@/lib/session-model";
 import { estimateSessionMin } from "@/lib/session-time";
+import { SPRING } from "@/lib/motion";
 import { weeklyStreak } from "@/lib/stats";
 import { requestAtlasSession } from "@/lib/today-session";
 import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const {
     todaySession,
     setTodaySession,
@@ -333,25 +336,35 @@ export default function HomePage() {
 
       {actionCards.length > 0 && (
         <div className="mb-4 space-y-2">
-          {actionCards.map((c, i) => (
-            <CoachCard
-              key={c.kind + (c.exId ?? "") + i}
-              card={c}
-              onAccept={
-                c.action === "deload"
-                  ? acceptDeload
-                  : c.action === "exam"
-                    ? () => {
-                        acceptExam();
-                        compose({ variant: "exam" });
-                      }
-                    : c.action === "back-reset"
-                      ? () => compose({ variant: "reset" })
-                      : undefined
-              }
-              onDismiss={() => dismissCard(c)}
-            />
-          ))}
+          {/* Wegwischen einer Karte gleitet, statt zu springen — Nachbarn
+              rücken per Layout-FLIP (transform, GPU) nach. */}
+          <AnimatePresence initial={false}>
+            {actionCards.map((c) => (
+              <motion.div
+                key={c.kind + (c.exId ?? "")}
+                layout={reduce ? false : true}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                transition={SPRING.panel}
+              >
+                <CoachCard
+                  card={c}
+                  onAccept={
+                    c.action === "deload"
+                      ? acceptDeload
+                      : c.action === "exam"
+                        ? () => {
+                            acceptExam();
+                            compose({ variant: "exam" });
+                          }
+                        : c.action === "back-reset"
+                          ? () => compose({ variant: "reset" })
+                          : undefined
+                  }
+                  onDismiss={() => dismissCard(c)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 

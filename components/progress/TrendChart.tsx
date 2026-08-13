@@ -1,14 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useId } from "react";
 
 const W = 300;
 const H = 56;
 const pad = 6;
 const GRID = "var(--line)"; // theme-aware — the old fixed dark grey vanished on light
-const GREEN = "#30d158"; // semantic volume green (== accent-volume token)
+const GREEN = "var(--gruen)"; // Fortschritts-Grün (== accent-volume token)
 
+/** Statisches Datenbild — kein Einzeichnen beim Mounten: die Kurve ist
+ *  Information, keine Choreografie (Frequenz-Regel: wird oft gesehen). */
 export function TrendChart({ values }: { values: number[] }) {
   const uid = useId().replace(/:/g, "");
   if (!values || values.length === 0) return null;
@@ -39,8 +40,8 @@ export function TrendChart({ values }: { values: number[] }) {
     <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}>
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={GREEN} stopOpacity={0.38} />
-          <stop offset="55%" stopColor={GREEN} stopOpacity={0.12} />
+          <stop offset="0%" stopColor={GREEN} stopOpacity={0.3} />
+          <stop offset="55%" stopColor={GREEN} stopOpacity={0.1} />
           <stop offset="100%" stopColor={GREEN} stopOpacity={0} />
         </linearGradient>
       </defs>
@@ -48,14 +49,8 @@ export function TrendChart({ values }: { values: number[] }) {
       {rows.map((ry) => (
         <line key={ry} x1={pad} y1={ry} x2={W - pad} y2={ry} stroke={GRID} strokeWidth={1} />
       ))}
-      <motion.path
-        d={area}
-        fill={`url(#${gradId})`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      />
-      <motion.path
+      <path d={area} fill={`url(#${gradId})`} />
+      <path
         d={line}
         fill="none"
         stroke={GREEN}
@@ -63,10 +58,6 @@ export function TrendChart({ values }: { values: number[] }) {
         strokeLinejoin="round"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
-        style={{ filter: "drop-shadow(0 1px 3px rgba(48,209,88,.45))" }}
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.9, ease: "easeOut" }}
       />
       {/* Small dot at every sample point. */}
       {values.map((v, i) => (

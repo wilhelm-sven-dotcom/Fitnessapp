@@ -224,7 +224,7 @@ export function WarmupPlayer({
           <span
             key={d.id}
             className={cn(
-              "h-1.5 rounded-full transition-all",
+              "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
               i < index ? "w-4 bg-faint" : i === index ? "w-8 bg-accent-sessions" : "w-4 bg-surface-2",
             )}
           />
@@ -260,10 +260,10 @@ export function WarmupPlayer({
             {switching ? "Position wechseln — es geht gleich weiter." : showing.cue}
           </p>
         </motion.div>
-        <p className="mt-8 font-display text-7xl font-semibold tabular-nums text-neutral-50">{left}</p>
+        <p className="stretch-display mt-8 font-display text-7xl font-semibold tabular-nums text-fg">{left}</p>
         <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
           <div
-            className="h-full rounded-full bg-accent-sessions transition-all"
+            className="h-full rounded-full bg-accent-sessions transition-[width] duration-1000 ease-linear"
             style={{ width: `${pct}%` }}
           />
         </div>

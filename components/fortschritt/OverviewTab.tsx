@@ -17,6 +17,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
+import { cn } from "@/lib/utils";
 
 type Kind = "weight" | "reps" | "time";
 interface Point {
@@ -201,7 +202,7 @@ export function OverviewTab() {
             >
               <ChevronDown
                 size={15}
-                className={showAllTrends ? "rotate-180" : undefined}
+                className={cn("transition-transform duration-200 ease-out", showAllTrends && "rotate-180")}
               />
               {showAllTrends ? "Weniger anzeigen" : `Alle ${list.length} Übungen zeigen`}
             </Pressable>

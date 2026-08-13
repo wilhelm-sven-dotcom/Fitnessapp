@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Dumbbell, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { BrandMark } from "@/components/brand/BrandMark";
@@ -43,6 +43,7 @@ const GOALS: { v: TrainingGoal; label: string }[] = [
 /** First-run welcome screen. Greets, pitches the app, captures name + a quick profile. */
 export function Welcome() {
   const { completeOnboarding } = useTraining();
+  const reduce = useReducedMotion();
   const [name, setName] = useState("");
   const [exp, setExp] = useState<Experience | undefined>(undefined);
   const [goals, setGoals] = useState<TrainingGoal[]>(["aufbau", "optik"]);
@@ -56,24 +57,17 @@ export function Welcome() {
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
-      initial={{ opacity: 0 }}
+      initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: EASE_OUT }}
     >
       <div className="mx-auto flex min-h-full max-w-md flex-col px-6 py-10">
         <motion.div
           className="relative flex flex-col items-center pt-6 text-center"
-          initial={{ opacity: 0, y: 12 }}
+          initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          <span
-            className="absolute -top-2 h-40 w-40 rounded-full"
-            style={{
-              background: "radial-gradient(circle, var(--accent) 0%, rgba(0,0,0,0) 70%)",
-              opacity: 0.25,
-            }}
-          />
           <BrandMark size={72} className="rounded-md" />
           <p className="mt-6 font-display text-3xl font-semibold tracking-tight text-fg">
             {greeting()}
@@ -87,7 +81,7 @@ export function Welcome() {
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.title}
-              initial={{ opacity: 0, y: 12 }}
+              initial={reduce ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE_OUT }}
               className="flex items-start gap-3 rounded-card border border-line bg-surface-1 p-4 shadow-card"
@@ -105,7 +99,7 @@ export function Welcome() {
 
         <motion.div
           className="mt-auto pt-10"
-          initial={{ opacity: 0, y: 12 }}
+          initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.5, ease: EASE_OUT }}
         >

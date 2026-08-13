@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { ChipTone } from "@/lib/coaching";
 
@@ -12,6 +9,7 @@ const toneClass: Record<ChipTone, string> = {
   info: "bg-surface-2 text-muted",
 };
 
+/** Statischer Hinweis-Chip — ohne Mount-Einflug (Navigation ist sofort). */
 export function Chip({
   tone,
   children,
@@ -20,16 +18,13 @@ export function Chip({
   children: React.ReactNode;
 }) {
   return (
-    <motion.span
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
+    <span
       className={cn(
         "inline-block rounded-pill px-2.5 py-1 text-xs font-medium",
         toneClass[tone],
       )}
     >
       {children}
-    </motion.span>
+    </span>
   );
 }

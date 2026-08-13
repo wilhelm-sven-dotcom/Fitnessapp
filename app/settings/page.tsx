@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Camera, Download, Plus, RotateCcw, Trash2, Upload, Volume2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { beepStart, primeAudio } from "@/lib/beep";
@@ -18,9 +19,11 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
+import { SPRING } from "@/lib/motion";
 import { toast } from "@/lib/toast";
 
 export default function SettingsPage() {
+  const reduce = useReducedMotion();
   const {
     resetAll,
     body,
@@ -197,12 +200,18 @@ export default function SettingsPage() {
         </Button>
         {body.length > 0 && (
           <div className="mt-3 space-y-1">
+            {/* Löschen gleitet raus statt zu springen; Nachbarn rücken per
+                Layout-FLIP nach (transform, unterbrechbar). */}
+            <AnimatePresence initial={false}>
             {[...body]
               .map((m, i) => ({ m, i }))
               .reverse()
               .map(({ m, i }) => (
-                <div
-                  key={m.date + i}
+                <motion.div
+                  key={m.date}
+                  layout={reduce ? false : true}
+                  exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                  transition={SPRING.panel}
                   className="flex items-center justify-between gap-2 rounded-card bg-surface-0 px-3 py-2"
                 >
                   <span className="flex items-center gap-1.5 text-sm text-muted">
@@ -221,8 +230,9 @@ export default function SettingsPage() {
                   >
                     <Trash2 size={14} />
                   </Pressable>
-                </div>
+                </motion.div>
               ))}
+            </AnimatePresence>
           </div>
         )}
       </section>

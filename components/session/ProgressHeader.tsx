@@ -46,7 +46,7 @@ export function ProgressHeader({
             <span
               key={it.id}
               className={cn(
-                "h-1.5 rounded-full transition-all",
+                "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
                 i === currentIndex
                   ? "w-6 bg-accent-ink"
                   : it.done

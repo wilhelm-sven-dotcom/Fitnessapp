@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useRef } from "react";
+import { SPRING } from "@/lib/motion";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -90,7 +91,7 @@ export function Sheet({
             initial={reduce ? { opacity: 0 } : { y: "100%" }}
             animate={reduce ? { opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0 } : { y: "100%" }}
-            transition={reduce ? { duration: 0.15 } : { type: "spring", stiffness: 360, damping: 36 }}
+            transition={reduce ? { duration: 0.15 } : SPRING.panel}
             drag="y"
             dragControls={dragControls}
             dragListener={false}

@@ -242,23 +242,23 @@ export function HistoryTab() {
                     {fmtDate(c.date)}
                   </span>
                   {confirmDel === `c-${c.id}` ? (
-                    <button
+                    <Pressable
                       onClick={() => {
                         void removeCardio(c.id);
                         setConfirmDel(null);
                       }}
-                      className="font-mono text-xs text-status-danger focus:outline-none"
+                      className="-m-2 flex min-h-11 items-center p-2 font-mono text-xs text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                     >
                       Löschen?
-                    </button>
+                    </Pressable>
                   ) : (
-                    <button
+                    <Pressable
                       onClick={() => setConfirmDel(`c-${c.id}`)}
                       aria-label="Einheit löschen"
-                      className="text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      className="-m-2 flex h-11 w-11 items-center justify-center text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                     >
                       <Trash2 size={14} />
-                    </button>
+                    </Pressable>
                   )}
                 </div>
               </div>
@@ -275,9 +275,9 @@ export function HistoryTab() {
               className="overflow-hidden rounded-card border border-line bg-surface-1 shadow-card"
             >
               <div className="flex items-center justify-between gap-2 px-4 py-3">
-                <button
+                <Pressable
                   onClick={() => setExpanded(isOpen ? null : realIdx)}
-                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ export function HistoryTab() {
                     )}
                     <p className="text-xs uppercase tracking-wider text-faint">Volumen</p>
                   </div>
-                </button>
+                </Pressable>
                 <Pressable
                   onClick={() => setConfirmDel(isDel ? null : `s-${realIdx}`)}
                   aria-label="Einheit löschen"

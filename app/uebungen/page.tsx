@@ -207,8 +207,7 @@ export default function ExerciseCatalogPage() {
                 const m = muscleOf(ex);
                 return (
                   <div key={ex.id} className="flex items-center gap-1">
-                    <button
-                      type="button"
+                    <Pressable
                       onClick={() => setSelected(ex)}
                       className="flex min-w-0 flex-1 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                     >
@@ -240,7 +239,7 @@ export default function ExerciseCatalogPage() {
                         )}
                         <ChevronRight size={15} className="text-faint" aria-hidden />
                       </span>
-                    </button>
+                    </Pressable>
                     {ex.custom && (
                       <Pressable
                         onClick={() => {
