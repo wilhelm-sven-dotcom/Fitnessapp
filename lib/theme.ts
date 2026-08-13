@@ -1,7 +1,8 @@
 /**
- * Appearance helpers. EINE Design-Identität; nur data-theme auf <html> steuert
- * dunkel/hell ("system" wird zur Laufzeit aufgelöst). Der Akzent (Bernstein)
- * gehört dem Design (globals.css); `accentOverride` kann ihn ersetzen.
+ * Appearance helpers. EINE Design-Identität („München ’72"); nur data-theme
+ * auf <html> steuert hell/dunkel ("system" wird zur Laufzeit aufgelöst) —
+ * HELL ist der Grundzustand. Der Akzent (Lichtblau) gehört dem Design
+ * (globals.css); `accentOverride` kann ihn ersetzen.
  * Die ACCENTS/PALETTE-Listen speisen den App-Icon-Designer.
  */
 
@@ -35,7 +36,7 @@ export function onAccent(hex: string): string {
   const g = parseInt(h.slice(2, 4), 16) / 255;
   const b = parseInt(h.slice(4, 6), 16) / 255;
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 0.6 ? "#0c0e12" : "#ffffff";
+  return lum > 0.6 ? "#121619" : "#ffffff";
 }
 
 /** Relative luminance 0..1 (sRGB, gamma-corrected) of a #rrggbb color. */
@@ -63,9 +64,9 @@ function contrastRatio(a: string, b: string): number {
  * `onAccent`, which colours text ON an accent-filled surface.
  */
 export function accentInk(hex: string, baseIsLight: boolean): string {
-  const base = baseIsLight ? "#f2f3f5" : "#0e0f12";
+  const base = baseIsLight ? "#f2f4f2" : "#14171a";
   if (contrastRatio(hex, base) >= 3) return hex;
-  return baseIsLight ? "#14171c" : "#eceef2";
+  return baseIsLight ? "#121619" : "#edf0f2";
 }
 
 /**
@@ -90,17 +91,17 @@ export const PALETTE = [
   "#0c0e12", // Schwarz
 ] as const;
 
-/* ── Theme (dark / light) ────────────────────────────────────────────────── */
+/* ── Theme (light / dark) — HELL ist der Grundzustand ───────────────────── */
 
-const DARK_BG = "#0e0f12";
-const LIGHT_BG = "#f2f3f5";
+const DARK_BG = "#14171a";
+const LIGHT_BG = "#f2f4f2";
 
 export function resolveTheme(pref: ThemePref | undefined): "dark" | "light" {
-  if (pref === "light") return "light";
+  if (pref === "dark") return "dark";
   if (pref === "system" && typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
-  return "dark";
+  return "light";
 }
 
 /** Apply theme to <html> and match the status-bar color. */

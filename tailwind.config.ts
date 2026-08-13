@@ -1,7 +1,9 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "class",
+  // Theme läuft über data-theme auf <html> (siehe lib/theme.ts) — dark: nur
+  // über diesen Selector, nie über eine .dark-Klasse.
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,32 +11,25 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        // Body face — driven by the active skin (--font-body): Archivo (blueprint)
-        // or Sora (tactile). Falls back to the system stack.
+        // Eine Familie fürs System: Archivo (variable, mit Weiten-Achse für
+        // Scoreboard-Ziffern via .stretch-display). Fallback: System-Grotesk.
         sans: [
           "var(--font-body)",
           "-apple-system",
           "BlinkMacSystemFont",
-          "SF Pro Display",
-          "SF Pro Text",
           "Segoe UI",
           "system-ui",
           "sans-serif",
         ],
-        // Alias for the body face: makes the widely-used `font-body` class real.
-        // Same value as `sans` — deliberately NO serif fallback (under
-        // blueprint/tactile a serif fallback would be wrong).
         body: [
           "var(--font-body)",
           "-apple-system",
           "BlinkMacSystemFont",
-          "SF Pro Display",
-          "SF Pro Text",
           "Segoe UI",
           "system-ui",
           "sans-serif",
         ],
-        // Mono face for labels / data / readouts — JetBrains Mono in both skins.
+        // Mono ausschließlich für Messwerte/Readouts — JetBrains Mono.
         mono: [
           "var(--font-mono)",
           "ui-monospace",
@@ -44,7 +39,6 @@ const config: Config = {
           "Monaco",
           "monospace",
         ],
-        // Display face for big numbers / headings / wordmark (skin --font-display).
         display: [
           "var(--font-display)",
           "-apple-system",
@@ -54,14 +48,24 @@ const config: Config = {
         ],
       },
       colors: {
-        // Apple-Fitness multicolor accents. `sessions` is the skin brand accent
-        // (CSS var); volume/coverage stay fixed = ring semantics.
-        accent: { sessions: "var(--accent)", volume: "#30d158", coverage: "#0a84ff" },
-        // Skin identity tokens: secondary/structural tint + the "today" highlight.
+        // Bereichs-Farbcode (Wegleitsystem München ’72): sessions = Blau,
+        // volume = Grün, coverage = Orange. Alles CSS-Vars → themefähig.
+        accent: {
+          sessions: "var(--accent)",
+          volume: "var(--gruen)",
+          coverage: "var(--orange)",
+        },
+        // ATLAS/Coach-Bereich = Orange (gleiches Feld wie coverage/live).
+        coach: "var(--orange)",
         "accent-2": "var(--accent-2)",
         live: "var(--live)",
-        // Semantic status (volume bars, coach banners, readiness)
-        status: { under: "#0a84ff", in: "#30d158", over: "#ff9f0a", danger: "#ff375f" },
+        // Semantic status (Volumen-Balken, Coach-Banner, Readiness)
+        status: {
+          under: "var(--accent)",
+          in: "var(--gruen)",
+          over: "var(--gelb)",
+          danger: "var(--rot)",
+        },
         // Material/elevation surfaces — theme-driven via CSS variables.
         surface: {
           0: "var(--base)",
@@ -76,32 +80,24 @@ const config: Config = {
         line: "var(--line)",
         strong: "var(--strong)",
         "on-strong": "var(--on-strong)",
-        // Contrast ink for accent-filled surfaces — follows the active accent
-        // (skin default or accentOverride), so CTAs stay readable on any accent.
+        // Tinte auf akzentgefüllten Flächen (hell: Weiß, dunkel: Anthrazit).
         "on-accent": "var(--on-accent)",
-        // Accent as a foreground mark on the page (icon/text/indicator) — stays
-        // legible under any accentOverride (falls back to ink when too low-contrast).
+        // Tinte auf JEDEM satten Farbfeld (Orange/Grün/Gelb/Rot-Flächen).
+        "on-color": "var(--ink-on-color)",
+        // Akzent als Vordergrund-Marke (Text/Icon) — lesbar auf dem Grund.
         "accent-ink": "var(--accent-ink)",
       },
-      // Corner radius is a skin token (blueprint = sharp, tactile = rounded).
       borderRadius: {
         card: "var(--radius-card)",
         pill: "var(--radius-pill)",
       },
-      // Panel elevation is skin-driven (blueprint = flat hairline, tactile = raised).
+      // Flaches Modul: Hairline trägt die Trennung, Schatten bleibt leise.
       boxShadow: {
         card: "var(--panel-shadow)",
         "card-lg": "var(--panel-shadow-lg)",
-        "glow-sessions": "0 0 18px -3px rgba(255,55,95,.5)",
-        "glow-volume": "0 0 18px -3px rgba(48,209,88,.5)",
-        "glow-coverage": "0 0 18px -3px rgba(10,132,255,.5)",
       },
-      // Reusable gradients exposed as real utilities (no arbitrary values at call sites).
       backgroundImage: {
         panel: "var(--panel-bg)",
-        "hero-sheen": "var(--hero-sheen)",
-        "hero-accent":
-          "radial-gradient(125% 90% at 100% 0%, rgba(255,55,95,.12), rgba(255,55,95,0) 60%)",
       },
     },
   },

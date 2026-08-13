@@ -155,7 +155,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoregOn: true,
   voiceCues: false,
   superset: false,
-  theme: "dark",
+  theme: "light",
   accentColor: DEFAULT_ACCENT,
 };
 
@@ -448,6 +448,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       settingsLoaded = { ...settingsLoaded, benchMigrated: true };
       void storage.setJSON(KEYS.equip, equipLoaded);
       void storage.setJSON(KEYS.gyms, gymsLoaded);
+      void storage.setJSON(KEYS.settings, settingsLoaded);
+    }
+    // Einmal-Migration München ’72: Ein gespeichertes "dark" stammt fast immer
+    // vom alten Dunkel-Default, nicht von einer bewussten Wahl — der neue helle
+    // Grundzustand übernimmt. Wer danach Dunkel wählt, behält es (Flag gesetzt).
+    if (!settingsLoaded.themeMigratedM72) {
+      settingsLoaded = {
+        ...settingsLoaded,
+        theme: settingsLoaded.theme === "dark" ? "light" : settingsLoaded.theme,
+        themeMigratedM72: true,
+      };
       void storage.setJSON(KEYS.settings, settingsLoaded);
     }
     setEquip(equipLoaded);

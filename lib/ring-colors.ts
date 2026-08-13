@@ -1,15 +1,16 @@
 /**
- * Hex source of truth for SVG strokes (activity rings, charts).
- * SVG attributes may use raw hex — only Tailwind classNames are constrained.
- * Mirrors the `accent.*` tokens in tailwind.config.ts.
+ * Farbquelle für SVG-Strokes (Activity-Rings, Charts). SVG-Attribute dürfen
+ * CSS-Variablen tragen — so folgen Ringe und Charts dem Theme automatisch.
+ * Spiegelt die `accent.*`-Tokens in tailwind.config.ts (München-’72-Trio:
+ * Blau = Einheiten · Grün = Volumen · Orange = Abdeckung).
  */
 export const RING = {
-  move: "#ff375f", // sessions (rot)
-  exercise: "#30d158", // volume (grün)
-  stand: "#0a84ff", // coverage (blau)
+  move: "var(--accent)", // sessions (blau)
+  exercise: "var(--gruen)", // volume (grün)
+  stand: "var(--orange)", // coverage (orange)
 } as const;
 
-export const RING_TRACK = "#2a2a30"; // unfilled groove (surface.3)
+export const RING_TRACK = "var(--line)"; // unfilled groove — theme-korrekt
 
 export type RingId = keyof typeof RING;
 

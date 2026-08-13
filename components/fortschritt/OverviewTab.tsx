@@ -127,7 +127,7 @@ export function OverviewTab() {
 
   return (
     <div>
-      <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
+      <Card variant="elevated" className="mb-4 rounded-card p-5">
         <Readout
           eyebrow="Gesamt gestemmt"
           value={totalT}
