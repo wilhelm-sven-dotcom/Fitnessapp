@@ -57,25 +57,33 @@ export default function RootLayout({
       className={`${archivo.variable} ${jbmono.variable}`}
     >
       <body>
-        {/*
-          THESIS: Training als System, nicht als Nachtclub — deutsches
-          Sportsystemdesign (Aicher, München 1972); verweigert wird die
-          Kategorie-Schablone „dunkel + Neonakzent + Glow".
-          OWN-WORLD: Silberweißer Grund, 1px-Hairline-Raster, flache satte
-          Farbfelder; Farbcode je Bereich: Blau=Heute/Session, Orange=ATLAS,
-          Grün=Fortschritt, Gelb=Warnung, Rot=Gefahr. Archivo (wdth-Achse für
-          Scoreboard-Ziffern) + JetBrains Mono nur für Messwerte; Radius 12,
-          Elevation als Hairline + ein leiser Offset-Schatten.
-          STORY: öffnen → Zustand und Tagesauftrag in Sekunden lesen →
-          starten → Sätze gegen große Tabellenziffern loggen → präzises,
-          knappes Feedback; Feier nur nach dem Speichern.
-          FIRST VIEWPORT: blaues Farbfeld-Hero (Datum/Zustand, Direktive),
-          darunter gerasterte Zeilenliste; Primäraktion als blaues Vollfeld.
-          FORM: Aicher-Systemraster; Hell ist Default (helles Gym), Dunkel
-          ist die Anthrazit-Variante über data-theme.
-          FINISH: unreviewed and undocumented is unfinished; this build ends
-          with the finish review, the verdict, and DESIGN.md (ui-style).
-        */}
+        {/* Richtungsvertrag München ’72 — als inertes <script> statt JSX-
+            Kommentar, damit er den Produktions-Build überlebt und im
+            ausgelieferten HTML auditierbar bleibt. */}
+        <script
+          type="text/x-direction-contract"
+          dangerouslySetInnerHTML={{
+            __html: `
+THESIS: Training als System, nicht als Nachtclub — deutsches Sportsystemdesign
+(Aicher, München 1972); verweigert wird die Kategorie-Schablone
+„dunkel + Neonakzent + Glow".
+OWN-WORLD: Silberweißer Grund, 1px-Hairline-Raster, flache satte Farbfelder;
+Farbcode je Bereich: Blau=Heute/Session, Orange=ATLAS, Grün=Fortschritt,
+Gelb=Warnung, Rot=Gefahr. Archivo (wdth-Achse für Scoreboard-Ziffern) +
+JetBrains Mono für Labels und Messwerte; Radius 12, Elevation als Hairline +
+ein leiser Offset-Schatten.
+STORY: öffnen → Zustand und Tagesauftrag in Sekunden lesen → starten → Sätze
+gegen große Tabellenziffern loggen → präzises, knappes Feedback; Feier nur
+nach dem Speichern.
+FIRST VIEWPORT: blaues Farbfeld-Hero (Datum/Zustand, Direktive), darunter
+gerasterte Zeilenliste; Primäraktion als blaues Vollfeld.
+FORM: Aicher-Systemraster; Hell ist Default (helles Gym), Dunkel ist die
+Anthrazit-Variante über data-theme.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the
+finish review, the verdict, and DESIGN.md (ui-style).
+`,
+          }}
+        />
         {/* Apply saved theme before paint (no flash of the wrong look).
             Enthält die Einmal-Migration auf den hellen Default: ein gespeichertes
             "dark" ohne themeMigratedM72-Flag stammt vom alten Dunkel-Default und
