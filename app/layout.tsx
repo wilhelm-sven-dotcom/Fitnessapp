@@ -5,6 +5,7 @@ import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { AppIconInstaller } from "@/components/pwa/AppIconInstaller";
+import { Toaster } from "@/components/ui/Toaster";
 
 // Zwei Schriften, ein System: Archivo (variable, inkl. Weiten-Achse für
 // Scoreboard-Ziffern) für Display/Body, JetBrains Mono nur für Messwerte.
@@ -86,6 +87,7 @@ export default function RootLayout({
         />
         <TrainingProvider>
           <AppShell>{children}</AppShell>
+          <Toaster />
           <AppIconInstaller />
         </TrainingProvider>
         <ServiceWorkerRegister />

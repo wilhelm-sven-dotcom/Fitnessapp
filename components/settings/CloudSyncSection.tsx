@@ -4,9 +4,10 @@ import { Cloud, LogOut, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { toast } from "@/lib/toast";
 
 const inputCls =
-  "rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-volume";
+  "rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-volume";
 
 export function CloudSyncSection() {
   const { cloud } = useTraining();
@@ -54,25 +55,21 @@ export function CloudSyncSection() {
   const confirmCode = async () => {
     setMsg("");
     const res = await cloud.verifyCode(email, code);
-    setMsg(
-      res.ok
-        ? "Angemeldet — Daten werden synchronisiert."
-        : res.error
-          ? `Fehler: ${res.error}`
-          : "Code ungültig.",
-    );
+    // Erfolg als Toast (transient), Fehler bleiben inline beim Formular.
+    if (res.ok) toast("Angemeldet — Daten werden synchronisiert.", { kind: "success" });
+    else setMsg(res.error ? `Fehler: ${res.error}` : "Code ungültig.");
   };
   const savePw = async () => {
     setMsg("");
     const res = await cloud.setPassword(newPassword);
-    if (res.ok) setNewPassword("");
-    setMsg(
-      res.ok
-        ? "Passwort gesetzt — damit meldest du dich jetzt in der App an."
-        : res.error
-          ? `Fehler: ${res.error}`
-          : "Hat nicht geklappt.",
-    );
+    if (res.ok) {
+      setNewPassword("");
+      toast("Passwort gesetzt — damit meldest du dich jetzt in der App an.", {
+        kind: "success",
+      });
+    } else {
+      setMsg(res.error ? `Fehler: ${res.error}` : "Hat nicht geklappt.");
+    }
   };
 
   return (
@@ -89,7 +86,9 @@ export function CloudSyncSection() {
           </div>
           <div className="flex gap-2">
             <Pressable
-              onClick={() => void cloud.syncNow()}
+              onClick={() =>
+                void cloud.syncNow().then(() => toast("Synchronisiert.", { kind: "success" }))
+              }
               disabled={cloud.busy}
               className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
             >

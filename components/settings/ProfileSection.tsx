@@ -75,7 +75,7 @@ export function ProfileSection() {
               onChange={(e) =>
                 setAthleteProfile({ age: e.target.value ? Number(e.target.value) : undefined })
               }
-              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
             />
           </label>
           <label className="flex items-center justify-between gap-3">
@@ -88,7 +88,7 @@ export function ProfileSection() {
               onChange={(e) =>
                 setAthleteProfile({ heightCm: e.target.value ? Number(e.target.value) : undefined })
               }
-              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
             />
           </label>
           <p className="text-xs leading-relaxed text-muted">

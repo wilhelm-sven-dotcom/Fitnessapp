@@ -17,6 +17,7 @@ import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/Skeleton";
 import {
   useTraining,
   type SessionSummary,
@@ -562,7 +563,22 @@ export function SessionRunner() {
   if (complete) {
     return <SessionComplete summary={complete} onDone={() => router.replace("/")} />;
   }
-  if (boot === "loading" || boot === "none") return null;
+  // Redirect läuft bereits bei "none" — dort bleibt es leer (kein Zucken).
+  if (boot === "none") return null;
+  // Resume liest asynchronen Storage — hier ist die Wartezeit real, das
+  // Gerüst pulsiert (Workout-Silhouette: Kopfzeile, Titel, Bühne, CTA).
+  if (boot === "loading")
+    return (
+      <div aria-busy="true" className="mx-auto max-w-md px-5 pt-5">
+        <div className="flex items-center justify-between">
+          <Skeleton pulse className="h-8 w-24" />
+          <Skeleton pulse className="h-8 w-8 rounded-full" />
+        </div>
+        <Skeleton pulse className="mt-6 h-7 w-2/3" />
+        <Skeleton pulse className="mt-4 h-64 w-full" />
+        <Skeleton pulse className="mt-4 h-12 w-full" />
+      </div>
+    );
 
   if (boot === "gate") {
     return (

@@ -240,7 +240,7 @@ export function ExerciseStage({
 
       <Pressable
         onClick={onOpenGuide}
-        className="mt-3 flex items-center gap-1 rounded px-1 py-1 text-xs text-accent-ink focus:outline-none"
+        className="mt-2 -ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-xs text-accent-ink focus:outline-none"
       >
         <ChevronRight size={14} /> Ausführung & Technik
       </Pressable>

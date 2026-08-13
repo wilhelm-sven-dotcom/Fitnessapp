@@ -18,6 +18,7 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
+import { toast } from "@/lib/toast";
 
 export default function SettingsPage() {
   const {
@@ -39,7 +40,6 @@ export default function SettingsPage() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [bw, setBw] = useState("");
   const [waist, setWaist] = useState("");
-  const [importMsg, setImportMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const photoRef = useRef<HTMLInputElement>(null);
@@ -82,6 +82,7 @@ export default function SettingsPage() {
     setBw("");
     setWaist("");
     clearPhoto();
+    toast("Eintrag gespeichert.", { kind: "success" });
   };
 
   const exportFile = () => {
@@ -94,6 +95,7 @@ export default function SettingsPage() {
     a.download = `training-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    toast("Backup heruntergeladen.", { kind: "success" });
   };
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,15 +104,16 @@ export default function SettingsPage() {
     if (!file) return;
     try {
       const ok = await importData(JSON.parse(await file.text()));
-      setImportMsg(ok ? "Import erfolgreich." : "Datei nicht erkannt.");
+      if (ok) toast("Import erfolgreich.", { kind: "success" });
+      else toast("Datei nicht erkannt.", { kind: "error" });
     } catch {
-      setImportMsg("Datei konnte nicht gelesen werden.");
+      toast("Datei konnte nicht gelesen werden.", { kind: "error" });
     }
   };
 
   return (
     <div>
-      <PageHeader title="Einstellungen" eyebrow="App" />
+      <PageHeader title="Einstellungen" eyebrow="App" tone="var(--muted)" />
 
       <AppearanceSection />
 
@@ -134,7 +137,7 @@ export default function SettingsPage() {
             onChange={(e) => setBw(e.target.value)}
             placeholder="Gewicht kg"
             aria-label="Körpergewicht in kg"
-            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
           <input
             type="number"
@@ -144,7 +147,7 @@ export default function SettingsPage() {
             onChange={(e) => setWaist(e.target.value)}
             placeholder="Bauch cm"
             aria-label="Bauchumfang in cm"
-            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
         </div>
         <input
@@ -209,7 +212,10 @@ export default function SettingsPage() {
                     {m.photoId && <Camera size={13} className="text-muted" />}
                   </span>
                   <Pressable
-                    onClick={() => deleteBodyMetric(i)}
+                    onClick={() => {
+                      void deleteBodyMetric(i);
+                      toast("Eintrag gelöscht.");
+                    }}
                     aria-label="Eintrag löschen"
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                   >
@@ -354,7 +360,6 @@ export default function SettingsPage() {
           <Button variant="secondary" full onClick={() => fileRef.current?.click()}>
             <Upload size={16} /> Import (JSON)
           </Button>
-          {importMsg && <p className="text-xs text-muted">{importMsg}</p>}
         </div>
         {!confirmReset ? (
           <Button variant="ghost" onClick={() => setConfirmReset(true)} className="px-1">
@@ -365,7 +370,7 @@ export default function SettingsPage() {
             <Button
               variant="danger"
               onClick={() => {
-                void resetAll();
+                void resetAll().then(() => toast("Alle Einheiten zurückgesetzt."));
                 setConfirmReset(false);
               }}
             >

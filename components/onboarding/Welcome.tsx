@@ -124,6 +124,7 @@ export function Welcome() {
               <Pressable
                 key={x.v}
                 onClick={() => setExp(x.v)}
+                aria-pressed={exp === x.v}
                 className={
                   "flex-1 rounded-pill py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions " +
                   (exp === x.v ? "bg-strong text-on-strong" : "text-muted")
@@ -140,6 +141,7 @@ export function Welcome() {
               <Pressable
                 key={g.v}
                 onClick={() => toggleGoal(g.v)}
+                aria-pressed={goals.includes(g.v)}
                 className={
                   "rounded-pill px-3 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions " +
                   (goals.includes(g.v) ? "bg-strong text-on-strong" : "bg-surface-2 text-muted")

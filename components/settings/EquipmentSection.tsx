@@ -73,7 +73,7 @@ export function EquipmentSection() {
           onChange={(e) => setNewGym(e.target.value)}
           placeholder="Neues Profil (z. B. Studio)"
           aria-label="Neues Gym-Profil anlegen"
-          className="min-w-0 flex-1 rounded-pill bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="min-w-0 flex-1 rounded-pill bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         />
         <Pressable
           onClick={() => {
@@ -107,7 +107,6 @@ export function EquipmentSection() {
             <Pressable
               key={e.key}
               onClick={() => toggleEquip(e.key)}
-              style={on ? { boxShadow: "0 0 14px -4px var(--accent)" } : undefined}
               className={cn(
                 "flex items-center justify-between gap-2 rounded-card px-3 py-3 text-sm focus:outline-none",
                 on

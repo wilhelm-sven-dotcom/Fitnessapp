@@ -31,8 +31,11 @@ export function Scale({
           <Pressable
             key={o}
             onClick={() => onPick(o)}
+            aria-pressed={value === o}
             className={cn(
-              "flex-1 rounded-pill py-1 text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+              // 44-px-Ziel: der meistgetippte Control im Training — mit
+              // Schweiß an den Händen zählt jede Zielfläche.
+              "flex h-11 flex-1 items-center justify-center rounded-pill text-sm font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
               value === o ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
             )}
           >

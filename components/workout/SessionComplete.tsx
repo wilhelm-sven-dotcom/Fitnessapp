@@ -134,7 +134,6 @@ export function SessionComplete({
             style={{
               width: `${Math.round(pct * 100)}%`,
               transition: reduce ? undefined : "width 1s cubic-bezier(0.22,1,0.36,1)",
-              boxShadow: "0 0 10px -1px var(--accent)",
             }}
           />
         </div>

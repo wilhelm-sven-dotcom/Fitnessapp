@@ -3,6 +3,8 @@
 import { ChevronRight, Pencil, Plus, Search, Youtube } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CustomExerciseEditor } from "@/components/exercises/CustomExerciseEditor";
+import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
 import { GuideSheet } from "@/components/workout/GuideSheet";
@@ -98,6 +100,7 @@ export default function ExerciseCatalogPage() {
       <PageHeader
         eyebrow="Katalog"
         title="Übungen"
+        tone="var(--fg)"
         subtitle={`${allLib.length} Übungen${customCount ? ` · ${customCount} eigene` : ""}`}
       />
 
@@ -116,7 +119,7 @@ export default function ExerciseCatalogPage() {
             autoCapitalize="off"
             placeholder="Übung suchen…"
             aria-label="Übung suchen"
-            className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
         </div>
         <Pressable
@@ -170,9 +173,24 @@ export default function ExerciseCatalogPage() {
       </div>
 
       {groups.length === 0 ? (
-        <p className="px-1 py-8 text-center text-sm text-muted">
-          Nichts gefunden — Filter lockern oder eine eigene Übung anlegen.
-        </p>
+        <EmptyState
+          icon={Search}
+          title="Nichts gefunden"
+          description="Kein Treffer für diese Kombination — Filter lockern oder eine eigene Übung anlegen."
+          action={
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setQ("");
+                setPatFilter(null);
+                setMuscleFilter(null);
+                setOnlyAvailable(false);
+              }}
+            >
+              Filter zurücksetzen
+            </Button>
+          }
+        />
       ) : (
         groups.map((g) => (
           <section

@@ -199,7 +199,7 @@ export function WarmupPlayer({
         <Pressable
           onClick={onClose}
           aria-label="Aufwärmen beenden"
-          className="flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
+          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-sm text-muted focus:outline-none"
         >
           <X size={18} /> Beenden
         </Pressable>

@@ -30,7 +30,7 @@ export function LevelCard() {
         <div className="mt-4 h-1.5 overflow-hidden rounded-pill bg-surface-2" aria-hidden>
           <div
             className="h-full rounded-pill bg-accent-sessions transition-[width] duration-500"
-            style={{ width: `${Math.round(lvl.pct * 100)}%`, boxShadow: "0 0 10px -1px var(--accent)" }}
+            style={{ width: `${Math.round(lvl.pct * 100)}%` }}
           />
         </div>
         <p className="mt-2 text-xs text-muted">

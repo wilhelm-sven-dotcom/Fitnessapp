@@ -23,15 +23,16 @@ export default function FortschrittPage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Deine Entwicklung" title="Fortschritt" />
+      <PageHeader eyebrow="Deine Entwicklung" title="Fortschritt" tone="var(--gruen)" />
 
       <div className="mb-4 flex overflow-hidden rounded-card border border-line bg-surface-1 p-1 shadow-card">
         {SEGMENTS.map((s) => (
           <Pressable
             key={s.key}
             onClick={() => setSeg(s.key)}
+            aria-pressed={seg === s.key}
             className={cn(
-              "flex-1 rounded-[12px] py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink",
+              "flex-1 rounded-card py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink",
               seg === s.key ? "bg-surface-2 text-fg" : "text-muted",
             )}
           >

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, LineChart, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -44,6 +44,7 @@ const TREND_PREVIEW = 4;
 export function OverviewTab() {
   const { log, muscleVolumes, cardio, settings } = useTraining();
   const router = useRouter();
+  const reduce = useReducedMotion();
   const [showAllTrends, setShowAllTrends] = useState(false);
 
   const totalT = Math.round(log.reduce((a, s) => a + sessionVolume(s), 0) / 100) / 10;
@@ -164,11 +165,10 @@ export function OverviewTab() {
                   <div className="flex items-center justify-end gap-1.5">
                     {e.isPR && (
                       <motion.span
-                        initial={{ scale: 0.7, opacity: 0 }}
-                        animate={{ scale: [0.7, 1.2, 1], opacity: 1 }}
+                        initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                        animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
                         transition={{ duration: 0.5, ease: "easeOut" }}
-                        style={{ boxShadow: "0 0 12px -2px #30d158" }}
-                        className="rounded bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-strong"
+                        className="rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
                       >
                         Rekord
                       </motion.span>

@@ -67,6 +67,7 @@ export function AppearanceSection() {
           <Pressable
             key={t.id}
             onClick={() => setTheme(t.id)}
+            aria-pressed={theme === t.id}
             className={cn(
               "flex-1 rounded-pill py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
               theme === t.id ? "bg-strong text-on-strong" : "text-muted",
