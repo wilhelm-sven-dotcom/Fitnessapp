@@ -186,6 +186,64 @@ function applyReadiness(list: ResolvedSlot[], scale: ReadinessScale): ResolvedSl
   });
 }
 
+type StravaTokens = NonNullable<AppSettings["strava"]>;
+/** Server-Roundtrip für alle Strava-Aktionen — zustandsfrei, lebt außerhalb
+ *  der Komponente, damit die API-Objekte sauber memoisierbar sind. */
+async function stravaPost(payload: Record<string, unknown>) {
+  const res = await fetch("/api/strava", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return (await res.json()) as {
+    ok: boolean;
+    error?: string;
+    reauth?: boolean;
+    tokens?: StravaTokens;
+    rides?: CardioSession[];
+  };
+}
+
+/** Eingaben des Editors härten und in eine vollwertige Übung gießen —
+ *  eigene Übungen sind erstklassig (Muskel, Equipment, Content) und fließen
+ *  über `allLib` automatisch in Pools, Volumen und den ATLAS-Katalog. */
+function buildCustom(id: string, data: CustomExerciseInput): Exercise {
+  const unit: Unit = data.unit === "Sek" ? "Sek" : "Wdh";
+  const clampInt = (v: unknown, lo: number, hi: number, dflt: number) => {
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+  };
+  const repLow = clampInt(data.repLow, 1, 180, unit === "Sek" ? 20 : 8);
+  const repHigh = clampInt(data.repHigh, repLow, 180, Math.max(repLow, unit === "Sek" ? 45 : 12));
+  const validReq = new Set<string>([...EQUIP_LIST.map((e) => e.key), "weight"]);
+  const req = (data.req ?? []).filter((t) => validReq.has(t));
+  const ex: Exercise = {
+    id,
+    name: data.name.trim().slice(0, 60) || "Eigene Übung",
+    pattern: data.pattern,
+    tag: "Eigene",
+    req: req.length ? req : ["none"],
+    weighted: !!data.weighted,
+    sets: clampInt(data.sets, 1, 6, 3),
+    repLow,
+    repHigh,
+    unit,
+    cue: (data.cue ?? "").trim().slice(0, 160) || "Eigene Übung — sauber und kontrolliert ausführen.",
+    steps: (data.steps ?? [])
+      .map((s) => s.trim().slice(0, 160))
+      .filter(Boolean)
+      .slice(0, 4),
+    back: (data.back ?? "").trim().slice(0, 160),
+    easier: (data.easier ?? "").trim().slice(0, 160),
+    custom: true,
+  };
+  if (data.muscle) ex.muscle = data.muscle;
+  if (data.muscleSecondary && data.muscleSecondary !== data.muscle)
+    ex.muscleSecondary = data.muscleSecondary;
+  if (data.backCaution) ex.backCaution = true;
+  return ex;
+}
+
 interface TrainingContextValue {
   log: LoggedSession[];
   equip: EquipKey[];
@@ -521,7 +579,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     };
   }, [cloudConfigured, pullOrSeed]);
 
-  const cloud: CloudApi = {
+  const cloud = useMemo<CloudApi>(() => ({
     configured: cloudConfigured,
     email: cloudEmail,
     busy: cloudBusy,
@@ -611,21 +669,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         setCloudBusy(false);
       }
     },
-  };
+  }), [cloudConfigured, cloudEmail, cloudBusy, collectLocal, pullOrSeed]);
 
   const allLib = useMemo(() => [...LIB, ...custom], [custom]);
   const has = useMemo(() => (k: string) => (equip as string[]).includes(k), [equip]);
-
-  const lastPerf = (id: string): LastPerf | null => {
-    for (let i = log.length - 1; i >= 0; i--) {
-      const ex = log[i].exercises?.find((e) => e.id === id);
-      // Only a filled WORKING set counts as a performance — a warmup-only entry
-      // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
-      if (ex && ex.sets && ex.sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null))
-        return { sets: ex.sets, date: log[i].date };
-    }
-    return null;
-  };
 
   const lastBackRed =
     log.length > 0 && log[log.length - 1].backTraffic === "red";
@@ -847,84 +894,41 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ];
   }, [log, weekCount, muscleVolumes]);
 
-  const saveExerciseVideos = async (next: Record<string, string>) => {
+  // Persistenz-Helfer: bewusst OHNE Closure über State (nur setState + storage),
+  // dadurch stabil (useCallback []) — Effekte und das memoisierte Context-Value
+  // können sie als Deps führen, ohne bei jedem Render neu zu entstehen.
+  const saveExerciseVideos = useCallback(async (next: Record<string, string>) => {
     setExerciseVideos(next);
     await storage.setJSON(KEYS.exerciseVideos, next);
-  };
-  // Attach / replace / clear a user-picked YouTube demo clip for one exercise.
-  // Stores the raw URL (the embed is derived at render); rejects anything that
-  // doesn't parse as YouTube and clears the entry on empty/invalid input, so the
-  // map never holds an un-embeddable URL. Persists + cloud-syncs like every store.
-  const setExerciseVideo = (exId: string, url: string | null) => {
-    const trimmed = (url ?? "").trim();
-    const next = { ...exerciseVideos };
-    if (!trimmed || !youtubeEmbedUrl(trimmed)) delete next[exId];
-    else next[exId] = trimmed;
-    void saveExerciseVideos(next);
-  };
-  const saveExerciseNotes = async (next: Record<string, string>) => {
+  }, []);
+  const saveExerciseNotes = useCallback(async (next: Record<string, string>) => {
     setExerciseNotes(next);
     await storage.setJSON(KEYS.exerciseNotes, next);
-  };
-  // Hilfsmittel-/Ausführungs-Notiz je Übung setzen/löschen (z. B. „Unterstützungs-
-  // band"). Dauerhaft je Übungs-Id gemerkt und beim Speichern auf die Einheit
-  // gestempelt; leer → Eintrag entfernen. Cap gegen Prompt-Aufblähung.
-  const setExerciseNote = (exId: string, note: string | null) => {
-    const trimmed = (note ?? "").trim().slice(0, 120);
-    const next = { ...exerciseNotes };
-    if (!trimmed) delete next[exId];
-    else next[exId] = trimmed;
-    void saveExerciseNotes(next);
-  };
-  const saveEquip = async (next: EquipKey[]) => {
+  }, []);
+  const saveEquip = useCallback(async (next: EquipKey[]) => {
     setEquip(next);
     await storage.setJSON(KEYS.equip, next);
-  };
-  const saveCustom = async (next: Exercise[]) => {
+  }, []);
+  const saveCustom = useCallback(async (next: Exercise[]) => {
     setCustom(next);
     await storage.setJSON(KEYS.custom, next);
-  };
-  const saveSettings = async (next: AppSettings) => {
+  }, []);
+  const saveSettings = useCallback(async (next: AppSettings) => {
     setSettings(next);
     await storage.setJSON(KEYS.settings, next);
-  };
-
-  const saveGyms = async (next: GymProfile[]) => {
+  }, []);
+  const saveGyms = useCallback(async (next: GymProfile[]) => {
     setGyms(next);
     await storage.setJSON(KEYS.gyms, next);
-  };
-  const switchGym = (id: string) => {
-    const g = gyms.find((x) => x.id === id);
-    if (!g) return;
-    void saveEquip(g.equip);
-    void saveSettings({ ...settings, activeGymId: id });
-  };
-  const addGym = (name: string, equipPreset?: EquipKey[]) => {
-    const g: GymProfile = {
-      id: "gym_" + Date.now(),
-      name: name.trim() || "Neues Gym",
-      equip: equipPreset ? [...equipPreset] : [...equip],
-    };
-    void saveGyms([...gyms, g]);
-    void saveSettings({ ...settings, activeGymId: g.id });
-    // Preset-Profile (z. B. Studio) schalten die Geräteliste direkt um.
-    if (equipPreset) void saveEquip([...equipPreset]);
-  };
-  const removeGym = (id: string) => {
-    if (gyms.length <= 1) return;
-    const next = gyms.filter((g) => g.id !== id);
-    void saveGyms(next);
-    if (settings.activeGymId === id) {
-      void saveEquip(next[0].equip);
-      void saveSettings({ ...settings, activeGymId: next[0].id });
-    }
-  };
-  const setWeightStep = (step: number) =>
-    void saveSettings({ ...settings, weightStep: step });
-  const setBikeWarmup = (on: boolean) =>
-    void saveSettings({ ...settings, bikeWarmup: on });
-  const setCoachMotivation = (on: boolean) =>
-    void saveSettings({ ...settings, coachMotivation: on });
+  }, []);
+  const saveDays = useCallback(async (next: WorkoutDay[]) => {
+    setDays(next);
+    await storage.setJSON(KEYS.days, next);
+  }, []);
+  const saveCardio = useCallback(async (next: CardioSession[]) => {
+    setCardio(next);
+    await storage.setJSON(KEYS.cardio, next);
+  }, []);
 
   // Ensure one gym profile exists — migrate from the flat equipment list.
   useEffect(() => {
@@ -934,28 +938,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     void saveSettings({ ...settings, activeGymId: g.id });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, gyms.length]);
-  const setBudget = (min: number) =>
-    void saveSettings({ ...settings, timeBudgetMin: min });
-  const setKeepAwake = (on: boolean) =>
-    void saveSettings({ ...settings, keepAwake: on });
-  const setAiPlanning = (on: boolean) =>
-    void saveSettings({ ...settings, aiPlanning: on });
-  const setCoachLive = (on: boolean) =>
-    void saveSettings({ ...settings, coachLive: on });
-  /** Zünd-Check: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
-  const addJump = (heightCm: number) => {
-    const next = [...jumps, { date: new Date().toISOString(), heightCm }].slice(-60);
-    setJumps(next);
-    void storage.setJSON(KEYS.jumps, next);
-  };
-
-  /** Heutige Einheit setzen + persistieren (KEYS.today, synct mit). */
-  const setTodaySession = (s: DailySession | null) => {
-    setTodaySessionState(s);
-    if (s) void storage.setJSON(KEYS.today, s);
-    else void storage.remove(KEYS.today);
-  };
-
   // Sprungtests laden (unkritisch fürs erste Rendern — darf nachladen).
   useEffect(() => {
     void storage.getJSON<JumpEntry[]>(KEYS.jumps, []).then((js) => {
@@ -970,71 +952,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBeepCueVolume(settings.cueVolume ?? 1);
   }, [settings.cueVolume]);
 
-  const setVoiceCues = (on: boolean) =>
-    void saveSettings({ ...settings, voiceCues: on });
-  const setCueVolume = (v: number) =>
-    void saveSettings({ ...settings, cueVolume: v });
-  const setTheme = (t: ThemePref) =>
-    void saveSettings({ ...settings, theme: t });
-  const setIcon = (icon: IconConfig | undefined) =>
-    void saveSettings({ ...settings, icon });
-  const setAccentOverride = (hex: string | undefined) =>
-    void saveSettings({ ...settings, accentOverride: hex });
-  const setAccent = (id: string) =>
-    void saveSettings({ ...settings, accentColor: id });
-  const setUserName = (name: string) =>
-    void saveSettings({ ...settings, userName: name.trim() || undefined });
-  const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
-    void saveSettings({
-      ...settings,
-      athleteProfile: { ...settings.athleteProfile, ...patch },
-    });
-  const completeOnboarding = (name?: string, profile?: Partial<AthleteProfile>) =>
-    void saveSettings({
-      ...settings,
-      onboarded: true,
-      userName: name?.trim() ? name.trim() : settings.userName,
-      athleteProfile: profile
-        ? { ...settings.athleteProfile, ...profile }
-        : settings.athleteProfile,
-    });
-
-  const saveCardio = async (next: CardioSession[]) => {
-    setCardio(next);
-    await storage.setJSON(KEYS.cardio, next);
-  };
-  // Manually logged endurance session (run/interval/ride/…) — the "manual"
-  // source seam, deduped by id like Strava imports.
-  const addManualCardio = async (entry: Omit<CardioSession, "id" | "source">) => {
-    const id = `manual-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    await saveCardio(mergeCardio(cardio, [{ ...entry, id, source: "manual" }]));
-  };
-  const removeCardio = async (id: string) => {
-    await saveCardio(cardio.filter((c) => c.id !== id));
-    // Import-Einheiten (nicht-manuell) als Grabstein merken, damit der nächste
-    // Sync sie nicht wieder einspielt. Manuelle IDs kommen nie zurück.
-    if (!id.startsWith("manual-") && !hiddenCardio.includes(id)) {
-      const next = [...hiddenCardio, id];
-      setHiddenCardio(next);
-      await storage.setJSON(KEYS.hiddenCardio, next);
-    }
-  };
-  type StravaTokens = NonNullable<AppSettings["strava"]>;
-  const stravaPost = async (payload: Record<string, unknown>) => {
-    const res = await fetch("/api/strava", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    return (await res.json()) as {
-      ok: boolean;
-      error?: string;
-      reauth?: boolean;
-      tokens?: StravaTokens;
-      rides?: CardioSession[];
-    };
-  };
-  const strava: StravaApi = {
+  const strava = useMemo<StravaApi>(() => ({
     connected: !!settings.strava?.refreshToken,
     athlete: settings.strava?.athleteName ?? null,
     busy: stravaBusy,
@@ -1093,12 +1011,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     },
     disconnect: () => void saveSettings({ ...settings, strava: undefined }),
-  };
+  }), [settings, stravaBusy, cardio, hiddenCardio, saveSettings, saveCardio]);
 
   // Spotify uses OAuth PKCE (no server secret) — the token exchange/refresh and
   // now-playing polling live in the useSpotify hook; the provider only persists
   // the auth (so it syncs to the cloud like every other setting).
-  const spotify: SpotifyApi = {
+  const spotify = useMemo<SpotifyApi>(() => ({
     configured: !!process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
     auth: settings.spotify,
     connect: async (auth) => {
@@ -1107,303 +1025,489 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     disconnect: async () => {
       await saveSettings({ ...settings, spotify: undefined });
     },
-  };
+  }), [settings, saveSettings]);
 
-  const acceptExam = () =>
-    void saveSettings({ ...settings, lastExamDate: new Date().toISOString() });
-  const acceptDeload = () =>
-    void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
-  const dismissCard = (card: CoachCard) =>
-    setDismissed((d) => [...d, card.kind + (card.exId ?? "")]);
-
-  const toggleEquip = (k: EquipKey) => {
-    const next = equip.includes(k) ? equip.filter((x) => x !== k) : [...equip, k];
-    void saveEquip(next);
-    const aid = settings.activeGymId;
-    if (aid) void saveGyms(gyms.map((g) => (g.id === aid ? { ...g, equip: next } : g)));
-  };
-
-  /** Eingaben des Editors härten und in eine vollwertige Übung gießen —
-   *  eigene Übungen sind erstklassig (Muskel, Equipment, Content) und fließen
-   *  über `allLib` automatisch in Pools, Volumen und den ATLAS-Katalog. */
-  const buildCustom = (id: string, data: CustomExerciseInput): Exercise => {
-    const unit: Unit = data.unit === "Sek" ? "Sek" : "Wdh";
-    const clampInt = (v: unknown, lo: number, hi: number, dflt: number) => {
-      const n = Math.round(Number(v));
-      return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
+  // DAS Context-Value — memoisiert, damit ein Provider-Render (z. B. ein
+  // Settings-Toggle) nicht jede Konsumenten-Komponente neu rendert. Die
+  // Aktions-Closures leben bewusst IN der Factory: sie entstehen nur, wenn
+  // sich eine Dep wirklich ändert — Stale-Closures sind damit ausgeschlossen,
+  // solange die Dep-Liste vollständig ist (exhaustive-deps wacht darüber).
+  const value = useMemo<TrainingContextValue>(() => {
+    const lastPerf = (id: string): LastPerf | null => {
+      for (let i = log.length - 1; i >= 0; i--) {
+        const ex = log[i].exercises?.find((e) => e.id === id);
+        // Only a filled WORKING set counts as a performance — a warmup-only entry
+        // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
+        if (ex && ex.sets && ex.sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null))
+          return { sets: ex.sets, date: log[i].date };
+      }
+      return null;
     };
-    const repLow = clampInt(data.repLow, 1, 180, unit === "Sek" ? 20 : 8);
-    const repHigh = clampInt(data.repHigh, repLow, 180, Math.max(repLow, unit === "Sek" ? 45 : 12));
-    const validReq = new Set<string>([...EQUIP_LIST.map((e) => e.key), "weight"]);
-    const req = (data.req ?? []).filter((t) => validReq.has(t));
-    const ex: Exercise = {
-      id,
-      name: data.name.trim().slice(0, 60) || "Eigene Übung",
-      pattern: data.pattern,
-      tag: "Eigene",
-      req: req.length ? req : ["none"],
-      weighted: !!data.weighted,
-      sets: clampInt(data.sets, 1, 6, 3),
-      repLow,
-      repHigh,
-      unit,
-      cue: (data.cue ?? "").trim().slice(0, 160) || "Eigene Übung — sauber und kontrolliert ausführen.",
-      steps: (data.steps ?? [])
-        .map((s) => s.trim().slice(0, 160))
-        .filter(Boolean)
-        .slice(0, 4),
-      back: (data.back ?? "").trim().slice(0, 160),
-      easier: (data.easier ?? "").trim().slice(0, 160),
-      custom: true,
+
+    /** Heutige Einheit setzen + persistieren (KEYS.today, synct mit). */
+    const setTodaySession = (s: DailySession | null) => {
+      setTodaySessionState(s);
+      if (s) void storage.setJSON(KEYS.today, s);
+      else void storage.remove(KEYS.today);
     };
-    if (data.muscle) ex.muscle = data.muscle;
-    if (data.muscleSecondary && data.muscleSecondary !== data.muscle)
-      ex.muscleSecondary = data.muscleSecondary;
-    if (data.backCaution) ex.backCaution = true;
-    return ex;
-  };
-  const addCustom = (data: CustomExerciseInput) => {
-    void saveCustom([...custom, buildCustom("custom_" + Date.now(), data)]);
-  };
-  const updateCustom = (id: string, data: CustomExerciseInput) => {
-    void saveCustom(custom.map((e) => (e.id === id ? buildCustom(id, data) : e)));
-  };
-  const removeCustom = (id: string) => {
-    void saveCustom(custom.filter((e) => e.id !== id));
-    if (exerciseVideos[id]) {
+
+    // Attach / replace / clear a user-picked YouTube demo clip for one exercise.
+    // Stores the raw URL (the embed is derived at render); rejects anything that
+    // doesn't parse as YouTube and clears the entry on empty/invalid input, so the
+    // map never holds an un-embeddable URL. Persists + cloud-syncs like every store.
+    const setExerciseVideo = (exId: string, url: string | null) => {
+      const trimmed = (url ?? "").trim();
       const next = { ...exerciseVideos };
-      delete next[id];
+      if (!trimmed || !youtubeEmbedUrl(trimmed)) delete next[exId];
+      else next[exId] = trimmed;
       void saveExerciseVideos(next);
-    }
-    if (exerciseNotes[id]) {
+    };
+    // Hilfsmittel-/Ausführungs-Notiz je Übung setzen/löschen (z. B. „Unterstützungs-
+    // band"). Dauerhaft je Übungs-Id gemerkt und beim Speichern auf die Einheit
+    // gestempelt; leer → Eintrag entfernen. Cap gegen Prompt-Aufblähung.
+    const setExerciseNote = (exId: string, note: string | null) => {
+      const trimmed = (note ?? "").trim().slice(0, 120);
       const next = { ...exerciseNotes };
-      delete next[id];
+      if (!trimmed) delete next[exId];
+      else next[exId] = trimmed;
       void saveExerciseNotes(next);
-    }
-  };
+    };
 
-  const saveDays = async (next: WorkoutDay[]) => {
-    setDays(next);
-    await storage.setJSON(KEYS.days, next);
-  };
-  const addDay = (day: WorkoutDay) => void saveDays([...days, day]);
-  const updateDay = (day: WorkoutDay) =>
-    void saveDays(days.map((d) => (d.id === day.id ? day : d)));
-  const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
+    const switchGym = (id: string) => {
+      const g = gyms.find((x) => x.id === id);
+      if (!g) return;
+      void saveEquip(g.equip);
+      void saveSettings({ ...settings, activeGymId: id });
+    };
+    const addGym = (name: string, equipPreset?: EquipKey[]) => {
+      const g: GymProfile = {
+        id: "gym_" + Date.now(),
+        name: name.trim() || "Neues Gym",
+        equip: equipPreset ? [...equipPreset] : [...equip],
+      };
+      void saveGyms([...gyms, g]);
+      void saveSettings({ ...settings, activeGymId: g.id });
+      // Preset-Profile (z. B. Studio) schalten die Geräteliste direkt um.
+      if (equipPreset) void saveEquip([...equipPreset]);
+    };
+    const removeGym = (id: string) => {
+      if (gyms.length <= 1) return;
+      const next = gyms.filter((g) => g.id !== id);
+      void saveGyms(next);
+      if (settings.activeGymId === id) {
+        void saveEquip(next[0].equip);
+        void saveSettings({ ...settings, activeGymId: next[0].id });
+      }
+    };
+    const toggleEquip = (k: EquipKey) => {
+      const next = equip.includes(k) ? equip.filter((x) => x !== k) : [...equip, k];
+      void saveEquip(next);
+      const aid = settings.activeGymId;
+      if (aid) void saveGyms(gyms.map((g) => (g.id === aid ? { ...g, equip: next } : g)));
+    };
 
-  /** Den Live-State des Runners als LoggedSession speichern. Items × Item-
-   *  Protokoll werden zu Übungs-Snapshots; die Heute-Einheit bekommt ihren
-   *  Erledigt-Stempel (in der real trainierten, ggf. umgebauten Fassung). */
-  const saveActiveSession = async (
-    state: ActiveSessionState,
-  ): Promise<SessionSummary | null> => {
-    const s = state.session;
-    const byId = new Map(allLib.map((e) => [e.id, e]));
-    const exercises: SessionExercise[] = [];
-    for (const it of s.items) {
-      const ex = byId.get(it.exerciseId);
-      if (!ex) continue;
-      const sets = (state.entries[it.id] || [])
-        .map((x) => {
-          const out: SetEntry = { weight: x.weight, reps: x.reps };
-          if (x.rir != null) out.rir = x.rir;
-          if (x.intensity != null) out.intensity = x.intensity;
-          if (x.warmup) out.warmup = true;
-          return out;
-        })
-        // Only truly filled sets (reps present) — weight-prefilled empty sets
-        // are suggestions, not performed work.
-        .filter((x) => x.reps !== "" && x.reps != null);
-      // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
-      // auto-prefilled (reps "5") and used to slip through as ghost sessions,
-      // inflating streak/XP and corrupting the next prescription.
-      if (!sets.some((x) => !x.warmup)) continue;
-      const mapped: SessionExercise = { id: ex.id, name: ex.name, unit: ex.unit, sets };
-      // Hilfsmittel-Notiz als Snapshot mitschreiben (was an dem Tag galt).
-      const exNote = exerciseNotes[ex.id];
-      if (exNote) mapped.note = exNote;
-      exercises.push(mapped);
-    }
-    if (!exercises.length) {
-      // Nothing real was performed → don't log a session; still clear state.
+    const setWeightStep = (step: number) =>
+      void saveSettings({ ...settings, weightStep: step });
+    const setBikeWarmup = (on: boolean) =>
+      void saveSettings({ ...settings, bikeWarmup: on });
+    const setCoachMotivation = (on: boolean) =>
+      void saveSettings({ ...settings, coachMotivation: on });
+    const setBudget = (min: number) =>
+      void saveSettings({ ...settings, timeBudgetMin: min });
+    const setKeepAwake = (on: boolean) =>
+      void saveSettings({ ...settings, keepAwake: on });
+    const setAiPlanning = (on: boolean) =>
+      void saveSettings({ ...settings, aiPlanning: on });
+    const setCoachLive = (on: boolean) =>
+      void saveSettings({ ...settings, coachLive: on });
+    const setVoiceCues = (on: boolean) =>
+      void saveSettings({ ...settings, voiceCues: on });
+    const setCueVolume = (v: number) =>
+      void saveSettings({ ...settings, cueVolume: v });
+    const setTheme = (t: ThemePref) =>
+      void saveSettings({ ...settings, theme: t });
+    const setIcon = (icon: IconConfig | undefined) =>
+      void saveSettings({ ...settings, icon });
+    const setAccentOverride = (hex: string | undefined) =>
+      void saveSettings({ ...settings, accentOverride: hex });
+    const setAccent = (id: string) =>
+      void saveSettings({ ...settings, accentColor: id });
+    const setUserName = (name: string) =>
+      void saveSettings({ ...settings, userName: name.trim() || undefined });
+    const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
+      void saveSettings({
+        ...settings,
+        athleteProfile: { ...settings.athleteProfile, ...patch },
+      });
+    const completeOnboarding = (name?: string, profile?: Partial<AthleteProfile>) =>
+      void saveSettings({
+        ...settings,
+        onboarded: true,
+        userName: name?.trim() ? name.trim() : settings.userName,
+        athleteProfile: profile
+          ? { ...settings.athleteProfile, ...profile }
+          : settings.athleteProfile,
+      });
+
+    /** Zünd-Check: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
+    const addJump = (heightCm: number) => {
+      const next = [...jumps, { date: new Date().toISOString(), heightCm }].slice(-60);
+      setJumps(next);
+      void storage.setJSON(KEYS.jumps, next);
+    };
+
+    // Manually logged endurance session (run/interval/ride/…) — the "manual"
+    // source seam, deduped by id like Strava imports.
+    const addManualCardio = async (entry: Omit<CardioSession, "id" | "source">) => {
+      const id = `manual-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      await saveCardio(mergeCardio(cardio, [{ ...entry, id, source: "manual" }]));
+    };
+    const removeCardio = async (id: string) => {
+      await saveCardio(cardio.filter((c) => c.id !== id));
+      // Import-Einheiten (nicht-manuell) als Grabstein merken, damit der nächste
+      // Sync sie nicht wieder einspielt. Manuelle IDs kommen nie zurück.
+      if (!id.startsWith("manual-") && !hiddenCardio.includes(id)) {
+        const next = [...hiddenCardio, id];
+        setHiddenCardio(next);
+        await storage.setJSON(KEYS.hiddenCardio, next);
+      }
+    };
+
+    const acceptExam = () =>
+      void saveSettings({ ...settings, lastExamDate: new Date().toISOString() });
+    const acceptDeload = () =>
+      void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
+    const dismissCard = (card: CoachCard) =>
+      setDismissed((d) => [...d, card.kind + (card.exId ?? "")]);
+
+    const addCustom = (data: CustomExerciseInput) => {
+      void saveCustom([...custom, buildCustom("custom_" + Date.now(), data)]);
+    };
+    const updateCustom = (id: string, data: CustomExerciseInput) => {
+      void saveCustom(custom.map((e) => (e.id === id ? buildCustom(id, data) : e)));
+    };
+    const removeCustom = (id: string) => {
+      void saveCustom(custom.filter((e) => e.id !== id));
+      if (exerciseVideos[id]) {
+        const next = { ...exerciseVideos };
+        delete next[id];
+        void saveExerciseVideos(next);
+      }
+      if (exerciseNotes[id]) {
+        const next = { ...exerciseNotes };
+        delete next[id];
+        void saveExerciseNotes(next);
+      }
+    };
+
+    const addDay = (day: WorkoutDay) => void saveDays([...days, day]);
+    const updateDay = (day: WorkoutDay) =>
+      void saveDays(days.map((d) => (d.id === day.id ? day : d)));
+    const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
+
+    /** Den Live-State des Runners als LoggedSession speichern. Items × Item-
+     *  Protokoll werden zu Übungs-Snapshots; die Heute-Einheit bekommt ihren
+     *  Erledigt-Stempel (in der real trainierten, ggf. umgebauten Fassung). */
+    const saveActiveSession = async (
+      state: ActiveSessionState,
+    ): Promise<SessionSummary | null> => {
+      const s = state.session;
+      const byId = new Map(allLib.map((e) => [e.id, e]));
+      const exercises: SessionExercise[] = [];
+      for (const it of s.items) {
+        const ex = byId.get(it.exerciseId);
+        if (!ex) continue;
+        const sets = (state.entries[it.id] || [])
+          .map((x) => {
+            const out: SetEntry = { weight: x.weight, reps: x.reps };
+            if (x.rir != null) out.rir = x.rir;
+            if (x.intensity != null) out.intensity = x.intensity;
+            if (x.warmup) out.warmup = true;
+            return out;
+          })
+          // Only truly filled sets (reps present) — weight-prefilled empty sets
+          // are suggestions, not performed work.
+          .filter((x) => x.reps !== "" && x.reps != null);
+        // An exercise counts only with ≥1 filled WORKING set. Warmups alone are
+        // auto-prefilled (reps "5") and used to slip through as ghost sessions,
+        // inflating streak/XP and corrupting the next prescription.
+        if (!sets.some((x) => !x.warmup)) continue;
+        const mapped: SessionExercise = { id: ex.id, name: ex.name, unit: ex.unit, sets };
+        // Hilfsmittel-Notiz als Snapshot mitschreiben (was an dem Tag galt).
+        const exNote = exerciseNotes[ex.id];
+        if (exNote) mapped.note = exNote;
+        exercises.push(mapped);
+      }
+      if (!exercises.length) {
+        // Nothing real was performed → don't log a session; still clear state.
+        void storage.remove(KEYS.active);
+        setTodayReadiness(null);
+        setBackSpareToday(false);
+        return null;
+      }
+      const newSession: LoggedSession = {
+        date: new Date().toISOString(),
+        dayKey: "today",
+        dayName: s.name,
+        focus: s.focus,
+        exercises,
+        estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
+      };
+      if (state.backTraffic) newSession.backTraffic = state.backTraffic;
+      const noteText = (state.note ?? "").trim();
+      if (noteText) newSession.note = noteText;
+      if (state.readiness) newSession.readiness = state.readiness;
+      if (deloadActive) newSession.isDeload = true;
+      if (s.variant === "exam") newSession.isExam = true;
+      if (s.variant === "reset") newSession.isBackReset = true;
+      const newLog = [...log, newSession];
+      // Summary for the completion takeover — computed BEFORE state clears so
+      // the celebration can show exactly what this session achieved.
+      const lvlBefore = trainingLevel({ log, allLib, settings });
+      const lvlAfter = trainingLevel({ log: newLog, allLib, settings });
+      const week = weeklySetStats(newLog);
+      const core = {
+        sets: exercises.reduce((a, ex) => a + ex.sets.filter((x) => !x.warmup).length, 0),
+        tonnage: sessionVolume(newSession),
+        prs: prTimeline(newLog).filter((e) => e.date === newSession.date).length,
+        levelBefore: lvlBefore.level,
+        levelAfter: lvlAfter.level,
+        xpPctFrom: lvlAfter.level > lvlBefore.level ? 0 : lvlBefore.pct,
+        xpPctTo: lvlAfter.pct,
+        weekSets: week.collected,
+        weekTarget: week.target,
+      };
+      // ATLAS-Debrief: VOR dem Log-Write erzeugen und an die Session hängen —
+      // so fließt es in Persistenz + Cloud-Sync und bleibt für immer stabil.
+      const debrief = sessionDebrief({
+        session: newSession,
+        log: newLog,
+        allLib,
+        summary: core,
+        readiness: state.readiness ?? null,
+      });
+      newSession.debrief = debrief;
+      const summary: SessionSummary = { ...core, debrief };
+      setSaving(true);
+      await storage.setJSON(KEYS.log, newLog);
+      setLog(newLog);
+      setSaving(false);
+      // Heute-Einheit als erledigt stempeln — die Startseite zeigt dann Ruhe
+      // statt eines abgearbeiteten Plans.
+      setTodaySession({ ...s, completedAt: new Date().toISOString() });
       void storage.remove(KEYS.active);
       setTodayReadiness(null);
       setBackSpareToday(false);
-      return null;
-    }
-    const newSession: LoggedSession = {
-      date: new Date().toISOString(),
-      dayKey: "today",
-      dayName: s.name,
-      focus: s.focus,
-      exercises,
-      estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
+      return summary;
     };
-    if (state.backTraffic) newSession.backTraffic = state.backTraffic;
-    const noteText = (state.note ?? "").trim();
-    if (noteText) newSession.note = noteText;
-    if (state.readiness) newSession.readiness = state.readiness;
-    if (deloadActive) newSession.isDeload = true;
-    if (s.variant === "exam") newSession.isExam = true;
-    if (s.variant === "reset") newSession.isBackReset = true;
-    const newLog = [...log, newSession];
-    // Summary for the completion takeover — computed BEFORE state clears so
-    // the celebration can show exactly what this session achieved.
-    const lvlBefore = trainingLevel({ log, allLib, settings });
-    const lvlAfter = trainingLevel({ log: newLog, allLib, settings });
-    const week = weeklySetStats(newLog);
-    const core = {
-      sets: exercises.reduce((a, ex) => a + ex.sets.filter((x) => !x.warmup).length, 0),
-      tonnage: sessionVolume(newSession),
-      prs: prTimeline(newLog).filter((e) => e.date === newSession.date).length,
-      levelBefore: lvlBefore.level,
-      levelAfter: lvlAfter.level,
-      xpPctFrom: lvlAfter.level > lvlBefore.level ? 0 : lvlBefore.pct,
-      xpPctTo: lvlAfter.pct,
-      weekSets: week.collected,
-      weekTarget: week.target,
+
+    /** Das gestreamte KI-Debrief nachträglich an die eben gespeicherte Einheit
+     *  schreiben — Verlauf und Cloud zeigen dann dauerhaft dieselben Zeilen wie
+     *  der Sieger-Moment. */
+    const amendLastDebrief = (lines: string[]) => {
+      const clean = lines.map((l) => l.trim()).filter(Boolean).slice(0, 3);
+      if (!clean.length) return;
+      setLog((prev) => {
+        if (!prev.length) return prev;
+        const next = [...prev];
+        next[next.length - 1] = { ...next[next.length - 1], debrief: clean };
+        void storage.setJSON(KEYS.log, next);
+        return next;
+      });
     };
-    // ATLAS-Debrief: VOR dem Log-Write erzeugen und an die Session hängen —
-    // so fließt es in Persistenz + Cloud-Sync und bleibt für immer stabil.
-    const debrief = sessionDebrief({
-      session: newSession,
-      log: newLog,
+
+    // Leave an active session WITHOUT saving — clears the persisted live state
+    // so a discarded workout isn't silently resumed or logged.
+    const discardActive = () => {
+      void storage.remove(KEYS.active);
+      setTodayReadiness(null);
+      setBackSpareToday(false);
+    };
+
+    const deleteSession = async (realIdx: number) => {
+      const newLog = log.filter((_, i) => i !== realIdx);
+      setLog(newLog);
+      if (newLog.length) await storage.setJSON(KEYS.log, newLog);
+      else await storage.remove(KEYS.log);
+    };
+
+    const resetAll = async () => {
+      await storage.remove(KEYS.log);
+      setLog([]);
+    };
+
+    const addBodyMetric = async (m: BodyMetric) => {
+      const next = [...body, m].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      );
+      setBody(next);
+      await storage.setJSON(KEYS.body, next);
+    };
+    const deleteBodyMetric = async (idx: number) => {
+      const target = body[idx];
+      if (target?.photoId) void deletePhoto(target.photoId);
+      const next = body.filter((_, i) => i !== idx);
+      setBody(next);
+      if (next.length) await storage.setJSON(KEYS.body, next);
+      else await storage.remove(KEYS.body);
+    };
+
+    const exportData = (): ExportEnvelope => ({
+      schemaVersion: 3,
+      exportedAt: new Date().toISOString(),
+      log,
+      equip,
+      choices,
+      custom,
+      body,
+      cardio,
+      days,
+      gyms,
+      exerciseVideos,
+      exerciseNotes,
+      settings,
+    });
+
+    const importData = async (raw: unknown): Promise<boolean> => {
+      if (!raw || typeof raw !== "object") return false;
+      const d = raw as Record<string, unknown>;
+      if (!Array.isArray(d.log)) return false;
+      // Sanitizer statt roher Cast — dieselbe Härtung wie loadAll (eine Wahrheit).
+      // Ein fehlendes Feld behält den aktuellen State (Teil-Backup löscht nichts).
+      const nextLog = sanitizeSessions(d.log);
+      const nextEquip = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
+      const nextChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : choices;
+      const nextCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : custom;
+      const nextBody = d.body !== undefined ? sanitizeBody(d.body) : body;
+      const nextCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : cardio;
+      const nextDays = d.days !== undefined ? sanitizeDays(d.days) : days;
+      const nextGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
+      const nextExerciseVideos =
+        d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
+      const nextExerciseNotes =
+        d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : exerciseNotes;
+      const nextSettings =
+        d.settings && typeof d.settings === "object"
+          ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
+          : settings;
+      setLog(nextLog);
+      setEquip(nextEquip);
+      setChoices(nextChoices);
+      setCustom(nextCustom);
+      setBody(nextBody);
+      setCardio(nextCardio);
+      setDays(nextDays);
+      setGyms(nextGyms);
+      setExerciseVideos(nextExerciseVideos);
+      setExerciseNotes(nextExerciseNotes);
+      setSettings(nextSettings);
+      await Promise.all([
+        storage.setJSON(KEYS.log, nextLog),
+        storage.setJSON(KEYS.equip, nextEquip),
+        storage.setJSON(KEYS.choices, nextChoices),
+        storage.setJSON(KEYS.custom, nextCustom),
+        storage.setJSON(KEYS.body, nextBody),
+        storage.setJSON(KEYS.cardio, nextCardio),
+        storage.setJSON(KEYS.days, nextDays),
+        storage.setJSON(KEYS.gyms, nextGyms),
+        storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
+        storage.setJSON(KEYS.exerciseNotes, nextExerciseNotes),
+        storage.setJSON(KEYS.settings, nextSettings),
+      ]);
+      return true;
+    };
+
+    return {
+      log,
+      equip,
+      choices,
+      custom,
+      exerciseVideos,
+      exerciseNotes,
+      body,
+      loading,
+      saving,
       allLib,
-      summary: core,
-      readiness: state.readiness ?? null,
-    });
-    newSession.debrief = debrief;
-    const summary: SessionSummary = { ...core, debrief };
-    setSaving(true);
-    await storage.setJSON(KEYS.log, newLog);
-    setLog(newLog);
-    setSaving(false);
-    // Heute-Einheit als erledigt stempeln — die Startseite zeigt dann Ruhe
-    // statt eines abgearbeiteten Plans.
-    setTodaySession({ ...s, completedAt: new Date().toISOString() });
-    void storage.remove(KEYS.active);
-    setTodayReadiness(null);
-    setBackSpareToday(false);
-    return summary;
-  };
-
-  /** Das gestreamte KI-Debrief nachträglich an die eben gespeicherte Einheit
-   *  schreiben — Verlauf und Cloud zeigen dann dauerhaft dieselben Zeilen wie
-   *  der Sieger-Moment. */
-  const amendLastDebrief = (lines: string[]) => {
-    const clean = lines.map((l) => l.trim()).filter(Boolean).slice(0, 3);
-    if (!clean.length) return;
-    setLog((prev) => {
-      if (!prev.length) return prev;
-      const next = [...prev];
-      next[next.length - 1] = { ...next[next.length - 1], debrief: clean };
-      void storage.setJSON(KEYS.log, next);
-      return next;
-    });
-  };
-
-  // Leave an active session WITHOUT saving — clears the persisted live state
-  // so a discarded workout isn't silently resumed or logged.
-  const discardActive = () => {
-    void storage.remove(KEYS.active);
-    setTodayReadiness(null);
-    setBackSpareToday(false);
-  };
-
-  const deleteSession = async (realIdx: number) => {
-    const newLog = log.filter((_, i) => i !== realIdx);
-    setLog(newLog);
-    if (newLog.length) await storage.setJSON(KEYS.log, newLog);
-    else await storage.remove(KEYS.log);
-  };
-
-  const resetAll = async () => {
-    await storage.remove(KEYS.log);
-    setLog([]);
-  };
-
-  const addBodyMetric = async (m: BodyMetric) => {
-    const next = [...body, m].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
-    setBody(next);
-    await storage.setJSON(KEYS.body, next);
-  };
-  const deleteBodyMetric = async (idx: number) => {
-    const target = body[idx];
-    if (target?.photoId) void deletePhoto(target.photoId);
-    const next = body.filter((_, i) => i !== idx);
-    setBody(next);
-    if (next.length) await storage.setJSON(KEYS.body, next);
-    else await storage.remove(KEYS.body);
-  };
-
-  const exportData = (): ExportEnvelope => ({
-    schemaVersion: 3,
-    exportedAt: new Date().toISOString(),
-    log,
-    equip,
-    choices,
-    custom,
-    body,
-    cardio,
-    days,
-    gyms,
-    exerciseVideos,
-    exerciseNotes,
-    settings,
-  });
-
-  const importData = async (raw: unknown): Promise<boolean> => {
-    if (!raw || typeof raw !== "object") return false;
-    const d = raw as Record<string, unknown>;
-    if (!Array.isArray(d.log)) return false;
-    // Sanitizer statt roher Cast — dieselbe Härtung wie loadAll (eine Wahrheit).
-    // Ein fehlendes Feld behält den aktuellen State (Teil-Backup löscht nichts).
-    const nextLog = sanitizeSessions(d.log);
-    const nextEquip = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
-    const nextChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : choices;
-    const nextCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : custom;
-    const nextBody = d.body !== undefined ? sanitizeBody(d.body) : body;
-    const nextCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : cardio;
-    const nextDays = d.days !== undefined ? sanitizeDays(d.days) : days;
-    const nextGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
-    const nextExerciseVideos =
-      d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
-    const nextExerciseNotes =
-      d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : exerciseNotes;
-    const nextSettings =
-      d.settings && typeof d.settings === "object"
-        ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
-        : settings;
-    setLog(nextLog);
-    setEquip(nextEquip);
-    setChoices(nextChoices);
-    setCustom(nextCustom);
-    setBody(nextBody);
-    setCardio(nextCardio);
-    setDays(nextDays);
-    setGyms(nextGyms);
-    setExerciseVideos(nextExerciseVideos);
-    setExerciseNotes(nextExerciseNotes);
-    setSettings(nextSettings);
-    await Promise.all([
-      storage.setJSON(KEYS.log, nextLog),
-      storage.setJSON(KEYS.equip, nextEquip),
-      storage.setJSON(KEYS.choices, nextChoices),
-      storage.setJSON(KEYS.custom, nextCustom),
-      storage.setJSON(KEYS.body, nextBody),
-      storage.setJSON(KEYS.cardio, nextCardio),
-      storage.setJSON(KEYS.days, nextDays),
-      storage.setJSON(KEYS.gyms, nextGyms),
-      storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
-      storage.setJSON(KEYS.exerciseNotes, nextExerciseNotes),
-      storage.setJSON(KEYS.settings, nextSettings),
-    ]);
-    return true;
-  };
-
-  const value: TrainingContextValue = {
+      has,
+      recTpl,
+      recList,
+      estimatedMin,
+      settings,
+      todayReadiness,
+      readinessScale,
+      ringMetrics,
+      muscleVolumes,
+      coach,
+      cardioAdvice: cardioTip,
+      fatigue,
+      phase,
+      weekSetStats,
+      trainer,
+      mission,
+      weekCount,
+      daysAgo,
+      lastLabel,
+      lastBackRed,
+      backSpareToday,
+      setBackSpareToday,
+      backSafeActive,
+      seeDoctor,
+      lastPerf,
+      toggleEquip,
+      addCustom,
+      updateCustom,
+      removeCustom,
+      setExerciseVideo,
+      setExerciseNote,
+      days,
+      addDay,
+      updateDay,
+      removeDay,
+      gyms,
+      switchGym,
+      addGym,
+      removeGym,
+      saveActiveSession,
+      amendLastDebrief,
+      discardActive,
+      deleteSession,
+      resetAll,
+      setBudget,
+      setVoiceCues,
+      setCueVolume,
+      setTheme,
+      setIcon,
+      setAccentOverride,
+      setAccent,
+      setWeightStep,
+      setBikeWarmup,
+      setCoachMotivation,
+      setKeepAwake,
+      setAiPlanning,
+      setCoachLive,
+      todaySession,
+      setTodaySession,
+      jumps,
+      addJump,
+      setUserName,
+      setAthleteProfile,
+      completeOnboarding,
+      setReadiness: (r) => setTodayReadiness(r),
+      acceptDeload,
+      acceptExam,
+      dismissCard,
+      addBodyMetric,
+      deleteBodyMetric,
+      exportData,
+      importData,
+      cardio,
+      addManualCardio,
+      removeCardio,
+      strava,
+      spotify,
+      cloud,
+    };
+  }, [
     log,
     equip,
     choices,
@@ -1424,7 +1528,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     ringMetrics,
     muscleVolumes,
     coach,
-    cardioAdvice: cardioTip,
+    cardioTip,
     fatigue,
     phase,
     weekSetStats,
@@ -1435,64 +1539,27 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     lastLabel,
     lastBackRed,
     backSpareToday,
-    setBackSpareToday,
     backSafeActive,
     seeDoctor,
-    lastPerf,
-    toggleEquip,
-    addCustom,
-    updateCustom,
-    removeCustom,
-    setExerciseVideo,
-    setExerciseNote,
+    deloadActive,
     days,
-    addDay,
-    updateDay,
-    removeDay,
     gyms,
-    switchGym,
-    addGym,
-    removeGym,
-    saveActiveSession,
-    amendLastDebrief,
-    discardActive,
-    deleteSession,
-    resetAll,
-    setBudget,
-    setVoiceCues,
-    setCueVolume,
-    setTheme,
-    setIcon,
-    setAccentOverride,
-    setAccent,
-    setWeightStep,
-    setBikeWarmup,
-    setCoachMotivation,
-    setKeepAwake,
-    setAiPlanning,
-    setCoachLive,
     todaySession,
-    setTodaySession,
     jumps,
-    addJump,
-    setUserName,
-    setAthleteProfile,
-    completeOnboarding,
-    setReadiness: (r) => setTodayReadiness(r),
-    acceptDeload,
-    acceptExam,
-    dismissCard,
-    addBodyMetric,
-    deleteBodyMetric,
-    exportData,
-    importData,
     cardio,
-    addManualCardio,
-    removeCardio,
+    hiddenCardio,
+    saveEquip,
+    saveCustom,
+    saveSettings,
+    saveGyms,
+    saveDays,
+    saveCardio,
+    saveExerciseVideos,
+    saveExerciseNotes,
     strava,
     spotify,
     cloud,
-  };
+  ]);
 
   return (
     <TrainingContext.Provider value={value}>{children}</TrainingContext.Provider>
