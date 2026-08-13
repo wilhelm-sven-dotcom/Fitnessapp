@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -470,13 +471,15 @@ export function HistoryTab() {
             </div>
           </div>
 
-          <Pressable
+          <Button
             onClick={() => void save()}
             disabled={!canSave}
-            className="mt-1 w-full rounded-card bg-accent-sessions py-3.5 text-base font-bold text-on-accent shadow-card-lg disabled:opacity-40"
+            size="lg"
+            full
+            className="mt-1"
           >
             Speichern
-          </Pressable>
+          </Button>
         </div>
       </Sheet>
     </div>

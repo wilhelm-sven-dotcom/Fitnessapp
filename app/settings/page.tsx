@@ -3,6 +3,7 @@
 import { Camera, Download, Plus, RotateCcw, Trash2, Upload, Volume2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { beepStart, primeAudio } from "@/lib/beep";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -172,21 +173,25 @@ export default function SettingsPage() {
             </Pressable>
           </div>
         ) : (
-          <Pressable
+          <Button
+            variant="secondary"
+            full
             onClick={() => photoRef.current?.click()}
             disabled={photoBusy}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
+            className="mt-2"
           >
             <Camera size={16} /> {photoBusy ? "Lädt…" : "Fortschritts-Foto"}
-          </Pressable>
+          </Button>
         )}
-        <Pressable
+        <Button
+          variant="strong"
+          full
           onClick={addBody}
           disabled={!bw.trim() && !waist.trim() && !photoId}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+          className="mt-2"
         >
           <Plus size={16} strokeWidth={2.5} /> Eintragen
-        </Pressable>
+        </Button>
         {body.length > 0 && (
           <div className="mt-3 space-y-1">
             {[...body]
@@ -271,16 +276,17 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-fg">Signalton-Lautstärke</p>
-              <Pressable
+              <Button
+                variant="secondary"
                 onClick={() => {
                   primeAudio();
                   beepStart();
                 }}
-                className="flex items-center gap-1.5 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-fg focus:outline-none"
+                className="px-3 py-1.5 text-xs"
               >
                 <Volume2 size={14} />
                 Probehören
-              </Pressable>
+              </Button>
             </div>
             <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
               Countdown-Töne im Aufwärmen und beim Zünd-Check — lauter stellen, wenn nebenbei Musik läuft.
@@ -335,12 +341,9 @@ export default function SettingsPage() {
           Datei oder spiele ein Backup zurück.
         </p>
         <div className="mb-4 flex flex-col gap-2">
-          <Pressable
-            onClick={exportFile}
-            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
-          >
+          <Button variant="secondary" full onClick={exportFile}>
             <Download size={16} /> Export (JSON)
-          </Pressable>
+          </Button>
           <input
             ref={fileRef}
             type="file"
@@ -348,38 +351,29 @@ export default function SettingsPage() {
             onChange={onImport}
             className="hidden"
           />
-          <Pressable
-            onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
-          >
+          <Button variant="secondary" full onClick={() => fileRef.current?.click()}>
             <Upload size={16} /> Import (JSON)
-          </Pressable>
+          </Button>
           {importMsg && <p className="text-xs text-muted">{importMsg}</p>}
         </div>
         {!confirmReset ? (
-          <Pressable
-            onClick={() => setConfirmReset(true)}
-            className="flex items-center gap-2 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
-          >
+          <Button variant="ghost" onClick={() => setConfirmReset(true)} className="px-1">
             <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
-          </Pressable>
+          </Button>
         ) : (
           <div className="flex items-center gap-2">
-            <Pressable
+            <Button
+              variant="danger"
               onClick={() => {
                 void resetAll();
                 setConfirmReset(false);
               }}
-              className="rounded-card bg-rose-950 px-3 py-2 text-sm text-rose-300 focus:outline-none"
             >
               Wirklich löschen
-            </Pressable>
-            <Pressable
-              onClick={() => setConfirmReset(false)}
-              className="rounded-card px-3 py-2 text-sm text-muted focus:outline-none"
-            >
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmReset(false)}>
               Abbrechen
-            </Pressable>
+            </Button>
           </div>
         )}
       </section>

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Dumbbell, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { greeting } from "@/lib/coaching";
@@ -149,12 +150,13 @@ export function Welcome() {
             ))}
           </div>
 
-          <Pressable
+          <Button
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
-            className="flex w-full items-center justify-center rounded-card bg-accent-sessions py-4 text-lg font-semibold text-on-accent shadow-card-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            size="lg"
+            full
           >
             Los geht&rsquo;s
-          </Pressable>
+          </Button>
         </motion.div>
       </div>
     </motion.div>

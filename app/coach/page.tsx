@@ -3,6 +3,7 @@
 import { ChevronRight, Dumbbell, KeyRound, Send, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -368,14 +369,15 @@ export default function CoachPage() {
           aria-label="Nachricht an den Coach"
           className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
         />
-        <Pressable
+        <Button
+          variant="strong"
           onClick={() => void send(input)}
           disabled={busy || !input.trim()}
           aria-label="Senden"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-strong text-on-strong focus:outline-none disabled:opacity-40"
+          className="h-11 w-11 shrink-0 rounded-card p-0"
         >
           <Send size={18} strokeWidth={2.5} />
-        </Pressable>
+        </Button>
       </div>
     </div>
   );
