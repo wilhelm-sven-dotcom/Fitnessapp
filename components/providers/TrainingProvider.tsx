@@ -41,14 +41,7 @@ import {
 } from "@/lib/readiness";
 import { estimateSessionMin, fitToBudget } from "@/lib/session-time";
 import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
-import { RING, type RingMetric } from "@/lib/ring-colors";
-import {
-  coverageCount,
-  rollingWeeklyBaseline,
-  weeklyMuscleVolume,
-  weeklyVolume,
-  type MuscleVolume,
-} from "@/lib/volume";
+import { weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
 import { prTimeline } from "@/lib/records";
@@ -262,7 +255,6 @@ interface TrainingContextValue {
   settings: AppSettings;
   todayReadiness: Readiness | null;
   readinessScale: ReadinessScale;
-  ringMetrics: RingMetric[];
   muscleVolumes: MuscleVolume[];
   coach: CoachCard[];
   cardioAdvice: CardioAdvice;
@@ -892,19 +884,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, mission, log, allLib]);
 
-  // Apple-Fitness activity rings: Einheiten · Volumen · Muskel-Abdeckung.
-  const ringMetrics = useMemo<RingMetric[]>(() => {
-    const wv = weeklyVolume(log);
-    const baseline = rollingWeeklyBaseline(log);
-    const volTarget = baseline > 0 ? baseline : Math.max(Math.round(wv), 1);
-    const cov = coverageCount(muscleVolumes);
-    return [
-      { id: "move", value: weekCount, target: 3, label: "Einheiten", color: RING.move },
-      { id: "exercise", value: Math.round(wv), target: volTarget, label: "Volumen", color: RING.exercise },
-      { id: "stand", value: cov.hit, target: cov.total, label: "Abdeckung", color: RING.stand },
-    ];
-  }, [log, weekCount, muscleVolumes]);
-
   // Persistenz-Helfer: bewusst OHNE Closure über State (nur setState + storage),
   // dadurch stabil (useCallback []) — Effekte und das memoisierte Context-Value
   // können sie als Deps führen, ohne bei jedem Render neu zu entstehen.
@@ -1446,7 +1425,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       settings,
       todayReadiness,
       readinessScale,
-      ringMetrics,
       muscleVolumes,
       coach,
       cardioAdvice: cardioTip,
@@ -1536,7 +1514,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     settings,
     todayReadiness,
     readinessScale,
-    ringMetrics,
     muscleVolumes,
     coach,
     cardioTip,
