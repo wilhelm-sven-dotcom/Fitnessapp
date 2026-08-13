@@ -231,7 +231,7 @@ export default function CoachPage() {
   const buildEl = (
     <Pressable
       onClick={() => router.push("/")}
-      className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-coverage"
+      className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
     >
       <span className="flex items-center gap-2">
         <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
@@ -330,7 +330,7 @@ export default function CoachPage() {
               className={cn(
                 "rounded-card px-4 py-3 text-sm leading-relaxed",
                 m.role === "user"
-                  ? "ml-8 bg-accent-coverage text-on-strong"
+                  ? "ml-8 bg-coach text-on-color"
                   : "mr-4 whitespace-pre-wrap border border-surface-3 bg-surface-1 shadow-card text-fg",
               )}
             >
@@ -366,7 +366,7 @@ export default function CoachPage() {
           rows={1}
           placeholder="Frag ATLAS…"
           aria-label="Nachricht an den Coach"
-          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
         />
         <Pressable
           onClick={() => void send(input)}

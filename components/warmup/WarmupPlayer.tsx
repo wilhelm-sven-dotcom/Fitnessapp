@@ -150,7 +150,7 @@ export function WarmupPlayer({
 
   if (done) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-base px-8 text-center">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 app-bg px-8 text-center">
         <p className="text-4xl font-semibold tracking-tight text-fg">Aufgewärmt 💪</p>
         <p className="max-w-xs text-sm text-muted">
           Gelenke warm, Rücken aktiviert. Jetzt sauber und kontrolliert trainieren.
@@ -167,7 +167,7 @@ export function WarmupPlayer({
 
   if (!current) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-base">
+      <div className="fixed inset-0 z-50 flex items-center justify-center app-bg">
         <Pressable
           onClick={onClose}
           className="rounded-card bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
@@ -188,7 +188,7 @@ export function WarmupPlayer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-base"
+      className="fixed inset-0 z-50 flex flex-col app-bg"
       style={{
         paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)",
         paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",

@@ -195,7 +195,7 @@ export default function SettingsPage() {
               .map(({ m, i }) => (
                 <div
                   key={m.date + i}
-                  className="flex items-center justify-between gap-2 rounded-card bg-base px-3 py-2"
+                  className="flex items-center justify-between gap-2 rounded-card bg-surface-0 px-3 py-2"
                 >
                   <span className="flex items-center gap-1.5 text-sm text-muted">
                     {fmtDateShort(m.date)}

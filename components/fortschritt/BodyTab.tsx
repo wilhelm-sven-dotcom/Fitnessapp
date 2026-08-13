@@ -183,7 +183,7 @@ export function BodyTab() {
               const exam = examWeeks.has(wk);
               const pIdx = m.photoId ? photos.findIndex((p) => p === m) : -1;
               return (
-                <div key={m.date + ri} className="log-row flex items-center gap-3">
+                <div key={m.date + ri} className="flex items-center gap-3">
                   {m.photoId ? (
                     <PhotoImg id={m.photoId} className="h-16 w-16 shrink-0 rounded-card" />
                   ) : (

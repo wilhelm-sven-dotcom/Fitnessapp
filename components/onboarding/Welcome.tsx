@@ -50,7 +50,7 @@ export function Welcome() {
 
   return (
     <motion.div
-      className="fixed inset-0 z-40 overflow-y-auto bg-base"
+      className="fixed inset-0 z-40 overflow-y-auto app-bg"
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",

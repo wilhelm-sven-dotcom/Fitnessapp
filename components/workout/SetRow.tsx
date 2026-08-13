@@ -89,7 +89,7 @@ export function SetRow({
         ? `${set.weight} kg × ${set.reps}`
         : `${set.reps} Wdh`;
     return (
-      <div className="set-row">
+      <div>
         <Pressable
           onClick={onActivate}
           aria-label={`${label} bearbeiten`}
@@ -133,7 +133,7 @@ export function SetRow({
       <Pressable
         onClick={onActivate}
         aria-label={`${label} starten`}
-        className="set-row flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
       >
         <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-full border border-line" />
         <span className="w-12 shrink-0 font-mono text-xs">{label}</span>
@@ -147,7 +147,7 @@ export function SetRow({
   const showGhostFill = !timed && !!ghostWeight && (w === "" || w == null);
   return (
     <motion.div
-      className="set-row set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
+      className="set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
       initial={reduce ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}

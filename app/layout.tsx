@@ -37,7 +37,7 @@ export const viewport: Viewport = {
   themeColor: "#f2f4f2",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // Kein maximumScale: Pinch-Zoom bleibt möglich (WCAG 1.4.4).
   viewportFit: "cover",
 };
 

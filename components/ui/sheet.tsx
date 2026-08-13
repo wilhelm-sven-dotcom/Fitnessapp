@@ -127,8 +127,11 @@ export function Sheet({
               )}
             </div>
             <div
-              className="overflow-y-auto px-5 pb-8 pt-2"
-              style={{ maxHeight: "78vh" }}
+              className="overflow-y-auto px-5 pt-2"
+              style={{
+                maxHeight: "78vh",
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 2rem)",
+              }}
             >
               {children}
             </div>

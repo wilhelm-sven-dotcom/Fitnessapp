@@ -161,7 +161,7 @@ export function GuideSheet({
             embedUrl ? (
               <div className="mb-3 flex justify-center">
                 <div
-                  className="overflow-hidden rounded-card border border-line bg-base"
+                  className="overflow-hidden rounded-card border border-line bg-surface-0"
                   style={{ height: "min(60vh, 480px)", aspectRatio: "9 / 16" }}
                 >
                   <iframe
@@ -179,7 +179,7 @@ export function GuideSheet({
             ) : (
               <video
                 src={nativeSrc}
-                className="mb-3 w-full rounded-card border border-line bg-base"
+                className="mb-3 w-full rounded-card border border-line bg-surface-0"
                 loop
                 muted
                 playsInline
@@ -189,7 +189,7 @@ export function GuideSheet({
             )
           ) : fig ? (
             <>
-              <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-base p-3">
+              <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-surface-0 p-3">
                 <FigurePanel label="Seitlich" fig={fig} viewKey="side" accentBones={accent} />
                 {fig.front ? (
                   <FigurePanel label="Frontal" fig={fig} viewKey="front" accentBones={accent} />
@@ -199,7 +199,7 @@ export function GuideSheet({
               </div>
               {/* Movement broken into 3 frozen positions — studyable, and the full
                   range stays visible even with reduced motion. */}
-              <div className="mb-3 rounded-card border border-line bg-base p-3">
+              <div className="mb-3 rounded-card border border-line bg-surface-0 p-3">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-accent-2">
                   Bewegung · 3 Positionen
                 </p>
@@ -222,7 +222,7 @@ export function GuideSheet({
               </div>
             </>
           ) : (
-            <div className="mb-3 rounded-card border border-line bg-base px-3 py-2">
+            <div className="mb-3 rounded-card border border-line bg-surface-0 px-3 py-2">
               <p className="font-mono text-xs text-faint">Animation folgt — Schritte unten.</p>
             </div>
           )}

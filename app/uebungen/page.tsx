@@ -188,7 +188,7 @@ export default function ExerciseCatalogPage() {
                 const available = reqOk(ex, has);
                 const m = muscleOf(ex);
                 return (
-                  <div key={ex.id} className="log-row flex items-center gap-1">
+                  <div key={ex.id} className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => setSelected(ex)}

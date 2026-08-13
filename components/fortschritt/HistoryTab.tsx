@@ -340,7 +340,7 @@ export function HistoryTab() {
                   {(s.exercises ?? []).map((ex) => (
                     <div
                       key={ex.id}
-                      className="log-row flex items-baseline justify-between gap-3"
+                      className="flex items-baseline justify-between gap-3"
                     >
                       <span className="text-sm text-muted">
                         {ex.name}
@@ -361,7 +361,7 @@ export function HistoryTab() {
                     </div>
                   ))}
                   {s.debrief && s.debrief.length > 0 && (
-                    <div className="mt-2 rounded-card bg-base px-3 py-2">
+                    <div className="mt-2 rounded-card bg-surface-0 px-3 py-2">
                       <p className="mb-1 flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
                         <AtlasMark size={12} className="text-fg" /> ATLAS
                       </p>
@@ -371,7 +371,7 @@ export function HistoryTab() {
                     </div>
                   )}
                   {s.note && (
-                    <p className="mt-2 rounded-card bg-base px-3 py-2 text-sm italic text-muted">
+                    <p className="mt-2 rounded-card bg-surface-0 px-3 py-2 text-sm italic text-muted">
                       „{s.note}“
                     </p>
                   )}
