@@ -194,7 +194,7 @@ export function HistoryTab() {
         {stats.map((s) => (
           <div
             key={s.l}
-            className="rounded-card border border-line bg-panel p-3 text-center shadow-card"
+            className="rounded-card border border-line bg-surface-1 p-3 text-center shadow-card"
           >
             <p className="font-display text-lg font-semibold tabular-nums text-fg">{s.v}</p>
             <p className="mt-0.5 font-mono text-xs uppercase tracking-wider text-faint">
@@ -219,7 +219,7 @@ export function HistoryTab() {
             return (
               <div
                 key={`c-${c.id}`}
-                className="flex items-center gap-3 rounded-card border border-line bg-panel p-3 shadow-card"
+                className="flex items-center gap-3 rounded-card border border-line bg-surface-1 p-3 shadow-card"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accent-ink">
                   <Icon size={17} />
@@ -272,7 +272,7 @@ export function HistoryTab() {
           return (
             <div
               key={`s-${s.date}-${realIdx}`}
-              className="overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card"
+              className="overflow-hidden rounded-card border border-line bg-surface-1 shadow-card"
             >
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <button

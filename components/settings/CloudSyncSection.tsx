@@ -18,7 +18,7 @@ export function CloudSyncSection() {
 
   if (!cloud.configured) {
     return (
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
           Cloud-Sync
         </p>
@@ -76,7 +76,7 @@ export function CloudSyncSection() {
   };
 
   return (
-    <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+    <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
       <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Cloud-Sync</p>
 
       {cloud.email ? (
@@ -103,7 +103,7 @@ export function CloudSyncSection() {
               <LogOut size={15} /> Abmelden
             </Pressable>
           </div>
-          <div className="border-t border-surface-3 pt-3">
+          <div className="border-t border-line pt-3">
             <p className="mb-2 text-xs leading-relaxed text-muted">
               Passwort setzen — danach meldest du dich in der installierten App (iPhone)
               direkt damit an, ganz ohne Mail.

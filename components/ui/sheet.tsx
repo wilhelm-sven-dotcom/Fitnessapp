@@ -86,7 +86,7 @@ export function Sheet({
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-surface-3 bg-surface-1 shadow-card focus:outline-none"
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-line bg-surface-1 shadow-card focus:outline-none"
             initial={reduce ? { opacity: 0 } : { y: "100%" }}
             animate={reduce ? { opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0 } : { y: "100%" }}

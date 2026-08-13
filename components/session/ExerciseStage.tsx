@@ -114,7 +114,7 @@ export function ExerciseStage({
   const cardioDone = !!sets[0] && sets[0].reps !== "" && sets[0].reps != null;
 
   return (
-    <section className="rounded-card border border-line bg-panel p-4 shadow-card">
+    <section className="rounded-card border border-line bg-surface-1 p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-xs text-accent-ink">

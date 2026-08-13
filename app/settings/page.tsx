@@ -121,7 +121,7 @@ export default function SettingsPage() {
       <AtlasSection />
       <EquipmentSection />
 
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Körperdaten
         </p>
@@ -221,7 +221,7 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
           Gym-Modus
         </p>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
 
       <SpotifySection />
 
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
           Als App installieren
         </p>
@@ -334,7 +334,7 @@ export default function SettingsPage() {
         </p>
       </section>
 
-      <section className="rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">Daten</p>
         <p className="mb-3 text-xs leading-relaxed text-muted">
           Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als

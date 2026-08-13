@@ -177,7 +177,7 @@ export default function ExerciseCatalogPage() {
         groups.map((g) => (
           <section
             key={g.pat}
-            className="mb-4 overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card"
+            className="mb-4 overflow-hidden rounded-card border border-line bg-surface-1 shadow-card"
           >
             <p className="border-b border-line px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted">
               {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>

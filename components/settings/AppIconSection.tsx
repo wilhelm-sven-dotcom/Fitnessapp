@@ -69,7 +69,7 @@ export function AppIconSection() {
   };
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-panel p-5 shadow-card">
+    <section className="mb-4 rounded-card border border-line bg-surface-1 p-5 shadow-card">
       <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">App-Icon</p>
 
       <div className="flex items-center gap-4">

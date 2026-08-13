@@ -55,7 +55,7 @@ export function FinishFlow({
           : `${done} ${done === 1 ? "Satz" : "Sätze"} protokolliert.`}
       </p>
 
-      <div className="mt-5 rounded-card border border-line bg-panel p-4 shadow-card">
+      <div className="mt-5 rounded-card border border-line bg-surface-1 p-4 shadow-card">
         <p className="text-sm font-medium text-fg">
           Wie fühlt sich dein unterer Rücken an?
         </p>

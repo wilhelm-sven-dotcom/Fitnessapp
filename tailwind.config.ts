@@ -96,9 +96,6 @@ const config: Config = {
         card: "var(--panel-shadow)",
         "card-lg": "var(--panel-shadow-lg)",
       },
-      backgroundImage: {
-        panel: "var(--panel-bg)",
-      },
     },
   },
   plugins: [],

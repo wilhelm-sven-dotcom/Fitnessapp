@@ -33,7 +33,7 @@ export function RestPanel({
 }) {
   const pct = total > 0 ? Math.max(0, Math.min(1, left / total)) : 0;
   return (
-    <section className="rounded-card border border-line bg-panel p-4 shadow-card">
+    <section className="rounded-card border border-line bg-surface-1 p-4 shadow-card">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-accent-2">

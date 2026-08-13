@@ -90,7 +90,7 @@ export function Welcome() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE_OUT }}
-              className="flex items-start gap-3 rounded-card border border-line bg-panel p-4 shadow-card"
+              className="flex items-start gap-3 rounded-card border border-line bg-surface-1 p-4 shadow-card"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-2">
                 <f.icon size={20} style={{ color: "var(--accent)" }} />

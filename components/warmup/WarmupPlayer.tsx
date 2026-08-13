@@ -249,7 +249,7 @@ export function WarmupPlayer({
             {switching ? "Wechsel" : isMobility ? "Mobilität" : "Aktivierung"}
           </span>
           {fig && (
-            <div className="mb-3 w-44 rounded-card border border-surface-3 bg-surface-1 p-2 shadow-card">
+            <div className="mb-3 w-44 rounded-card border border-line bg-surface-1 p-2 shadow-card">
               <FigurePanel label="" fig={fig} viewKey="side" />
             </div>
           )}

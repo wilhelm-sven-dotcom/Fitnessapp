@@ -3,18 +3,19 @@ import { cn } from "@/lib/utils";
 type CardVariant = "base" | "elevated" | "glass";
 
 const VARIANT: Record<CardVariant, string> = {
-  // Skin panel material: blueprint = flat + hairline; tactile = raised + depth.
-  base: "border border-line bg-panel shadow-card",
-  // A touch more lift for hero / focal cards.
-  elevated: "border border-line bg-panel shadow-card-lg",
+  // Flaches Modul München ’72: weiße Fläche, Hairline, leiser Schatten.
+  base: "border border-line bg-surface-1 shadow-card",
+  // Etwas mehr Präsenz für Fokus-Karten.
+  elevated: "border border-line bg-surface-1 shadow-card-lg",
   // Frosted floating chrome.
   glass: "glass border border-line shadow-card",
 };
 
 /**
- * Shared card surface. Replaces the copy-pasted `rounded-card bg-surface-1 p-4`
- * pattern with one elevated material. Padding/radius default sensibly and can be
- * overridden via `className` (twMerge resolves conflicts).
+ * Shared card surface — DAS eine Panel-Rezept (`border-line bg-surface-1
+ * shadow-card`). <section>-Panels tragen dieselben Klassen direkt, wo die
+ * Semantik ein section-Element verlangt. Padding/Radius default sensibly and
+ * can be overridden via `className` (twMerge resolves conflicts).
  */
 export function Card({
   variant = "base",
