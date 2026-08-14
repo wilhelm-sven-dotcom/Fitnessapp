@@ -1,14 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Burst } from "@/components/ui/Burst";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Readout } from "@/components/ui/Readout";
 import { useTraining, type SessionSummary } from "@/components/providers/TrainingProvider";
 import { success } from "@/lib/haptics";
 import { EASE_OUT } from "@/lib/motion";
+import { renderShareCard } from "@/lib/share-card";
 import { speak } from "@/lib/voice";
 
 /**
@@ -19,9 +22,12 @@ import { speak } from "@/lib/voice";
  */
 export function SessionComplete({
   summary,
+  name,
   onDone,
 }: {
   summary: SessionSummary;
+  /** Session-Name für die Share-Card („Ganzkörper A"). */
+  name?: string;
   onDone: () => void;
 }) {
   const { settings } = useTraining();
@@ -29,6 +35,52 @@ export function SessionComplete({
   const levelUp = summary.levelAfter > summary.levelBefore;
   const [pct, setPct] = useState(reduce ? summary.xpPctTo : summary.xpPctFrom);
   const [lvl, setLvl] = useState(reduce || !levelUp ? summary.levelAfter : summary.levelBefore);
+
+  // Share-Card VORAB rendern: iOS verlangt navigator.share({files}) direkt in
+  // der Klick-Geste — mit fertigem File klappt das ohne await-Umweg.
+  const [shareFile, setShareFile] = useState<File | null>(null);
+  useEffect(() => {
+    let alive = true;
+    renderShareCard({
+      name: name || "Training",
+      dateISO: new Date().toISOString(),
+      sets: summary.sets,
+      tonnage: summary.tonnage,
+      prs: summary.prs,
+      weekSets: summary.weekSets,
+      weekTarget: summary.weekTarget,
+    })
+      .then((blob) => {
+        if (!alive) return;
+        const day = new Date().toISOString().slice(0, 10);
+        setShareFile(new File([blob], `training-${day}.png`, { type: "image/png" }));
+      })
+      .catch(() => {
+        /* ohne Card einfach kein Teilen-Knopf */
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const share = async () => {
+    if (!shareFile) return;
+    if (navigator.canShare?.({ files: [shareFile] }) && navigator.share) {
+      try {
+        await navigator.share({ files: [shareFile] });
+      } catch {
+        /* Abbruch im Share-Sheet ist kein Fehler */
+      }
+    } else {
+      const url = URL.createObjectURL(shareFile);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = shareFile.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
 
   useEffect(() => {
     success();
@@ -168,11 +220,20 @@ export function SessionComplete({
         initial={reduce ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={reduce ? undefined : { duration: 0.4, delay: 1.4 }}
-        className="mt-10 w-full max-w-xs"
+        className="mt-10 flex w-full max-w-xs items-stretch gap-2"
       >
+        {shareFile && (
+          <Button
+            variant="secondary"
+            onClick={share}
+            className="flex-1 rounded-card py-3.5 text-base font-semibold"
+          >
+            <Share2 size={17} strokeWidth={2.5} /> Teilen
+          </Button>
+        )}
         <Pressable
           onClick={onDone}
-          className="w-full rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="flex-1 rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         >
           Weiter
         </Pressable>

@@ -596,7 +596,13 @@ export function SessionRunner() {
   /* ── Rendering ── */
 
   if (complete) {
-    return <SessionComplete summary={complete} onDone={() => router.replace("/")} />;
+    return (
+      <SessionComplete
+        summary={complete}
+        name={todaySession?.name}
+        onDone={() => router.replace("/")}
+      />
+    );
   }
   // Redirect läuft bereits bei "none" — dort bleibt es leer (kein Zucken).
   if (boot === "none") return null;
