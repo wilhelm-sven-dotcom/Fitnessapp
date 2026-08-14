@@ -65,7 +65,6 @@ export function ExerciseStage({
   const effActive = editIdx ?? activeSetIdx;
   const work = sets.filter((s) => !s.warmup);
   const done = work.filter(isFilled).length;
-  const complete = ex.pattern !== "cardio" && work.length > 0 && work.every(isFilled);
 
   const prescLine = isExam
     ? "Prüfung: Rampe 5 · 4 · 3 — steigere zum schweren Test-Satz."
@@ -150,7 +149,7 @@ export function ExerciseStage({
       {aidNote && (
         <Pressable
           onClick={onOpenGuide}
-          className="mt-1.5 flex items-center gap-1 text-xs text-muted focus:outline-none"
+          className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
         >
           <Wrench size={12} className="shrink-0" />
           <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
@@ -182,16 +181,28 @@ export function ExerciseStage({
         </div>
       ) : (
         <>
-          {order && (
-            <div className="mt-4 text-center" data-testid="stage-order">
-              <p className="font-mono text-xs uppercase tracking-widest text-faint">
-                Jetzt · Satz {order.setNo}/{item.sets}
-              </p>
-              <p className="mt-1 font-display text-5xl font-bold leading-none tracking-tight tabular-nums text-fg">
-                {order.text}
-              </p>
-            </div>
-          )}
+          {/* Gleiche Höhe in beiden Zuständen — kein Layout-Sprung beim letzten Satz. */}
+          <div className="mt-4 text-center" data-testid="stage-order">
+            {order ? (
+              <>
+                <p className="font-mono text-xs uppercase tracking-widest text-faint">
+                  Jetzt · Satz {order.setNo}/{item.sets}
+                </p>
+                <p className="mt-1 font-display text-5xl font-bold leading-none tracking-tight tabular-nums text-fg">
+                  {order.text}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-mono text-xs uppercase tracking-widest text-status-in">
+                  Übung geschafft · {done}/{work.length} Sätze
+                </p>
+                <p className="mt-1 font-display text-5xl font-bold leading-none tracking-tight text-fg">
+                  Fertig
+                </p>
+              </>
+            )}
+          </div>
 
           <div className="mt-4 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
             <p className="text-xs uppercase tracking-widest text-muted">Letztes Mal</p>
@@ -233,12 +244,6 @@ export function ExerciseStage({
             })()}
           </div>
 
-          {complete && (
-            <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-status-in">
-              <Check size={15} strokeWidth={2.5} /> Übung geschafft — {done}/
-              {work.length} Sätze.
-            </p>
-          )}
         </>
       )}
 

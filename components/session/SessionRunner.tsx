@@ -43,8 +43,10 @@ import { dailyToTemplate, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
+import { beep, beepEnd, primeAudio } from "@/lib/beep";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
+import { cn } from "@/lib/utils";
 import { warmupFor } from "@/lib/warmup";
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import type { Exercise, Readiness, SetEntry, TrafficLight } from "@/lib/types";
@@ -249,16 +251,44 @@ export function SessionRunner() {
   // Display wach halten, solange trainiert wird (abschaltbar).
   useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
 
-  // Pausen-Countdown — inline, ohne Overlay.
+  // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
+  // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
+  // irgendwo entsperrt Audio + Speech (gleiches Muster wie im WarmupPlayer).
+  useEffect(() => {
+    const prime = () => {
+      primeAudio();
+      try {
+        window.speechSynthesis?.resume();
+      } catch {
+        /* Speech optional */
+      }
+      document.removeEventListener("pointerdown", prime);
+      document.removeEventListener("keydown", prime);
+    };
+    document.addEventListener("pointerdown", prime);
+    document.addEventListener("keydown", prime);
+    return () => {
+      document.removeEventListener("pointerdown", prime);
+      document.removeEventListener("keydown", prime);
+    };
+  }, []);
+
+  // Pausen-Countdown — als Dock unten, hörbar ohne Blick aufs Display: Tick
+  // in den letzten 3 s, Doppelton bei 0. iOS kennt kein navigator.vibrate —
+  // Audio ist dort das einzige Ende-Signal. Beeps bewusst ungated (cueVolume
+  // regelt die Lautstärke), nur die Stimme hängt an voiceCues. Kein Auto-
+  // Unmount: das Dock bleibt als „Pause vorbei" stehen, bis der Nutzer
+  // weitermacht (+15 s startet neu, Weiter räumt weg).
   useEffect(() => {
     if (!rest) return;
     if (rest.left <= 0) {
+      beepEnd();
       if (typeof navigator !== "undefined" && navigator.vibrate)
         navigator.vibrate(200);
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
-      const id = setTimeout(() => setRest(null), 700);
-      return () => clearTimeout(id);
+      return;
     }
+    if (rest.left <= 3) beep();
     if (settings.voiceCues) {
       if (rest.left === 10) speak("Noch zehn Sekunden");
       else if (rest.left <= 3) speak(["", "eins", "zwei", "drei"][rest.left]);
@@ -452,6 +482,8 @@ export function SessionRunner() {
     } else {
       tap();
     }
+    // Direkt vorm Pausenstart wecken — der Countdown tönt dann auch aus Timern.
+    primeAudio();
     setRest({ itemId, setIdx: i, left: TIME.restSec, total: TIME.restSec });
     scheduleCoachCall(itemId, i);
   };
@@ -473,8 +505,11 @@ export function SessionRunner() {
   const goNext = () => {
     tap();
     const n = nextOpenIndex();
-    if (n == null) patch((s) => ({ ...s, phase: "finish" }));
-    else patch((s) => ({ ...s, currentIndex: n }));
+    if (n == null) {
+      // Abschluss-Phase hat kein Dock — stehende Pause nicht mitnehmen.
+      setRest(null);
+      patch((s) => ({ ...s, phase: "finish" }));
+    } else patch((s) => ({ ...s, currentIndex: n }));
   };
 
   const goPrev = () => {
@@ -676,7 +711,9 @@ export function SessionRunner() {
   const restEx = restItem ? byId.get(restItem.exerciseId) : undefined;
 
   return (
-    <div className="space-y-3">
+    // Solange das Pausen-Dock unten steht, bekommt der Inhalt Auslauf,
+    // damit Logbuch und Weiter-Knopf nicht darunter verschwinden.
+    <div className={cn("space-y-3", rest && "pb-36")}>
       <ProgressHeader
         items={headerItems}
         currentIndex={st.currentIndex}
@@ -714,28 +751,6 @@ export function SessionRunner() {
         onIntensity={(i, val) => setFieldEffort(item.id, i, "intensity", val)}
         onCardioToggle={(done) => setField(item.id, 0, "reps", done ? "1" : "")}
       />
-
-      {rest && (
-        <RestPanel
-          left={rest.left}
-          total={rest.total}
-          set={restSet}
-          timed={restEx?.unit === "Sek"}
-          setNo={
-            restSet
-              ? (st.entries[rest.itemId] ?? [])
-                  .slice(0, rest.setIdx + 1)
-                  .filter((s) => !s.warmup).length
-              : 0
-          }
-          onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
-          onIntensity={(v) =>
-            rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
-          }
-          onAdd={() => setRest((r) => (r ? { ...r, left: r.left + 15 } : r))}
-          onSkip={() => setRest(null)}
-        />
-      )}
 
       <AtlasPanel
         ex={ex}
@@ -789,6 +804,28 @@ export function SessionRunner() {
           )}
         </Pressable>
       </div>
+
+      {rest && (
+        <RestPanel
+          left={rest.left}
+          total={rest.total}
+          set={restSet}
+          timed={restEx?.unit === "Sek"}
+          setNo={
+            restSet
+              ? (st.entries[rest.itemId] ?? [])
+                  .slice(0, rest.setIdx + 1)
+                  .filter((s) => !s.warmup).length
+              : 0
+          }
+          onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
+          onIntensity={(v) =>
+            rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
+          }
+          onAdd={() => setRest((r) => (r ? { ...r, left: r.left + 15 } : r))}
+          onSkip={() => setRest(null)}
+        />
+      )}
 
       <OverviewSheet
         open={overviewOpen}

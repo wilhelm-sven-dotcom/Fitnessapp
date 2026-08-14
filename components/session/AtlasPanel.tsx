@@ -81,7 +81,10 @@ export function AtlasPanel({
     speak(line.text);
   }, [line, voiceOn, item.id, done]);
 
-  if (!override && !line) return null;
+  // Cardio hat keine Satz-Reaktionen — dort bleibt das Panel weg. Sonst steht
+  // es IMMER (stille Momente zeigen „…"), damit die Bühne nicht springt.
+  if (ex.pattern === "cardio" && !override) return null;
+  const quiet = !override && !line;
 
   return (
     <section
@@ -96,13 +99,16 @@ export function AtlasPanel({
           ATLAS
         </span>
       </p>
-      <p className="mt-1 text-sm leading-snug text-fg">
-        {override ? override.text : line!.text}
+      <p
+        className={cn("mt-1 text-sm leading-snug", quiet ? "text-faint" : "text-fg")}
+        aria-hidden={quiet || undefined}
+      >
+        {override ? override.text : quiet ? "…" : line!.text}
       </p>
       {override?.actionLabel && override.onApply && (
         <Pressable
           onClick={override.onApply}
-          className="mt-2 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+          className="mt-2 inline-flex min-h-11 items-center rounded-pill bg-surface-2 px-4 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
         >
           {override.actionLabel}
         </Pressable>
