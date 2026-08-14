@@ -17,6 +17,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
+import { weeklyMuscleVolume } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 
 type Kind = "weight" | "reps" | "time";
@@ -43,10 +44,16 @@ const TREND_PREVIEW = 4;
 /** Übersicht: die kuratierten Kern-Karten — Level, Phase, Rekorde,
  *  Muskel-Volumen & -Balance, dazu die Übungs-Trends (aufklappbar). */
 export function OverviewTab() {
-  const { log, muscleVolumes, cardio, settings } = useTraining();
+  const { log, allLib, muscleVolumes, cardio, settings } = useTraining();
   const router = useRouter();
   const reduce = useReducedMotion();
   const [showAllTrends, setShowAllTrends] = useState(false);
+
+  // Vorwochen-Volumen für den Radar-Geist (gleiche Quelle, Referenz −7 Tage).
+  const prevMuscleVolumes = useMemo(
+    () => weeklyMuscleVolume(log, allLib, new Date(Date.now() - 7 * 86400000)),
+    [log, allLib],
+  );
 
   const totalT = Math.round(log.reduce((a, s) => a + sessionVolume(s), 0) / 100) / 10;
 
@@ -148,7 +155,7 @@ export function OverviewTab() {
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 
-      <MuscleBalanceCard muscleVolumes={muscleVolumes} />
+      <MuscleBalanceCard muscleVolumes={muscleVolumes} prevMuscleVolumes={prevMuscleVolumes} />
 
       {list.length > 0 && (
         <div className="space-y-3">

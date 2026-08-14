@@ -1,4 +1,4 @@
-import { MUSCLE_LABEL, VOLUME_TARGET, type MuscleVolume } from "@/lib/volume";
+import { MUSCLE_LABEL, volumeTargetFor, type MuscleVolume } from "@/lib/volume";
 import type { Muscle } from "@/lib/types";
 
 /** Short labels so all spokes fit around the radar. */
@@ -21,31 +21,27 @@ export interface RadarAxis {
   label: string;
   short: string;
   sets: number;
-  /** 0..1+, sets relative to the upper target. 1 = top of the 10–20 range. */
+  /** Wochenziel DIESES Muskels (kleine Muskeln haben ein niedrigeres Band). */
+  target: { min: number; max: number };
+  /** 0..~1.07 — Wurzel-Skala relativ zum per-Muskel-Ziel: 1 = oberes Ziel.
+   *  Die Wurzel streckt den realen Wertebereich (wenige Sätze) sichtbar auf,
+   *  der Deckel 1.15 (vor der Wurzel) lässt „über Ziel" erkennbar überstehen. */
   value: number;
 }
 
 export function radarAxes(vols: MuscleVolume[]): RadarAxis[] {
-  return vols.map((v) => ({
-    muscle: v.muscle,
-    label: MUSCLE_LABEL[v.muscle],
-    short: SHORT_LABEL[v.muscle],
-    sets: v.sets,
-    value: VOLUME_TARGET.max > 0 ? v.sets / VOLUME_TARGET.max : 0,
-  }));
-}
-
-/** Radar axes scaled to the session's own peak — shows the shape (DNA) of a
- *  single session rather than progress toward the weekly target. */
-export function sessionRadarAxes(vols: MuscleVolume[]): RadarAxis[] {
-  const max = Math.max(1, ...vols.map((v) => v.sets));
-  return vols.map((v) => ({
-    muscle: v.muscle,
-    label: MUSCLE_LABEL[v.muscle],
-    short: SHORT_LABEL[v.muscle],
-    sets: v.sets,
-    value: v.sets / max,
-  }));
+  return vols.map((v) => {
+    const target = volumeTargetFor(v.muscle);
+    const frac = target.max > 0 ? v.sets / target.max : 0;
+    return {
+      muscle: v.muscle,
+      label: MUSCLE_LABEL[v.muscle],
+      short: SHORT_LABEL[v.muscle],
+      sets: v.sets,
+      target,
+      value: Math.sqrt(Math.min(1.15, Math.max(0, frac))),
+    };
+  });
 }
 
 export interface BalanceRatio {
