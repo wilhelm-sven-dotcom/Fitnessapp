@@ -112,7 +112,7 @@ export function AppIconSection() {
           value={cfg.letter ?? ""}
           onChange={(e) => update({ letter: e.target.value })}
           placeholder="z. B. S"
-          className="mt-2 w-full rounded-pill bg-surface-2 px-3 py-2.5 text-center text-sm uppercase text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="mt-2 w-full rounded-pill bg-surface-2 px-3 py-2.5 text-center text-base uppercase text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         />
       )}
 
