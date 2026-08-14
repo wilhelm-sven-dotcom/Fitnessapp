@@ -745,6 +745,8 @@ export function SessionRunner() {
         aidNote={exerciseNotes[ex.id]}
         weightStep={settings.weightStep ?? 2.5}
         onOpenGuide={() => setGuideOpen(true)}
+        onPrev={goPrev}
+        onNext={goNext}
         onWeight={(i, val) => setFieldEffort(item.id, i, "weight", val)}
         onReps={(i, oldVal, val) => onReps(item.id, i, oldVal, val)}
         onRir={(i, val) => setFieldEffort(item.id, i, "rir", val)}

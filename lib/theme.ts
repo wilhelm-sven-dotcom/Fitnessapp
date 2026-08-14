@@ -108,7 +108,24 @@ export function resolveTheme(pref: ThemePref | undefined): "dark" | "light" {
 export function applyTheme(pref: ThemePref | undefined): void {
   if (typeof document === "undefined") return;
   const resolved = resolveTheme(pref);
-  document.documentElement.setAttribute("data-theme", resolved);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", resolved === "light" ? LIGHT_BG : DARK_BG);
+  const commit = () => {
+    document.documentElement.setAttribute("data-theme", resolved);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", resolved === "light" ? LIGHT_BG : DARK_BG);
+  };
+  // Echter Wechsel als kurzer Crossfade (View Transition) statt hartem
+  // Umschlag aller Flächen; No-Op-Aufrufe (Boot, gleiche Wahl) und
+  // reduced motion committen direkt. Ohne Browser-Support: ebenso.
+  const changed = document.documentElement.getAttribute("data-theme") !== resolved;
+  const reduce =
+    typeof window !== "undefined" &&
+    !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const doc = document as Document & {
+    startViewTransition?: (cb: () => void) => unknown;
+  };
+  if (changed && !reduce && typeof doc.startViewTransition === "function") {
+    doc.startViewTransition(commit);
+  } else {
+    commit();
+  }
 }

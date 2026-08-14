@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Dumbbell, Sparkles, TrendingUp } from "lucide-react";
+import { PressableLink } from "@/components/ui/PressableLink";
 import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export function BottomNav() {
           const active =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
-            <Link
+            <PressableLink
               key={href}
               href={href}
               className="relative flex flex-1 flex-col items-center gap-1 rounded-card pb-2 pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink"
@@ -57,7 +57,7 @@ export function BottomNav() {
               >
                 {label}
               </span>
-            </Link>
+            </PressableLink>
           );
         })}
       </div>

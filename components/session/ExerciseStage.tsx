@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronRight, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SetRow } from "@/components/workout/SetRow";
@@ -30,6 +31,8 @@ export function ExerciseStage({
   aidNote,
   weightStep,
   onOpenGuide,
+  onPrev,
+  onNext,
   onWeight,
   onReps,
   onRir,
@@ -49,6 +52,9 @@ export function ExerciseStage({
   /** Schrittweite der Gewichts-Stepper im Satz-Logbuch (settings.weightStep). */
   weightStep?: number;
   onOpenGuide: () => void;
+  /** Swipe auf dem Kopfbereich blättert zwischen Übungen (Buttons bleiben). */
+  onPrev: () => void;
+  onNext: () => void;
   onWeight: (i: number, val: string) => void;
   onReps: (i: number, oldVal: string, val: string) => void;
   onRir: (i: number, val: number) => void;
@@ -58,6 +64,7 @@ export function ExerciseStage({
   // Fokus-Logbuch: der manuell geöffnete Satz; sonst der erste offene Arbeitssatz.
   const [editIdx, setEditIdx] = useState<number | null>(null);
   useEffect(() => setEditIdx(null), [item.id]);
+  const reduce = useReducedMotion();
 
   const activeSetIdx = sets.findIndex(
     (s) => !s.warmup && (s.reps === "" || s.reps == null),
@@ -117,44 +124,57 @@ export function ExerciseStage({
 
   return (
     <section className="rounded-card border border-line bg-surface-1 p-4 shadow-card">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-xs text-accent-ink">
-            {String(index + 1).padStart(2, "0")}
-            <span className="text-faint"> / {String(total).padStart(2, "0")}</span>
-          </p>
-          <h2 className="mt-0.5 font-display text-2xl font-semibold leading-tight tracking-tight text-fg">
-            {ex.name}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted">
-            {ex.tag} · {PATTERN_LABEL[ex.pattern]}
-          </p>
+      {/* Kopf = Wischfläche: horizontal blättern (Elastik deutet es an),
+          das Satz-Logbuch darunter bleibt reine Tipp-Zone. */}
+      <motion.div
+        drag={reduce ? false : "x"}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.18}
+        dragMomentum={false}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -56 || info.velocity.x < -500) onNext();
+          else if (info.offset.x > 56 || info.velocity.x > 500) onPrev();
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-mono text-xs text-accent-ink">
+              {String(index + 1).padStart(2, "0")}
+              <span className="text-faint"> / {String(total).padStart(2, "0")}</span>
+            </p>
+            <h2 className="mt-0.5 font-display text-2xl font-semibold leading-tight tracking-tight text-fg">
+              {ex.name}
+            </h2>
+            <p className="mt-0.5 text-xs text-muted">
+              {ex.tag} · {PATTERN_LABEL[ex.pattern]}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="font-mono text-sm tabular-nums text-accent-ink">
+              {ex.pattern === "cardio"
+                ? `${ex.repLow}–${ex.repHigh}`
+                : `${item.sets} × ${item.repLow}${item.repHigh > item.repLow ? `–${item.repHigh}` : ""}`}
+            </p>
+            <p className="text-xs uppercase tracking-wider text-faint">
+              {ex.pattern === "cardio" ? "Min" : ex.unit === "Sek" ? "Sekunden" : "Wdh"}
+            </p>
+          </div>
         </div>
-        <div className="shrink-0 text-right">
-          <p className="font-mono text-sm tabular-nums text-accent-ink">
-            {ex.pattern === "cardio"
-              ? `${ex.repLow}–${ex.repHigh}`
-              : `${item.sets} × ${item.repLow}${item.repHigh > item.repLow ? `–${item.repHigh}` : ""}`}
-          </p>
-          <p className="text-xs uppercase tracking-wider text-faint">
-            {ex.pattern === "cardio" ? "Min" : ex.unit === "Sek" ? "Sekunden" : "Wdh"}
-          </p>
-        </div>
-      </div>
 
-      {item.why && (
-        <p className="mt-2 text-xs leading-relaxed text-muted">{item.why}</p>
-      )}
+        {item.why && (
+          <p className="mt-2 text-xs leading-relaxed text-muted">{item.why}</p>
+        )}
 
-      {aidNote && (
-        <Pressable
-          onClick={onOpenGuide}
-          className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-        >
-          <Wrench size={12} className="shrink-0" />
-          <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
-        </Pressable>
-      )}
+        {aidNote && (
+          <Pressable
+            onClick={onOpenGuide}
+            className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+          >
+            <Wrench size={12} className="shrink-0" />
+            <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
+          </Pressable>
+        )}
+      </motion.div>
 
       {ex.pattern === "cardio" ? (
         <div className="mt-3">

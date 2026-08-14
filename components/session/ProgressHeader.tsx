@@ -1,6 +1,7 @@
 "use client";
 
 import { LayoutList, X } from "lucide-react";
+import { Odometer } from "@/components/ui/Odometer";
 import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +64,8 @@ export function ProgressHeader({
       </Pressable>
 
       <span className="shrink-0 font-mono text-xs tabular-nums text-muted">
-        ~{remainMin} Min
+        {/* Rollt nur bei echten Wertwechseln — beim Mount steht er sofort. */}
+        ~<Odometer value={remainMin} /> Min
       </span>
     </div>
   );
