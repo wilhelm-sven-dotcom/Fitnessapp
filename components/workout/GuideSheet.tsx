@@ -1,7 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Music, Pencil, Trash2, Wrench, X, Youtube } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
+import { Pencil, Trash2, Wrench, X, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { figFor, muscleBones } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
@@ -9,7 +9,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { useSpotifyResume } from "@/components/spotify/useSpotifyResume";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
-import { EASE_OUT } from "@/lib/motion";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import type { Exercise } from "@/lib/types";
@@ -59,6 +59,12 @@ export function GuideSheet({
   // Nur ein YouTube-Embed kann die iOS-Audio-Session übernehmen; nach dem
   // Schließen Spotify wieder anwerfen (der native <video muted> triggert nichts).
   const { notice: spotifyNotice } = useSpotifyResume(open && !!embedUrl);
+  // Konnte Spotify nicht automatisch weiterspielen (kein Premium / kein aktives
+  // Gerät), sagt es der App-Toaster — statt eines eigenen Ad-hoc-Overlays.
+  useEffect(() => {
+    if (spotifyNotice === "blocked")
+      toast("Spotify pausiert — Musik in der Spotify-App fortsetzen.");
+  }, [spotifyNotice]);
 
   const [hasVideo, setHasVideo] = useState(false);
   const [mode, setMode] = useState<"video" | "figure">("figure");
@@ -142,17 +148,17 @@ export function GuideSheet({
           {hasVideo && (
             <div className="mb-3 flex gap-1 rounded-pill bg-surface-2 p-1">
               {(["video", "figure"] as const).map((m) => (
-                <button
+                <Pressable
                   key={m}
-                  type="button"
                   onClick={() => setMode(m)}
+                  aria-pressed={mode === m}
                   className={cn(
                     "flex-1 rounded-pill py-1.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
                     mode === m ? "bg-strong text-on-strong" : "text-muted",
                   )}
                 >
                   {m === "video" ? "Video" : "Illustration"}
-                </button>
+                </Pressable>
               ))}
             </div>
           )}
@@ -161,7 +167,7 @@ export function GuideSheet({
             embedUrl ? (
               <div className="mb-3 flex justify-center">
                 <div
-                  className="overflow-hidden rounded-card border border-line bg-base"
+                  className="overflow-hidden rounded-card border border-line bg-surface-0"
                   style={{ height: "min(60vh, 480px)", aspectRatio: "9 / 16" }}
                 >
                   <iframe
@@ -179,7 +185,7 @@ export function GuideSheet({
             ) : (
               <video
                 src={nativeSrc}
-                className="mb-3 w-full rounded-card border border-line bg-base"
+                className="mb-3 w-full rounded-card border border-line bg-surface-0"
                 loop
                 muted
                 playsInline
@@ -189,7 +195,7 @@ export function GuideSheet({
             )
           ) : fig ? (
             <>
-              <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-base p-3">
+              <div className="mb-3 flex items-end gap-1 rounded-card border border-line bg-surface-0 p-3">
                 <FigurePanel label="Seitlich" fig={fig} viewKey="side" accentBones={accent} />
                 {fig.front ? (
                   <FigurePanel label="Frontal" fig={fig} viewKey="front" accentBones={accent} />
@@ -199,7 +205,7 @@ export function GuideSheet({
               </div>
               {/* Movement broken into 3 frozen positions — studyable, and the full
                   range stays visible even with reduced motion. */}
-              <div className="mb-3 rounded-card border border-line bg-base p-3">
+              <div className="mb-3 rounded-card border border-line bg-surface-0 p-3">
                 <p className="mb-2 font-mono text-xs uppercase tracking-widest text-accent-2">
                   Bewegung · 3 Positionen
                 </p>
@@ -222,7 +228,7 @@ export function GuideSheet({
               </div>
             </>
           ) : (
-            <div className="mb-3 rounded-card border border-line bg-base px-3 py-2">
+            <div className="mb-3 rounded-card border border-line bg-surface-0 px-3 py-2">
               <p className="font-mono text-xs text-faint">Animation folgt — Schritte unten.</p>
             </div>
           )}
@@ -249,7 +255,7 @@ export function GuideSheet({
                     }}
                     placeholder="youtube.com/shorts/… einfügen"
                     className={cn(
-                      "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions",
+                      "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
                       invalid && "ring-2 ring-status-danger",
                     )}
                   />
@@ -338,7 +344,7 @@ export function GuideSheet({
                     if (e.key === "Enter") saveNote();
                   }}
                   placeholder="z. B. Unterstützungsband, Gurte, 20-kg-Band"
-                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                 />
                 <Pressable
                   type="button"
@@ -450,26 +456,6 @@ export function GuideSheet({
         </>
       )}
       </Sheet>
-      {/* Dezenter Hinweis, wenn Spotify nicht automatisch fortgesetzt werden kann
-          (kein Premium / kein aktives Gerät). GuideSheet bleibt gemountet, also
-          überlebt der Toast das Schließen des Sheets. */}
-      <AnimatePresence>
-        {spotifyNotice === "blocked" && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.25, ease: EASE_OUT }}
-            className="fixed inset-x-0 z-50 flex justify-center px-5"
-            style={{ bottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
-          >
-            <div className="flex items-center gap-2 rounded-card border border-line bg-surface-1 px-3 py-2 text-xs text-muted shadow-card">
-              <Music size={14} className="shrink-0 text-accent-ink" />
-              <span>Spotify pausiert — Musik in der Spotify-App fortsetzen.</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

@@ -13,7 +13,7 @@ import type { SetEntry, Unit } from "@/lib/types";
 export type SetState = "done" | "active" | "upcoming";
 
 const inputClass =
-  "min-w-0 flex-1 rounded-pill bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
+  "min-w-0 flex-1 rounded-pill bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions";
 
 /** One logged set in three states — the focus-logbook: a done set is a compact
  *  ledger line (effort still editable), the active set is the big instrument
@@ -89,7 +89,7 @@ export function SetRow({
         ? `${set.weight} kg × ${set.reps}`
         : `${set.reps} Wdh`;
     return (
-      <div className="set-row">
+      <div>
         <Pressable
           onClick={onActivate}
           aria-label={`${label} bearbeiten`}
@@ -103,8 +103,7 @@ export function SetRow({
               initial={reduce ? false : { scale: 0.7, opacity: 0 }}
               animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{ boxShadow: "0 0 12px -2px #30d158" }}
-              className="flex shrink-0 items-center gap-1 rounded bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-strong"
+              className="flex shrink-0 items-center gap-1 rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
             >
               <Trophy size={11} strokeWidth={2.5} /> Rekord
             </motion.span>
@@ -133,7 +132,7 @@ export function SetRow({
       <Pressable
         onClick={onActivate}
         aria-label={`${label} starten`}
-        className="set-row flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
       >
         <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-full border border-line" />
         <span className="w-12 shrink-0 font-mono text-xs">{label}</span>
@@ -147,7 +146,7 @@ export function SetRow({
   const showGhostFill = !timed && !!ghostWeight && (w === "" || w == null);
   return (
     <motion.div
-      className="set-row set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
+      className="set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
       initial={reduce ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}

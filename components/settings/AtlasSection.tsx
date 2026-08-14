@@ -28,7 +28,7 @@ export function AtlasSection() {
   }, []);
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-panel p-5 shadow-card">
+    <section className="mb-4 rounded-card border border-line bg-surface-1 p-5 shadow-card">
       <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">
         ATLAS
       </p>

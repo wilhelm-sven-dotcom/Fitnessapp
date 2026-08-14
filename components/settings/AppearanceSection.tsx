@@ -19,7 +19,7 @@ export function AppearanceSection() {
   const [name, setName] = useState(settings.userName ?? "");
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-panel p-5 shadow-card">
+    <section className="mb-4 rounded-card border border-line bg-surface-1 p-5 shadow-card">
       <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
         Darstellung
       </p>
@@ -67,6 +67,7 @@ export function AppearanceSection() {
           <Pressable
             key={t.id}
             onClick={() => setTheme(t.id)}
+            aria-pressed={theme === t.id}
             className={cn(
               "flex-1 rounded-pill py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
               theme === t.id ? "bg-strong text-on-strong" : "text-muted",

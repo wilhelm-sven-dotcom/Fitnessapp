@@ -33,15 +33,15 @@ export function RestPanel({
 }) {
   const pct = total > 0 ? Math.max(0, Math.min(1, left / total)) : 0;
   return (
-    <section className="rounded-card border border-line bg-panel p-4 shadow-card">
+    <section className="rounded-card border border-line bg-surface-1 p-4 shadow-card">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
             Pause
           </p>
-          <p className="font-display text-4xl font-bold tabular-nums leading-none text-fg">
+          <p className="stretch-display font-display text-5xl font-bold tabular-nums leading-none text-fg">
             {left}
-            <span className="ml-1 text-base font-medium text-muted">s</span>
+            <span className="ml-1 text-base font-medium tracking-normal text-muted">s</span>
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -62,7 +62,7 @@ export function RestPanel({
 
       <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-surface-2">
         <div
-          className="h-full rounded-full bg-accent-sessions transition-all"
+          className="h-full rounded-full bg-accent-sessions transition-[width] duration-1000 ease-linear"
           style={{ width: `${pct * 100}%` }}
         />
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil, Play, RefreshCw, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { WishBar } from "@/components/home/WishBar";
@@ -131,15 +132,17 @@ export function SessionCard({
 
       {spareSlot && <div className="mt-4">{spareSlot}</div>}
 
-      <Pressable
+      <Button
         onClick={() => {
           tap();
           onStart();
         }}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-card bg-accent-sessions py-4 text-lg font-bold text-on-accent shadow-card-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        size="lg"
+        full
+        className="mt-4"
       >
         <Play size={18} strokeWidth={2.5} /> {locked ? "Training fortsetzen" : "Training starten"}
-      </Pressable>
+      </Button>
 
       {!locked && (
         <div className="mt-3 space-y-2 border-t border-line pt-3">

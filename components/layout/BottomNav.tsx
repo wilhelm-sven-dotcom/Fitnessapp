@@ -3,15 +3,17 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, Flame, Sparkles, TrendingUp } from "lucide-react";
+import { CalendarDays, Dumbbell, Sparkles, TrendingUp } from "lucide-react";
 import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
+// Wegleitsystem München ’72: jeder Bereich trägt seine Farbe — Blau = Heute,
+// Orange = ATLAS/Coach, Grün = Fortschritt; der Katalog bleibt neutral.
 const tabs = [
-  { href: "/", label: "Heute", Icon: Flame },
-  { href: "/coach", label: "Coach", Icon: Sparkles },
-  { href: "/uebungen", label: "Übungen", Icon: Dumbbell },
-  { href: "/fortschritt", label: "Fortschritt", Icon: TrendingUp },
+  { href: "/", label: "Heute", Icon: CalendarDays, tone: "var(--accent)" },
+  { href: "/coach", label: "Coach", Icon: Sparkles, tone: "var(--orange)" },
+  { href: "/uebungen", label: "Übungen", Icon: Dumbbell, tone: "var(--fg)" },
+  { href: "/fortschritt", label: "Fortschritt", Icon: TrendingUp, tone: "var(--gruen)" },
 ] as const;
 
 export function BottomNav() {
@@ -22,7 +24,7 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-auto flex max-w-md">
-        {tabs.map(({ href, label, Icon }) => {
+        {tabs.map(({ href, label, Icon, tone }) => {
           const active =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
@@ -34,17 +36,15 @@ export function BottomNav() {
               <Icon
                 size={20}
                 strokeWidth={active ? 2.5 : 2}
-                className={cn(
-                  "transition-colors",
-                  active ? "text-fg" : "text-muted",
-                )}
+                className={cn("transition-colors", !active && "text-muted")}
+                style={active ? { color: tone } : undefined}
               />
               <span className="relative flex h-1 w-6 items-center justify-center">
                 {active && (
                   <motion.span
                     layoutId="navPill"
-                    className="absolute inset-0 rounded-full bg-accent-ink"
-                    style={{ boxShadow: "0 0 10px -1px var(--accent-ink)" }}
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: tone }}
                     transition={SPRING.press}
                   />
                 )}

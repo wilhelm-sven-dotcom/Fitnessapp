@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck, Trophy } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
@@ -10,7 +11,6 @@ import { CoachCard } from "@/components/coach/CoachCard";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
-import { StreakFlame } from "@/components/ui/StreakFlame";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
@@ -27,12 +27,14 @@ import {
   type SessionVariant,
 } from "@/lib/session-model";
 import { estimateSessionMin } from "@/lib/session-time";
+import { SPRING } from "@/lib/motion";
 import { weeklyStreak } from "@/lib/stats";
 import { requestAtlasSession } from "@/lib/today-session";
 import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const {
     todaySession,
     setTodaySession,
@@ -67,10 +69,11 @@ export default function HomePage() {
   const chips = homeChips({ daysAgo, weekCount });
   const streak = weeklyStreak(log);
   const now = new Date();
+  // Kurzform — die Hero-Kopfzeile muss neben Level/Woche in EINE Zeile passen.
   const today = now.toLocaleDateString("de-DE", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "short",
   });
   const kw = isoWeek(now);
   const greetingSeed = useMemo(() => Math.floor(Math.random() * 100000), []);
@@ -219,35 +222,43 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      <header className="mb-4">
-        <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-          {today} · KW {kw}
-        </p>
-        <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-fg">
-          {greeting({ name: settings.userName, seed: greetingSeed })}
-        </h1>
-        <p className="mt-0.5 text-sm text-muted">{lastLabel}.</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {streak > 0 && (
-            <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-              <StreakFlame size={14} className="text-accent-ink" />
-              <span className="font-display text-sm font-bold tabular-nums text-fg">{streak}</span>
-              <span className="text-xs text-muted">Wo</span>
+      {/* Das blaue Farbfeld — Zustand und Tagesauftrag in einem Blick.
+          Untere Zeile (ATLAS-Direktive) öffnet den Coach. */}
+      <header className="mb-4 overflow-hidden rounded-card bg-accent-sessions text-on-accent shadow-card">
+        <div className="px-5 pb-5 pt-4">
+          <div className="flex items-baseline justify-between gap-2 font-mono text-xs uppercase tracking-widest">
+            <span className="whitespace-nowrap">
+              {today} · KW <span className="tabular-nums">{kw}</span>
             </span>
-          )}
-          <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-            <Trophy size={13} className="text-accent-ink" aria-hidden />
-            <span className="font-display text-sm font-bold tabular-nums text-fg">
-              Lv {level.level}
+            <span className="whitespace-nowrap tabular-nums">
+              Lv {level.level} · {weekCount}/3
             </span>
-          </span>
-          <span className="flex items-center gap-1.5 rounded-pill border border-line bg-surface-1 px-3 py-1.5 shadow-card">
-            <span className="font-display text-sm font-bold tabular-nums text-fg">
-              {weekCount}/3
-            </span>
-            <span className="text-xs text-muted">Woche</span>
-          </span>
+          </div>
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">
+            {greeting({ name: settings.userName, seed: greetingSeed })}
+          </h1>
+          <p className="mt-1 text-sm">
+            {lastLabel}.{streak > 0 ? ` ${streak} ${streak === 1 ? "Woche" : "Wochen"} in Serie.` : ""}
+          </p>
         </div>
+        <Pressable
+          onClick={() => router.push("/coach")}
+          aria-label="ATLAS öffnen"
+          className="block w-full px-5 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-on-accent"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.16)" }}
+        >
+          <span className="flex items-center gap-2">
+            <AtlasMark size={15} className="shrink-0" />
+            <span className="font-mono text-xs uppercase tracking-widest">ATLAS</span>
+            <span className="ml-auto font-mono text-xs tabular-nums">
+              Mission {Math.round(trainer.mission.pct * 100)} %
+            </span>
+          </span>
+          <span className="mt-1 flex items-start justify-between gap-2">
+            <span className="min-w-0 text-sm leading-snug">{trainer.directive.text}</span>
+            <ChevronRight size={15} className="mt-0.5 shrink-0" aria-hidden />
+          </span>
+        </Pressable>
       </header>
 
       {chips.length > 0 && (
@@ -273,29 +284,6 @@ export default function HomePage() {
           </span>
         </Pressable>
       )}
-
-      {/* ATLAS-Status: die Tages-Direktive als ruhige Zeile — Details im Coach. */}
-      <Pressable
-        onClick={() => router.push("/coach")}
-        aria-label="ATLAS öffnen"
-        className="mb-4 block w-full rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-      >
-        <span className="flex items-center gap-2">
-          <AtlasMark size={15} className="shrink-0 text-fg" />
-          <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
-            ATLAS
-          </span>
-          <span className="ml-auto font-mono text-xs tabular-nums text-faint">
-            Mission {Math.round(trainer.mission.pct * 100)} %
-          </span>
-        </span>
-        <span className="mt-1.5 flex items-start justify-between gap-2">
-          <span className="min-w-0 text-sm leading-snug text-fg">
-            {trainer.directive.text}
-          </span>
-          <ChevronRight size={15} className="mt-0.5 shrink-0 text-faint" />
-        </span>
-      </Pressable>
 
       {/* Die heutige Einheit — das eine Herzstück der Seite. */}
       {todaySession?.completedAt ? (
@@ -349,25 +337,35 @@ export default function HomePage() {
 
       {actionCards.length > 0 && (
         <div className="mb-4 space-y-2">
-          {actionCards.map((c, i) => (
-            <CoachCard
-              key={c.kind + (c.exId ?? "") + i}
-              card={c}
-              onAccept={
-                c.action === "deload"
-                  ? acceptDeload
-                  : c.action === "exam"
-                    ? () => {
-                        acceptExam();
-                        compose({ variant: "exam" });
-                      }
-                    : c.action === "back-reset"
-                      ? () => compose({ variant: "reset" })
-                      : undefined
-              }
-              onDismiss={() => dismissCard(c)}
-            />
-          ))}
+          {/* Wegwischen einer Karte gleitet, statt zu springen — Nachbarn
+              rücken per Layout-FLIP (transform, GPU) nach. */}
+          <AnimatePresence initial={false}>
+            {actionCards.map((c) => (
+              <motion.div
+                key={c.kind + (c.exId ?? "")}
+                layout={reduce ? false : true}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                transition={SPRING.panel}
+              >
+                <CoachCard
+                  card={c}
+                  onAccept={
+                    c.action === "deload"
+                      ? acceptDeload
+                      : c.action === "exam"
+                        ? () => {
+                            acceptExam();
+                            compose({ variant: "exam" });
+                          }
+                        : c.action === "back-reset"
+                          ? () => compose({ variant: "reset" })
+                          : undefined
+                  }
+                  onDismiss={() => dismissCard(c)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 

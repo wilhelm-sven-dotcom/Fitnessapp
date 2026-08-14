@@ -38,7 +38,8 @@ export function CoachCard({
           <Pressable
             onClick={onDismiss}
             aria-label="Ausblenden"
-            className="shrink-0 rounded p-0.5 text-muted focus:outline-none"
+            // 44-px-Ziel ohne Layout-Versatz: negative Margin frisst das Padding.
+            className="-m-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted focus:outline-none"
           >
             <X size={15} />
           </Pressable>

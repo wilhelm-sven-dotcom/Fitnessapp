@@ -150,7 +150,7 @@ export function WarmupPlayer({
 
   if (done) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-base px-8 text-center">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 app-bg px-8 text-center">
         <p className="text-4xl font-semibold tracking-tight text-fg">Aufgewärmt 💪</p>
         <p className="max-w-xs text-sm text-muted">
           Gelenke warm, Rücken aktiviert. Jetzt sauber und kontrolliert trainieren.
@@ -167,7 +167,7 @@ export function WarmupPlayer({
 
   if (!current) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-base">
+      <div className="fixed inset-0 z-50 flex items-center justify-center app-bg">
         <Pressable
           onClick={onClose}
           className="rounded-card bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
@@ -188,7 +188,7 @@ export function WarmupPlayer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-base"
+      className="fixed inset-0 z-50 flex flex-col app-bg"
       style={{
         paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)",
         paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
@@ -199,7 +199,7 @@ export function WarmupPlayer({
         <Pressable
           onClick={onClose}
           aria-label="Aufwärmen beenden"
-          className="flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
+          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-sm text-muted focus:outline-none"
         >
           <X size={18} /> Beenden
         </Pressable>
@@ -224,7 +224,7 @@ export function WarmupPlayer({
           <span
             key={d.id}
             className={cn(
-              "h-1.5 rounded-full transition-all",
+              "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
               i < index ? "w-4 bg-faint" : i === index ? "w-8 bg-accent-sessions" : "w-4 bg-surface-2",
             )}
           />
@@ -249,7 +249,7 @@ export function WarmupPlayer({
             {switching ? "Wechsel" : isMobility ? "Mobilität" : "Aktivierung"}
           </span>
           {fig && (
-            <div className="mb-3 w-44 rounded-card border border-surface-3 bg-surface-1 p-2 shadow-card">
+            <div className="mb-3 w-44 rounded-card border border-line bg-surface-1 p-2 shadow-card">
               <FigurePanel label="" fig={fig} viewKey="side" />
             </div>
           )}
@@ -260,10 +260,10 @@ export function WarmupPlayer({
             {switching ? "Position wechseln — es geht gleich weiter." : showing.cue}
           </p>
         </motion.div>
-        <p className="mt-8 font-display text-7xl font-semibold tabular-nums text-neutral-50">{left}</p>
+        <p className="stretch-display mt-8 font-display text-7xl font-semibold tabular-nums text-fg">{left}</p>
         <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
           <div
-            className="h-full rounded-full bg-accent-sessions transition-all"
+            className="h-full rounded-full bg-accent-sessions transition-[width] duration-1000 ease-linear"
             style={{ width: `${pct}%` }}
           />
         </div>

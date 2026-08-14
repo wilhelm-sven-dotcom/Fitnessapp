@@ -32,7 +32,7 @@ export function Toggle({
         )}
       >
         <span
-          className="absolute top-0.5 h-6 w-6 rounded-full bg-white transition-all"
+          className="absolute top-0.5 h-6 w-6 rounded-full bg-white transition-[left] duration-200 ease-out"
           style={{ left: checked ? 22 : 2 }}
         />
       </Pressable>

@@ -10,9 +10,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    // Matches the app base (--base dark) and layout.tsx's viewport themeColor.
-    background_color: "#0e0f12",
-    theme_color: "#0e0f12",
+    // Matches the app base (--base hell) and layout.tsx's viewport themeColor.
+    background_color: "#f2f4f2",
+    theme_color: "#f2f4f2",
     icons: [
       { src: "/manifest-icon/192", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/manifest-icon/512", sizes: "512x512", type: "image/png", purpose: "any" },

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -193,7 +194,7 @@ export function HistoryTab() {
         {stats.map((s) => (
           <div
             key={s.l}
-            className="rounded-card border border-line bg-panel p-3 text-center shadow-card"
+            className="rounded-card border border-line bg-surface-1 p-3 text-center shadow-card"
           >
             <p className="font-display text-lg font-semibold tabular-nums text-fg">{s.v}</p>
             <p className="mt-0.5 font-mono text-xs uppercase tracking-wider text-faint">
@@ -218,7 +219,7 @@ export function HistoryTab() {
             return (
               <div
                 key={`c-${c.id}`}
-                className="flex items-center gap-3 rounded-card border border-line bg-panel p-3 shadow-card"
+                className="flex items-center gap-3 rounded-card border border-line bg-surface-1 p-3 shadow-card"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accent-ink">
                   <Icon size={17} />
@@ -241,23 +242,23 @@ export function HistoryTab() {
                     {fmtDate(c.date)}
                   </span>
                   {confirmDel === `c-${c.id}` ? (
-                    <button
+                    <Pressable
                       onClick={() => {
                         void removeCardio(c.id);
                         setConfirmDel(null);
                       }}
-                      className="font-mono text-xs text-status-danger focus:outline-none"
+                      className="-m-2 flex min-h-11 items-center p-2 font-mono text-xs text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                     >
                       Löschen?
-                    </button>
+                    </Pressable>
                   ) : (
-                    <button
+                    <Pressable
                       onClick={() => setConfirmDel(`c-${c.id}`)}
                       aria-label="Einheit löschen"
-                      className="text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      className="-m-2 flex h-11 w-11 items-center justify-center text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                     >
                       <Trash2 size={14} />
-                    </button>
+                    </Pressable>
                   )}
                 </div>
               </div>
@@ -271,12 +272,12 @@ export function HistoryTab() {
           return (
             <div
               key={`s-${s.date}-${realIdx}`}
-              className="overflow-hidden rounded-card border border-surface-3 bg-surface-1 shadow-card"
+              className="overflow-hidden rounded-card border border-line bg-surface-1 shadow-card"
             >
               <div className="flex items-center justify-between gap-2 px-4 py-3">
-                <button
+                <Pressable
                   onClick={() => setExpanded(isOpen ? null : realIdx)}
-                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -304,7 +305,7 @@ export function HistoryTab() {
                     )}
                     <p className="text-xs uppercase tracking-wider text-faint">Volumen</p>
                   </div>
-                </button>
+                </Pressable>
                 <Pressable
                   onClick={() => setConfirmDel(isDel ? null : `s-${realIdx}`)}
                   aria-label="Einheit löschen"
@@ -340,7 +341,7 @@ export function HistoryTab() {
                   {(s.exercises ?? []).map((ex) => (
                     <div
                       key={ex.id}
-                      className="log-row flex items-baseline justify-between gap-3"
+                      className="flex items-baseline justify-between gap-3"
                     >
                       <span className="text-sm text-muted">
                         {ex.name}
@@ -361,7 +362,7 @@ export function HistoryTab() {
                     </div>
                   ))}
                   {s.debrief && s.debrief.length > 0 && (
-                    <div className="mt-2 rounded-card bg-base px-3 py-2">
+                    <div className="mt-2 rounded-card bg-surface-0 px-3 py-2">
                       <p className="mb-1 flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
                         <AtlasMark size={12} className="text-fg" /> ATLAS
                       </p>
@@ -371,7 +372,7 @@ export function HistoryTab() {
                     </div>
                   )}
                   {s.note && (
-                    <p className="mt-2 rounded-card bg-base px-3 py-2 text-sm italic text-muted">
+                    <p className="mt-2 rounded-card bg-surface-0 px-3 py-2 text-sm italic text-muted">
                       „{s.note}“
                     </p>
                   )}
@@ -470,13 +471,15 @@ export function HistoryTab() {
             </div>
           </div>
 
-          <Pressable
+          <Button
             onClick={() => void save()}
             disabled={!canSave}
-            className="mt-1 w-full rounded-card bg-accent-sessions py-3.5 text-base font-bold text-on-accent shadow-card-lg disabled:opacity-40"
+            size="lg"
+            full
+            className="mt-1"
           >
             Speichern
-          </Pressable>
+          </Button>
         </div>
       </Sheet>
     </div>

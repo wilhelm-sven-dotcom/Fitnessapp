@@ -17,7 +17,7 @@ export function LevelCard() {
 
   return (
     <div>
-      <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
+      <Card variant="elevated" className="mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
             <Trophy size={13} className="text-accent-ink" /> Trainingslevel
@@ -30,7 +30,7 @@ export function LevelCard() {
         <div className="mt-4 h-1.5 overflow-hidden rounded-pill bg-surface-2" aria-hidden>
           <div
             className="h-full rounded-pill bg-accent-sessions transition-[width] duration-500"
-            style={{ width: `${Math.round(lvl.pct * 100)}%`, boxShadow: "0 0 10px -1px var(--accent)" }}
+            style={{ width: `${Math.round(lvl.pct * 100)}%` }}
           />
         </div>
         <p className="mt-2 text-xs text-muted">

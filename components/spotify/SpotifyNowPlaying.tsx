@@ -16,7 +16,7 @@ export function SpotifyNowPlaying() {
   if (!connected) return null;
 
   return (
-    <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-panel p-2.5 shadow-card">
+    <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-surface-1 p-2.5 shadow-card">
       <span
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-surface-2 bg-cover bg-center text-accent-ink"
         style={now?.artUrl ? { backgroundImage: `url(${now.artUrl})` } : undefined}

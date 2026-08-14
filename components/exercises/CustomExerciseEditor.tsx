@@ -19,7 +19,7 @@ const PATTERNS: Pattern[] = [
 ];
 
 const inputClass =
-  "w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions";
+  "w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (

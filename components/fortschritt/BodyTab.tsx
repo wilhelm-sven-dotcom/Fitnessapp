@@ -10,6 +10,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Readout } from "@/components/ui/Readout";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { fmtDateShort } from "@/lib/format";
 import { prTimeline } from "@/lib/records";
@@ -158,12 +159,9 @@ export function BodyTab() {
           title="Noch keine Körperdaten"
           description="Halte Gewicht, Bauchumfang und ein Ausgangsfoto fest — künftige Vergleiche zeigen den Fortschritt, den die Waage verschweigt."
           action={
-            <Pressable
-              onClick={() => router.push("/settings")}
-              className="rounded-pill bg-accent-sessions px-5 py-2.5 text-sm font-semibold text-on-accent focus:outline-none"
-            >
+            <Button onClick={() => router.push("/settings")}>
               In den Einstellungen erfassen
-            </Pressable>
+            </Button>
           }
         />
       ) : null}
@@ -183,7 +181,7 @@ export function BodyTab() {
               const exam = examWeeks.has(wk);
               const pIdx = m.photoId ? photos.findIndex((p) => p === m) : -1;
               return (
-                <div key={m.date + ri} className="log-row flex items-center gap-3">
+                <div key={m.date + ri} className="flex items-center gap-3">
                   {m.photoId ? (
                     <PhotoImg id={m.photoId} className="h-16 w-16 shrink-0 rounded-card" />
                   ) : (

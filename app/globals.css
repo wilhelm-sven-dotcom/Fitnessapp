@@ -3,86 +3,107 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────────────────────
-   EIN Design: „Ruhig & fokussiert" — geschliffenes Instrument in Bernstein.
-   Dunkel ist der Grundzustand; [data-theme="light"] überschreibt nur die
-   Neutralwerte (Identität — Akzent, Fonts, Radius, Panels — bleibt).
-   Fonts kommen aus layout.tsx (next/font → --font-sora/--font-jbmono).
+   EIN Design: „München ’72" — deutsches Sportsystemdesign nach Aicher.
+   Heller Silbergrund ist der Grundzustand; [data-theme="dark"] ist die
+   Anthrazit-Variante (gleiche Hues, angehoben). Flache satte Farbfelder,
+   Hairline-Raster, keine Verläufe/Glows. EIN Farbcode pro Bereich:
+   Blau = Heute/Session · Orange = ATLAS/Live · Grün = Fortschritt ·
+   Gelb = Warnung · Rot = Gefahr. Fonts aus layout.tsx
+   (next/font → --font-archivo/--font-jbmono). Alle Paare WCAG-geprüft
+   (Text ≥ 4.5:1, große Schrift/Flächen ≥ 3:1).
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: dark;
-  --base: #0e0f12;
-  --card: #16181d;
-  --surface-2: #1b1e24;
-  --line: #262a33;
-  --fg: #eceef2;
-  --muted: #9aa1ac;
-  --faint: #5e626b;
-  --strong: #eceef2;
-  --on-strong: #0e0f12;
-  --glass: rgba(14, 15, 18, 0.72);
+  color-scheme: light;
+  --base: #f2f4f2; /* Silberweiß, kühl — Papier des Systems */
+  --card: #ffffff;
+  --surface-2: #e8ebe8;
+  --line: #d4d9d4; /* das 1px-Raster */
+  --fg: #121619;
+  --muted: #4d5a5e;
+  --faint: #5f6b73; /* ≥4.5:1 auf Weiß — Hinweise/Placeholder lesbar */
+  --strong: #121619;
+  --on-strong: #ffffff;
+  --glass: rgba(242, 244, 242, 0.82);
 
-  --accent: #ff9f0a; /* Bernstein — CTA, Signatur, der EINE Akzent */
-  --accent-2: #9aa1ac; /* neutral — Labels bleiben ruhig */
-  --live: #ff375f; /* „heute/empfohlen"-Marker */
-  --on-accent: #0e0f12; /* dunkle Tinte auf Bernstein */
-  --accent-ink: var(--accent); /* Akzent als Vordergrund-Marke */
+  --accent: #0c6a99; /* Lichtblau — Heute/Session, DER Primärton */
+  --on-accent: #ffffff; /* Tinte auf Farbfeldern (hell: Weiß) */
+  --ink-on-color: #ffffff;
+  --accent-ink: #0c6a99; /* Akzent als Vordergrund-Marke (≥4.5 auf Grund) */
+  --accent-2: #4d5a5e; /* neutrale Eyebrows/Labels */
 
-  --font-display: var(--font-sora);
-  --font-body: var(--font-sora);
+  --orange: #bc4708; /* Leuchtorange — ATLAS, Live-Marker */
+  --gruen: #0a7248; /* Grün — Fortschritt, Erfolg, Volumen */
+  --gelb: #956600; /* Gelb — Warnung, über Ziel */
+  --rot: #bf2f1e; /* Signalrot — Gefahr (sparsam) */
+  --live: #bc4708; /* „heute/empfohlen"-Marker = Orange */
+
+  --font-display: var(--font-archivo);
+  --font-body: var(--font-archivo);
   --font-mono: var(--font-jbmono);
 
-  --radius-card: 16px;
+  --radius-card: 12px;
   --radius-pill: 999px;
-  --panel-bg: linear-gradient(180deg, #181b21, #121419);
-  --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 22px rgba(0, 0, 0, 0.45);
-  --panel-shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.55);
-  --hero-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 42%);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.2), transparent 62%);
-  --page-bg: radial-gradient(120% 80% at 50% -10%, #15171c, #0e0f12 60%);
-  --page-bg-size: 100% 100%;
-  --page-bg-repeat: no-repeat;
 
-  --stage-glow: rgba(255, 159, 10, 0.22);
+  /* Flache Module: weiße Fläche + Hairline; Elevation nur als leiser
+     Offset-Schatten (schwebendes Chrome nimmt --panel-shadow-lg). */
+  --panel-shadow: 0 1px 2px rgba(18, 22, 25, 0.05);
+  --panel-shadow-lg: 0 2px 6px rgba(18, 22, 25, 0.06), 0 16px 32px -20px rgba(18, 22, 25, 0.25);
+  --page-bg: none;
+  --page-bg-size: auto;
+  --page-bg-repeat: no-repeat;
 }
 
-/* Hell: Neutralwerte wechseln, die Identität bleibt. */
-[data-theme="light"] {
-  color-scheme: light;
-  --base: #f2f3f5;
-  --card: #ffffff;
-  --surface-2: #e9ebef;
-  --line: #d8dce3;
-  --fg: #14171c;
-  --muted: #54606e;
-  --faint: #6b7280; /* ≥4.5:1 auf Weiß — Hinweise/Placeholder lesbar */
-  --strong: #14171c;
-  --on-strong: #ffffff;
-  --glass: rgba(255, 255, 255, 0.72);
-  --accent-ink: #b3700a; /* Bernstein vertieft — als Marke lesbar auf Hell */
-  --panel-bg: linear-gradient(0deg, #ffffff, #ffffff);
-  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 24px -16px rgba(0, 0, 0, 0.25);
-  --panel-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.08), 0 22px 48px -22px rgba(0, 0, 0, 0.3);
-  --hero-sheen: linear-gradient(135deg, rgba(0, 0, 0, 0.04), transparent 42%);
-  --hero-glow: radial-gradient(120% 80% at 50% -5%, rgba(255, 159, 10, 0.16), transparent 62%);
-  --page-bg: radial-gradient(120% 80% at 50% -10%, #ffffff, #eef0f3 60%);
-  --stage-glow: rgba(255, 159, 10, 0.15);
+/* Dunkel: Anthrazit-Variante — Hues angehoben, Tinte auf Farbfeldern dunkel. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --base: #14171a;
+  --card: #1b1f24;
+  --surface-2: #22272c;
+  --line: #2e343a;
+  --fg: #edf0f2;
+  --muted: #a3adb3;
+  --faint: #808b92;
+  --strong: #edf0f2;
+  --on-strong: #14171a;
+  --glass: rgba(20, 23, 26, 0.82);
+
+  --accent: #4aa9d9;
+  --on-accent: #0e1417;
+  --ink-on-color: #0e1417;
+  --accent-ink: #4aa9d9;
+  --accent-2: #a3adb3;
+
+  --orange: #ff6a2a;
+  --gruen: #33bf7f;
+  --gelb: #f2b63c;
+  --rot: #ff5a47;
+  --live: #ff6a2a;
+
+  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --panel-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 16px 34px -20px rgba(0, 0, 0, 0.6);
 }
 
 html {
   -webkit-text-size-adjust: 100%;
   background-color: var(--base);
+  accent-color: var(--accent);
 }
 
 @layer base {
   body {
     @apply font-sans antialiased;
     background-color: var(--base);
-    background-image: var(--page-bg);
-    background-size: var(--page-bg-size);
-    background-repeat: var(--page-bg-repeat);
-    background-attachment: fixed;
     color: var(--fg);
     text-rendering: optimizeLegibility;
+  }
+  /* Browser-Oberflächen tragen das Design mit: Auswahl + Einfügemarke. */
+  ::selection {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  input,
+  textarea {
+    caret-color: var(--accent);
   }
 }
 
@@ -101,9 +122,6 @@ html {
 /* Seiten-Hintergrund — wie <body>, wiederverwendbar für Vollbild-Overlays. */
 .app-bg {
   background-color: var(--base);
-  background-image: var(--page-bg);
-  background-size: var(--page-bg-size);
-  background-repeat: var(--page-bg-repeat);
 }
 
 /* Frosted material for floating chrome (nav, sheet header, top bar) */
@@ -113,29 +131,10 @@ html {
   backdrop-filter: saturate(160%) blur(20px);
 }
 
-/* The one bold accent moment — depth + a charged glow in the accent.
-   Use INSTEAD of shadow-card (it carries its own elevation). */
-.glow-accent {
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 18px 48px -24px rgba(0, 0, 0, 0.85),
-    0 0 30px -8px var(--accent);
-}
-
-/* Material top-edge highlight for hero / elevated cards. Composes with any
-   box-shadow (it draws a hairline via ::before, not a shadow). */
-.edge-top {
-  position: relative;
-}
-.edge-top::before {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
+/* Scoreboard-Ziffern: Archivo auf der Weiten-Achse gespannt — für große
+   Readouts/Hero-Zahlen (immer mit tabular-nums kombinieren). */
+.stretch-display {
+  font-stretch: 118%;
 }
 
 /* Horizontal scroller without a visible scrollbar — the row's own nodes
@@ -148,35 +147,10 @@ html {
   display: none;
 }
 
-/* Satz-Logbuch: der aktive Satz hebt sich als geschliffener Chip. */
+/* Satz-Logbuch: der aktive Satz hebt sich als flaches Modul mit Hairline. */
 .set-active {
-  background: var(--panel-bg);
-  box-shadow: var(--panel-shadow);
-}
-
-/* Fokuslicht der aktiven Übungskarte im Live-Training. */
-.stage-dim {
-  opacity: 0.55;
-  filter: saturate(0.72);
-  transition:
-    opacity 0.3s ease,
-    filter 0.3s ease;
-}
-.stage-light {
+  background: var(--card);
   box-shadow:
-    0 0 56px -10px var(--stage-glow),
-    var(--panel-shadow-lg);
-}
-.stage-light::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 55% at 50% 0%, var(--stage-glow), transparent 62%);
-  opacity: 0.5;
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .stage-dim {
-    transition: none;
-  }
+    inset 0 0 0 1px var(--line),
+    var(--panel-shadow);
 }

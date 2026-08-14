@@ -52,7 +52,13 @@ export function SessionComplete({
     reduce ? undefined : { duration: 0.4, delay: 0.15 + i * 0.12, ease: EASE_OUT };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-surface-0 px-6 text-center">
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-surface-0 px-6 text-center"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
       {!reduce && <Burst />}
 
       <motion.p
@@ -128,7 +134,6 @@ export function SessionComplete({
             style={{
               width: `${Math.round(pct * 100)}%`,
               transition: reduce ? undefined : "width 1s cubic-bezier(0.22,1,0.36,1)",
-              boxShadow: "0 0 10px -1px var(--accent)",
             }}
           />
         </div>

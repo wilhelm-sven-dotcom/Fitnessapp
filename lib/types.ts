@@ -229,8 +229,10 @@ export interface AppSettings {
   cueVolume?: number;
   /** Pair the last two accessory slots as a superset — saves rest time. */
   superset?: boolean;
-  /** Appearance: color theme preference (default 'dark'). */
+  /** Appearance: color theme preference (default 'light' — München ’72). */
   theme?: "dark" | "light" | "system";
+  /** Einmal-Migration gelaufen: alter Dunkel-Default wurde auf Hell gehoben. */
+  themeMigratedM72?: boolean;
   /** Appearance: legacy brand accent (id from lib/theme ACCENTS) — fallback icon only. */
   accentColor?: string;
   /** App-icon design (custom home-screen icon). Unset = generated default. */

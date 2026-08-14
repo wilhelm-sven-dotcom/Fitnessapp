@@ -15,7 +15,7 @@ export function RecordsBoard({ log }: { log: LoggedSession[] }) {
 
   return (
     <div>
-      <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
+      <Card variant="elevated" className="mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
             <Trophy size={13} className="text-accent-ink" /> Rekorde

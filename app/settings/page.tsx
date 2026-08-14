@@ -1,8 +1,10 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Camera, Download, Plus, RotateCcw, Trash2, Upload, Volume2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { beepStart, primeAudio } from "@/lib/beep";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -17,8 +19,11 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
 import { fmtDateShort } from "@/lib/format";
+import { SPRING } from "@/lib/motion";
+import { toast } from "@/lib/toast";
 
 export default function SettingsPage() {
+  const reduce = useReducedMotion();
   const {
     resetAll,
     body,
@@ -38,7 +43,6 @@ export default function SettingsPage() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [bw, setBw] = useState("");
   const [waist, setWaist] = useState("");
-  const [importMsg, setImportMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const photoRef = useRef<HTMLInputElement>(null);
@@ -81,6 +85,7 @@ export default function SettingsPage() {
     setBw("");
     setWaist("");
     clearPhoto();
+    toast("Eintrag gespeichert.", { kind: "success" });
   };
 
   const exportFile = () => {
@@ -93,6 +98,7 @@ export default function SettingsPage() {
     a.download = `training-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    toast("Backup heruntergeladen.", { kind: "success" });
   };
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,15 +107,16 @@ export default function SettingsPage() {
     if (!file) return;
     try {
       const ok = await importData(JSON.parse(await file.text()));
-      setImportMsg(ok ? "Import erfolgreich." : "Datei nicht erkannt.");
+      if (ok) toast("Import erfolgreich.", { kind: "success" });
+      else toast("Datei nicht erkannt.", { kind: "error" });
     } catch {
-      setImportMsg("Datei konnte nicht gelesen werden.");
+      toast("Datei konnte nicht gelesen werden.", { kind: "error" });
     }
   };
 
   return (
     <div>
-      <PageHeader title="Einstellungen" eyebrow="App" />
+      <PageHeader title="Einstellungen" eyebrow="App" tone="var(--muted)" />
 
       <AppearanceSection />
 
@@ -120,7 +127,7 @@ export default function SettingsPage() {
       <AtlasSection />
       <EquipmentSection />
 
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
           Körperdaten
         </p>
@@ -133,7 +140,7 @@ export default function SettingsPage() {
             onChange={(e) => setBw(e.target.value)}
             placeholder="Gewicht kg"
             aria-label="Körpergewicht in kg"
-            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
           <input
             type="number"
@@ -143,7 +150,7 @@ export default function SettingsPage() {
             onChange={(e) => setWaist(e.target.value)}
             placeholder="Bauch cm"
             aria-label="Bauchumfang in cm"
-            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
         </div>
         <input
@@ -172,30 +179,40 @@ export default function SettingsPage() {
             </Pressable>
           </div>
         ) : (
-          <Pressable
+          <Button
+            variant="secondary"
+            full
             onClick={() => photoRef.current?.click()}
             disabled={photoBusy}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-50"
+            className="mt-2"
           >
             <Camera size={16} /> {photoBusy ? "Lädt…" : "Fortschritts-Foto"}
-          </Pressable>
+          </Button>
         )}
-        <Pressable
+        <Button
+          variant="strong"
+          full
           onClick={addBody}
           disabled={!bw.trim() && !waist.trim() && !photoId}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+          className="mt-2"
         >
           <Plus size={16} strokeWidth={2.5} /> Eintragen
-        </Pressable>
+        </Button>
         {body.length > 0 && (
           <div className="mt-3 space-y-1">
+            {/* Löschen gleitet raus statt zu springen; Nachbarn rücken per
+                Layout-FLIP nach (transform, unterbrechbar). */}
+            <AnimatePresence initial={false}>
             {[...body]
               .map((m, i) => ({ m, i }))
               .reverse()
               .map(({ m, i }) => (
-                <div
-                  key={m.date + i}
-                  className="flex items-center justify-between gap-2 rounded-card bg-base px-3 py-2"
+                <motion.div
+                  key={m.date}
+                  layout={reduce ? false : true}
+                  exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                  transition={SPRING.panel}
+                  className="flex items-center justify-between gap-2 rounded-card bg-surface-0 px-3 py-2"
                 >
                   <span className="flex items-center gap-1.5 text-sm text-muted">
                     {fmtDateShort(m.date)}
@@ -204,19 +221,23 @@ export default function SettingsPage() {
                     {m.photoId && <Camera size={13} className="text-muted" />}
                   </span>
                   <Pressable
-                    onClick={() => deleteBodyMetric(i)}
+                    onClick={() => {
+                      void deleteBodyMetric(i);
+                      toast("Eintrag gelöscht.");
+                    }}
                     aria-label="Eintrag löschen"
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
                   >
                     <Trash2 size={14} />
                   </Pressable>
-                </div>
+                </motion.div>
               ))}
+            </AnimatePresence>
           </div>
         )}
       </section>
 
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
           Gym-Modus
         </p>
@@ -271,16 +292,17 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-fg">Signalton-Lautstärke</p>
-              <Pressable
+              <Button
+                variant="secondary"
                 onClick={() => {
                   primeAudio();
                   beepStart();
                 }}
-                className="flex items-center gap-1.5 rounded-pill bg-surface-2 px-3 py-1.5 text-xs font-medium text-fg focus:outline-none"
+                className="px-3 py-1.5 text-xs"
               >
                 <Volume2 size={14} />
                 Probehören
-              </Pressable>
+              </Button>
             </div>
             <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
               Countdown-Töne im Aufwärmen und beim Zünd-Check — lauter stellen, wenn nebenbei Musik läuft.
@@ -317,7 +339,7 @@ export default function SettingsPage() {
 
       <SpotifySection />
 
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
           Als App installieren
         </p>
@@ -328,19 +350,16 @@ export default function SettingsPage() {
         </p>
       </section>
 
-      <section className="rounded-card border border-surface-3 bg-surface-1 shadow-card p-5">
+      <section className="rounded-card border border-line bg-surface-1 shadow-card p-5">
         <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">Daten</p>
         <p className="mb-3 text-xs leading-relaxed text-muted">
           Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als
           Datei oder spiele ein Backup zurück.
         </p>
         <div className="mb-4 flex flex-col gap-2">
-          <Pressable
-            onClick={exportFile}
-            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
-          >
+          <Button variant="secondary" full onClick={exportFile}>
             <Download size={16} /> Export (JSON)
-          </Pressable>
+          </Button>
           <input
             ref={fileRef}
             type="file"
@@ -348,38 +367,28 @@ export default function SettingsPage() {
             onChange={onImport}
             className="hidden"
           />
-          <Pressable
-            onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none"
-          >
+          <Button variant="secondary" full onClick={() => fileRef.current?.click()}>
             <Upload size={16} /> Import (JSON)
-          </Pressable>
-          {importMsg && <p className="text-xs text-muted">{importMsg}</p>}
+          </Button>
         </div>
         {!confirmReset ? (
-          <Pressable
-            onClick={() => setConfirmReset(true)}
-            className="flex items-center gap-2 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
-          >
+          <Button variant="ghost" onClick={() => setConfirmReset(true)} className="px-1">
             <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
-          </Pressable>
+          </Button>
         ) : (
           <div className="flex items-center gap-2">
-            <Pressable
+            <Button
+              variant="danger"
               onClick={() => {
-                void resetAll();
+                void resetAll().then(() => toast("Alle Einheiten zurückgesetzt."));
                 setConfirmReset(false);
               }}
-              className="rounded-card bg-rose-950 px-3 py-2 text-sm text-rose-300 focus:outline-none"
             >
               Wirklich löschen
-            </Pressable>
-            <Pressable
-              onClick={() => setConfirmReset(false)}
-              className="rounded-card px-3 py-2 text-sm text-muted focus:outline-none"
-            >
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmReset(false)}>
               Abbrechen
-            </Pressable>
+            </Button>
           </div>
         )}
       </section>

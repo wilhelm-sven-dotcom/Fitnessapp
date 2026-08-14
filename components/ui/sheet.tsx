@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useRef } from "react";
+import { SPRING } from "@/lib/motion";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -86,11 +87,11 @@ export function Sheet({
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-surface-3 bg-surface-1 shadow-card focus:outline-none"
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-line bg-surface-1 shadow-card focus:outline-none"
             initial={reduce ? { opacity: 0 } : { y: "100%" }}
             animate={reduce ? { opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0 } : { y: "100%" }}
-            transition={reduce ? { duration: 0.15 } : { type: "spring", stiffness: 360, damping: 36 }}
+            transition={reduce ? { duration: 0.15 } : SPRING.panel}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
@@ -127,8 +128,11 @@ export function Sheet({
               )}
             </div>
             <div
-              className="overflow-y-auto px-5 pb-8 pt-2"
-              style={{ maxHeight: "78vh" }}
+              className="overflow-y-auto px-5 pt-2"
+              style={{
+                maxHeight: "78vh",
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 2rem)",
+              }}
             >
               {children}
             </div>

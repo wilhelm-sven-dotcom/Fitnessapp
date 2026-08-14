@@ -3,6 +3,7 @@
 import { ChevronRight, Dumbbell, KeyRound, Send, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -231,7 +232,7 @@ export default function CoachPage() {
   const buildEl = (
     <Pressable
       onClick={() => router.push("/")}
-      className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-coverage"
+      className="flex w-full items-center justify-between gap-2 rounded-card border border-line bg-surface-1 px-4 py-3 text-left text-sm text-fg shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
     >
       <span className="flex items-center gap-2">
         <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
@@ -263,7 +264,7 @@ export default function CoachPage() {
   return (
     <div>
       {/* Status-Kopf: Mission + Tages-Direktive. */}
-      <div className="mb-4 rounded-card border border-line bg-panel p-4 shadow-card">
+      <div className="mb-4 rounded-card border border-line bg-surface-1 p-4 shadow-card">
         <div className="flex items-center gap-2">
           <AtlasMark size={20} live className="text-fg" />
           <h1 className="font-display text-xl font-semibold tracking-tight text-fg">
@@ -282,7 +283,7 @@ export default function CoachPage() {
       </div>
 
       {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
-      <section className="mb-4 rounded-card border border-surface-3 bg-surface-1 p-4 shadow-card">
+      <section className="mb-4 rounded-card border border-line bg-surface-1 p-4 shadow-card">
         <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
           Wochen-Rapport · KW {isoWeek(new Date())}
         </p>
@@ -310,7 +311,7 @@ export default function CoachPage() {
               <Pressable
                 key={s}
                 onClick={() => send(s)}
-                className="flex w-full items-center justify-between gap-2 rounded-card border border-surface-3 bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-fg focus:outline-none"
+                className="flex w-full items-center justify-between gap-2 rounded-card border border-line bg-surface-1 shadow-card px-4 py-3 text-left text-sm text-fg focus:outline-none"
               >
                 {s}
                 <Send size={15} className="shrink-0 text-faint" />
@@ -330,8 +331,8 @@ export default function CoachPage() {
               className={cn(
                 "rounded-card px-4 py-3 text-sm leading-relaxed",
                 m.role === "user"
-                  ? "ml-8 bg-accent-coverage text-on-strong"
-                  : "mr-4 whitespace-pre-wrap border border-surface-3 bg-surface-1 shadow-card text-fg",
+                  ? "ml-8 bg-coach text-on-color"
+                  : "mr-4 whitespace-pre-wrap border border-line bg-surface-1 shadow-card text-fg",
               )}
             >
               {m.content || (busy ? "…" : "")}
@@ -366,16 +367,17 @@ export default function CoachPage() {
           rows={1}
           placeholder="Frag ATLAS…"
           aria-label="Nachricht an den Coach"
-          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-coverage"
+          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
         />
-        <Pressable
+        <Button
+          variant="strong"
           onClick={() => void send(input)}
           disabled={busy || !input.trim()}
           aria-label="Senden"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-strong text-on-strong focus:outline-none disabled:opacity-40"
+          className="h-11 w-11 shrink-0 rounded-card p-0"
         >
           <Send size={18} strokeWidth={2.5} />
-        </Pressable>
+        </Button>
       </div>
     </div>
   );

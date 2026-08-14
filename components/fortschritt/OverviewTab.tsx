@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, LineChart, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -17,6 +17,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { fmtDateShort } from "@/lib/format";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
+import { cn } from "@/lib/utils";
 
 type Kind = "weight" | "reps" | "time";
 interface Point {
@@ -44,6 +45,7 @@ const TREND_PREVIEW = 4;
 export function OverviewTab() {
   const { log, muscleVolumes, cardio, settings } = useTraining();
   const router = useRouter();
+  const reduce = useReducedMotion();
   const [showAllTrends, setShowAllTrends] = useState(false);
 
   const totalT = Math.round(log.reduce((a, s) => a + sessionVolume(s), 0) / 100) / 10;
@@ -127,7 +129,7 @@ export function OverviewTab() {
 
   return (
     <div>
-      <Card variant="elevated" className="edge-top mb-4 rounded-card p-5">
+      <Card variant="elevated" className="mb-4 rounded-card p-5">
         <Readout
           eyebrow="Gesamt gestemmt"
           value={totalT}
@@ -164,11 +166,10 @@ export function OverviewTab() {
                   <div className="flex items-center justify-end gap-1.5">
                     {e.isPR && (
                       <motion.span
-                        initial={{ scale: 0.7, opacity: 0 }}
-                        animate={{ scale: [0.7, 1.2, 1], opacity: 1 }}
+                        initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                        animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
                         transition={{ duration: 0.5, ease: "easeOut" }}
-                        style={{ boxShadow: "0 0 12px -2px #30d158" }}
-                        className="rounded bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-strong"
+                        className="rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
                       >
                         Rekord
                       </motion.span>
@@ -201,7 +202,7 @@ export function OverviewTab() {
             >
               <ChevronDown
                 size={15}
-                className={showAllTrends ? "rotate-180" : undefined}
+                className={cn("transition-transform duration-200 ease-out", showAllTrends && "rotate-180")}
               />
               {showAllTrends ? "Weniger anzeigen" : `Alle ${list.length} Übungen zeigen`}
             </Pressable>

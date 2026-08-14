@@ -1,9 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Dumbbell, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { greeting } from "@/lib/coaching";
@@ -42,6 +43,7 @@ const GOALS: { v: TrainingGoal; label: string }[] = [
 /** First-run welcome screen. Greets, pitches the app, captures name + a quick profile. */
 export function Welcome() {
   const { completeOnboarding } = useTraining();
+  const reduce = useReducedMotion();
   const [name, setName] = useState("");
   const [exp, setExp] = useState<Experience | undefined>(undefined);
   const [goals, setGoals] = useState<TrainingGoal[]>(["aufbau", "optik"]);
@@ -50,29 +52,22 @@ export function Welcome() {
 
   return (
     <motion.div
-      className="fixed inset-0 z-40 overflow-y-auto bg-base"
+      className="fixed inset-0 z-40 overflow-y-auto app-bg"
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
-      initial={{ opacity: 0 }}
+      initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: EASE_OUT }}
     >
       <div className="mx-auto flex min-h-full max-w-md flex-col px-6 py-10">
         <motion.div
           className="relative flex flex-col items-center pt-6 text-center"
-          initial={{ opacity: 0, y: 12 }}
+          initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          <span
-            className="absolute -top-2 h-40 w-40 rounded-full"
-            style={{
-              background: "radial-gradient(circle, var(--accent) 0%, rgba(0,0,0,0) 70%)",
-              opacity: 0.25,
-            }}
-          />
           <BrandMark size={72} className="rounded-md" />
           <p className="mt-6 font-display text-3xl font-semibold tracking-tight text-fg">
             {greeting()}
@@ -86,10 +81,10 @@ export function Welcome() {
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.title}
-              initial={{ opacity: 0, y: 12 }}
+              initial={reduce ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE_OUT }}
-              className="flex items-start gap-3 rounded-card border border-line bg-panel p-4 shadow-card"
+              className="flex items-start gap-3 rounded-card border border-line bg-surface-1 p-4 shadow-card"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-surface-2">
                 <f.icon size={20} style={{ color: "var(--accent)" }} />
@@ -104,7 +99,7 @@ export function Welcome() {
 
         <motion.div
           className="mt-auto pt-10"
-          initial={{ opacity: 0, y: 12 }}
+          initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.5, ease: EASE_OUT }}
         >
@@ -123,6 +118,7 @@ export function Welcome() {
               <Pressable
                 key={x.v}
                 onClick={() => setExp(x.v)}
+                aria-pressed={exp === x.v}
                 className={
                   "flex-1 rounded-pill py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions " +
                   (exp === x.v ? "bg-strong text-on-strong" : "text-muted")
@@ -139,6 +135,7 @@ export function Welcome() {
               <Pressable
                 key={g.v}
                 onClick={() => toggleGoal(g.v)}
+                aria-pressed={goals.includes(g.v)}
                 className={
                   "rounded-pill px-3 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions " +
                   (goals.includes(g.v) ? "bg-strong text-on-strong" : "bg-surface-2 text-muted")
@@ -149,12 +146,13 @@ export function Welcome() {
             ))}
           </div>
 
-          <Pressable
+          <Button
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
-            className="flex w-full items-center justify-center rounded-card bg-accent-sessions py-4 text-lg font-semibold text-on-accent shadow-card-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            size="lg"
+            full
           >
             Los geht&rsquo;s
-          </Pressable>
+          </Button>
         </motion.div>
       </div>
     </motion.div>

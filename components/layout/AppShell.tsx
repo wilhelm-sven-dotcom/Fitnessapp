@@ -4,6 +4,7 @@ import { Cloud, CloudOff, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
@@ -17,9 +18,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
-  // Kein Splash: localStorage ist in Millisekunden gelesen — die App rendert,
-  // sobald die Daten da sind. `loading` deckt nur diesen einen Frame ab.
-  if (loading) return null;
+  // Kein Splash: localStorage ist in Millisekunden gelesen — `loading` deckt
+  // nur diesen einen Frame ab. Statt Blank-Screen steht ein statisches
+  // Seiten-Gerüst (kein Puls: bei <100 ms wäre das Flacker-Theater).
+  if (loading)
+    return (
+      <div aria-busy="true" className="mx-auto max-w-md px-5 pb-28 pt-5">
+        <Skeleton className="h-6 w-28" />
+        <Skeleton className="mt-4 h-44 w-full" />
+        <Skeleton className="mt-4 h-24 w-full" />
+        <Skeleton className="mt-3 h-24 w-full" />
+      </div>
+    );
 
   return (
     <>

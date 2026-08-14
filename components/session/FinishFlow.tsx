@@ -38,7 +38,7 @@ export function FinishFlow({
     <div>
       <Pressable
         onClick={onBack}
-        className="mb-4 flex items-center gap-1 rounded-card px-1 py-1 text-sm text-muted focus:outline-none"
+        className="mb-4 -ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-sm text-muted focus:outline-none"
       >
         <ArrowLeft size={18} /> Zurück ins Training
       </Pressable>
@@ -55,7 +55,7 @@ export function FinishFlow({
           : `${done} ${done === 1 ? "Satz" : "Sätze"} protokolliert.`}
       </p>
 
-      <div className="mt-5 rounded-card border border-line bg-panel p-4 shadow-card">
+      <div className="mt-5 rounded-card border border-line bg-surface-1 p-4 shadow-card">
         <p className="text-sm font-medium text-fg">
           Wie fühlt sich dein unterer Rücken an?
         </p>
@@ -81,7 +81,7 @@ export function FinishFlow({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz zur Einheit — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent-sessions"
+          className="mt-4 w-full resize-none rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
         />
       </div>
 

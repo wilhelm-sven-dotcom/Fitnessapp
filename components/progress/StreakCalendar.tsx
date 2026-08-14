@@ -1,13 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
-import { StreakFlame } from "@/components/ui/StreakFlame";
+import { SPRING } from "@/lib/motion";
 import type { LoggedSession } from "@/lib/types";
 
 const GOAL = 3;
-const VOLUME = "#30d158";
-const SESSIONS = "#ff375f";
 
 function weekStart(d: Date) {
   const off = (d.getDay() + 6) % 7;
@@ -17,7 +15,10 @@ function weekStart(d: Date) {
   return m;
 }
 
+/** Wochenraster München ’72: gefüllte Quadrate je Einheit — Grün, wenn das
+ *  Wochenziel steht, Blau auf dem Weg dorthin. Ruhig, keine Glows. */
 export function StreakCalendar({ log }: { log: LoggedSession[] }) {
+  const reduce = useReducedMotion();
   const thisStart = weekStart(new Date());
   const weeks = Array.from({ length: 5 }, (_, i) => {
     const start = new Date(thisStart);
@@ -42,26 +43,21 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
       <div className="flex items-end justify-between gap-2">
         {weeks.map((w, wi) => {
           const goalMet = w.count >= GOAL;
-          const dots = Math.max(GOAL, w.count);
+          const cells = Math.max(GOAL, w.count);
           return (
             <div key={wi} className="flex flex-1 flex-col items-center gap-2">
               <div className="flex flex-col-reverse gap-1.5">
-                {Array.from({ length: dots }, (_, di) => {
+                {Array.from({ length: cells }, (_, di) => {
                   const done = di < w.count;
-                  const c = done ? (goalMet ? VOLUME : SESSIONS) : null;
+                  const c = done ? (goalMet ? "var(--gruen)" : "var(--accent)") : null;
                   return (
                     <motion.span
                       key={di}
-                      initial={{ opacity: 0, scale: 0.3 }}
+                      initial={reduce ? false : { opacity: 0, scale: 0.6 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        delay: wi * 0.06 + di * 0.04,
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                      className={c ? "h-3 w-3 rounded-full" : "h-3 w-3 rounded-full bg-surface-2"}
-                      style={c ? { backgroundColor: c, boxShadow: `0 0 8px -1px ${c}` } : undefined}
+                      transition={{ delay: wi * 0.06 + di * 0.04, ...SPRING.pop }}
+                      className={c ? "h-3 w-3 rounded-sm" : "h-3 w-3 rounded-sm bg-surface-2"}
+                      style={c ? { backgroundColor: c } : undefined}
                     />
                   );
                 })}
@@ -69,12 +65,11 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
               <span
                 className={
                   w.current
-                    ? "flex items-center gap-1 text-xs font-medium tabular-nums text-fg"
+                    ? "text-xs font-medium tabular-nums text-fg"
                     : "text-xs tabular-nums text-faint"
                 }
               >
                 {w.current ? "jetzt" : `−${4 - wi}`}
-                {w.current && goalMet && <StreakFlame size={12} color="var(--accent)" />}
               </span>
             </div>
           );

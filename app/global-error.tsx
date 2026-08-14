@@ -69,65 +69,66 @@ export default function GlobalError({
     }
   };
 
+  // Dieses Dokument ersetzt den kompletten App-Baum — globals.css und die
+  // Theme-Mechanik sind hier NICHT geladen. Deshalb eigene, minimale Styles
+  // (München-’72-Neutrals) mit prefers-color-scheme-Variante und sichtbarem
+  // Tastatur-Fokus. Rohe Hex sind hier die einzige Möglichkeit — bewusst.
   return (
     <html lang="de">
-      <body
-        style={{
-          margin: 0,
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0c0e12",
-          color: "#e8ecf2",
-          fontFamily:
-            "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-          WebkitFontSmoothing: "antialiased",
-        }}
-      >
+      <body className="ge-body">
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+:root { --ge-base:#f2f4f2; --ge-card:#ffffff; --ge-line:#d4d9d4; --ge-fg:#121619; --ge-muted:#4d5a5e; --ge-blau:#0c6a99; }
+@media (prefers-color-scheme: dark) {
+  :root { --ge-base:#14171a; --ge-card:#1b1f24; --ge-line:#2e343a; --ge-fg:#edf0f2; --ge-muted:#a3adb3; --ge-blau:#4aa9d9; }
+}
+.ge-body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:var(--ge-base); color:var(--ge-fg); -webkit-font-smoothing:antialiased;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+.ge-btn { appearance:none; cursor:pointer; border-radius:12px; font:inherit; }
+.ge-btn:focus-visible, .ge-btn-quiet:focus-visible { outline:2px solid var(--ge-blau); outline-offset:2px; }
+.ge-primary { border:0; padding:13px 16px; font-size:16px; font-weight:600; color:#ffffff; background:var(--ge-blau); }
+@media (prefers-color-scheme: dark) { .ge-primary { color:#0e1417; } }
+.ge-quiet { border:1px solid var(--ge-line); padding:13px 16px; font-size:15px; font-weight:500; color:var(--ge-fg); background:transparent; }
+.ge-small { border:1px solid var(--ge-line); border-radius:8px; margin-top:8px; padding:8px 12px; font-size:13px; font-weight:500; color:var(--ge-fg); background:transparent; }
+.ge-btn:active { transform:scale(0.97); }
+`,
+          }}
+        />
         <div style={{ maxWidth: 340, padding: "0 24px", textAlign: "center" }}>
-          <div style={{ fontSize: 34, marginBottom: 10 }} aria-hidden>
-            ⚠️
-          </div>
+          <svg
+            aria-hidden
+            width="34"
+            height="34"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--ge-blau)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ marginBottom: 10 }}
+          >
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>
             Kurz neu laden
           </h1>
-          <p style={{ fontSize: 15, lineHeight: 1.5, color: "#8a93a3", margin: "0 0 24px" }}>
+          <p style={{ fontSize: 15, lineHeight: 1.5, color: "var(--ge-muted)", margin: "0 0 24px" }}>
             Da ist etwas schiefgelaufen — meist, weil sich die App gerade aktualisiert
             hat. Ein Neuladen behebt es. Deine Daten sind sicher.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button
-              onClick={hardReload}
-              style={{
-                appearance: "none",
-                border: 0,
-                borderRadius: 10,
-                padding: "13px 16px",
-                fontSize: 16,
-                fontWeight: 600,
-                color: "#0c0e12",
-                background: "#ff375f",
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={hardReload} className="ge-btn ge-primary">
               App neu laden
             </button>
             <button
               onClick={() => {
                 window.location.href = "/";
               }}
-              style={{
-                appearance: "none",
-                border: "1px solid #222b38",
-                borderRadius: 10,
-                padding: "13px 16px",
-                fontSize: 15,
-                fontWeight: 500,
-                color: "#e8ecf2",
-                background: "transparent",
-                cursor: "pointer",
-              }}
+              className="ge-btn ge-quiet"
             >
               Zur Startseite
             </button>
@@ -141,7 +142,7 @@ export default function GlobalError({
                 fontSize: 11,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "#5e6672",
+                color: "var(--ge-muted)",
               }}
             >
               Technische Details
@@ -156,30 +157,16 @@ export default function GlobalError({
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                 fontSize: 11,
                 lineHeight: 1.45,
-                color: "#9aa3af",
-                background: "#12161c",
-                border: "1px solid #222b38",
+                color: "var(--ge-muted)",
+                background: "var(--ge-card)",
+                border: "1px solid var(--ge-line)",
                 borderRadius: 8,
                 padding: "10px 12px",
               }}
             >
               {detail}
             </pre>
-            <button
-              onClick={copy}
-              style={{
-                appearance: "none",
-                marginTop: 8,
-                border: "1px solid #222b38",
-                borderRadius: 8,
-                padding: "8px 12px",
-                fontSize: 13,
-                fontWeight: 500,
-                color: "#e8ecf2",
-                background: "transparent",
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={copy} className="ge-btn ge-small">
               {copied ? "Kopiert ✓" : "Fehler kopieren"}
             </button>
           </div>
