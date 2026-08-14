@@ -28,6 +28,7 @@ export function ExerciseStage({
   record,
   isExam,
   aidNote,
+  weightStep,
   onOpenGuide,
   onWeight,
   onReps,
@@ -45,6 +46,8 @@ export function ExerciseStage({
   record: ExRecord | null;
   isExam: boolean;
   aidNote?: string;
+  /** Schrittweite der Gewichts-Stepper im Satz-Logbuch (settings.weightStep). */
+  weightStep?: number;
   onOpenGuide: () => void;
   onWeight: (i: number, val: string) => void;
   onReps: (i: number, oldVal: string, val: string) => void;
@@ -215,6 +218,7 @@ export function ExerciseStage({
                     state={state}
                     ghostWeight={s.warmup ? undefined : ghostWeight}
                     ghostReps={s.warmup ? undefined : ghostReps}
+                    weightStep={weightStep}
                     onWeight={(val) => onWeight(i, val)}
                     onReps={(oldVal, val) => onReps(i, oldVal, val)}
                     onRir={(val) => onRir(i, val)}

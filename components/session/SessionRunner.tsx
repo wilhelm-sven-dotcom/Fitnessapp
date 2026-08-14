@@ -706,6 +706,7 @@ export function SessionRunner() {
         record={recordMap.get(ex.id) ?? null}
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
+        weightStep={settings.weightStep ?? 2.5}
         onOpenGuide={() => setGuideOpen(true)}
         onWeight={(i, val) => setFieldEffort(item.id, i, "weight", val)}
         onReps={(i, oldVal, val) => onReps(item.id, i, oldVal, val)}
