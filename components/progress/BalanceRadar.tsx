@@ -66,7 +66,9 @@ export function BalanceRadar({
 
   return (
     <svg
-      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      // Seitlich 24px Luft: die längsten Achsen-Labels („Schultern") ragen
+      // sonst über den viewBox-Rand und werden hart beschnitten.
+      viewBox={`-24 0 ${SIZE + 48} ${SIZE}`}
       className="mx-auto w-full max-w-sm"
       role="group"
       aria-label="Muskel-Balance-Radar — Achsen antippbar"
