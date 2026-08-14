@@ -69,10 +69,11 @@ export default function HomePage() {
   const chips = homeChips({ daysAgo, weekCount });
   const streak = weeklyStreak(log);
   const now = new Date();
+  // Kurzform — die Hero-Kopfzeile muss neben Level/Woche in EINE Zeile passen.
   const today = now.toLocaleDateString("de-DE", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "short",
   });
   const kw = isoWeek(now);
   const greetingSeed = useMemo(() => Math.floor(Math.random() * 100000), []);
@@ -226,10 +227,10 @@ export default function HomePage() {
       <header className="mb-4 overflow-hidden rounded-card bg-accent-sessions text-on-accent shadow-card">
         <div className="px-5 pb-5 pt-4">
           <div className="flex items-baseline justify-between gap-2 font-mono text-xs uppercase tracking-widest">
-            <span>
+            <span className="whitespace-nowrap">
               {today} · KW <span className="tabular-nums">{kw}</span>
             </span>
-            <span className="tabular-nums">
+            <span className="whitespace-nowrap tabular-nums">
               Lv {level.level} · {weekCount}/3
             </span>
           </div>
