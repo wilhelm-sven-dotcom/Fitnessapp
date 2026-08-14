@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { LevelCard } from "@/components/progress/LevelCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
+import { MuscleHeatmapCard } from "@/components/progress/MuscleHeatmapCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { PhaseCard } from "@/components/progress/PhaseCard";
 import { RecordsBoard } from "@/components/progress/RecordsBoard";
@@ -146,6 +147,8 @@ export function OverviewTab() {
           hint={`über ${log.length} ${log.length === 1 ? "Einheit" : "Einheiten"}`}
         />
       </Card>
+
+      <MuscleHeatmapCard muscleVolumes={muscleVolumes} />
 
       <LevelCard />
 

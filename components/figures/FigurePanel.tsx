@@ -156,8 +156,9 @@ export function FigurePanel({
           "f" + bn[0] + bn[1],
         ),
       )}
-      {/* Neutral-spine cue. */}
-      {spine.map((sp, idx) => cap(sp, 3.5, "#34d399", "sp" + idx))}
+      {/* Neutral-spine cue — in der Heatmap (boneTint) nur Hairline-Naht,
+          damit das Grün der Wirbelsäule nicht wie eine Heat-Stufe liest. */}
+      {spine.map((sp, idx) => cap(sp, 3.5, boneTint ? "var(--line)" : "#34d399", "sp" + idx))}
       {P[headKey] && (
         <>
           <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />
