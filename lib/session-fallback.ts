@@ -34,6 +34,14 @@ export interface FallbackOpts {
   backSafe?: boolean;
   injuries?: InjuryArea[];
   variant?: SessionVariant;
+  /** Vom Nutzer deaktivierte Übungs-Ids — fliegen aus allen Auswahl-Pools.
+   *  (Die Reset-Variante behält ihre festen Reha-Ids — Sicherheitsprogramm.) */
+  disabled?: string[];
+}
+
+/** Deaktivierte Ids als Set fürs Pool-Filtern (Aufrufe sind selten). */
+function blockedOf(opts: FallbackOpts): ReadonlySet<string> | undefined {
+  return opts.disabled?.length ? new Set(opts.disabled) : undefined;
 }
 
 /** Muskel → Muster, die ihn primär treffen (für die Bedarfs-Füllung). */
@@ -123,7 +131,7 @@ function pickFromPool(
   lastUsed: Map<string, number>,
   avoid: Set<string>,
 ): Exercise | null {
-  let pool = poolFor(pattern, opts.has, opts.allLib).filter((e) => !used.has(e.id));
+  let pool = poolFor(pattern, opts.has, opts.allLib, blockedOf(opts)).filter((e) => !used.has(e.id));
   if (!pool.length) return null;
 
   if (opts.backSafe) {
@@ -197,7 +205,7 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
       "Testtag: vier Grundmuster, jeweils sauber hochgerampt bis zum schweren Satz. Keine Rekordjagd um jeden Preis — Technik entscheidet.";
     for (const pat of EXAM_PATTERNS) {
       // Fürs Testen zählt Vertrautheit: die zuletzt trainierte Übung des Musters.
-      const pool = poolFor(pat, opts.has, opts.allLib);
+      const pool = poolFor(pat, opts.has, opts.allLib, blockedOf(opts));
       if (!pool.length) continue;
       const sorted = [...pool].sort(
         (a, b) => (lastUsed.get(b.id) ?? 0) - (lastUsed.get(a.id) ?? 0),
@@ -264,7 +272,7 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
   const slots: ResolvedSlot[] = picked.map((ex, i) => ({
     ex: { ...ex },
     slotKey: `today:i${i + 1}`,
-    pool: poolFor(ex.pattern, opts.has, opts.allLib),
+    pool: poolFor(ex.pattern, opts.has, opts.allLib, blockedOf(opts)),
   }));
   const fitted =
     variant === "normal"

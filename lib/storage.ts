@@ -59,6 +59,9 @@ export const KEYS = {
   // Grabsteine gelöschter Import-Einheiten (Strava-IDs) — der Sync spielt sie
   // sonst beim nächsten Lauf wieder ein. Gelöscht bleibt gelöscht.
   hiddenCardio: "wilhelm-training-cardio-hidden",
+  // Deaktivierte Übungen (Ids) — fliegen aus Planung und Tausch-Vorschlägen,
+  // bleiben aber im Katalog (reaktivierbar) und in der Historie sichtbar.
+  disabledExercises: "wilhelm-training-disabled",
   days: "wilhelm-training-days",
   gyms: "wilhelm-training-gyms",
   exerciseVideos: "wilhelm-training-exercise-videos",

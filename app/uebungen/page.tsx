@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Pencil, Plus, Search, Youtube } from "lucide-react";
+import { ChevronRight, Eye, EyeOff, Pencil, Plus, Search, Youtube } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CustomExerciseEditor } from "@/components/exercises/CustomExerciseEditor";
 import { Button } from "@/components/ui/Button";
@@ -54,7 +54,7 @@ function FilterChip({
 }
 
 export default function ExerciseCatalogPage() {
-  const { allLib, exerciseVideos, has } = useTraining();
+  const { allLib, exerciseVideos, has, disabledExercises, toggleExerciseDisabled } = useTraining();
   const [q, setQ] = useState("");
   const [patFilter, setPatFilter] = useState<Pattern | null>(null);
   const [muscleFilter, setMuscleFilter] = useState<Muscle | null>(null);
@@ -204,6 +204,7 @@ export default function ExerciseCatalogPage() {
               {g.list.map((ex) => {
                 const hasVideo = !!exerciseVideos[ex.id];
                 const available = reqOk(ex, has);
+                const off = disabledExercises.includes(ex.id);
                 const m = muscleOf(ex);
                 return (
                   <div key={ex.id} className="flex items-center gap-1">
@@ -215,7 +216,8 @@ export default function ExerciseCatalogPage() {
                         <span
                           className={cn(
                             "truncate text-sm",
-                            available ? "text-fg" : "text-faint",
+                            available && !off ? "text-fg" : "text-faint",
+                            off && "line-through",
                           )}
                         >
                           {ex.name}
@@ -223,6 +225,11 @@ export default function ExerciseCatalogPage() {
                         {ex.custom && (
                           <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 text-xs text-accent-2">
                             Eigene
+                          </span>
+                        )}
+                        {off && (
+                          <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 text-xs text-faint">
+                            Aus
                           </span>
                         )}
                       </span>
@@ -250,6 +257,19 @@ export default function ExerciseCatalogPage() {
                         className="shrink-0 rounded-full p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                       >
                         <Pencil size={14} />
+                      </Pressable>
+                    )}
+                    {ex.pattern !== "cardio" && (
+                      <Pressable
+                        onClick={() => toggleExerciseDisabled(ex.id)}
+                        aria-label={`${ex.name} ${off ? "aktivieren" : "deaktivieren"}`}
+                        aria-pressed={off}
+                        className={cn(
+                          "shrink-0 rounded-full p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
+                          off ? "text-status-over" : "text-faint",
+                        )}
+                      >
+                        {off ? <EyeOff size={14} /> : <Eye size={14} />}
                       </Pressable>
                     )}
                   </div>

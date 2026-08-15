@@ -15,12 +15,17 @@ import type {
  * den deterministischen Fallback und ersetzt ihn, wenn ATLAS antwortet.
  */
 
-/** Übungen, die heute wählbar sind: Equipment-gefiltert, ohne Cardio-Blöcke. */
+/** Übungen, die heute wählbar sind: Equipment-gefiltert, ohne Cardio-Blöcke,
+ *  ohne vom Nutzer deaktivierte Übungen. */
 export function availableExercises(
   allLib: Exercise[],
   has: (k: string) => boolean,
+  disabled?: readonly string[],
 ): Exercise[] {
-  return allLib.filter((e) => e.pattern !== "cardio" && reqOk(e, has));
+  const blocked = disabled?.length ? new Set(disabled) : undefined;
+  return allLib.filter(
+    (e) => e.pattern !== "cardio" && reqOk(e, has) && !blocked?.has(e.id),
+  );
 }
 
 /** Kompakte Zuletzt-verwendet-Zeilen — ATLAS soll NICHT dieselbe Einheit
@@ -51,6 +56,8 @@ export interface AtlasSessionRequest {
   backSafe?: boolean;
   persona?: string;
   readinessLine?: string;
+  /** Vom Nutzer deaktivierte Übungs-Ids — landen nicht im ATLAS-Pool. */
+  disabled?: string[];
 }
 
 /** Ruft /api/atlas/session. `null` bei fehlendem Key, Offline, Timeout oder
@@ -60,7 +67,7 @@ export async function requestAtlasSession(
   opts: { timeoutMs?: number } = {},
 ): Promise<DailySession | null> {
   if (typeof navigator !== "undefined" && !navigator.onLine) return null;
-  const avail = availableExercises(req.allLib, req.has);
+  const avail = availableExercises(req.allLib, req.has, req.disabled);
   if (avail.length < 5) return null;
 
   const contextParts = [
