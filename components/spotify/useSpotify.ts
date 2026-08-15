@@ -15,7 +15,7 @@ const POLL_MS = 8000;
 /**
  * Reusable Spotify access-token source: refreshes + persists the rotated token
  * on demand and reports whether a connection exists at all. Shared by useSpotify
- * (widget polling) and useSpotifyResume (targeted one-off checks). Inert unless
+ * (widget polling) and useSpotifyDuck (countdown ducking). Inert unless
  * Spotify is configured AND connected — never throws.
  */
 export function useSpotifyToken(): {

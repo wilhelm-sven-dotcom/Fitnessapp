@@ -17,7 +17,7 @@ const BACKOFF_MS = 5 * 60 * 1000;
  * Gerät ohne Volume-Support) → 5-Minuten-Backoff, still — Ducking ist
  * Komfort, kein Feature-Versprechen.
  *
- * Bewusste Trade-offs (Muster useSpotifyResume): ändert der Nutzer die
+ * Bewusste Trade-offs: ändert der Nutzer die
  * Lautstärke WÄHREND des Ducks, überschreibt der Restore das; schlägt der
  * Restore fehl (Token/Netz weg), bleibt die Musik auf dem geduckten Wert —
  * der Floor von 20 % hält das harmlos.
