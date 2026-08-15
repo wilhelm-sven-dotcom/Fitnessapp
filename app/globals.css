@@ -98,6 +98,14 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Horizontal-Clip NUR auf body: er propagiert zum Viewport (html bleibt
+   visible), body wird dadurch selbst KEIN Scrollport — genau so überleben
+   die sticky-Leisten (App-Header, Trainings-Kopf). Ein overflow-x-hidden
+   auf html oder einem inneren Wrapper entwaffnet sie stumm. */
+body {
+  overflow-x: hidden;
+}
+
 @layer base {
   body {
     @apply font-sans antialiased;

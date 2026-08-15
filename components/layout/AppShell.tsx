@@ -34,8 +34,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       {firstRun && <Welcome />}
+      {/* Kein overflow-x-hidden auf diesem Wrapper: der Clip sitzt auf
+          html/body — sonst kleben weder App-Header noch Trainings-Kopf. */}
       {!firstRun && (
-        <div className="min-h-screen overflow-x-hidden">
+        <div className="min-h-screen">
           {!hideChrome && (
             <header
               className="glass sticky top-0 z-30 border-b border-line"

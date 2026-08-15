@@ -256,7 +256,8 @@ export function SessionRunner() {
   useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
 
   // Beobachtet den 1-px-Sentinel über dem Kopf (Muster FigurePanel) —
-  // Deps decken das (Re-)Mounten des Running-Baums ab.
+  // Deps decken das (Re-)Mounten des Baums ab: der Sentinel existiert erst
+  // in der Übungs-Phase (Check-in/Aufwärmen rendern andere Bäume).
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
@@ -265,7 +266,7 @@ export function SessionRunner() {
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [boot, complete]);
+  }, [boot, complete, active?.phase]);
 
   // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
   // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
