@@ -40,7 +40,7 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { dailyToTemplate, type DailySession } from "@/lib/session-model";
+import type { DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
@@ -262,6 +262,24 @@ export function SessionRunner() {
   const onWarmupCountdown = useCallback(
     (kind: "drill" | "switch") => duckFor(kind === "drill" ? 7000 : 5000),
     [duckFor],
+  );
+
+  // Aufwärm-Drills: deterministisch je (Einheit, Tag) — Seed aus startedAt,
+  // damit Reload und Re-Render exakt dieselbe Liste sehen (Rotation ohne
+  // Zufall); Tagesform/Rücken/Equipment fließen in die RAMP-Auswahl ein.
+  const warmupDrills = useMemo(
+    () =>
+      active && active.phase === "warmup"
+        ? warmupFor(active.session.items, allLib, {
+            readiness: active.readiness,
+            backSafe: active.backSafe,
+            lastBackRed,
+            bike: !!settings.bikeWarmup,
+            has,
+            seed: active.startedAt.slice(0, 10),
+          })
+        : [],
+    [active, allLib, lastBackRed, settings.bikeWarmup, has],
   );
 
   // Beobachtet den 1-px-Sentinel über dem Kopf (Muster FigurePanel) —
@@ -677,9 +695,7 @@ export function SessionRunner() {
   if (!st) return null;
 
   if (st.phase === "warmup") {
-    const drills = warmupFor(dailyToTemplate(st.session, allLib), {
-      bike: settings.bikeWarmup,
-    });
+    const drills = warmupDrills;
     const toExercise = () => patch((s) => ({ ...s, phase: "exercise" }));
     return (
       <WarmupPlayer
