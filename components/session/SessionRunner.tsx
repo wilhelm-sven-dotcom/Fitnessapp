@@ -103,6 +103,10 @@ export function SessionRunner() {
   const [boot, setBoot] = useState<Boot>("loading");
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
+  // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
+  // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [condensed, setCondensed] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
@@ -250,6 +254,18 @@ export function SessionRunner() {
 
   // Display wach halten, solange trainiert wird (abschaltbar).
   useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
+
+  // Beobachtet den 1-px-Sentinel über dem Kopf (Muster FigurePanel) —
+  // Deps decken das (Re-)Mounten des Running-Baums ab.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(([entry]) =>
+      setCondensed(!entry.isIntersecting),
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [boot, complete]);
 
   // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
   // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
@@ -720,13 +736,24 @@ export function SessionRunner() {
     // Solange das Pausen-Dock unten steht, bekommt der Inhalt Auslauf,
     // damit Logbuch und Weiter-Knopf nicht darunter verschwinden.
     <div className={cn("space-y-3", rest && "pb-36")}>
-      <ProgressHeader
-        items={headerItems}
-        currentIndex={st.currentIndex}
-        remainMin={remainMin}
-        onExit={() => setExitOpen(true)}
-        onOverview={() => setOverviewOpen(true)}
-      />
+      <div ref={sentinelRef} aria-hidden className="-mb-3 h-px" />
+      {/* Der Kopf haftet beim Scrollen: Full-bleed über -mx-5 (AppShell wrappt
+          in px-5), z-20 unter Pausen-Dock (30) und Sheets (50). */}
+      <div
+        className={cn(
+          "sticky top-0 z-20 -mx-5 px-5 pb-2",
+          condensed && "glass border-b border-line",
+        )}
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
+      >
+        <ProgressHeader
+          items={headerItems}
+          currentIndex={st.currentIndex}
+          remainMin={remainMin}
+          onExit={() => setExitOpen(true)}
+          onOverview={() => setOverviewOpen(true)}
+        />
+      </div>
 
       <div className="px-1">
         <p className="truncate text-sm text-muted">
