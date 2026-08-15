@@ -45,7 +45,7 @@ const TREND_PREVIEW = 4;
 /** Übersicht: die kuratierten Kern-Karten — Level, Phase, Rekorde,
  *  Muskel-Volumen & -Balance, dazu die Übungs-Trends (aufklappbar). */
 export function OverviewTab() {
-  const { log, allLib, muscleVolumes, cardio, settings } = useTraining();
+  const { log, allLib, muscleVolumes, phase } = useTraining();
   const router = useRouter();
   const reduce = useReducedMotion();
   const [showAllTrends, setShowAllTrends] = useState(false);
@@ -181,7 +181,7 @@ export function OverviewTab() {
 
       <LevelCard />
 
-      <PhaseCard log={log} cardio={cardio} settings={settings} />
+      <PhaseCard log={log} phase={phase} />
 
       <RecordsBoard log={log} onJump={jumpToTrend} />
 
