@@ -43,8 +43,10 @@ import { dailyToTemplate, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
+import { beep, beepEnd, primeAudio } from "@/lib/beep";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
+import { cn } from "@/lib/utils";
 import { warmupFor } from "@/lib/warmup";
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import type { Exercise, Readiness, SetEntry, TrafficLight } from "@/lib/types";
@@ -101,6 +103,10 @@ export function SessionRunner() {
   const [boot, setBoot] = useState<Boot>("loading");
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
+  // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
+  // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [condensed, setCondensed] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
@@ -249,16 +255,57 @@ export function SessionRunner() {
   // Display wach halten, solange trainiert wird (abschaltbar).
   useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
 
-  // Pausen-Countdown — inline, ohne Overlay.
+  // Beobachtet den 1-px-Sentinel über dem Kopf (Muster FigurePanel) —
+  // Deps decken das (Re-)Mounten des Baums ab: der Sentinel existiert erst
+  // in der Übungs-Phase (Check-in/Aufwärmen rendern andere Bäume).
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(([entry]) =>
+      setCondensed(!entry.isIntersecting),
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [boot, complete, active?.phase]);
+
+  // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
+  // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
+  // irgendwo entsperrt Audio + Speech (gleiches Muster wie im WarmupPlayer).
+  useEffect(() => {
+    const prime = () => {
+      primeAudio();
+      try {
+        window.speechSynthesis?.resume();
+      } catch {
+        /* Speech optional */
+      }
+      document.removeEventListener("pointerdown", prime);
+      document.removeEventListener("keydown", prime);
+    };
+    document.addEventListener("pointerdown", prime);
+    document.addEventListener("keydown", prime);
+    return () => {
+      document.removeEventListener("pointerdown", prime);
+      document.removeEventListener("keydown", prime);
+    };
+  }, []);
+
+  // Pausen-Countdown — als Dock unten, hörbar ohne Blick aufs Display: Tick
+  // in den letzten 3 s, Doppelton bei 0. iOS kennt kein navigator.vibrate —
+  // Audio ist dort das einzige Ende-Signal. Beeps bewusst ungated (cueVolume
+  // regelt die Lautstärke), nur die Stimme hängt an voiceCues. Kein Auto-
+  // Unmount: das Dock bleibt als „Pause vorbei" stehen, bis der Nutzer
+  // weitermacht (+15 s startet neu, Weiter räumt weg).
   useEffect(() => {
     if (!rest) return;
     if (rest.left <= 0) {
+      beepEnd();
       if (typeof navigator !== "undefined" && navigator.vibrate)
         navigator.vibrate(200);
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
-      const id = setTimeout(() => setRest(null), 700);
-      return () => clearTimeout(id);
+      return;
     }
+    if (rest.left <= 3) beep();
     if (settings.voiceCues) {
       if (rest.left === 10) speak("Noch zehn Sekunden");
       else if (rest.left <= 3) speak(["", "eins", "zwei", "drei"][rest.left]);
@@ -452,6 +499,8 @@ export function SessionRunner() {
     } else {
       tap();
     }
+    // Direkt vorm Pausenstart wecken — der Countdown tönt dann auch aus Timern.
+    primeAudio();
     setRest({ itemId, setIdx: i, left: TIME.restSec, total: TIME.restSec });
     scheduleCoachCall(itemId, i);
   };
@@ -473,8 +522,11 @@ export function SessionRunner() {
   const goNext = () => {
     tap();
     const n = nextOpenIndex();
-    if (n == null) patch((s) => ({ ...s, phase: "finish" }));
-    else patch((s) => ({ ...s, currentIndex: n }));
+    if (n == null) {
+      // Abschluss-Phase hat kein Dock — stehende Pause nicht mitnehmen.
+      setRest(null);
+      patch((s) => ({ ...s, phase: "finish" }));
+    } else patch((s) => ({ ...s, currentIndex: n }));
   };
 
   const goPrev = () => {
@@ -561,7 +613,13 @@ export function SessionRunner() {
   /* ── Rendering ── */
 
   if (complete) {
-    return <SessionComplete summary={complete} onDone={() => router.replace("/")} />;
+    return (
+      <SessionComplete
+        summary={complete}
+        name={todaySession?.name}
+        onDone={() => router.replace("/")}
+      />
+    );
   }
   // Redirect läuft bereits bei "none" — dort bleibt es leer (kein Zucken).
   if (boot === "none") return null;
@@ -676,14 +734,27 @@ export function SessionRunner() {
   const restEx = restItem ? byId.get(restItem.exerciseId) : undefined;
 
   return (
-    <div className="space-y-3">
-      <ProgressHeader
-        items={headerItems}
-        currentIndex={st.currentIndex}
-        remainMin={remainMin}
-        onExit={() => setExitOpen(true)}
-        onOverview={() => setOverviewOpen(true)}
-      />
+    // Solange das Pausen-Dock unten steht, bekommt der Inhalt Auslauf,
+    // damit Logbuch und Weiter-Knopf nicht darunter verschwinden.
+    <div className={cn("space-y-3", rest && "pb-36")}>
+      <div ref={sentinelRef} aria-hidden className="-mb-3 h-px" />
+      {/* Der Kopf haftet beim Scrollen: Full-bleed über -mx-5 (AppShell wrappt
+          in px-5), z-20 unter Pausen-Dock (30) und Sheets (50). */}
+      <div
+        className={cn(
+          "sticky top-0 z-20 -mx-5 px-5 pb-2",
+          condensed && "glass border-b border-line",
+        )}
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
+      >
+        <ProgressHeader
+          items={headerItems}
+          currentIndex={st.currentIndex}
+          remainMin={remainMin}
+          onExit={() => setExitOpen(true)}
+          onOverview={() => setOverviewOpen(true)}
+        />
+      </div>
 
       <div className="px-1">
         <p className="truncate text-sm text-muted">
@@ -706,35 +777,16 @@ export function SessionRunner() {
         record={recordMap.get(ex.id) ?? null}
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
+        weightStep={settings.weightStep ?? 2.5}
         onOpenGuide={() => setGuideOpen(true)}
+        onPrev={goPrev}
+        onNext={goNext}
         onWeight={(i, val) => setFieldEffort(item.id, i, "weight", val)}
         onReps={(i, oldVal, val) => onReps(item.id, i, oldVal, val)}
         onRir={(i, val) => setFieldEffort(item.id, i, "rir", val)}
         onIntensity={(i, val) => setFieldEffort(item.id, i, "intensity", val)}
         onCardioToggle={(done) => setField(item.id, 0, "reps", done ? "1" : "")}
       />
-
-      {rest && (
-        <RestPanel
-          left={rest.left}
-          total={rest.total}
-          set={restSet}
-          timed={restEx?.unit === "Sek"}
-          setNo={
-            restSet
-              ? (st.entries[rest.itemId] ?? [])
-                  .slice(0, rest.setIdx + 1)
-                  .filter((s) => !s.warmup).length
-              : 0
-          }
-          onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
-          onIntensity={(v) =>
-            rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
-          }
-          onAdd={() => setRest((r) => (r ? { ...r, left: r.left + 15 } : r))}
-          onSkip={() => setRest(null)}
-        />
-      )}
 
       <AtlasPanel
         ex={ex}
@@ -788,6 +840,28 @@ export function SessionRunner() {
           )}
         </Pressable>
       </div>
+
+      {rest && (
+        <RestPanel
+          left={rest.left}
+          total={rest.total}
+          set={restSet}
+          timed={restEx?.unit === "Sek"}
+          setNo={
+            restSet
+              ? (st.entries[rest.itemId] ?? [])
+                  .slice(0, rest.setIdx + 1)
+                  .filter((s) => !s.warmup).length
+              : 0
+          }
+          onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
+          onIntensity={(v) =>
+            rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
+          }
+          onAdd={() => setRest((r) => (r ? { ...r, left: r.left + 15 } : r))}
+          onSkip={() => setRest(null)}
+        />
+      )}
 
       <OverviewSheet
         open={overviewOpen}

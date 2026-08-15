@@ -12,6 +12,11 @@ function buzz(pattern: number | number[]): void {
   }
 }
 
+/** Feinster Impuls für Stepper-Schritte (±Gewicht/±Wdh). */
+export function tick(): void {
+  buzz(10);
+}
+
 /** Light tap for primary actions (start, save, select). */
 export function tap(): void {
   buzz(15);

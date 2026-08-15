@@ -109,7 +109,7 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Dein Name (optional)"
-            className="mb-4 w-full rounded-pill bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            className="mb-4 w-full rounded-pill bg-surface-2 px-4 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
 
           <p className="mb-1.5 px-1 text-sm font-medium text-fg">Dein Level</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronRight, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SetRow } from "@/components/workout/SetRow";
@@ -7,6 +8,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { beatsRecord } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { PATTERN_LABEL } from "@/lib/exercises";
+import { SPRING } from "@/lib/motion";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import type { PlannedExercise } from "@/lib/session-model";
@@ -28,7 +30,10 @@ export function ExerciseStage({
   record,
   isExam,
   aidNote,
+  weightStep,
   onOpenGuide,
+  onPrev,
+  onNext,
   onWeight,
   onReps,
   onRir,
@@ -45,7 +50,12 @@ export function ExerciseStage({
   record: ExRecord | null;
   isExam: boolean;
   aidNote?: string;
+  /** Schrittweite der Gewichts-Stepper im Satz-Logbuch (settings.weightStep). */
+  weightStep?: number;
   onOpenGuide: () => void;
+  /** Swipe auf dem Kopfbereich blättert zwischen Übungen (Buttons bleiben). */
+  onPrev: () => void;
+  onNext: () => void;
   onWeight: (i: number, val: string) => void;
   onReps: (i: number, oldVal: string, val: string) => void;
   onRir: (i: number, val: number) => void;
@@ -55,6 +65,7 @@ export function ExerciseStage({
   // Fokus-Logbuch: der manuell geöffnete Satz; sonst der erste offene Arbeitssatz.
   const [editIdx, setEditIdx] = useState<number | null>(null);
   useEffect(() => setEditIdx(null), [item.id]);
+  const reduce = useReducedMotion();
 
   const activeSetIdx = sets.findIndex(
     (s) => !s.warmup && (s.reps === "" || s.reps == null),
@@ -62,7 +73,6 @@ export function ExerciseStage({
   const effActive = editIdx ?? activeSetIdx;
   const work = sets.filter((s) => !s.warmup);
   const done = work.filter(isFilled).length;
-  const complete = ex.pattern !== "cardio" && work.length > 0 && work.every(isFilled);
 
   const prescLine = isExam
     ? "Prüfung: Rampe 5 · 4 · 3 — steigere zum schweren Test-Satz."
@@ -115,44 +125,57 @@ export function ExerciseStage({
 
   return (
     <section className="rounded-card border border-line bg-surface-1 p-4 shadow-card">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-xs text-accent-ink">
-            {String(index + 1).padStart(2, "0")}
-            <span className="text-faint"> / {String(total).padStart(2, "0")}</span>
-          </p>
-          <h2 className="mt-0.5 font-display text-2xl font-semibold leading-tight tracking-tight text-fg">
-            {ex.name}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted">
-            {ex.tag} · {PATTERN_LABEL[ex.pattern]}
-          </p>
+      {/* Kopf = Wischfläche: horizontal blättern (Elastik deutet es an),
+          das Satz-Logbuch darunter bleibt reine Tipp-Zone. */}
+      <motion.div
+        drag={reduce ? false : "x"}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.18}
+        dragMomentum={false}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -56 || info.velocity.x < -500) onNext();
+          else if (info.offset.x > 56 || info.velocity.x > 500) onPrev();
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-mono text-xs text-accent-ink">
+              {String(index + 1).padStart(2, "0")}
+              <span className="text-faint"> / {String(total).padStart(2, "0")}</span>
+            </p>
+            <h2 className="mt-0.5 font-display text-2xl font-semibold leading-tight tracking-tight text-fg">
+              {ex.name}
+            </h2>
+            <p className="mt-0.5 text-xs text-muted">
+              {ex.tag} · {PATTERN_LABEL[ex.pattern]}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="font-mono text-sm tabular-nums text-accent-ink">
+              {ex.pattern === "cardio"
+                ? `${ex.repLow}–${ex.repHigh}`
+                : `${item.sets} × ${item.repLow}${item.repHigh > item.repLow ? `–${item.repHigh}` : ""}`}
+            </p>
+            <p className="text-xs uppercase tracking-wider text-faint">
+              {ex.pattern === "cardio" ? "Min" : ex.unit === "Sek" ? "Sekunden" : "Wdh"}
+            </p>
+          </div>
         </div>
-        <div className="shrink-0 text-right">
-          <p className="font-mono text-sm tabular-nums text-accent-ink">
-            {ex.pattern === "cardio"
-              ? `${ex.repLow}–${ex.repHigh}`
-              : `${item.sets} × ${item.repLow}${item.repHigh > item.repLow ? `–${item.repHigh}` : ""}`}
-          </p>
-          <p className="text-xs uppercase tracking-wider text-faint">
-            {ex.pattern === "cardio" ? "Min" : ex.unit === "Sek" ? "Sekunden" : "Wdh"}
-          </p>
-        </div>
-      </div>
 
-      {item.why && (
-        <p className="mt-2 text-xs leading-relaxed text-muted">{item.why}</p>
-      )}
+        {item.why && (
+          <p className="mt-2 text-xs leading-relaxed text-muted">{item.why}</p>
+        )}
 
-      {aidNote && (
-        <Pressable
-          onClick={onOpenGuide}
-          className="mt-1.5 flex items-center gap-1 text-xs text-muted focus:outline-none"
-        >
-          <Wrench size={12} className="shrink-0" />
-          <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
-        </Pressable>
-      )}
+        {aidNote && (
+          <Pressable
+            onClick={onOpenGuide}
+            className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+          >
+            <Wrench size={12} className="shrink-0" />
+            <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
+          </Pressable>
+        )}
+      </motion.div>
 
       {ex.pattern === "cardio" ? (
         <div className="mt-3">
@@ -179,16 +202,28 @@ export function ExerciseStage({
         </div>
       ) : (
         <>
-          {order && (
-            <div className="mt-4 text-center" data-testid="stage-order">
-              <p className="font-mono text-xs uppercase tracking-widest text-faint">
-                Jetzt · Satz {order.setNo}/{item.sets}
-              </p>
-              <p className="mt-1 font-display text-5xl font-bold leading-none tracking-tight tabular-nums text-fg">
-                {order.text}
-              </p>
-            </div>
-          )}
+          {/* Gleiche Höhe in beiden Zuständen — kein Layout-Sprung beim letzten Satz. */}
+          <div className="mt-4 text-center" data-testid="stage-order">
+            {order ? (
+              <>
+                <p className="font-mono text-xs uppercase tracking-widest text-faint">
+                  Jetzt · Satz {order.setNo}/{item.sets}
+                </p>
+                <p className="mt-1 font-display text-5xl font-bold leading-none tracking-tight tabular-nums text-fg">
+                  {order.text}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-mono text-xs uppercase tracking-widest text-status-in">
+                  Übung geschafft · {done}/{work.length} Sätze
+                </p>
+                <p className="mt-1 font-display text-5xl font-bold leading-none tracking-tight text-fg">
+                  Fertig
+                </p>
+              </>
+            )}
+          </div>
 
           <div className="mt-4 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
             <p className="text-xs uppercase tracking-widest text-muted">Letztes Mal</p>
@@ -205,36 +240,40 @@ export function ExerciseStage({
                 const state: "active" | "done" | "upcoming" =
                   i === effActive ? "active" : filled ? "done" : "upcoming";
                 return (
-                  <SetRow
+                  // layout="position" = reine Translation: beim Aktiv-Wechsel
+                  // GLEITEN die Zeilen an ihre neuen Plätze (kein Scale-Morph,
+                  // der Ring und Inputs verzerren würde). SetRow selbst bleibt
+                  // unangetastet — .set-active trägt weiter den Smoke-Test.
+                  <motion.div
                     key={i}
-                    label={label}
-                    isWarmup={!!s.warmup}
-                    unit={ex.unit}
-                    set={s}
-                    isDumbbell={ex.req.includes("dumbbell") || ex.req.includes("db")}
-                    state={state}
-                    ghostWeight={s.warmup ? undefined : ghostWeight}
-                    ghostReps={s.warmup ? undefined : ghostReps}
-                    onWeight={(val) => onWeight(i, val)}
-                    onReps={(oldVal, val) => onReps(i, oldVal, val)}
-                    onRir={(val) => onRir(i, val)}
-                    onIntensity={(val) => onIntensity(i, val)}
-                    onActivate={() => setEditIdx(i)}
-                    onDeactivate={() => setEditIdx((k) => (k === i ? null : k))}
-                    recordLabel={record?.label}
-                    isRecord={beatsRecord(ex, s, record ?? null)}
-                  />
+                    layout={reduce ? false : "position"}
+                    transition={SPRING.panel}
+                  >
+                    <SetRow
+                      label={label}
+                      isWarmup={!!s.warmup}
+                      unit={ex.unit}
+                      set={s}
+                      isDumbbell={ex.req.includes("dumbbell") || ex.req.includes("db")}
+                      state={state}
+                      ghostWeight={s.warmup ? undefined : ghostWeight}
+                      ghostReps={s.warmup ? undefined : ghostReps}
+                      weightStep={weightStep}
+                      onWeight={(val) => onWeight(i, val)}
+                      onReps={(oldVal, val) => onReps(i, oldVal, val)}
+                      onRir={(val) => onRir(i, val)}
+                      onIntensity={(val) => onIntensity(i, val)}
+                      onActivate={() => setEditIdx(i)}
+                      onDeactivate={() => setEditIdx((k) => (k === i ? null : k))}
+                      recordLabel={record?.label}
+                      isRecord={beatsRecord(ex, s, record ?? null)}
+                    />
+                  </motion.div>
                 );
               });
             })()}
           </div>
 
-          {complete && (
-            <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-status-in">
-              <Check size={15} strokeWidth={2.5} /> Übung geschafft — {done}/
-              {work.length} Sätze.
-            </p>
-          )}
         </>
       )}
 

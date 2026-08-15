@@ -255,7 +255,7 @@ export function GuideSheet({
                     }}
                     placeholder="youtube.com/shorts/… einfügen"
                     className={cn(
-                      "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+                      "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
                       invalid && "ring-2 ring-status-danger",
                     )}
                   />
@@ -344,7 +344,7 @@ export function GuideSheet({
                     if (e.key === "Enter") saveNote();
                   }}
                   placeholder="z. B. Unterstützungsband, Gurte, 20-kg-Band"
-                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
                 />
                 <Pressable
                   type="button"

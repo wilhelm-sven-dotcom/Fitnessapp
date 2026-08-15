@@ -159,3 +159,98 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 - ❌ Nicht Hover-zentriert denken (Touch-PWA); reduced-motion nie ignorieren.
 - ✅ Leitbild: **ein Farbfeld mutig** (der blaue Heute-Hero, der Bereichscode),
   drumherum Silber, Hairlines und Disziplin — Systematik statt Stimmung.
+
+## Interaktions-Konventionen Stufe 2 (Gym-Flow, Heatmap, Poster)
+
+- **Stepper statt Tastatur** im Satz-Logbuch: −/+ als `Pressable` 44 px
+  (`h-11 w-11 rounded-card bg-surface-2`), Gewicht in `settings.weightStep`,
+  Wiederholungen ±1; Ticks lokal puffern, Provider-Commit debounct (350 ms);
+  je Schritt Haptik `tick()`. Ein-Tap-Commit „Satz erledigt · X kg × Y" als
+  `Button` full über den bestehenden `onReps`-Pfad (Erst-Commit-Semantik!).
+- **Pausen-Dock**: die Satzpause ist ein FESTES Dock am unteren Rand
+  (`fixed inset-x-0 bottom-0 z-30`, innen `mx-auto max-w-md px-5` +
+  Safe-Area-`paddingBottom` inline), Panel-Rezept mit `shadow-card-lg`.
+  Letzte 5 s: Zahl+Balken wechseln per Token auf `var(--gelb)`
+  (`transition-colors`, Datenänderung = erlaubter Anlass); bei 0 EIN Puls
+  (`scale [1, 1.04, 1]`, ≤200 ms, reduced-motion-gesichert) und der Zustand
+  „Pause vorbei / Los" bleibt stehen — kein Auto-Unmount. Akustik wie im
+  Aufwärmen: `beep()` ≤3 s, `beepEnd()` bei 0, ungated (cueVolume regelt);
+  nur Sprache hängt an `voiceCues`. Container hinter dem Dock bekommt
+  `pb-36`, solange die Pause lebt.
+- **Layout-Ruhe auf der Bühne**: Zustands-Slots behalten ihre Höhe — der
+  „Jetzt"-Block zeigt nach dem letzten Satz „Übung geschafft / Fertig",
+  das ATLAS-Panel zeigt still „…" statt zu verschwinden (nur Cardio bleibt
+  ohne Panel).
+- **Muskel-Heatmap** (`MuscleHeatmapCard`): die EINE Heat-Wahrheit lebt in
+  **`lib/heat.ts`** — `MUSCLE_BONES_HEAT`, `HEAT_STEPS` {35, 55, 78, 100},
+  `heatStepFor` (Quartile auf `sets / volumeTargetFor(m).max`),
+  `boneHeatSteps` (Kombi-Segmente = MAX, 0 = untrainiert) und `mixHex`
+  (RGB-Lerp für Canvas). Die Card macht daraus `color-mix(in srgb,
+  var(--gruen) X%, var(--surface-2))`; `CSS.supports`-Fallback binär
+  (volles Grün), erst nach Mount aktivieren (SSR-stabil). Untrainiert =
+  `var(--surface-2)`. IMMER mit der Fußnote „Schema, keine Anatomie".
+  Spine wird unter `boneTint` zur Hairline; `boneWidth` lebt in figureData
+  (Poster zeichnet mit denselben Stärken).
+- **Share-Card** (`lib/share-card.ts`): 1080×1350 (4:5), Farben zur Laufzeit
+  aus den Tokens (`getComputedStyle` → respektiert Theme + accentOverride),
+  Schriften aus `--font-archivo`/`--font-jbmono` (`document.fonts.load`,
+  System-Fallback ok), Zahlen de-DE, rounded-rect via arcTo (kein
+  `ctx.roundRect` — altes iOS). Blob VORAB im Effekt rendern; Klick nutzt
+  `navigator.canShare({files})` → Share-Sheet, sonst PNG-Download. Teilen
+  gibt es NUR im Sieger-Moment (Frequenz-Regel).
+- **PressableLink** ist die Navigations-Schwester von `Pressable`
+  (motion(next/link), whileTap 0.97, `SPRING.press`) — für Tabs und
+  Header-Icons; Icon-Ziele grundsätzlich 44 px (`h-11 w-11` bzw.
+  `-m-2 h-11 w-11`, wenn das Raster kompakt bleiben soll).
+- **Plattform-Basis** (globals.css): `-webkit-tap-highlight-color: transparent`,
+  `touch-action: manipulation` auf Bedienelementen, `overscroll-behavior-y:
+  none` am Dokument (Pull-to-Refresh bewusst geopfert), Formularschrift
+  1rem gegen iOS-Zoom (an Feldern explizit `text-base`), `scroll-margin`
+  für fokussierte Felder, Sheets `overscroll-contain`. Theme-Wechsel läuft
+  als View-Transition-Crossfade in `applyTheme` (nur bei echtem Wechsel,
+  reduced-motion-gesichert); `theme-color` wird pre-paint im No-Flash-Script
+  gesetzt.
+- **STICKY-FALLE:** Der Horizontal-Clip liegt NUR auf `body { overflow-x:
+  hidden }` (propagiert zum Viewport, body bleibt scrollfrei). NIE
+  `overflow-x-hidden` auf `html` oder einen inneren Wrapper legen — das
+  macht den Wrapper zum toten Scrollport und entwaffnet jede
+  `position:sticky`-Leiste stumm (App-Header, Trainings-Kopf).
+
+## Interaktions-Konventionen Folgestufe (Trends, Sheets, Sticky, Poster)
+
+- **TrendChart v2**: `points`-API (`{date?, value, label?}`) statt nackter
+  Werte — mit lückenlosen Daten wird die x-Achse ZEITproportional
+  (Trainingslücken ehrlich sichtbar), sonst Index-Fallback. Scrubbing nach
+  BeforeAfter-Muster (setPointerCapture, `e.buttons > 0`), Wrapper
+  `touch-pan-y select-none` (NIE `touch-none` — die Seite muss vertikal
+  scrollbar bleiben); Auswahl = nächstliegender Punkt; Marker = leise
+  Senkrechte + Ring; **Readout-Slot mit fester Höhe ÜBER dem SVG**
+  (kein Layout-Sprung unterm Finger). Keine Animationen (Frequenz-Regel).
+- **Aufklappen & springen**: Listen klappen per bedingtem Rendern auf
+  (kein Höhen-Theater), Toggle trägt `aria-expanded`. Sprung zu einer
+  Karte: Ref-Map + `pendingJump`-State — der Effekt scrollt NACH dem
+  Commit (Ziel ist gemountet), `scroll-mt-20` gegen Sticky-Chrome,
+  Highlight = `ring-2 ring-accent-volume` + `transition-shadow` für ~1,2 s
+  (Nutzeraktion als Anlass), reduced motion scrollt `auto`.
+- **Level-Sheet**: XP-Herleitung aus `trainingXpParts` (lib/achievements) —
+  `trainingLevel` summiert intern DIESELBEN Teile (Single Source, kein
+  Drift). Abzeichen aus `evaluateAchievements` als Hairline-Liste; Tier als
+  Mono-Text-Chip (KEINE Metallfarben ins Token-System), gesperrt =
+  `text-faint` + `h-1`-Progress in `bg-accent-volume`. Lazy rechnen
+  (`open` in den useMemo-Deps).
+- **Sticky-Trainings-Kopf** (SessionRunner): 1-px-Sentinel (`-mb-3 h-px`)
+  + Wrapper `sticky top-0 z-20 -mx-5 px-5 pb-2` mit Safe-Area-paddingTop
+  inline; IntersectionObserver auf dem Sentinel schaltet `glass border-b
+  border-line` NUR im kondensierten Zustand (Rezept = App-Header). Der
+  Observer-Effekt braucht `active?.phase` in den Deps — der Sentinel
+  existiert erst im Übungs-Baum. z-Ordnung: 20 < Dock 30 < Sheets 50.
+- **Listen-Gleiten**: Zeilen in `motion.div layout={reduce ? false :
+  "position"}` (SPRING.panel) — NUR Translation. NIE `layoutId`-Morph über
+  Zeilen ungleicher Höhe (Framer skaliert — Ring/Inputs verzerren).
+- **Wochen-Poster** (share-card): mit `muscleVolumes` zeichnet
+  `drawFigure` die zwei Heat-Figuren (FigurePanel-Rezept: Outline
+  boneWidth+6 in Grundfarbe → Fill in `mixHex`-Tint → Spine → Kopf, round
+  caps, Frame A, ohne Boden/Gerät); Tints aus `lib/heat`, Farben zur
+  Laufzeit via cssVar. Die PR-Textzeile entfällt im Figuren-Layout (die
+  grüne REKORDE-Spalte sagt es schon); ohne `muscleVolumes` bleibt das
+  kompakte Alt-Layout (Rückwärtskompatibilität).

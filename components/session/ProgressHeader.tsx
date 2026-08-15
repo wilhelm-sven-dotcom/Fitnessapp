@@ -1,6 +1,7 @@
 "use client";
 
 import { LayoutList, X } from "lucide-react";
+import { Odometer } from "@/components/ui/Odometer";
 import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ export function ProgressHeader({
       <Pressable
         onClick={onExit}
         aria-label="Training beenden"
-        className="shrink-0 rounded-full p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+        className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
       >
         <X size={18} />
       </Pressable>
@@ -63,7 +64,8 @@ export function ProgressHeader({
       </Pressable>
 
       <span className="shrink-0 font-mono text-xs tabular-nums text-muted">
-        ~{remainMin} Min
+        {/* Rollt nur bei echten Wertwechseln — beim Mount steht er sofort. */}
+        ~<Odometer value={remainMin} /> Min
       </span>
     </div>
   );

@@ -25,8 +25,9 @@ import type { AppSettings, Exercise, LoggedSession } from "@/lib/types";
  * safety those functions carry (`s.exercises ?? []`, `workSets` = `(sets ?? [])…`)
  * is inherited; the only raw walk here (totalSets / ratedSets) uses the same guards.
  *
- * Level formula (XP blends the four pillars the app tracks):
- *   xp = 4·Einheiten + round(Gesamtvolumen_kg / 1000) + 12·PRs + 8·Streak + 5·bestCoverage
+ * Level formula (XP blends the pillars the app tracks — the SAME parts feed
+ * `trainingXpParts`, so the Level-Sheet derivation can never drift):
+ *   xp = 4·Einheiten + round(Volumen_kg/1000) + 12·PRs + 8·Streak + 5·bestCoverage + round(Sätze/4)
  * RPG-style growing thresholds so early levels come fast, later ones slow:
  *   xpToReach(n) = round(50 · (n-1)^1.6)   // L1=0, L2=50, L3≈152, L4≈290 …
  */
@@ -311,16 +312,39 @@ function levelTitle(level: number): string {
   return `${band} ${roman}`;
 }
 
-/** Current training level + progress toward the next, from the same metrics. */
-export function trainingLevel(input: AchievementInput): TrainingLevel {
+export interface XpPart {
+  label: string;
+  /** Lesbare Herleitung („23 × 4", „12,4 t → 12"). */
+  detail: string;
+  xp: number;
+}
+
+/** Die XP-Herleitung, Zeile für Zeile — `trainingLevel` summiert exakt diese
+ *  Teile (Single Source: der Balken und das Level-Sheet erzählen dasselbe). */
+export function trainingXpParts(input: AchievementInput): { parts: XpPart[]; total: number } {
   const m = computeMetrics(input);
-  const xp =
-    4 * m.sessions +
-    Math.round(m.totalVolume / 1000) +
-    12 * m.prCount +
-    8 * m.streak +
-    5 * m.bestCoverage +
-    Math.round(m.totalSets / 4);
+  const parts: XpPart[] = [
+    { label: "Einheiten", detail: `${m.sessions} × 4`, xp: 4 * m.sessions },
+    {
+      label: "Gesamtvolumen",
+      detail: `${tonnes(m.totalVolume)} · 1 je Tonne`,
+      xp: Math.round(m.totalVolume / 1000),
+    },
+    { label: "Rekorde", detail: `${m.prCount} × 12`, xp: 12 * m.prCount },
+    { label: "Wochen-Serie", detail: `${m.streak} × 8`, xp: 8 * m.streak },
+    {
+      label: "Beste Wochen-Abdeckung",
+      detail: `${m.bestCoverage} ${m.bestCoverage === 1 ? "Muskel" : "Muskeln"} × 5`,
+      xp: 5 * m.bestCoverage,
+    },
+    { label: "Arbeitssätze", detail: `${m.totalSets} ÷ 4`, xp: Math.round(m.totalSets / 4) },
+  ];
+  return { parts, total: parts.reduce((a, p) => a + p.xp, 0) };
+}
+
+/** Current training level + progress toward the next, from the same parts. */
+export function trainingLevel(input: AchievementInput): TrainingLevel {
+  const { total: xp } = trainingXpParts(input);
   const xpToReach = (n: number) => Math.round(50 * Math.pow(Math.max(0, n - 1), 1.6));
   let level = 1;
   while (level < 200 && xp >= xpToReach(level + 1)) level++;

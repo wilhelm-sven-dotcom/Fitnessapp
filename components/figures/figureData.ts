@@ -58,6 +58,14 @@ export const FB: Bone[] = [["sh", "hip"], ["sh", "elbowL"], ["elbowL", "handL"],
 export const SP: Bone[] = [["sh", "hip"]];
 export const SPL: Bone[] = [["sh", "hip"], ["hip", "knee"], ["knee", "foot"]];
 
+/** Limb thickness: torso > thigh/upper-arm > shin/forearm. Lebt bei den
+ *  Posen-Daten, weil auch das Canvas-Poster mit genau diesen Stärken zeichnet. */
+export function boneWidth([a, b]: Bone): number {
+  if (a === "sh" && b === "hip") return 18;
+  if (a.startsWith("elbow") || a.startsWith("knee")) return 10;
+  return 13;
+}
+
 /** A view's pose sequence — the authored `frames`, or [A, B] for legacy 2-pose figures.
  * Drops any undefined/null entry (a hole in an authored sequence) and always returns
  * at least one frame, so frameAt/lerpPts downstream can never index into nothing. */

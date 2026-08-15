@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  boneWidth,
   frameAt,
   framesOf,
   lerpPts,
@@ -42,13 +43,6 @@ function Equip({ P, eq }: { P: Frame; eq?: EquipDef }) {
     });
   }
   return <>{e}</>;
-}
-
-/** Limb thickness: torso > thigh/upper-arm > shin/forearm. */
-function boneWidth([a, b]: Bone): number {
-  if (a === "sh" && b === "hip") return 18;
-  if (a.startsWith("elbow") || a.startsWith("knee")) return 10;
-  return 13;
 }
 
 /**
@@ -156,8 +150,9 @@ export function FigurePanel({
           "f" + bn[0] + bn[1],
         ),
       )}
-      {/* Neutral-spine cue. */}
-      {spine.map((sp, idx) => cap(sp, 3.5, "#34d399", "sp" + idx))}
+      {/* Neutral-spine cue — in der Heatmap (boneTint) nur Hairline-Naht,
+          damit das Grün der Wirbelsäule nicht wie eine Heat-Stufe liest. */}
+      {spine.map((sp, idx) => cap(sp, 3.5, boneTint ? "var(--line)" : "#34d399", "sp" + idx))}
       {P[headKey] && (
         <>
           <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />

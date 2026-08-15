@@ -1,8 +1,8 @@
 "use client";
 
 import { Cloud, CloudOff, Settings } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PressableLink } from "@/components/ui/PressableLink";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -34,8 +34,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       {firstRun && <Welcome />}
+      {/* Kein overflow-x-hidden auf diesem Wrapper: der Clip sitzt auf
+          html/body — sonst kleben weder App-Header noch Trainings-Kopf. */}
       {!firstRun && (
-        <div className="min-h-screen overflow-x-hidden">
+        <div className="min-h-screen">
           {!hideChrome && (
             <header
               className="glass sticky top-0 z-30 border-b border-line"
@@ -49,30 +51,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center gap-1">
                   {cloud.configured &&
                     (cloud.email ? (
-                      <Link
+                      <PressableLink
                         href="/settings"
                         aria-label="Cloud-Sync aktiv"
-                        className="rounded-full p-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="flex h-11 w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                         style={{ color: "var(--accent-ink)" }}
                       >
                         <Cloud size={20} />
-                      </Link>
+                      </PressableLink>
                     ) : (
-                      <Link
+                      <PressableLink
                         href="/settings"
                         aria-label="Anmelden für Cloud-Sync"
-                        className="rounded-full p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="flex h-11 w-11 items-center justify-center rounded-full text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                       >
                         <CloudOff size={20} />
-                      </Link>
+                      </PressableLink>
                     ))}
-                  <Link
+                  <PressableLink
                     href="/settings"
                     aria-label="Einstellungen"
-                    className="rounded-full p-2.5 text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                   >
                     <Settings size={20} />
-                  </Link>
+                  </PressableLink>
                 </div>
               </div>
             </header>

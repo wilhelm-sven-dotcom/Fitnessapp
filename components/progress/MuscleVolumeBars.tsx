@@ -1,32 +1,36 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
-import { EASE_OUT } from "@/lib/motion";
-import { MUSCLE_LABEL, VOLUME_TARGET, type MuscleVolume } from "@/lib/volume";
+import { MUSCLE_LABEL, volumeTargetFor, type MuscleVolume } from "@/lib/volume";
 
-const SCALE_MAX = 24;
-const HIGHLIGHT = "linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0))";
-const statusHex: Record<MuscleVolume["status"], string> = {
-  under: "#0a84ff",
-  in: "#30d158",
-  over: "#ff9f0a",
+// Status-Farben als Tokens (theme-korrekt): unter Ziel = Blau, im Ziel = Grün,
+// über Ziel = Gelb — identisch zur Status-Semantik in tailwind.config.ts.
+const statusVar: Record<MuscleVolume["status"], string> = {
+  under: "var(--accent)",
+  in: "var(--gruen)",
+  over: "var(--gelb)",
 };
 
+const fmt = (n: number) => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
+
+/**
+ * Wochen-Volumen je Muskel — flache Balken (keine Glows/Verläufe), Zielband
+ * und Skala JE Zeile aus dem per-Muskel-Ziel, damit Bild und Status-Farbe
+ * dieselbe Wahrheit erzählen (kleine Muskeln haben ein niedrigeres Band).
+ * Breiten-Übergang nur bei Datenänderung (CSS-Transition, kein Mount-Reveal).
+ */
 export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
-  const reduce = useReducedMotion();
   return (
     <Card className="mb-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-semibold leading-tight">Wochen-Volumen</h3>
-        <span className="text-xs text-muted">
-          Sätze · Ziel {VOLUME_TARGET.min}–{VOLUME_TARGET.max}
-        </span>
+        <span className="text-xs text-muted">Sätze · Ziel je Muskel</span>
       </div>
       <div className="space-y-2">
-        {data.map((m, i) => {
-          const hex = statusHex[m.status];
-          const pct = Math.min(100, (m.sets / SCALE_MAX) * 100);
+        {data.map((m) => {
+          const target = volumeTargetFor(m.muscle);
+          const scaleMax = target.max * 1.2;
+          const pct = Math.min(100, (m.sets / scaleMax) * 100);
           return (
             <div key={m.muscle} className="flex items-center gap-3">
               <span className="w-24 shrink-0 text-xs text-muted">
@@ -36,25 +40,18 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
                 <div
                   className="absolute inset-y-0"
                   style={{
-                    left: `${(VOLUME_TARGET.min / SCALE_MAX) * 100}%`,
-                    width: `${((VOLUME_TARGET.max - VOLUME_TARGET.min) / SCALE_MAX) * 100}%`,
+                    left: `${(target.min / scaleMax) * 100}%`,
+                    width: `${((target.max - target.min) / scaleMax) * 100}%`,
                     backgroundColor: "var(--line)",
                   }}
                 />
-                <motion.div
-                  className="absolute inset-y-0 left-0 rounded-full"
-                  style={{
-                    backgroundColor: hex,
-                    backgroundImage: HIGHLIGHT,
-                    boxShadow: `0 0 8px -2px ${hex}`,
-                  }}
-                  initial={reduce ? false : { width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.6, delay: i * 0.05, ease: EASE_OUT }}
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ease-out"
+                  style={{ width: `${pct}%`, backgroundColor: statusVar[m.status] }}
                 />
               </div>
-              <span className="w-7 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
-                {m.sets}
+              <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
+                {fmt(m.sets)}
               </span>
             </div>
           );

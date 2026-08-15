@@ -367,7 +367,7 @@ export default function CoachPage() {
           rows={1}
           placeholder="Frag ATLAS…"
           aria-label="Nachricht an den Coach"
-          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
+          className="flex-1 resize-none rounded-card bg-surface-2 px-4 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-coach"
         />
         <Button
           variant="strong"

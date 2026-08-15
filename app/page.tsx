@@ -11,6 +11,7 @@ import { CoachCard } from "@/components/coach/CoachCard";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { Odometer } from "@/components/ui/Odometer";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
@@ -251,7 +252,7 @@ export default function HomePage() {
             <AtlasMark size={15} className="shrink-0" />
             <span className="font-mono text-xs uppercase tracking-widest">ATLAS</span>
             <span className="ml-auto font-mono text-xs tabular-nums">
-              Mission {Math.round(trainer.mission.pct * 100)} %
+              Mission <Odometer value={Math.round(trainer.mission.pct * 100)} /> %
             </span>
           </span>
           <span className="mt-1 flex items-start justify-between gap-2">

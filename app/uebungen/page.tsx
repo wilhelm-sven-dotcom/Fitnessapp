@@ -119,7 +119,7 @@ export default function ExerciseCatalogPage() {
             autoCapitalize="off"
             placeholder="Übung suchen…"
             aria-label="Übung suchen"
-            className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
           />
         </div>
         <Pressable

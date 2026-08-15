@@ -40,6 +40,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   // Kein maximumScale: Pinch-Zoom bleibt möglich (WCAG 1.4.4).
   viewportFit: "cover",
+  // iOS-Tastatur STAUCHT das Layout statt es zu überdecken — Sticky-Chrome
+  // (Dock, Nav) bleibt über der Tastatur sichtbar.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -87,10 +90,12 @@ finish review, the verdict, and DESIGN.md (ui-style).
         {/* Apply saved theme before paint (no flash of the wrong look).
             Enthält die Einmal-Migration auf den hellen Default: ein gespeichertes
             "dark" ohne themeMigratedM72-Flag stammt vom alten Dunkel-Default und
-            wird wie "light" behandelt (loadAll persistiert die Migration). */}
+            wird wie "light" behandelt (loadAll persistiert die Migration).
+            Setzt auch das theme-color-Meta pre-paint — sonst blitzt die
+            Systemleiste beim Dunkel-Kaltstart hell auf (Werte = lib/theme.ts). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');d.setAttribute('data-theme',r);if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#14171a':'#f2f4f2');if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);}catch(e){}})();`,
           }}
         />
         <TrainingProvider>

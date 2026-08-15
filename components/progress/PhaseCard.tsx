@@ -2,27 +2,19 @@
 
 import { CalendarRange } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { fatigueState } from "@/lib/fatigue";
-import { phaseState } from "@/lib/periodization";
-import type { AppSettings, CardioSession, LoggedSession } from "@/lib/types";
+import type { PhaseState } from "@/lib/periodization";
+import type { LoggedSession } from "@/lib/types";
 
-const DAY = 86_400_000;
-
-/** Where you are in the ~6-week block + when a deload is due. */
-export function PhaseCard({
-  log,
-  cardio,
-  settings,
-}: {
-  log: LoggedSession[];
-  cardio: CardioSession[];
-  settings: AppSettings;
-}) {
+/**
+ * Where you are in the ~6-week block + when a deload is due. Der Zustand
+ * kommt fertig aus dem Provider (eine Quelle — keine Doppelrechnung);
+ * der Entlastungs-Slot im Balken zeigt die tatsächlich empfohlene Woche
+ * (bei vorgezogenem Deload also die aktuelle), die Legende benennt die
+ * drei Farben.
+ */
+export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: PhaseState }) {
   if (log.length < 3) return null; // needs some history to be meaningful
-  const band = fatigueState(log, cardio).band;
-  const minDate = Math.min(...log.map((s) => new Date(s.date).getTime()));
-  const historyWeeks = (Date.now() - minDate) / (7 * DAY);
-  const p = phaseState(settings, band, historyWeeks);
+  const deloadWk = p.due ? p.cycleWeek : p.cycleLength;
 
   return (
     <div>
@@ -38,22 +30,48 @@ export function PhaseCard({
         <div className="flex gap-1" aria-hidden>
           {Array.from({ length: p.cycleLength }).map((_, i) => {
             const wk = i + 1;
-            const isDeloadWeek = wk === p.cycleLength;
+            const isDeload = wk === deloadWk;
             const active = wk === p.cycleWeek;
             return (
               <div
                 key={i}
                 className="h-2 flex-1 rounded-pill"
                 style={{
-                  background: active
-                    ? "var(--accent-ink)"
-                    : isDeloadWeek
-                      ? "var(--surface-2)"
+                  // Fällt Entlastung auf die aktive Woche, gewinnt die
+                  // Entlastungs-Füllung; „aktiv" bleibt als Inset-Hairline lesbar.
+                  background: isDeload
+                    ? "var(--surface-2)"
+                    : active
+                      ? "var(--accent-ink)"
                       : "var(--line)",
+                  boxShadow:
+                    isDeload && active ? "inset 0 0 0 1.5px var(--accent-ink)" : undefined,
                 }}
               />
             );
           })}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="h-3 w-3 rounded-sm"
+              style={{ background: "var(--accent-ink)" }}
+              aria-hidden
+            />
+            aktuelle Woche
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-sm" style={{ background: "var(--line)" }} aria-hidden />
+            Training
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="h-3 w-3 rounded-sm"
+              style={{ background: "var(--surface-2)" }}
+              aria-hidden
+            />
+            Entlastung
+          </span>
         </div>
         <div className="mt-3 flex items-center gap-2">
           <p className="font-display text-2xl font-bold tracking-tight text-fg">{p.title}</p>

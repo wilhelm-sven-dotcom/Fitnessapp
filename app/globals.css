@@ -87,6 +87,23 @@ html {
   -webkit-text-size-adjust: 100%;
   background-color: var(--base);
   accent-color: var(--accent);
+  /* App statt Browser: kein grauer Tap-Blitz auf iOS. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Kein Gummiband/Pull-to-Refresh am Dokumentrand — die App ist die Seite.
+   (Bewusster Tausch: Browser-Reload per Ziehen entfällt; Daten laden lokal.) */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Horizontal-Clip NUR auf body: er propagiert zum Viewport (html bleibt
+   visible), body wird dadurch selbst KEIN Scrollport — genau so überleben
+   die sticky-Leisten (App-Header, Trainings-Kopf). Ein overflow-x-hidden
+   auf html oder einem inneren Wrapper entwaffnet sie stumm. */
+body {
+  overflow-x: hidden;
 }
 
 @layer base {
@@ -104,6 +121,29 @@ html {
   input,
   textarea {
     caret-color: var(--accent);
+  }
+  /* Bedienelemente reagieren SOFORT: keine 350-ms-Doppeltipp-Wartezeit,
+     kein versehentliches Zoomen beim schnellen Tippen im Training. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+  /* iOS zoomt in Felder unter 16 px hinein — Formularschrift bleibt 1rem.
+     (Utilities wie text-base an den Feldern sagen dasselbe explizit.) */
+  input,
+  textarea,
+  select {
+    font-size: 1rem;
+  }
+  /* Fokussierte Felder scrollen sich unter Sticky-Chrome frei
+     (Header oben, Dock/Nav unten). */
+  input,
+  textarea {
+    scroll-margin: 4.5rem 0 5.5rem;
   }
 }
 

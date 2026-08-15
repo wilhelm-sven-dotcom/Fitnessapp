@@ -1,19 +1,39 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { useId } from "react";
+import { useState } from "react";
 import type { RadarAxis } from "@/lib/balance";
+import type { Muscle } from "@/lib/types";
 
 const SIZE = 220;
 const C = SIZE / 2;
-const R = 74;
-const GRID = "var(--line)"; // theme-aware — the old fixed dark grey vanished on light
-const GREEN = "#30d158"; // semantic volume green (== accent-volume token)
+const R = 92; // Netz füllt die viewBox — Labels sitzen bei R+12
+const GRID = "var(--line)";
+const GREEN = "var(--gruen)"; // Fortschritts-Grün, theme-korrekt in hell & dunkel
 
-export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
-  const reduce = useReducedMotion();
-  const uid = useId().replace(/:/g, "");
-  const fillId = `radar-${uid}`;
+/** Zahl ohne unnötige Dezimale, de-DE (7.5 → „7,5", 3 → „3"). */
+const fmt = (n: number) =>
+  n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
+
+/**
+ * Muskel-Balance-Radar. Statisches Datenbild (keine Mount-Choreografie),
+ * flache Füllung statt Verlauf/Glow. Jede Achse ist antippbar (44-px-Hitbox)
+ * und meldet die Auswahl nach oben — das Scoreboard der Karte zeigt Details.
+ * Außenrand = oberes Wochenziel JE Muskel, gestricheltes Polygon = unteres
+ * Ziel; die Wurzel-Skala macht reale Wochenwerte (wenige Sätze) sichtbar.
+ */
+export function BalanceRadar({
+  axes,
+  ghost,
+  selected,
+  onSelect,
+}: {
+  axes: RadarAxis[];
+  /** Vorwoche als gestrichelte Kontur (gleiche Achsen-Reihenfolge). */
+  ghost?: RadarAxis[];
+  selected?: Muscle | null;
+  onSelect?: (m: Muscle | null) => void;
+}) {
+  const [focused, setFocused] = useState<Muscle | null>(null);
   const n = axes.length;
   if (n < 3) return null;
 
@@ -31,31 +51,45 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
       .join(" ") + " Z";
 
   const gridOuter = polygon(() => 1);
-  const gridMid = polygon(() => 0.5); // = the 10-set minimum target
-  const data = polygon((i) => Math.max(0, Math.min(1, axes[i].value)));
+  // Unteres Ziel je Achse — mit Wurzel-Skala ein Polygon, kein Kreisring.
+  const gridMin = polygon((i) =>
+    axes[i].target.max > 0 ? Math.sqrt(axes[i].target.min / axes[i].target.max) : 0,
+  );
+  const cap = Math.sqrt(1.15); // Skalen-Deckel — „über Ziel" ragt bis hierher
+  const data = polygon((i) => Math.min(cap, Math.max(0, axes[i].value)));
+  const ghostPath =
+    ghost && ghost.length === n
+      ? polygon((i) => Math.min(cap, Math.max(0, ghost[i].value)))
+      : null;
+
+  const toggle = (m: Muscle) => onSelect?.(selected === m ? null : m);
 
   return (
-    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="mx-auto w-full max-w-xs">
-      <defs>
-        <radialGradient id={fillId} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#30d158" stopOpacity={0.4} />
-          <stop offset="100%" stopColor="#30d158" stopOpacity={0.08} />
-        </radialGradient>
-      </defs>
+    <svg
+      // Seitlich 24px Luft: die längsten Achsen-Labels („Schultern") ragen
+      // sonst über den viewBox-Rand und werden hart beschnitten.
+      viewBox={`-24 0 ${SIZE + 48} ${SIZE}`}
+      className="mx-auto w-full max-w-sm"
+      role="group"
+      aria-label="Muskel-Balance-Radar — Achsen antippbar"
+    >
       <path d={gridOuter} fill="none" stroke={GRID} strokeWidth={1} />
-      {/* Dashed ring marks the minimum target (10 sets). */}
-      <path d={gridMid} fill="none" stroke="var(--line)" strokeWidth={1} strokeDasharray="2 3" />
+      {/* Gestrichelt = unteres Wochenziel je Muskel. */}
+      <path d={gridMin} fill="none" stroke={GRID} strokeWidth={1} strokeDasharray="2 3" />
       {axes.map((a, i) => {
         const [ex, ey] = pt(i, R);
-        const [lx, ly] = pt(i, R + 16);
+        const [lx, ly] = pt(i, R + 12);
+        const active = selected === a.muscle;
         return (
           <g key={a.muscle}>
             <line x1={C} y1={C} x2={ex} y2={ey} stroke={GRID} strokeWidth={1} />
             <text
               x={lx}
               y={ly}
-              fill="var(--faint)"
-              fontSize={9}
+              fill={active ? "var(--fg)" : "var(--faint)"}
+              fontSize={10}
+              fontWeight={active ? 600 : 400}
+              className="font-mono"
               textAnchor="middle"
               dominantBaseline="middle"
             >
@@ -64,21 +98,73 @@ export function BalanceRadar({ axes }: { axes: RadarAxis[] }) {
           </g>
         );
       })}
-      <motion.path
+      {/* Vorwoche als ruhige Kontur hinter den aktuellen Daten. */}
+      {ghostPath && (
+        <path
+          d={ghostPath}
+          fill="none"
+          stroke="var(--muted)"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+          strokeLinejoin="round"
+        />
+      )}
+      <path
         d={data}
-        fill={`url(#${fillId})`}
+        fill={GREEN}
+        fillOpacity={0.12}
         stroke={GREEN}
         strokeWidth={2}
         strokeLinejoin="round"
-        style={{ filter: "drop-shadow(0 0 6px rgba(48,209,88,.4))" }}
-        initial={reduce ? false : { pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       />
       {axes.map((a, i) => {
-        const [x, y] = pt(i, R * Math.max(0, Math.min(1, a.value)));
-        return <circle key={a.muscle} cx={x} cy={y} r={3} fill={GREEN} />;
+        const frac = Math.min(cap, Math.max(0, a.value));
+        const [x, y] = pt(i, R * frac);
+        const active = selected === a.muscle;
+        return (
+          <circle
+            key={a.muscle}
+            cx={x}
+            cy={y}
+            r={active ? 4.5 : 3}
+            fill={GREEN}
+            stroke={active ? "var(--fg)" : "none"}
+            strokeWidth={active ? 1 : 0}
+          />
+        );
       })}
+      {/* 44-px-Hitboxen + Fokus-Ring an den Achsen-Enden (über allem). */}
+      {onSelect &&
+        axes.map((a, i) => {
+          const [lx, ly] = pt(i, R + 8);
+          return (
+            <g key={`hit-${a.muscle}`}>
+              {focused === a.muscle && (
+                <circle cx={lx} cy={ly} r={19} fill="none" stroke="var(--accent)" strokeWidth={2} />
+              )}
+              <circle
+                cx={lx}
+                cy={ly}
+                r={22}
+                fill="transparent"
+                role="button"
+                tabIndex={0}
+                aria-pressed={selected === a.muscle}
+                aria-label={`${a.label}: ${fmt(a.sets)} von ${a.target.min}–${a.target.max} Sätzen`}
+                style={{ cursor: "pointer", outline: "none" }}
+                onClick={() => toggle(a.muscle)}
+                onFocus={() => setFocused(a.muscle)}
+                onBlur={() => setFocused(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggle(a.muscle);
+                  }
+                }}
+              />
+            </g>
+          );
+        })}
     </svg>
   );
 }
