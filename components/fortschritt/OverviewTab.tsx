@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, LineChart, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LevelCard } from "@/components/progress/LevelCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
 import { MuscleHeatmapCard } from "@/components/progress/MuscleHeatmapCard";
@@ -49,6 +49,28 @@ export function OverviewTab() {
   const router = useRouter();
   const reduce = useReducedMotion();
   const [showAllTrends, setShowAllTrends] = useState(false);
+
+  // Sprung „Rekord → Übungs-Trend": erst ggf. aufklappen, der Effekt scrollt
+  // NACH dem Commit (Ziel-Card ist dann gemountet), kurzes Ring-Highlight.
+  const trendRefs = useRef(new Map<string, HTMLDivElement>());
+  const [pendingJump, setPendingJump] = useState<string | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingJump) return;
+    const el = trendRefs.current.get(pendingJump);
+    if (el) {
+      el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      setFlashId(pendingJump);
+    }
+    setPendingJump(null);
+  }, [pendingJump, reduce]);
+
+  useEffect(() => {
+    if (!flashId) return;
+    const id = setTimeout(() => setFlashId(null), 1200);
+    return () => clearTimeout(id);
+  }, [flashId]);
 
   // Vorwochen-Volumen für den Radar-Geist (gleiche Quelle, Referenz −7 Tage).
   const prevMuscleVolumes = useMemo(
@@ -115,6 +137,13 @@ export function OverviewTab() {
       );
   }, [log]);
 
+  const jumpToTrend = (exId: string) => {
+    const idx = list.findIndex((e) => e.id === exId);
+    if (idx < 0) return; // Übung ohne Trend-Serie — nichts zu springen
+    if (idx >= TREND_PREVIEW) setShowAllTrends(true);
+    setPendingJump(exId);
+  };
+
   if (log.length === 0) {
     return (
       <EmptyState
@@ -154,7 +183,7 @@ export function OverviewTab() {
 
       <PhaseCard log={log} cardio={cardio} settings={settings} />
 
-      <RecordsBoard log={log} />
+      <RecordsBoard log={log} onJump={jumpToTrend} />
 
       {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
 
@@ -166,44 +195,58 @@ export function OverviewTab() {
             Übungs-Trends · {list.length}
           </p>
           {trends.map((e) => (
-            <Card key={e.id}>
-              <div className="mb-2 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="truncate font-semibold leading-tight">{e.name}</h3>
-                  <p className="mt-0.5 text-xs text-muted">{kindLabel[e.kind]}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    {e.isPR && (
-                      <motion.span
-                        initial={reduce ? false : { scale: 0.7, opacity: 0 }}
-                        animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
-                        className="rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
-                      >
-                        Rekord
-                      </motion.span>
-                    )}
-                    <p className="font-display text-lg font-semibold leading-none tabular-nums text-accent-volume">
-                      {e.top}
+            <div
+              key={e.id}
+              ref={(el) => {
+                if (el) trendRefs.current.set(e.id, el);
+                else trendRefs.current.delete(e.id);
+              }}
+              className="scroll-mt-20"
+            >
+              <Card
+                className={cn(
+                  "transition-shadow duration-300",
+                  flashId === e.id && "ring-2 ring-accent-volume",
+                )}
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate font-semibold leading-tight">{e.name}</h3>
+                    <p className="mt-0.5 text-xs text-muted">{kindLabel[e.kind]}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {e.isPR && (
+                        <motion.span
+                          initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+                          animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
+                          className="rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
+                        >
+                          Rekord
+                        </motion.span>
+                      )}
+                      <p className="font-display text-lg font-semibold leading-none tabular-nums text-accent-volume">
+                        {e.top}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs uppercase tracking-wider text-faint">
+                      Bestwert
                     </p>
                   </div>
-                  <p className="mt-1 text-xs uppercase tracking-wider text-faint">
-                    Bestwert
-                  </p>
                 </div>
-              </div>
-              <TrendChart points={e.points} />
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="truncate text-xs text-muted">
-                  Bestleistung <span className="text-muted">{e.bestPt.label}</span> ·{" "}
-                  {fmtDateShort(e.bestPt.date)}
-                </span>
-                <span className="shrink-0 text-xs text-muted">
-                  zuletzt <span className="text-muted">{e.latest.label}</span>
-                </span>
-              </div>
-            </Card>
+                <TrendChart points={e.points} />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="truncate text-xs text-muted">
+                    Bestleistung <span className="text-muted">{e.bestPt.label}</span> ·{" "}
+                    {fmtDateShort(e.bestPt.date)}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted">
+                    zuletzt <span className="text-muted">{e.latest.label}</span>
+                  </span>
+                </div>
+              </Card>
+            </div>
           ))}
           {list.length > TREND_PREVIEW && (
             <Pressable
