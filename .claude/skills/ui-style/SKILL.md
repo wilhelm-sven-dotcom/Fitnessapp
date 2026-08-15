@@ -247,6 +247,25 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 - **Listen-Gleiten**: Zeilen in `motion.div layout={reduce ? false :
   "position"}` (SPRING.panel) — NUR Translation. NIE `layoutId`-Morph über
   Zeilen ungleicher Höhe (Framer skaliert — Ring/Inputs verzerren).
+- **Signalton-Rezept** (`lib/beep.ts`, API-stabil: beep/beepEnd/beepStart):
+  Triangle-Oszillator + Lowpass (3·f, Q 0.8), Grundton 1568 Hz, Tick =
+  Doppel-Puls (2 × 40 ms); Basis-Gains 0.22/0.30, Kappe 0.9, lazy
+  DynamicsCompressor als Master-Bus. Beeps bleiben ungated (cueVolume regelt),
+  nur Sprache hängt an voiceCues. Keine neuen Töne erfinden — transponieren.
+- **Spotify-Ducking** (`useSpotifyDuck`): NUR in Countdown-Momenten
+  (`duckFor(ms)` bei Pause left===5 bzw. Warmup-Drill 5 s/Wechsel 3 s über die
+  WarmupPlayer-Prop `onCountdown` — der Player bleibt Spotify-frei). 40 % vom
+  Ist-Wert, Floor 20; restore-once + Epoch + Unmount-Cleanup; Fehler → stiller
+  5-min-Backoff. Setting `duckSpotify` (Default an, inert ohne Verbindung).
+- **Aufwärmen = RAMP** (`lib/warmup.ts`): Katalog-Drills tragen `phase`
+  (raise/mobilise/activate — Badge: Puls blau, Mobilität orange, Aktivierung
+  grün), `patterns`, `priority`, `backLoad` (safe/neutral/deep), `equipment`.
+  `warmupFor(items, lib, opts)` ist pur und deterministisch (FNV-Seed =
+  Datum aus startedAt, am Call-Site memoisiert — NIE Math.random): Budget je
+  Tagesform (450/360/270 s), Abdeckungsgarantie je Session-Muster, Core
+  immer, Rücken-Ampel entfernt „deep" und ergänzt „safe". KEINE gehaltenen
+  statischen Dehnungen in den Katalog aufnehmen (Simic 2013; McGowan 2015).
+  Player-Dots werden ab >8 Drills kompakt.
 - **Wochen-Poster** (share-card): mit `muscleVolumes` zeichnet
   `drawFigure` die zwei Heat-Figuren (FigurePanel-Rezept: Outline
   boneWidth+6 in Grundfarbe → Fill in `mixHex`-Tint → Spine → Kopf, round
