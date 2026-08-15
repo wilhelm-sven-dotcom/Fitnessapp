@@ -1,19 +1,23 @@
 "use client";
 
-import { Trophy } from "lucide-react";
-import { useMemo } from "react";
+import { ChevronRight, Trophy } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Readout } from "@/components/ui/Readout";
+import { Pressable } from "@/components/ui/pressable";
+import { LevelSheet } from "@/components/progress/LevelSheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
 
 /** Trainingslevel hero — the big number is the level (in the skin's display face,
  *  so it reads as a magazine numeral under editorial). XP blends consistency,
- *  volume, PRs and breadth; the bar shows progress to the next level. */
+ *  volume, PRs and breadth; the bar shows progress to the next level. Der
+ *  XP-Wert rechts öffnet das Sheet mit Herleitung + Abzeichen. */
 export function LevelCard() {
   const { log, allLib, settings } = useTraining();
   const lvl = useMemo(() => trainingLevel({ log, allLib, settings }), [log, allLib, settings]);
   const remaining = Math.max(0, lvl.xpForNext - lvl.xp);
+  const [open, setOpen] = useState(false);
 
   return (
     <div>
@@ -22,7 +26,14 @@ export function LevelCard() {
           <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
             <Trophy size={13} className="text-accent-ink" /> Trainingslevel
           </span>
-          <span className="font-mono text-xs tabular-nums text-faint">{lvl.xp} XP</span>
+          <Pressable
+            onClick={() => setOpen(true)}
+            aria-haspopup="dialog"
+            aria-label="Wie das Level entsteht"
+            className="-m-2 flex min-h-11 items-center gap-1 rounded-card p-2 font-mono text-xs tabular-nums text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+          >
+            {lvl.xp} XP <ChevronRight size={12} aria-hidden />
+          </Pressable>
         </div>
 
         <Readout value={lvl.level} eyebrow={`Level · ${lvl.title}`} size="lg" tone="var(--accent-ink)" />
@@ -39,6 +50,8 @@ export function LevelCard() {
             : `Noch ${remaining} XP bis Level ${lvl.level + 1}.`}
         </p>
       </Card>
+
+      <LevelSheet open={open} onClose={() => setOpen(false)} />
     </div>
   );
 }
