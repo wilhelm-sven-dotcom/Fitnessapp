@@ -278,6 +278,9 @@ interface TrainingContextValue {
   addCustom: (data: CustomExerciseInput) => void;
   updateCustom: (id: string, data: CustomExerciseInput) => void;
   removeCustom: (id: string) => void;
+  /** Deaktivierte Übungs-Ids — raus aus Planung/Tausch, sichtbar im Katalog. */
+  disabledExercises: string[];
+  toggleExerciseDisabled: (id: string) => void;
   setExerciseVideo: (exId: string, url: string | null) => void;
   setExerciseNote: (exId: string, note: string | null) => void;
   days: WorkoutDay[];
@@ -307,6 +310,7 @@ interface TrainingContextValue {
   setBikeWarmup: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
+  setDuckSpotify: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
   setCoachLive: (on: boolean) => void;
   /** Die heutige, frisch komponierte Einheit (ATLAS / Fallback / manuell). */
@@ -382,6 +386,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // IDs gelöschter Import-Einheiten — der Strava-Sync überspringt sie, sonst
   // käme eine gelöschte (oder doppelte) Fahrt beim nächsten Sync zurück.
   const [hiddenCardio, setHiddenCardio] = useState<string[]>([]);
+  const [disabledExercises, setDisabledExercises] = useState<string[]>([]);
   const [days, setDays] = useState<WorkoutDay[]>([]);
   const [gyms, setGyms] = useState<GymProfile[]>([]);
   const [exerciseVideos, setExerciseVideos] = useState<Record<string, string>>({});
@@ -403,7 +408,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en, td] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en, td, dx] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -418,6 +423,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<StoredMission | null>(KEYS.mission, null),
       storage.getJSON<Record<string, string>>(KEYS.exerciseNotes, {}),
       storage.getJSON<DailySession | null>(KEYS.today, null),
+      storage.getJSON<string[]>(KEYS.disabledExercises, []),
     ]);
     // Alles durch die Sanitizer VOR setState — vergiftete Sync-/Legacy-Daten
     // dürfen den Render nie erreichen (sonst global-error auf jeder Route).
@@ -465,6 +471,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     if (Array.isArray(ca) && cleanCardio.length !== ca.length)
       void storage.setJSON(KEYS.cardio, cleanCardio);
     setHiddenCardio(Array.isArray(hc) ? hc.filter((x): x is string => typeof x === "string") : []);
+    setDisabledExercises(
+      Array.isArray(dx) ? dx.filter((x): x is string => typeof x === "string") : [],
+    );
     setDays(sanitizeDays(da));
     setGyms(gymsLoaded);
     setExerciseVideos(sanitizeVideoMap(ev));
@@ -1106,6 +1115,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, timeBudgetMin: min });
     const setKeepAwake = (on: boolean) =>
       void saveSettings({ ...settings, keepAwake: on });
+    const setDuckSpotify = (on: boolean) =>
+      void saveSettings({ ...settings, duckSpotify: on });
     const setAiPlanning = (on: boolean) =>
       void saveSettings({ ...settings, aiPlanning: on });
     const setCoachLive = (on: boolean) =>
@@ -1172,6 +1183,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
     const addCustom = (data: CustomExerciseInput) => {
       void saveCustom([...custom, buildCustom("custom_" + Date.now(), data)]);
+    };
+    const toggleExerciseDisabled = (id: string) => {
+      const next = disabledExercises.includes(id)
+        ? disabledExercises.filter((x) => x !== id)
+        : [...disabledExercises, id];
+      setDisabledExercises(next);
+      void storage.setJSON(KEYS.disabledExercises, next);
     };
     const updateCustom = (id: string, data: CustomExerciseInput) => {
       void saveCustom(custom.map((e) => (e.id === id ? buildCustom(id, data) : e)));
@@ -1446,6 +1464,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       addCustom,
       updateCustom,
       removeCustom,
+      disabledExercises,
+      toggleExerciseDisabled,
       setExerciseVideo,
       setExerciseNote,
       days,
@@ -1472,6 +1492,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setBikeWarmup,
       setCoachMotivation,
       setKeepAwake,
+      setDuckSpotify,
       setAiPlanning,
       setCoachLive,
       todaySession,
@@ -1536,6 +1557,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     jumps,
     cardio,
     hiddenCardio,
+    disabledExercises,
     saveEquip,
     saveCustom,
     saveSettings,

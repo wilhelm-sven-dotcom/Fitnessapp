@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AtlasPanel } from "@/components/session/AtlasPanel";
 import { ExerciseStage } from "@/components/session/ExerciseStage";
 import { FinishFlow } from "@/components/session/FinishFlow";
@@ -10,11 +10,11 @@ import { ProgressHeader } from "@/components/session/ProgressHeader";
 import { RestPanel } from "@/components/session/RestPanel";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
+import { useSpotifyDuck } from "@/components/spotify/useSpotifyDuck";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
-import { useWakeLock } from "@/components/workout/useWakeLock";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -39,7 +39,7 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { dailyToTemplate, type DailySession } from "@/lib/session-model";
+import type { DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
@@ -252,8 +252,33 @@ export function SessionRunner() {
     if (boot === "none") router.replace("/");
   }, [boot, router]);
 
-  // Display wach halten, solange trainiert wird (abschaltbar).
-  useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
+  // Display-Wachhalten läuft jetzt app-weit in der AppShell (settings.keepAwake).
+
+  // Spotify beim Countdown kurz leiser (Pause + Aufwärmen) — inert ohne
+  // Verbindung; Restore übernimmt der Hook (Timer/Unmount).
+  const { duckFor } = useSpotifyDuck(settings.duckSpotify !== false);
+  const onWarmupCountdown = useCallback(
+    (kind: "drill" | "switch") => duckFor(kind === "drill" ? 7000 : 5000),
+    [duckFor],
+  );
+
+  // Aufwärm-Drills: deterministisch je (Einheit, Tag) — Seed aus startedAt,
+  // damit Reload und Re-Render exakt dieselbe Liste sehen (Rotation ohne
+  // Zufall); Tagesform/Rücken/Equipment fließen in die RAMP-Auswahl ein.
+  const warmupDrills = useMemo(
+    () =>
+      active && active.phase === "warmup"
+        ? warmupFor(active.session.items, allLib, {
+            readiness: active.readiness,
+            backSafe: active.backSafe,
+            lastBackRed,
+            bike: !!settings.bikeWarmup,
+            has,
+            seed: active.startedAt.slice(0, 10),
+          })
+        : [],
+    [active, allLib, lastBackRed, settings.bikeWarmup, has],
+  );
 
   // Beobachtet den 1-px-Sentinel über dem Kopf (Muster FigurePanel) —
   // Deps decken das (Re-)Mounten des Baums ab: der Sentinel existiert erst
@@ -305,6 +330,8 @@ export function SessionRunner() {
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
       return;
     }
+    // Musik kurz leiser, damit Endton + Ansage durchkommen (Restore automatisch).
+    if (rest.left === 5) duckFor(7000);
     if (rest.left <= 3) beep();
     if (settings.voiceCues) {
       if (rest.left === 10) speak("Noch zehn Sekunden");
@@ -315,7 +342,7 @@ export function SessionRunner() {
       1000,
     );
     return () => clearTimeout(id);
-  }, [rest, settings.voiceCues]);
+  }, [rest, settings.voiceCues, duckFor]);
 
   /* ── Satz-Handler ── */
 
@@ -666,14 +693,13 @@ export function SessionRunner() {
   if (!st) return null;
 
   if (st.phase === "warmup") {
-    const drills = warmupFor(dailyToTemplate(st.session, allLib), {
-      bike: settings.bikeWarmup,
-    });
+    const drills = warmupDrills;
     const toExercise = () => patch((s) => ({ ...s, phase: "exercise" }));
     return (
       <WarmupPlayer
         drills={drills}
         voiceOn={!!settings.voiceCues}
+        onCountdown={onWarmupCountdown}
         onClose={toExercise}
         onFinished={() => {
           success();

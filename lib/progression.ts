@@ -48,8 +48,12 @@ export function poolFor(
   pattern: string,
   has: (k: string) => boolean,
   allLib: Exercise[],
+  /** Deaktivierte Übungs-Ids — nur die PLANUNGS-Pfade filtern damit. */
+  blocked?: ReadonlySet<string>,
 ): Exercise[] {
-  return allLib.filter((e) => e.pattern === pattern && reqOk(e, has));
+  return allLib.filter(
+    (e) => e.pattern === pattern && reqOk(e, has) && !blocked?.has(e.id),
+  );
 }
 
 /** Heavy hinges to avoid when the lower back is irritated. */

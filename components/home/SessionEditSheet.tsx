@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
+import { useTraining } from "@/components/providers/TrainingProvider";
 import { reqOk } from "@/lib/progression";
 import {
   addItem,
@@ -38,13 +39,19 @@ export function SessionEditSheet({
   onChange: (next: DailySession) => void;
 }) {
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
+  const { disabledExercises } = useTraining();
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const available = useMemo(
-    () => allLib.filter((e) => e.pattern !== "cardio" && reqOk(e, has)),
-    [allLib, has],
-  );
+  // Tausch-/Hinzufüge-Kandidaten: ohne Cardio, ohne fehlendes Equipment,
+  // ohne vom Nutzer deaktivierte Übungen (die GEPLANTEN Items bleiben —
+  // nur neue Vorschläge respektieren die Liste).
+  const available = useMemo(() => {
+    const blocked = new Set(disabledExercises);
+    return allLib.filter(
+      (e) => e.pattern !== "cardio" && reqOk(e, has) && !blocked.has(e.id),
+    );
+  }, [allLib, has, disabledExercises]);
   const usedIds = new Set(session.items.map((it) => it.exerciseId));
 
   // Tausch-Pool: gleiches Muster zuerst (naheliegende Alternativen), danach

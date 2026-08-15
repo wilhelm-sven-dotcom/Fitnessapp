@@ -60,6 +60,7 @@ export default function HomePage() {
     backSpareToday,
     setBackSpareToday,
     backSafeActive,
+    disabledExercises,
   } = useTraining();
 
   const has = useMemo(
@@ -117,6 +118,7 @@ export default function HomePage() {
       backSafe: backSafeActive,
       injuries: effectiveProfile(settings, body).injuries,
       variant,
+      disabled: disabledExercises,
     });
     setTodaySession(opts.wish ? { ...fallback, wish: opts.wish } : fallback);
     setComposing(true);
@@ -142,6 +144,7 @@ export default function HomePage() {
       backSafe: backSafeActive,
       persona: athletePersona(effectiveProfile(settings, body), settings.userName),
       readinessLine,
+      disabled: disabledExercises,
     }).then((s) => {
       setComposing(false);
       if (!s || genRef.current !== gen) return;

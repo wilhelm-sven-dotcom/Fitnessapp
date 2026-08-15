@@ -27,6 +27,7 @@ export function WarmupPlayer({
   voiceOn,
   onClose,
   onFinished,
+  onCountdown,
 }: {
   drills: WarmupDrill[];
   voiceOn: boolean;
@@ -34,6 +35,9 @@ export function WarmupPlayer({
   /** Reached the done screen and confirmed — a completed warm-up, unlike
    *  an early exit via „Beenden" (which stays plain onClose). */
   onFinished?: () => void;
+  /** Feuert am Anfang des Schluss-Countdowns (Drill: 5 s, Wechsel: 3 s) —
+   *  der Runner senkt darüber die Musik (Spotify-Ducking). */
+  onCountdown?: (kind: "drill" | "switch") => void;
 }) {
   const total = drills.length;
   const [index, setIndex] = useState(0);
@@ -101,14 +105,16 @@ export function WarmupPlayer({
   useEffect(() => {
     if (paused || done) return;
     if (phase === "drill") {
+      if (left === 5) onCountdown?.("drill");
       if (left <= 5 && left > 0) beep();
       if (voiceOn && left <= 3 && left >= 1) speak(["", "eins", "zwei", "drei"][left]);
       if (left === 0) beepEnd();
     } else {
+      if (left === 3) onCountdown?.("switch");
       if (left <= 3 && left > 0) beep();
       if (left === 0) beepStart();
     }
-  }, [left, paused, done, phase, voiceOn]);
+  }, [left, paused, done, phase, voiceOn, onCountdown]);
 
   // Countdown; bei 0: Drill → 5-s-Wechselpause → nächster Drill (bzw. Done).
   useEffect(() => {
@@ -183,7 +189,13 @@ export function WarmupPlayer({
   const showing = switching && next ? next : current;
   const phaseTotal = switching ? SWITCH_SEC : current.durationSec;
   const pct = phaseTotal > 0 ? (left / phaseTotal) * 100 : 0;
-  const isMobility = showing.kind === "mobility";
+  // RAMP-Badge: Puls (Blau) / Mobilität (Orange) / Aktivierung (Grün).
+  const badge =
+    showing.phase === "raise"
+      ? { label: "Puls", cls: "bg-accent-sessions text-on-accent" }
+      : showing.phase === "mobilise"
+        ? { label: "Mobilität", cls: "bg-accent-coverage text-on-strong" }
+        : { label: "Aktivierung", cls: "bg-accent-volume text-on-strong" };
   const fig = FIG[showing.figure ?? showing.id];
 
   return (
@@ -218,14 +230,18 @@ export function WarmupPlayer({
         </div>
       </div>
 
-      {/* progress dots */}
-      <div className="mt-3 flex justify-center gap-1.5 px-5">
+      {/* progress dots — ab >8 Drills kompakt, damit die Reihe auf 320 px trägt */}
+      <div className={cn("mt-3 flex justify-center px-5", total > 8 ? "gap-1" : "gap-1.5")}>
         {drills.map((d, i) => (
           <span
             key={d.id}
             className={cn(
               "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
-              i < index ? "w-4 bg-faint" : i === index ? "w-8 bg-accent-sessions" : "w-4 bg-surface-2",
+              i === index
+                ? total > 8
+                  ? "w-4 bg-accent-sessions"
+                  : "w-8 bg-accent-sessions"
+                : cn(total > 8 ? "w-1.5" : "w-4", i < index ? "bg-faint" : "bg-surface-2"),
             )}
           />
         ))}
@@ -241,15 +257,12 @@ export function WarmupPlayer({
           transition={{ duration: 0.4, ease: EASE_OUT }}
         >
           <span
-            className={cn(
-              "mb-4 rounded-full px-3 py-1 text-xs font-medium",
-              isMobility ? "bg-accent-coverage text-on-strong" : "bg-accent-volume text-on-strong",
-            )}
+            className={cn("mb-4 rounded-full px-3 py-1 text-xs font-medium", badge.cls)}
           >
-            {switching ? "Wechsel" : isMobility ? "Mobilität" : "Aktivierung"}
+            {switching ? "Wechsel" : badge.label}
           </span>
           {fig && (
-            <div className="mb-3 w-44 rounded-card border border-line bg-surface-1 p-2 shadow-card">
+            <div className="mb-3 w-60 rounded-card border border-line bg-surface-1 p-2 shadow-card">
               <FigurePanel label="" fig={fig} viewKey="side" />
             </div>
           )}

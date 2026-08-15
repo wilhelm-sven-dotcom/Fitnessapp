@@ -6,10 +6,8 @@ import { useEffect, useState } from "react";
 import { figFor, muscleBones } from "@/components/figures/figureData";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { useSpotifyResume } from "@/components/spotify/useSpotifyResume";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
-import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import type { Exercise } from "@/lib/types";
@@ -56,15 +54,8 @@ export function GuideSheet({
       ? (ex.videoUrl ?? `/exercise-media/${ex.id}.mp4`)
       : undefined;
 
-  // Nur ein YouTube-Embed kann die iOS-Audio-Session übernehmen; nach dem
-  // Schließen Spotify wieder anwerfen (der native <video muted> triggert nichts).
-  const { notice: spotifyNotice } = useSpotifyResume(open && !!embedUrl);
-  // Konnte Spotify nicht automatisch weiterspielen (kein Premium / kein aktives
-  // Gerät), sagt es der App-Toaster — statt eines eigenen Ad-hoc-Overlays.
-  useEffect(() => {
-    if (spotifyNotice === "blocked")
-      toast("Spotify pausiert — Musik in der Spotify-App fortsetzen.");
-  }, [spotifyNotice]);
+  // BEWUSST kein Spotify-Auto-Resume nach dem YouTube-Guide mehr: ob die
+  // Musik weiterläuft, entscheidet der Nutzer (Play im Now-Playing-Widget).
 
   const [hasVideo, setHasVideo] = useState(false);
   const [mode, setMode] = useState<"video" | "figure">("figure");

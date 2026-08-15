@@ -162,6 +162,50 @@ export async function currentlyPlaying(token: string): Promise<NowPlaying | null
   }
 }
 
+export interface PlayerState {
+  isPlaying: boolean;
+  /** Lautstärke des aktiven Geräts (0–100) — null, wenn unbekannt. */
+  volumePercent: number | null;
+  /** Cast-/Connect-Geräte können Volume-Steuerung verweigern. */
+  supportsVolume: boolean;
+}
+
+/** Voller Player-Status inkl. Geräte-Lautstärke — null ohne aktives Gerät. */
+export async function playerState(token: string): Promise<PlayerState | null> {
+  try {
+    const res = await fetch(`${SPOTIFY_API}/me/player`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 204 || !res.ok) return null; // kein aktives Gerät
+    const d = (await res.json()) as {
+      is_playing?: boolean;
+      device?: { volume_percent?: number | null; supports_volume?: boolean };
+    };
+    return {
+      isPlaying: !!d.is_playing,
+      volumePercent:
+        typeof d.device?.volume_percent === "number" ? d.device.volume_percent : null,
+      supportsVolume: d.device?.supports_volume !== false,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Geräte-Lautstärke setzen (0–100). False bei Fehlschlag (kein Premium/Gerät). */
+export async function setVolume(token: string, percent: number): Promise<boolean> {
+  try {
+    const p = Math.round(Math.min(100, Math.max(0, percent)));
+    const res = await fetch(
+      `${SPOTIFY_API}/me/player/volume?volume_percent=${p}`,
+      { method: "PUT", headers: { Authorization: `Bearer ${token}` } },
+    );
+    return res.ok || res.status === 204;
+  } catch {
+    return false;
+  }
+}
+
 /** Returns false on failure (e.g. no Premium / no active device — HTTP 403/404). */
 export async function control(token: string, action: SpotifyAction): Promise<boolean> {
   try {

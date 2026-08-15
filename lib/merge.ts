@@ -43,6 +43,9 @@ export function mergeCloudLocal(cloud: RawMap, local: RawMap): RawMap {
   const byDate = new Set<string>([KEYS.log, KEYS.cardio, KEYS.body]);
   const byId = new Set<string>([KEYS.days, KEYS.gyms, KEYS.custom]);
   const byKey = new Set<string>([KEYS.choices, KEYS.exerciseVideos, KEYS.exerciseNotes]);
+  // Plain-String-Listen (Grabsteine/Deaktivierungen): Union — was ein Gerät
+  // deaktiviert hat, bleibt auf beiden deaktiviert.
+  const byValue = new Set<string>([KEYS.disabledExercises]);
 
   const merged: RawMap = {};
   for (const k of Object.values(KEYS)) {
@@ -74,6 +77,10 @@ export function mergeCloudLocal(cloud: RawMap, local: RawMap): RawMap {
           parse<{ id?: string }[]>(c, []),
           (x) => String(x?.id ?? ""),
         ),
+      );
+    } else if (byValue.has(k)) {
+      merged[k] = JSON.stringify(
+        unionBy(parse<string[]>(l, []), parse<string[]>(c, []), (x) => String(x)),
       );
     } else if (byKey.has(k)) {
       merged[k] = JSON.stringify({
