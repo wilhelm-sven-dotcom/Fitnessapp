@@ -30,7 +30,9 @@ export function SessionComplete({
   name?: string;
   onDone: () => void;
 }) {
-  const { settings } = useTraining();
+  // muscleVolumes ist hier frisch: der Sieger-Moment mountet NACH dem Save,
+  // der Provider hat die eben gespeicherte Einheit bereits eingerechnet.
+  const { settings, muscleVolumes } = useTraining();
   const reduce = useReducedMotion();
   const levelUp = summary.levelAfter > summary.levelBefore;
   const [pct, setPct] = useState(reduce ? summary.xpPctTo : summary.xpPctFrom);
@@ -49,6 +51,7 @@ export function SessionComplete({
       prs: summary.prs,
       weekSets: summary.weekSets,
       weekTarget: summary.weekTarget,
+      muscleVolumes,
     })
       .then((blob) => {
         if (!alive) return;
