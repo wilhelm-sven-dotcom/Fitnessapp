@@ -1,8 +1,6 @@
 /* ===================== Figuren (animiert, datengetrieben). Grün = Wirbelsäule. ===================== */
 /* Datenpunkte 1:1 aus dem Prototyp übernommen. */
 
-import type { Muscle } from "@/lib/types";
-
 export type Pt = [number, number];
 export type Frame = Record<string, Pt>;
 export type Bone = [string, string];
@@ -59,6 +57,14 @@ export const SBR: Bone[] = [...SB, ["sh", "elbow2"], ["elbow2", "hand2"]];
 export const FB: Bone[] = [["sh", "hip"], ["sh", "elbowL"], ["elbowL", "handL"], ["sh", "elbowR"], ["elbowR", "handR"], ["hip", "kneeL"], ["kneeL", "footL"], ["hip", "kneeR"], ["kneeR", "footR"]];
 export const SP: Bone[] = [["sh", "hip"]];
 export const SPL: Bone[] = [["sh", "hip"], ["hip", "knee"], ["knee", "foot"]];
+
+/** Limb thickness: torso > thigh/upper-arm > shin/forearm. Lebt bei den
+ *  Posen-Daten, weil auch das Canvas-Poster mit genau diesen Stärken zeichnet. */
+export function boneWidth([a, b]: Bone): number {
+  if (a === "sh" && b === "hip") return 18;
+  if (a.startsWith("elbow") || a.startsWith("knee")) return 10;
+  return 13;
+}
 
 /** A view's pose sequence — the authored `frames`, or [A, B] for legacy 2-pose figures.
  * Drops any undefined/null entry (a hole in an authored sequence) and always returns
@@ -161,37 +167,6 @@ export const FIGURE_ALIAS: Record<string, string> = {
   // Waden
   calf_raise_bw: "squat_bw", calf_raise_db: "squat_bw", calf_single: "stepup",
   calf_seated: "squat_bw",
-};
-
-/**
- * Wochen-Heatmap: Bone-Segmente („a>b") der stehenden Figur (squat_bw) je
- * Ansicht → beteiligte Muskeln. Kombi-Segmente (Torso vorn, Oberarm und
- * Oberschenkel im Profil) nehmen das MAX der beteiligten Muskeln. Schema,
- * keine Anatomie: die Front trägt die vorderen Muskeln, das Profil die
- * hintere Kette (Rücken, Schultern/Trizeps, Beinrückseite/Gesäß).
- */
-export const MUSCLE_BONES_HEAT: Record<
-  "front" | "side",
-  Record<string, readonly Muscle[]>
-> = {
-  front: {
-    "sh>hip": ["chest", "core"],
-    "sh>elbowL": ["biceps"],
-    "sh>elbowR": ["biceps"],
-    "elbowL>handL": ["forearms"],
-    "elbowR>handR": ["forearms"],
-    "hip>kneeL": ["quads"],
-    "hip>kneeR": ["quads"],
-    "kneeL>footL": ["calves"],
-    "kneeR>footR": ["calves"],
-  },
-  side: {
-    "sh>hip": ["back"],
-    "sh>elbow": ["shoulders", "triceps"],
-    "elbow>hand": ["forearms"],
-    "hip>knee": ["hamstrings", "glutes"],
-    "knee>foot": ["calves"],
-  },
 };
 
 /** Muster → Default-Figur (letzte Rückfallebene, z. B. für eigene Übungen). */

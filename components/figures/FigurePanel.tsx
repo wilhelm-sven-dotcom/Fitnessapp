@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  boneWidth,
   frameAt,
   framesOf,
   lerpPts,
@@ -42,13 +43,6 @@ function Equip({ P, eq }: { P: Frame; eq?: EquipDef }) {
     });
   }
   return <>{e}</>;
-}
-
-/** Limb thickness: torso > thigh/upper-arm > shin/forearm. */
-function boneWidth([a, b]: Bone): number {
-  if (a === "sh" && b === "hip") return 18;
-  if (a.startsWith("elbow") || a.startsWith("knee")) return 10;
-  return 13;
 }
 
 /**

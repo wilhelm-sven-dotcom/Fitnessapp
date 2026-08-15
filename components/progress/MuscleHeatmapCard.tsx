@@ -2,26 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FigurePanel } from "@/components/figures/FigurePanel";
-import { FIG, MUSCLE_BONES_HEAT } from "@/components/figures/figureData";
+import { FIG } from "@/components/figures/figureData";
 import { Card } from "@/components/ui/Card";
-import { volumeTargetFor, type MuscleVolume } from "@/lib/volume";
-
-// Grün-Rampe (color-mix-Anteil Richtung Wochen-Maximum je Muskel):
-// vier Stufen, damit „angefangen" und „voll im Ziel" unterscheidbar sind.
-const STEPS = [35, 55, 78, 100] as const;
-
-function stepFor(p: number): (typeof STEPS)[number] {
-  if (p < 0.25) return STEPS[0];
-  if (p < 0.5) return STEPS[1];
-  if (p < 0.75) return STEPS[2];
-  return STEPS[3];
-}
+import { boneHeatSteps, HEAT_STEPS, type HeatStep } from "@/lib/heat";
+import type { MuscleVolume } from "@/lib/volume";
 
 /**
  * Der grüne Athlet: die Wochensätze färben die stehende Piktogramm-Figur —
- * vorn die Front-Muskeln, im Profil die hintere Kette. Schema, keine
- * Anatomie (Kombi-Segmente nehmen das MAX ihrer Muskeln); die exakten
- * Zahlen stehen im Wochen-Volumen darunter.
+ * vorn die Front-Muskeln, im Profil die hintere Kette. Stufen-Mathematik
+ * lebt in lib/heat (geteilt mit dem Wochen-Poster); hier wird nur noch
+ * color-mix daraus. Schema, keine Anatomie; die exakten Zahlen stehen im
+ * Wochen-Volumen darunter.
  */
 export function MuscleHeatmapCard({ muscleVolumes }: { muscleVolumes: MuscleVolume[] }) {
   // color-mix erst nach dem Mount einschalten (SSR-stabil). Ohne Browser-
@@ -35,25 +26,16 @@ export function MuscleHeatmapCard({ muscleVolumes }: { muscleVolumes: MuscleVolu
   }, []);
 
   const { tints, hit } = useMemo(() => {
-    const p = new Map<string, number>();
-    for (const v of muscleVolumes) {
-      p.set(
-        v.muscle,
-        Math.min(1, Math.max(0, v.sets / volumeTargetFor(v.muscle).max)),
-      );
-    }
-    const color = (muscles: readonly string[]): string => {
-      const m = Math.max(...muscles.map((k) => p.get(k) ?? 0));
-      if (m <= 0) return "var(--surface-2)";
+    const steps = boneHeatSteps(muscleVolumes);
+    const color = (step: HeatStep): string => {
+      if (step <= 0) return "var(--surface-2)";
       if (!mix) return "var(--gruen)";
-      return `color-mix(in srgb, var(--gruen) ${stepFor(m)}%, var(--surface-2))`;
+      return `color-mix(in srgb, var(--gruen) ${step}%, var(--surface-2))`;
     };
-    const paint = (view: "front" | "side") =>
-      Object.fromEntries(
-        Object.entries(MUSCLE_BONES_HEAT[view]).map(([bone, ms]) => [bone, color(ms)]),
-      );
+    const paint = (m: Record<string, HeatStep>) =>
+      Object.fromEntries(Object.entries(m).map(([bone, s]) => [bone, color(s)]));
     return {
-      tints: { front: paint("front"), side: paint("side") },
+      tints: { front: paint(steps.front), side: paint(steps.side) },
       hit: muscleVolumes.filter((v) => v.status !== "under").length,
     };
   }, [muscleVolumes, mix]);
@@ -100,7 +82,7 @@ export function MuscleHeatmapCard({ muscleVolumes }: { muscleVolumes: MuscleVolu
       <div className="mt-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted">wenig</span>
-          {STEPS.map((x) => (
+          {HEAT_STEPS.map((x) => (
             <span
               key={x}
               className="h-3 w-3 rounded-sm"
