@@ -36,6 +36,7 @@ export default function SettingsPage() {
     setCueVolume,
     setWeightStep,
     setBikeWarmup,
+    setDuckSpotify,
     setCoachMotivation,
     setKeepAwake,
   } = useTraining();
@@ -247,6 +248,12 @@ export default function SettingsPage() {
             onChange={setVoiceCues}
             label="Sprach-Ansagen"
             hint="Sagt Satzpause-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
+          />
+          <Toggle
+            checked={settings.duckSpotify !== false}
+            onChange={setDuckSpotify}
+            label="Musik leiser bei Countdown"
+            hint="Senkt Spotify in den letzten Sekunden kurz ab und stellt danach zurück — braucht Premium und ein aktives Gerät."
           />
           <Toggle
             checked={!!settings.bikeWarmup}

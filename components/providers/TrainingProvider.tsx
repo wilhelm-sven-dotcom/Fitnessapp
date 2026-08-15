@@ -307,6 +307,7 @@ interface TrainingContextValue {
   setBikeWarmup: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
+  setDuckSpotify: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
   setCoachLive: (on: boolean) => void;
   /** Die heutige, frisch komponierte Einheit (ATLAS / Fallback / manuell). */
@@ -1106,6 +1107,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, timeBudgetMin: min });
     const setKeepAwake = (on: boolean) =>
       void saveSettings({ ...settings, keepAwake: on });
+    const setDuckSpotify = (on: boolean) =>
+      void saveSettings({ ...settings, duckSpotify: on });
     const setAiPlanning = (on: boolean) =>
       void saveSettings({ ...settings, aiPlanning: on });
     const setCoachLive = (on: boolean) =>
@@ -1472,6 +1475,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setBikeWarmup,
       setCoachMotivation,
       setKeepAwake,
+      setDuckSpotify,
       setAiPlanning,
       setCoachLive,
       todaySession,

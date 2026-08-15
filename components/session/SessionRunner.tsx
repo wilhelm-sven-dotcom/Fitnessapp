@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AtlasPanel } from "@/components/session/AtlasPanel";
 import { ExerciseStage } from "@/components/session/ExerciseStage";
 import { FinishFlow } from "@/components/session/FinishFlow";
@@ -10,6 +10,7 @@ import { ProgressHeader } from "@/components/session/ProgressHeader";
 import { RestPanel } from "@/components/session/RestPanel";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
+import { useSpotifyDuck } from "@/components/spotify/useSpotifyDuck";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { SessionComplete } from "@/components/workout/SessionComplete";
@@ -255,6 +256,14 @@ export function SessionRunner() {
   // Display wach halten, solange trainiert wird (abschaltbar).
   useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
 
+  // Spotify beim Countdown kurz leiser (Pause + Aufwärmen) — inert ohne
+  // Verbindung; Restore übernimmt der Hook (Timer/Unmount).
+  const { duckFor } = useSpotifyDuck(settings.duckSpotify !== false);
+  const onWarmupCountdown = useCallback(
+    (kind: "drill" | "switch") => duckFor(kind === "drill" ? 7000 : 5000),
+    [duckFor],
+  );
+
   // Beobachtet den 1-px-Sentinel über dem Kopf (Muster FigurePanel) —
   // Deps decken das (Re-)Mounten des Baums ab: der Sentinel existiert erst
   // in der Übungs-Phase (Check-in/Aufwärmen rendern andere Bäume).
@@ -305,6 +314,8 @@ export function SessionRunner() {
       if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
       return;
     }
+    // Musik kurz leiser, damit Endton + Ansage durchkommen (Restore automatisch).
+    if (rest.left === 5) duckFor(7000);
     if (rest.left <= 3) beep();
     if (settings.voiceCues) {
       if (rest.left === 10) speak("Noch zehn Sekunden");
@@ -315,7 +326,7 @@ export function SessionRunner() {
       1000,
     );
     return () => clearTimeout(id);
-  }, [rest, settings.voiceCues]);
+  }, [rest, settings.voiceCues, duckFor]);
 
   /* ── Satz-Handler ── */
 
@@ -674,6 +685,7 @@ export function SessionRunner() {
       <WarmupPlayer
         drills={drills}
         voiceOn={!!settings.voiceCues}
+        onCountdown={onWarmupCountdown}
         onClose={toExercise}
         onFinished={() => {
           success();

@@ -255,6 +255,8 @@ export interface AppSettings {
   coachMotivation?: boolean;
   /** Keep the screen awake while a session is running (Screen Wake Lock, default on). */
   keepAwake?: boolean;
+  /** Spotify beim Countdown kurz leiser (default an; braucht Premium + aktives Gerät). */
+  duckSpotify?: boolean;
   /** ATLAS plant die Woche per Claude-KI (default an; greift nur mit Server-Key). */
   aiPlanning?: boolean;
   /** Die Ringecke: ATLAS-Ansagen in der Satzpause (default an; braucht Server-Key). */

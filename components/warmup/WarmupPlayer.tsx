@@ -27,6 +27,7 @@ export function WarmupPlayer({
   voiceOn,
   onClose,
   onFinished,
+  onCountdown,
 }: {
   drills: WarmupDrill[];
   voiceOn: boolean;
@@ -34,6 +35,9 @@ export function WarmupPlayer({
   /** Reached the done screen and confirmed — a completed warm-up, unlike
    *  an early exit via „Beenden" (which stays plain onClose). */
   onFinished?: () => void;
+  /** Feuert am Anfang des Schluss-Countdowns (Drill: 5 s, Wechsel: 3 s) —
+   *  der Runner senkt darüber die Musik (Spotify-Ducking). */
+  onCountdown?: (kind: "drill" | "switch") => void;
 }) {
   const total = drills.length;
   const [index, setIndex] = useState(0);
@@ -101,14 +105,16 @@ export function WarmupPlayer({
   useEffect(() => {
     if (paused || done) return;
     if (phase === "drill") {
+      if (left === 5) onCountdown?.("drill");
       if (left <= 5 && left > 0) beep();
       if (voiceOn && left <= 3 && left >= 1) speak(["", "eins", "zwei", "drei"][left]);
       if (left === 0) beepEnd();
     } else {
+      if (left === 3) onCountdown?.("switch");
       if (left <= 3 && left > 0) beep();
       if (left === 0) beepStart();
     }
-  }, [left, paused, done, phase, voiceOn]);
+  }, [left, paused, done, phase, voiceOn, onCountdown]);
 
   // Countdown; bei 0: Drill → 5-s-Wechselpause → nächster Drill (bzw. Done).
   useEffect(() => {
