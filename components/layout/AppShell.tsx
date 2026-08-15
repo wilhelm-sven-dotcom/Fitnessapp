@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
@@ -13,6 +14,11 @@ import { Welcome } from "@/components/onboarding/Welcome";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loading, cloud, settings, log, body } = useTraining();
   const pathname = usePathname();
+
+  // Display bleibt wach, solange die App offen ist (abschaltbar) — nicht nur
+  // im Training: kein Sperrbildschirm beim Blick auf Plan oder Fortschritt.
+  // Der Hook re-akquiriert bei visibilitychange und gibt beim Verstecken frei.
+  useWakeLock(settings.keepAwake !== false);
 
   const hideChrome = pathname?.startsWith("/workout") || false;
   const firstRun =

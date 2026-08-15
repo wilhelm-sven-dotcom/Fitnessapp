@@ -270,8 +270,8 @@ export default function SettingsPage() {
           <Toggle
             checked={settings.keepAwake !== false}
             onChange={setKeepAwake}
-            label="Display an im Training"
-            hint="Der Bildschirm bleibt wach, solange eine Einheit läuft — kein Sperrbildschirm zwischen den Sätzen."
+            label="Display bleibt an"
+            hint="Der Bildschirm bleibt wach, solange die App offen ist — kein Sperrbildschirm im Gym, auch zwischen den Übungen."
           />
           <div>
             <p className="text-sm font-medium text-fg">Gewichtsstufe</p>

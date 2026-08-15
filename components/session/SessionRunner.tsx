@@ -15,7 +15,6 @@ import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { SessionComplete } from "@/components/workout/SessionComplete";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
-import { useWakeLock } from "@/components/workout/useWakeLock";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -253,8 +252,7 @@ export function SessionRunner() {
     if (boot === "none") router.replace("/");
   }, [boot, router]);
 
-  // Display wach halten, solange trainiert wird (abschaltbar).
-  useWakeLock(settings.keepAwake !== false && boot === "running" && !complete);
+  // Display-Wachhalten läuft jetzt app-weit in der AppShell (settings.keepAwake).
 
   // Spotify beim Countdown kurz leiser (Pause + Aufwärmen) — inert ohne
   // Verbindung; Restore übernimmt der Hook (Timer/Unmount).
