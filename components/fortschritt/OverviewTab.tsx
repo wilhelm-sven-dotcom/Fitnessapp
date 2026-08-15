@@ -193,7 +193,7 @@ export function OverviewTab() {
                   </p>
                 </div>
               </div>
-              <TrendChart values={e.points.map((p) => p.value)} />
+              <TrendChart points={e.points} />
               <div className="mt-2 flex items-center justify-between gap-2">
                 <span className="truncate text-xs text-muted">
                   Bestleistung <span className="text-muted">{e.bestPt.label}</span> ·{" "}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { BeforeAfter } from "@/components/progress/BeforeAfter";
 import { PhotoImg } from "@/components/progress/PhotoImg";
-import { TrendChart } from "@/components/progress/TrendChart";
+import { TrendChart, type TrendPoint } from "@/components/progress/TrendChart";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -30,14 +30,14 @@ function kgDelta(a?: number, b?: number): string | null {
 function BodyCard({
   label,
   unit,
-  values,
+  points,
 }: {
   label: string;
   unit: string;
-  values: number[];
+  points: TrendPoint[];
 }) {
-  const latest = values[values.length - 1];
-  const delta = values.length > 1 ? latest - values[0] : 0;
+  const latest = points[points.length - 1].value;
+  const delta = points.length > 1 ? latest - points[0].value : 0;
   return (
     <Card>
       <div className="flex items-end justify-between">
@@ -51,7 +51,7 @@ function BodyCard({
           />
           <p className="mt-0.5 text-xs text-muted">{label}</p>
         </div>
-        {values.length > 1 && (
+        {points.length > 1 && (
           <span className="text-xs tabular-nums text-muted">
             {delta > 0 ? "+" : ""}
             {delta.toFixed(1)} {unit}
@@ -59,7 +59,7 @@ function BodyCard({
         )}
       </div>
       <div className="mt-2">
-        <TrendChart values={values} />
+        <TrendChart points={points} />
       </div>
     </Card>
   );
@@ -71,12 +71,21 @@ export function BodyTab() {
   const { body, log } = useTraining();
   const router = useRouter();
 
+  // Kurven-Punkte mit Datum (Zeitachse) und fertigem Readout-Text.
   const weightSeries = body
     .filter((m) => m.weightKg != null)
-    .map((m) => m.weightKg as number);
+    .map((m) => ({
+      date: m.date,
+      value: m.weightKg as number,
+      label: `${fmtKg(m.weightKg as number)} kg`,
+    }));
   const waistSeries = body
     .filter((m) => m.waistCm != null)
-    .map((m) => m.waistCm as number);
+    .map((m) => ({
+      date: m.date,
+      value: m.waistCm as number,
+      label: `${fmtKg(m.waistCm as number)} cm`,
+    }));
 
   // Aufsteigend (Provider sortiert so); Fotos sind die Timeline-Anker.
   const photos = useMemo(() => body.filter((b) => b.photoId), [body]);
@@ -124,10 +133,10 @@ export function BodyTab() {
       {(weightSeries.length > 0 || waistSeries.length > 0) && (
         <div className="mb-4 space-y-3">
           {weightSeries.length > 0 && (
-            <BodyCard label="Körpergewicht" unit="kg" values={weightSeries} />
+            <BodyCard label="Körpergewicht" unit="kg" points={weightSeries} />
           )}
           {waistSeries.length > 0 && (
-            <BodyCard label="Bauchumfang" unit="cm" values={waistSeries} />
+            <BodyCard label="Bauchumfang" unit="cm" points={waistSeries} />
           )}
         </div>
       )}
