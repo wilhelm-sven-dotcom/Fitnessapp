@@ -8,6 +8,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { beatsRecord } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { PATTERN_LABEL } from "@/lib/exercises";
+import { SPRING } from "@/lib/motion";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import type { PlannedExercise } from "@/lib/session-model";
@@ -239,26 +240,35 @@ export function ExerciseStage({
                 const state: "active" | "done" | "upcoming" =
                   i === effActive ? "active" : filled ? "done" : "upcoming";
                 return (
-                  <SetRow
+                  // layout="position" = reine Translation: beim Aktiv-Wechsel
+                  // GLEITEN die Zeilen an ihre neuen Plätze (kein Scale-Morph,
+                  // der Ring und Inputs verzerren würde). SetRow selbst bleibt
+                  // unangetastet — .set-active trägt weiter den Smoke-Test.
+                  <motion.div
                     key={i}
-                    label={label}
-                    isWarmup={!!s.warmup}
-                    unit={ex.unit}
-                    set={s}
-                    isDumbbell={ex.req.includes("dumbbell") || ex.req.includes("db")}
-                    state={state}
-                    ghostWeight={s.warmup ? undefined : ghostWeight}
-                    ghostReps={s.warmup ? undefined : ghostReps}
-                    weightStep={weightStep}
-                    onWeight={(val) => onWeight(i, val)}
-                    onReps={(oldVal, val) => onReps(i, oldVal, val)}
-                    onRir={(val) => onRir(i, val)}
-                    onIntensity={(val) => onIntensity(i, val)}
-                    onActivate={() => setEditIdx(i)}
-                    onDeactivate={() => setEditIdx((k) => (k === i ? null : k))}
-                    recordLabel={record?.label}
-                    isRecord={beatsRecord(ex, s, record ?? null)}
-                  />
+                    layout={reduce ? false : "position"}
+                    transition={SPRING.panel}
+                  >
+                    <SetRow
+                      label={label}
+                      isWarmup={!!s.warmup}
+                      unit={ex.unit}
+                      set={s}
+                      isDumbbell={ex.req.includes("dumbbell") || ex.req.includes("db")}
+                      state={state}
+                      ghostWeight={s.warmup ? undefined : ghostWeight}
+                      ghostReps={s.warmup ? undefined : ghostReps}
+                      weightStep={weightStep}
+                      onWeight={(val) => onWeight(i, val)}
+                      onReps={(oldVal, val) => onReps(i, oldVal, val)}
+                      onRir={(val) => onRir(i, val)}
+                      onIntensity={(val) => onIntensity(i, val)}
+                      onActivate={() => setEditIdx(i)}
+                      onDeactivate={() => setEditIdx((k) => (k === i ? null : k))}
+                      recordLabel={record?.label}
+                      isRecord={beatsRecord(ex, s, record ?? null)}
+                    />
+                  </motion.div>
                 );
               });
             })()}
