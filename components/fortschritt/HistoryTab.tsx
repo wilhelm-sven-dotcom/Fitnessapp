@@ -384,7 +384,7 @@ export function HistoryTab() {
       </div>
 
       <Link
-        href="/settings"
+        href="/settings?seg=verbindungen"
         className="mt-5 block text-center text-xs text-muted underline-offset-2 hover:underline"
       >
         Strava verbinden für automatische Läufe und Fahrten →

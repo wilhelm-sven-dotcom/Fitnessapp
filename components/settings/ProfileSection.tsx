@@ -92,8 +92,8 @@ export function ProfileSection() {
             />
           </label>
           <p className="text-xs leading-relaxed text-muted">
-            Gewicht kommt aus deinen Körperdaten unten ({eff.bodyweightKg} kg) — für
-            relative Kraft und Recomp.
+            Gewicht kommt aus deinen Körperdaten ({eff.bodyweightKg} kg) — erfassen
+            unter Fortschritt → Körper.
           </p>
         </div>
 
