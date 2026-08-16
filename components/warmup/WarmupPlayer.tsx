@@ -9,8 +9,10 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
 import { beep, beepEnd, beepStart, primeAudio, setCueVolume as setBeepCueVolume } from "@/lib/beep";
+import { useOffline } from "@/lib/use-offline";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
+import { youtubeEmbedUrl } from "@/lib/youtube";
 import type { WarmupDrill } from "@/lib/warmup";
 
 const SWITCH_SEC = 5;
@@ -49,8 +51,9 @@ export function WarmupPlayer({
 
   const current = drills[index];
   const reduce = useReducedMotion();
-  const { settings, setCueVolume } = useTraining();
+  const { settings, setCueVolume, warmupVideos } = useTraining();
   const cueVol = settings.cueVolume ?? 1;
+  const offline = useOffline();
 
   // Signalton-Lautstärke direkt im Player durchschalten — mit sofortigem
   // Ton-Feedback in der NEUEN Lautstärke (Modul direkt setzen, dann persistieren).
@@ -197,6 +200,11 @@ export function WarmupPlayer({
         ? { label: "Mobilität", cls: "bg-accent-coverage text-on-strong" }
         : { label: "Aktivierung", cls: "bg-accent-volume text-on-strong" };
   const fig = FIG[showing.figure ?? showing.id];
+  // Eigenes Drill-Video (stumm, loopend): Countdown-Töne und Spotify-Ducking
+  // bleiben by construction hörbar (mute=1). Offline → Figur-Fallback.
+  const embed = offline
+    ? null
+    : youtubeEmbedUrl(warmupVideos[showing.id], { autoplay: !reduce, loop: true });
 
   return (
     <div
@@ -249,6 +257,35 @@ export function WarmupPlayer({
 
       {/* drill */}
       <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+        {/* Media-Bühne mit EIGENEM Key (Drill-Id): weil `showing` in der
+            Wechsel-Phase schon der NÄCHSTE Drill ist, mountet das iframe im
+            5-s-Fenster (Preload) und remountet beim Drill-Start NICHT. */}
+        <motion.div
+          key={`media:${showing.id}`}
+          initial={reduce ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
+        >
+          {embed ? (
+            <div
+              className="mb-3 overflow-hidden rounded-card border border-line bg-surface-0"
+              style={{ height: "min(32vh, 300px)", aspectRatio: "9 / 16" }}
+            >
+              <iframe
+                src={embed}
+                title={`YouTube-Video: ${showing.name}`}
+                className="h-full w-full"
+                style={{ border: 0 }}
+                referrerPolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          ) : fig ? (
+            <div className="mb-3 w-72 rounded-card border border-line bg-surface-1 p-2 shadow-card">
+              <FigurePanel label="" fig={fig} viewKey="side" periodMs={showing.periodMs} />
+            </div>
+          ) : null}
+        </motion.div>
         <motion.div
           key={`${index}:${phase}`}
           className="flex flex-col items-center"
@@ -261,11 +298,6 @@ export function WarmupPlayer({
           >
             {switching ? "Wechsel" : badge.label}
           </span>
-          {fig && (
-            <div className="mb-3 w-60 rounded-card border border-line bg-surface-1 p-2 shadow-card">
-              <FigurePanel label="" fig={fig} viewKey="side" />
-            </div>
-          )}
           <h2 className="font-display text-4xl font-semibold tracking-tight text-fg">
             {switching ? `Gleich: ${showing.name}` : showing.name}
           </h2>

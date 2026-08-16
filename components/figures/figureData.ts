@@ -1,12 +1,14 @@
 /* ===================== Figuren (animiert, datengetrieben). Grün = Wirbelsäule. ===================== */
-/* Datenpunkte 1:1 aus dem Prototyp übernommen. */
+/* Seit dem Video-Umbau zeigen NUR noch Aufwärm-Player, Muskel-Heatmap und
+ * Wochen-Poster Figuren — die Übungs-Ausführung erklärt das eigene Video.
+ * `squat_bw` ist der Heatmap-/Poster-Körper (Frame A bleibt byte-stabil). */
 
 export type Pt = [number, number];
 export type Frame = Record<string, Pt>;
 export type Bone = [string, string];
 
 export interface EquipDef {
-  kind: "db" | "goblet" | "kbHip" | "band" | "strap";
+  kind: "db" | "band" | "band2";
   hands?: string[];
   at?: string;
   from?: Pt;
@@ -47,13 +49,15 @@ export interface ViewDef {
 export interface FigureDef {
   ground: number | null;
   vb?: string;
+  /** Frames bilden einen geschlossenen Kreis (Sägezahn statt Ping-Pong) —
+   *  z. B. Pedaltritt oder Schulterkreisen. Eigenschaft der Zeichnung. */
+  cycle?: boolean;
   side: ViewDef;
   front?: ViewDef;
 }
 
 export const SB: Bone[] = [["sh", "hip"], ["sh", "elbow"], ["elbow", "hand"], ["hip", "knee"], ["knee", "foot"]];
 export const SB2: Bone[] = [...SB, ["hip", "knee2"], ["knee2", "foot2"]];
-export const SBR: Bone[] = [...SB, ["sh", "elbow2"], ["elbow2", "hand2"]];
 export const FB: Bone[] = [["sh", "hip"], ["sh", "elbowL"], ["elbowL", "handL"], ["sh", "elbowR"], ["elbowR", "handR"], ["hip", "kneeL"], ["kneeL", "footL"], ["hip", "kneeR"], ["kneeR", "footR"]];
 export const SP: Bone[] = [["sh", "hip"]];
 export const SPL: Bone[] = [["sh", "hip"], ["hip", "knee"], ["knee", "foot"]];
@@ -91,205 +95,42 @@ export function frameAt(n: number, f: number): { i: number; next: number; t: num
   return { i, next: i + 1, t: pos - i };
 }
 
-/**
- * Worked-muscle highlight: which bone segments to tint in the accent for a given
- * movement pattern. Keys are "a>b" (matching bone pairs, side + front variants).
- * Approximate — a form aid, not anatomy.
- */
-export function muscleBones(pattern?: string): Set<string> {
-  const s = new Set<string>();
-  const add = (...k: string[]) => k.forEach((x) => s.add(x));
-  switch (pattern) {
-    case "squat":
-    case "lunge":
-      add("hip>knee", "hip>knee2", "hip>kneeL", "hip>kneeR"); // Beine
-      break;
-    case "hinge":
-      add("sh>hip", "hip>knee", "hip>kneeL", "hip>kneeR"); // Hüfte/Rücken/Beine
-      break;
-    case "calf":
-      add("knee>foot", "knee2>foot2", "kneeL>footL", "kneeR>footR"); // Waden
-      break;
-    case "push":
-    case "pull":
-      add("sh>elbow", "elbow>hand", "sh>elbow2", "elbow2>hand2", "sh>elbowL", "elbowL>handL", "sh>elbowR", "elbowR>handR", "sh>hip");
-      break;
-    case "core":
-    default:
-      add("sh>hip");
-  }
-  return s;
-}
-
-/**
- * Neue Übungs-Id → nächstliegende bestehende Figur. Statt 80 neue Zeichnungen
- * zeigt der Katalog die verwandte Bewegung; `PATTERN_FIGURE` fängt den Rest
- * (auch eigene Übungen) mit einer Muster-Default-Figur ab.
- */
-export const FIGURE_ALIAS: Record<string, string> = {
-  // Squat-Familie
-  squat_bar: "squat_bw", front_squat: "goblet", squat_db: "goblet", box_squat: "squat_bw",
-  leg_press: "squat_bw", hack_squat: "squat_bw", leg_extension: "squat_bw", wall_sit: "squat_bw",
-  // Lunge-Familie
-  walking_lunge: "reverse_lunge", split_squat: "bss", side_lunge: "reverse_lunge",
-  cossack: "reverse_lunge", pistol_box: "stepup",
-  // Hinge-Familie
-  deadlift: "rdl_db", rdl_bar: "rdl_db", kb_swing: "rdl_db", good_morning: "rdl_db",
-  rdl_single: "rdl_db", sumo_deadlift: "rdl_db", leg_curl: "glutebridge",
-  back_ext: "glutebridge", pull_through: "rdl_db",
-  // Druck horizontal
-  bench_bar: "floorpress", bench_incline: "floorpress", bench_db: "floorpress",
-  incline_db: "floorpress", chest_press_machine: "floorpress", cable_fly: "floorpress",
-  db_fly: "floorpress", pec_deck: "floorpress", pushup_deficit: "pushup",
-  // Druck über Kopf
-  ohp_bar: "ohp_stand", arnold_press: "ohp_seat", shoulder_press_machine: "ohp_seat",
-  push_press: "ohp_stand", ohp_kb: "ohp_stand",
-  // Zug horizontal
-  row_bar: "row1", cable_row: "band_row", chest_row_db: "row1", row_machine: "band_row",
-  kb_row: "row1", renegade_row: "row1", shrug_db: "lateral",
-  // Zug vertikal
-  lat_pulldown: "band_pulldown", straight_arm_pulldown: "band_pulldown",
-  pullup_negative: "pullup", scap_pullup: "pullup", pullover_db: "tri_oh",
-  // Arme
-  incline_curl: "curl", concentration_curl: "curl", cable_curl: "curl", curl_bar: "curl",
-  skull_crusher: "tri_oh", pushdown: "tri_oh", tri_cable_oh: "tri_oh",
-  diamond_pushup: "pushup", bench_dips: "dips", wrist_curl: "curl", reverse_curl: "curl",
-  // Schultern
-  cable_lateral: "lateral", band_lateral: "lateral", reverse_fly_db: "face_pull",
-  reverse_fly_machine: "face_pull", front_raise: "lateral", upright_row: "lateral",
-  face_pull_cable: "face_pull", rear_delt_row: "row1",
-  // Core
-  hollow_hold: "deadbug", hanging_knee_raise: "pullup", cable_chop: "pallof",
-  db_chop: "pallof", around_world: "ohp_stand", wipers: "deadbug",
-  reverse_crunch: "deadbug", crunch: "deadbug",
-  russian_twist: "pallof", mountain_climbers: "plank", superman: "birddog",
-  farmer_carry: "suitcase",
-  // Waden
-  calf_raise_bw: "squat_bw", calf_raise_db: "squat_bw", calf_single: "stepup",
-  calf_seated: "squat_bw",
-};
-
-/** Muster → Default-Figur (letzte Rückfallebene, z. B. für eigene Übungen). */
-export const PATTERN_FIGURE: Record<string, string> = {
-  squat: "squat_bw", lunge: "reverse_lunge", hinge: "rdl_db", hpush: "pushup",
-  vpush: "ohp_stand", hpull: "row1", vpull: "pullup", arm: "curl",
-  lateral: "lateral", core: "plank", calf: "stepup", cardio: "bike_easy",
-};
-
-/** Figur für eine Übung: eigene Zeichnung → Alias → Muster-Default. */
-export function figFor(ex: { id: string; pattern?: string }): FigureDef | undefined {
-  return (
-    FIG[ex.id] ??
-    FIG[FIGURE_ALIAS[ex.id] ?? ""] ??
-    (ex.pattern ? FIG[PATTERN_FIGURE[ex.pattern] ?? ""] : undefined)
-  );
-}
-
+/* Autoren-Regeln: Frame 0 = die charakteristische Pose (reduced motion friert
+ * dort ein); Ping-Pong macht die Reihenfolge sonst egal. Jeder Frame trägt das
+ * IDENTISCHE Punkt-Key-Set; A/B bleiben frames[0]/frames[last] (ViewDef). */
 export const FIG: Record<string, FigureDef> = {
-  goblet: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "goblet", hands: ["hand"] },
-      frames: [
-        { head: [101, 30], sh: [100, 50], hip: [100, 93], elbow: [114, 72], hand: [101, 84], knee: [100, 121], foot: [100, 148] },
-        { head: [108, 54], sh: [105, 73], hip: [100, 114], elbow: [118, 92], hand: [104, 103], knee: [126, 123], foot: [119, 148] },
-        { head: [112, 66], sh: [108, 84], hip: [100, 124], elbow: [120, 102], hand: [106, 113], knee: [134, 124], foot: [119, 148] },
-      ],
-      A: { head: [101, 30], sh: [100, 50], hip: [100, 93], elbow: [114, 72], hand: [101, 84], knee: [100, 121], foot: [100, 148] },
-      B: { head: [108, 54], sh: [105, 73], hip: [100, 114], elbow: [118, 92], hand: [104, 103], knee: [126, 123], foot: [119, 148] } },
-    front: { bones: FB, spine: SP, equip: { kind: "goblet", hands: ["handL", "handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [84, 68], handL: [96, 80], elbowR: [116, 68], handR: [104, 80], kneeL: [92, 121], footL: [90, 148], kneeR: [108, 121], footR: [110, 148] },
-      B: { head: [100, 52], sh: [100, 72], hip: [100, 113], elbowL: [84, 90], handL: [96, 102], elbowR: [116, 90], handR: [104, 102], kneeL: [84, 124], footL: [84, 148], kneeR: [116, 124], footR: [116, 148] } } },
-
-  floorpress: { ground: 150, vb: "0 90 200 75",
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [58, 146], sh: [76, 146], hip: [126, 146], knee: [150, 130], foot: [166, 150], elbow: [98, 150], hand: [104, 138] },
-      B: { head: [58, 146], sh: [76, 146], hip: [126, 146], knee: [150, 130], foot: [166, 150], elbow: [100, 126], hand: [103, 106] } } },
-
   glutebridge: { ground: 150, vb: "0 90 200 75",
-    side: { bones: SB, spine: SP, equip: { kind: "kbHip", at: "hip" },
-      A: { head: [58, 146], sh: [72, 146], hip: [114, 140], knee: [150, 120], foot: [158, 150] },
-      B: { head: [58, 146], sh: [72, 146], hip: [120, 115], knee: [150, 118], foot: [158, 150] } } },
-
-  ohp_seat: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] }, static: [{ t: "rect", x: 86, y: 120, w: 46, h: 12 }],
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 118], knee: [128, 118], foot: [128, 148], elbow: [100, 68], hand: [104, 54] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 118], knee: [128, 118], foot: [128, 148], elbow: [100, 46], hand: [101, 28] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] }, static: [{ t: "rect", x: 86, y: 120, w: 46, h: 12 }],
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 118], kneeL: [92, 118], footL: [90, 148], kneeR: [108, 118], footR: [110, 148], elbowL: [82, 52], handL: [80, 36], elbowR: [118, 52], handR: [120, 36] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 118], kneeL: [92, 118], footL: [90, 148], kneeR: [108, 118], footR: [110, 148], elbowL: [88, 44], handL: [88, 26], elbowR: [112, 44], handR: [112, 26] } } },
-
-  plank: { ground: 150, vb: "0 90 200 75",
-    side: { bones: SB, spine: SPL,
-      A: { head: [58, 118], sh: [70, 121], hip: [120, 134], knee: [150, 141], foot: [180, 148], elbow: [72, 150], hand: [58, 150] },
-      B: { head: [58, 116], sh: [70, 119], hip: [120, 133], knee: [150, 140], foot: [180, 147], elbow: [72, 150], hand: [58, 150] } } },
-
-  bss: { ground: 150,
-    side: { bones: SB2, spine: SP, equip: { kind: "db", hands: ["hand"] }, static: [{ t: "rect", x: 150, y: 120, w: 44, h: 30 }],
-      A: { head: [100, 28], sh: [100, 48], hip: [100, 96], knee: [96, 123], foot: [92, 148], knee2: [130, 118], foot2: [158, 122], elbow: [100, 72], hand: [100, 92] },
-      B: { head: [102, 46], sh: [102, 66], hip: [100, 114], knee: [100, 128], foot: [96, 148], knee2: [126, 128], foot2: [158, 122], elbow: [101, 90], hand: [101, 110] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 94], kneeL: [94, 122], footL: [92, 148], kneeR: [106, 122], footR: [108, 148], elbowL: [84, 72], handL: [84, 93], elbowR: [116, 72], handR: [116, 93] },
-      B: { head: [100, 46], sh: [100, 66], hip: [100, 110], kneeL: [90, 128], footL: [88, 148], kneeR: [110, 128], footR: [112, 148], elbowL: [84, 88], handL: [84, 109], elbowR: [116, 88], handR: [116, 109] } } },
-
-  pullup: { ground: null,
-    side: { bones: SB, spine: SP, static: [{ t: "line", x1: 58, y1: 22, x2: 148, y2: 22, c: "#737373", w: 5 }],
-      A: { head: [100, 46], sh: [100, 58], hip: [100, 104], knee: [100, 128], foot: [100, 150], elbow: [101, 40], hand: [100, 26] },
-      B: { head: [100, 30], sh: [100, 42], hip: [100, 88], knee: [100, 112], foot: [100, 134], elbow: [104, 32], hand: [100, 26] } },
-    front: { bones: FB, spine: SP, static: [{ t: "line", x1: 55, y1: 22, x2: 145, y2: 22, c: "#737373", w: 5 }],
-      A: { head: [100, 46], sh: [100, 58], hip: [100, 104], elbowL: [88, 40], handL: [80, 26], elbowR: [112, 40], handR: [120, 26], kneeL: [94, 128], footL: [94, 150], kneeR: [106, 128], footR: [106, 150] },
-      B: { head: [100, 30], sh: [100, 42], hip: [100, 88], elbowL: [90, 32], handL: [80, 26], elbowR: [110, 32], handR: [120, 26], kneeL: [96, 112], footL: [96, 134], kneeR: [104, 112], footR: [104, 134] } } },
-
-  row1: { ground: 150,
-    side: { bones: SBR, spine: SP, equip: { kind: "db", hands: ["hand2"] }, static: [{ t: "rect", x: 56, y: 112, w: 40, h: 38 }],
-      A: { head: [92, 80], sh: [104, 82], hip: [150, 98], elbow: [98, 96], hand: [80, 112], knee: [156, 124], foot: [156, 150], elbow2: [150, 104], hand2: [150, 120] },
-      B: { head: [92, 80], sh: [104, 82], hip: [150, 98], elbow: [98, 96], hand: [80, 112], knee: [156, 124], foot: [156, 150], elbow2: [150, 88], hand2: [150, 104] } } },
-
-  curl: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [101, 72], hand: [103, 92] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [101, 72], hand: [112, 60] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 70], handL: [84, 92], elbowR: [114, 70], handR: [116, 92], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 70], handL: [90, 58], elbowR: [114, 70], handR: [110, 58], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] } } },
+    side: { bones: SB, spine: SP,
+      frames: [
+        { head: [58, 146], sh: [72, 146], hip: [120, 112], knee: [150, 116], foot: [158, 150] },
+        { head: [58, 146], sh: [72, 146], hip: [118, 126], knee: [150, 118], foot: [158, 150] },
+        { head: [58, 146], sh: [72, 146], hip: [114, 140], knee: [150, 120], foot: [158, 150] },
+      ],
+      A: { head: [58, 146], sh: [72, 146], hip: [120, 112], knee: [150, 116], foot: [158, 150] },
+      B: { head: [58, 146], sh: [72, 146], hip: [114, 140], knee: [150, 120], foot: [158, 150] } } },
 
   pallof: { ground: 150,
     side: { bones: SB, spine: SP, equip: { kind: "band", from: [186, 84], to: "hand" }, static: [{ t: "rect", x: 182, y: 72, w: 8, h: 40 }],
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 66], hand: [120, 72] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [130, 72], hand: [150, 76] } } },
-
-  stepup: { ground: 150,
-    side: { bones: SB2, spine: SP, equip: { kind: "db", hands: ["hand"] }, static: [{ t: "rect", x: 128, y: 116, w: 58, h: 34 }],
-      A: { head: [100, 36], sh: [100, 56], hip: [100, 100], knee: [122, 120], foot: [146, 118], knee2: [96, 126], foot2: [92, 148], elbow: [100, 78], hand: [100, 98] },
-      B: { head: [100, 16], sh: [100, 36], hip: [100, 78], knee: [140, 110], foot: [146, 118], knee2: [122, 104], foot2: [126, 118], elbow: [100, 56], hand: [100, 76] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] }, static: [{ t: "rect", x: 80, y: 116, w: 40, h: 34 }],
-      A: { head: [100, 38], sh: [100, 58], hip: [100, 100], kneeL: [92, 126], footL: [90, 148], kneeR: [108, 118], footR: [104, 118], elbowL: [84, 78], handL: [82, 98], elbowR: [116, 78], handR: [118, 98] },
-      B: { head: [100, 20], sh: [100, 40], hip: [100, 80], kneeL: [92, 108], footL: [92, 120], kneeR: [108, 108], footR: [104, 118], elbowL: [84, 58], handL: [82, 78], elbowR: [116, 58], handR: [118, 78] } } },
-
-  dips: { ground: null,
-    side: { bones: SB, spine: SP, equip: { kind: "strap", lines: [[[96, 18], "hand"]] },
-      A: { head: [100, 62], sh: [100, 80], hip: [100, 118], knee: [112, 128], foot: [120, 116], elbow: [96, 96], hand: [96, 82] },
-      B: { head: [100, 44], sh: [100, 62], hip: [100, 100], knee: [112, 112], foot: [120, 100], elbow: [96, 80], hand: [96, 82] } },
-    front: { bones: FB, spine: SP, equip: { kind: "strap", lines: [[[88, 18], "handL"], [[112, 18], "handR"]] },
-      A: { head: [100, 60], sh: [100, 78], hip: [100, 116], elbowL: [86, 92], handL: [86, 80], elbowR: [114, 92], handR: [114, 80], kneeL: [92, 128], footL: [88, 140], kneeR: [108, 128], footR: [112, 140] },
-      B: { head: [100, 44], sh: [100, 62], hip: [100, 100], elbowL: [86, 78], handL: [86, 80], elbowR: [114, 78], handR: [114, 80], kneeL: [92, 112], footL: [88, 124], kneeR: [108, 112], footR: [112, 124] } } },
-
-  ringrow: { ground: 150,
-    side: { bones: SB, spine: SPL, equip: { kind: "strap", lines: [[[126, 18], "hand"]] },
-      A: { head: [102, 108], sh: [112, 112], hip: [150, 130], knee: [168, 139], foot: [186, 148], elbow: [120, 100], hand: [126, 90] },
-      B: { head: [102, 94], sh: [112, 98], hip: [150, 122], knee: [168, 135], foot: [186, 148], elbow: [122, 92], hand: [126, 90] } } },
-
-  lateral: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [103, 70], hand: [104, 90] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 56], hand: [122, 50] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [88, 68], handL: [86, 90], elbowR: [112, 68], handR: [114, 90], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [78, 54], handL: [64, 50], elbowR: [122, 54], handR: [136, 50], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] } } },
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [130, 72], hand: [150, 76] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [121, 69], hand: [135, 74] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 66], hand: [120, 72] },
+      ],
+      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [130, 72], hand: [150, 76] },
+      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 66], hand: [120, 72] } } },
 
   sideplank: { ground: 150, vb: "0 90 200 75",
     side: { bones: SB, spine: SPL,
-      A: { head: [82, 118], sh: [92, 121], hip: [134, 138], knee: [164, 144], foot: [188, 150], elbow: [92, 150], hand: [80, 150] },
-      B: { head: [82, 114], sh: [92, 118], hip: [134, 132], knee: [164, 140], foot: [188, 148], elbow: [92, 150], hand: [80, 150] } } },
+      frames: [
+        { head: [82, 110], sh: [92, 114], hip: [134, 128], knee: [164, 138], foot: [188, 148], elbow: [92, 150], hand: [80, 150] },
+        { head: [82, 114], sh: [92, 118], hip: [134, 135], knee: [164, 141], foot: [188, 149], elbow: [92, 150], hand: [80, 150] },
+        { head: [82, 118], sh: [92, 122], hip: [134, 142], knee: [164, 144], foot: [188, 150], elbow: [92, 150], hand: [80, 150] },
+      ],
+      A: { head: [82, 110], sh: [92, 114], hip: [134, 128], knee: [164, 138], foot: [188, 148], elbow: [92, 150], hand: [80, 150] },
+      B: { head: [82, 118], sh: [92, 122], hip: [134, 142], knee: [164, 144], foot: [188, 150], elbow: [92, 150], hand: [80, 150] } } },
 
+  // Heatmap-/Poster-Körper + Referenz-Kniebeuge — Frame A NICHT anfassen
+  // (MuscleHeatmapCard und lib/share-card zeichnen exakt diese Punkte).
   squat_bw: { ground: 150,
     side: { bones: SB, spine: SP,
       frames: [
@@ -303,105 +144,35 @@ export const FIG: Record<string, FigureDef> = {
       A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 62], handL: [80, 62], elbowR: [114, 62], handR: [120, 62], kneeL: [92, 121], footL: [90, 148], kneeR: [108, 121], footR: [110, 148] },
       B: { head: [100, 50], sh: [100, 68], hip: [100, 110], elbowL: [86, 80], handL: [80, 80], elbowR: [114, 80], handR: [120, 80], kneeL: [84, 124], footL: [84, 148], kneeR: [116, 124], footR: [116, 148] } } },
 
-  reverse_lunge: { ground: 150,
-    side: { bones: SB2, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 28], sh: [100, 48], hip: [100, 93], knee: [100, 120], foot: [100, 148], knee2: [104, 120], foot2: [104, 148], elbow: [100, 70], hand: [100, 90] },
-      B: { head: [100, 42], sh: [100, 62], hip: [100, 100], knee: [96, 124], foot: [92, 148], knee2: [122, 128], foot2: [144, 148], elbow: [100, 84], hand: [100, 104] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] },
-      A: { head: [100, 28], sh: [100, 48], hip: [100, 93], elbowL: [84, 70], handL: [84, 90], elbowR: [116, 70], handR: [116, 90], kneeL: [94, 120], footL: [92, 148], kneeR: [106, 120], footR: [108, 148] },
-      B: { head: [100, 40], sh: [100, 60], hip: [100, 103], elbowL: [84, 82], handL: [84, 102], elbowR: [116, 82], handR: [116, 102], kneeL: [94, 126], footL: [92, 150], kneeR: [104, 124], footR: [104, 138] } } },
-
-  hip_thrust: { ground: 150, vb: "0 90 200 75",
-    side: { bones: SB, spine: SP, equip: { kind: "kbHip", at: "hip" }, static: [{ t: "rect", x: 40, y: 116, w: 34, h: 34 }],
-      A: { head: [52, 120], sh: [66, 120], hip: [110, 142], knee: [150, 122], foot: [158, 150] },
-      B: { head: [52, 118], sh: [66, 118], hip: [118, 118], knee: [150, 118], foot: [158, 150] } } },
-
-  rdl_db: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [100, 70], hand: [100, 90] },
-      B: { head: [128, 66], sh: [120, 72], hip: [96, 96], knee: [100, 120], foot: [100, 148], elbow: [120, 92], hand: [120, 112] } } },
-
-  pushup: { ground: 150, vb: "0 90 200 75",
-    side: { bones: SB, spine: SPL,
-      frames: [
-        { head: [58, 114], sh: [72, 118], hip: [120, 132], knee: [150, 139], foot: [182, 148], elbow: [72, 133], hand: [72, 150] },
-        { head: [58, 122], sh: [72, 125], hip: [120, 137], knee: [150, 143], foot: [182, 149], elbow: [66, 137], hand: [76, 150] },
-        { head: [58, 130], sh: [72, 132], hip: [120, 141], knee: [150, 146], foot: [182, 150], elbow: [60, 143], hand: [80, 150] },
-      ],
-      A: { head: [58, 114], sh: [72, 118], hip: [120, 132], knee: [150, 139], foot: [182, 148], elbow: [72, 133], hand: [72, 150] },
-      B: { head: [58, 130], sh: [72, 132], hip: [120, 141], knee: [150, 146], foot: [182, 150], elbow: [60, 143], hand: [80, 150] } } },
-
-  ohp_stand: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [100, 68], hand: [104, 54] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [100, 46], hand: [101, 28] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [84, 66], handL: [82, 52], elbowR: [116, 66], handR: [118, 52], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [88, 44], handL: [88, 26], elbowR: [112, 44], handR: [112, 26], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] } } },
-
-  pike_pushup: { ground: 150,
-    side: { bones: SB, spine: SP,
-      A: { head: [84, 120], sh: [96, 112], hip: [120, 96], knee: [140, 118], foot: [158, 148], elbow: [88, 128], hand: [78, 140] },
-      B: { head: [80, 134], sh: [94, 124], hip: [120, 98], knee: [140, 120], foot: [158, 148], elbow: [82, 138], hand: [76, 150] } } },
-
-  band_row: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "band", from: [188, 74], to: "hand" }, static: [{ t: "rect", x: 184, y: 58, w: 8, h: 40 }],
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [120, 68], hand: [150, 72] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [88, 70], hand: [78, 74] } } },
-
-  chinup: { ground: null,
-    side: { bones: SB, spine: SP, static: [{ t: "line", x1: 58, y1: 22, x2: 148, y2: 22, c: "#737373", w: 5 }],
-      A: { head: [100, 46], sh: [100, 58], hip: [100, 104], knee: [100, 128], foot: [100, 150], elbow: [101, 40], hand: [100, 26] },
-      B: { head: [100, 30], sh: [100, 42], hip: [100, 88], knee: [100, 112], foot: [100, 134], elbow: [104, 32], hand: [100, 26] } },
-    front: { bones: FB, spine: SP, static: [{ t: "line", x1: 55, y1: 22, x2: 145, y2: 22, c: "#737373", w: 5 }],
-      A: { head: [100, 46], sh: [100, 58], hip: [100, 104], elbowL: [92, 40], handL: [88, 26], elbowR: [108, 40], handR: [112, 26], kneeL: [94, 128], footL: [94, 150], kneeR: [106, 128], footR: [106, 150] },
-      B: { head: [100, 30], sh: [100, 42], hip: [100, 88], elbowL: [94, 32], handL: [88, 26], elbowR: [106, 32], handR: [112, 26], kneeL: [96, 112], footL: [96, 134], kneeR: [104, 112], footR: [104, 134] } } },
-
-  band_pulldown: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "band", from: [100, 18], to: "hand" }, static: [{ t: "line", x1: 80, y1: 18, x2: 120, y2: 18, c: "#737373", w: 4 }],
-      A: { head: [100, 32], sh: [100, 52], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [108, 40], hand: [108, 24] },
-      B: { head: [100, 32], sh: [100, 52], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 72], hand: [112, 58] } } },
-
-  hammer_curl: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [101, 72], hand: [103, 92] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [101, 72], hand: [112, 60] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handL", "handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 70], handL: [84, 92], elbowR: [114, 70], handR: [116, 92], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 70], handL: [90, 58], elbowR: [114, 70], handR: [110, 58], kneeL: [92, 121], footL: [91, 148], kneeR: [108, 121], footR: [109, 148] } } },
-
-  tri_oh: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 32], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [100, 46], hand: [112, 58] },
-      B: { head: [100, 32], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [100, 46], hand: [100, 28] } } },
-
-  face_pull: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "band", from: [188, 42], to: "hand" }, static: [{ t: "rect", x: 184, y: 26, w: 8, h: 36 }],
-      A: { head: [100, 32], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [120, 52], hand: [150, 44] },
-      B: { head: [100, 32], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 52], hand: [96, 44] } } },
-
   birddog: { ground: 150, vb: "0 90 200 75",
     side: { bones: [["sh", "hip"], ["sh", "hand"], ["sh", "handS"], ["hip", "foot"], ["hip", "kneeS"]], spine: SP,
-      A: { head: [86, 116], sh: [96, 116], hip: [130, 118], hand: [96, 132], handS: [100, 150], foot: [132, 132], kneeS: [134, 150] },
-      B: { head: [84, 112], sh: [96, 116], hip: [130, 118], hand: [62, 108], handS: [100, 150], foot: [170, 108], kneeS: [134, 150] } } },
+      frames: [
+        { head: [84, 112], sh: [96, 116], hip: [130, 118], hand: [62, 108], handS: [100, 150], foot: [170, 108], kneeS: [134, 150] },
+        { head: [85, 114], sh: [96, 116], hip: [130, 118], hand: [78, 120], handS: [100, 150], foot: [152, 120], kneeS: [134, 150] },
+        { head: [86, 116], sh: [96, 116], hip: [130, 118], hand: [96, 132], handS: [100, 150], foot: [132, 132], kneeS: [134, 150] },
+      ],
+      A: { head: [84, 112], sh: [96, 116], hip: [130, 118], hand: [62, 108], handS: [100, 150], foot: [170, 108], kneeS: [134, 150] },
+      B: { head: [86, 116], sh: [96, 116], hip: [130, 118], hand: [96, 132], handS: [100, 150], foot: [132, 132], kneeS: [134, 150] } } },
 
   deadbug: { ground: 150, vb: "0 90 200 75",
     side: { bones: SB, spine: SP,
-      A: { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [80, 127], hand: [80, 108], knee: [120, 120], foot: [120, 108] },
-      B: { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [68, 128], hand: [58, 140], knee: [140, 126], foot: [166, 140] } } },
+      frames: [
+        { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [68, 128], hand: [58, 140], knee: [140, 126], foot: [166, 140] },
+        { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [73, 127], hand: [67, 126], knee: [130, 123], foot: [144, 120] },
+        { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [80, 127], hand: [80, 108], knee: [120, 120], foot: [120, 108] },
+      ],
+      A: { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [68, 128], hand: [58, 140], knee: [140, 126], foot: [166, 140] },
+      B: { head: [64, 146], sh: [80, 146], hip: [120, 146], elbow: [80, 127], hand: [80, 108], knee: [120, 120], foot: [120, 108] } } },
 
   gb_march: { ground: 150, vb: "0 90 200 75",
     side: { bones: SB2, spine: SP,
-      A: { head: [52, 146], sh: [66, 146], hip: [112, 118], knee: [150, 118], foot: [158, 150], knee2: [150, 118], foot2: [158, 150] },
+      frames: [
+        { head: [52, 146], sh: [66, 146], hip: [112, 118], knee: [118, 102], foot: [126, 118], knee2: [150, 118], foot2: [158, 150] },
+        { head: [52, 146], sh: [66, 146], hip: [112, 118], knee: [150, 118], foot: [158, 150], knee2: [150, 118], foot2: [158, 150] },
+        { head: [52, 146], sh: [66, 146], hip: [112, 118], knee: [150, 118], foot: [158, 150], knee2: [118, 102], foot2: [126, 118] },
+      ],
+      A: { head: [52, 146], sh: [66, 146], hip: [112, 118], knee: [118, 102], foot: [126, 118], knee2: [150, 118], foot2: [158, 150] },
       B: { head: [52, 146], sh: [66, 146], hip: [112, 118], knee: [150, 118], foot: [158, 150], knee2: [118, 102], foot2: [126, 118] } } },
-
-  suitcase: { ground: 150,
-    side: { bones: SB, spine: SP, equip: { kind: "db", hands: ["hand"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [112, 72], hand: [112, 92] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [96, 121], foot: [88, 148], elbow: [112, 72], hand: [112, 93] } },
-    front: { bones: FB, spine: SP, equip: { kind: "db", hands: ["handR"] },
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 72], handL: [84, 92], elbowR: [114, 72], handR: [116, 92], kneeL: [94, 121], footL: [92, 148], kneeR: [106, 121], footR: [108, 148] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 92], elbowL: [86, 72], handL: [84, 92], elbowR: [114, 72], handR: [116, 93], kneeL: [94, 121], footL: [92, 148], kneeR: [106, 121], footR: [108, 148] } } },
 
   // ===== Aufwärm-Drills (mehrere Posen) =====
   cat_cow: { ground: 150, vb: "0 90 200 75",
@@ -414,15 +185,16 @@ export const FIG: Record<string, FigureDef> = {
       A: { head: [86, 126], sh: [94, 116], mid: [110, 104], hip: [126, 116], elbow: [94, 134], hand: [94, 150], knee: [126, 134], foot: [126, 150] },
       B: { head: [86, 108], sh: [94, 116], mid: [110, 126], hip: [126, 116], elbow: [94, 134], hand: [94, 150], knee: [126, 134], foot: [126, 150] } } },
 
-  hip_circles: { ground: 150,
+  hip_circles: { ground: 150, cycle: true,
     side: { bones: SB2, spine: SP,
       frames: [
         { head: [106, 33], sh: [106, 52], hip: [110, 94], elbow: [118, 74], hand: [112, 92], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] },
         { head: [100, 30], sh: [100, 50], hip: [100, 88], elbow: [114, 72], hand: [104, 88], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] },
         { head: [94, 33], sh: [94, 52], hip: [90, 94], elbow: [104, 74], hand: [96, 92], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] },
+        { head: [100, 36], sh: [100, 55], hip: [100, 99], elbow: [112, 76], hand: [104, 94], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] },
       ],
       A: { head: [106, 33], sh: [106, 52], hip: [110, 94], elbow: [118, 74], hand: [112, 92], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] },
-      B: { head: [94, 33], sh: [94, 52], hip: [90, 94], elbow: [104, 74], hand: [96, 92], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] } } },
+      B: { head: [100, 36], sh: [100, 55], hip: [100, 99], elbow: [112, 76], hand: [104, 94], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148] } } },
 
   ankle_rocks: { ground: 150,
     side: { bones: SB2, spine: SP,
@@ -434,7 +206,7 @@ export const FIG: Record<string, FigureDef> = {
       A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbow: [100, 72], hand: [100, 92], knee: [94, 121], foot: [92, 148], knee2: [108, 121], foot2: [110, 148] },
       B: { head: [104, 32], sh: [102, 52], hip: [102, 96], elbow: [102, 74], hand: [102, 94], knee: [116, 120], foot: [92, 148], knee2: [108, 121], foot2: [110, 148] } } },
 
-  shoulder_circles: { ground: 150,
+  shoulder_circles: { ground: 150, cycle: true,
     side: { bones: SB2, spine: SP,
       frames: [
         { head: [100, 30], sh: [100, 50], hip: [100, 93], knee: [92, 121], foot: [90, 148], knee2: [110, 121], foot2: [112, 148], elbow: [112, 66], hand: [122, 82] },
@@ -458,8 +230,13 @@ export const FIG: Record<string, FigureDef> = {
   // Warmup v2 (RAMP): Puls- und Mobilitäts-Muster ohne bestehendes Pendant.
   jumping_jacks: { ground: 150,
     side: { bones: FB, spine: SP,
-      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 66], handL: [90, 84], elbowR: [114, 66], handR: [110, 84], kneeL: [95, 121], footL: [94, 148], kneeR: [105, 121], footR: [106, 148] },
-      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [78, 36], handL: [66, 18], elbowR: [122, 36], handR: [134, 18], kneeL: [84, 122], footL: [72, 148], kneeR: [116, 122], footR: [128, 148] } } },
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [78, 36], handL: [66, 18], elbowR: [122, 36], handR: [134, 18], kneeL: [84, 122], footL: [72, 148], kneeR: [116, 122], footR: [128, 148] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [82, 48], handL: [66, 44], elbowR: [118, 48], handR: [134, 44], kneeL: [90, 122], footL: [82, 148], kneeR: [110, 122], footR: [118, 148] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 66], handL: [90, 84], elbowR: [114, 66], handR: [110, 84], kneeL: [95, 121], footL: [94, 148], kneeR: [105, 121], footR: [106, 148] },
+      ],
+      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [78, 36], handL: [66, 18], elbowR: [122, 36], handR: [134, 18], kneeL: [84, 122], footL: [72, 148], kneeR: [116, 122], footR: [128, 148] },
+      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [86, 66], handL: [90, 84], elbowR: [114, 66], handR: [110, 84], kneeL: [95, 121], footL: [94, 148], kneeR: [105, 121], footR: [106, 148] } } },
 
   march_high: { ground: 150,
     side: { bones: SB2, spine: SP,
@@ -474,12 +251,13 @@ export const FIG: Record<string, FigureDef> = {
   worlds_greatest: { ground: 150,
     side: { bones: [["sh", "hip"], ["sh", "elbow"], ["elbow", "hand"], ["sh", "elbow2"], ["elbow2", "hand2"], ["hip", "knee"], ["knee", "foot"], ["hip", "knee2"], ["knee2", "foot2"]], spine: SP,
       frames: [
-        { head: [76, 84], sh: [84, 88], hip: [116, 100], elbow: [80, 106], hand: [76, 124], elbow2: [88, 108], hand2: [86, 126], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
-        { head: [74, 78], sh: [84, 84], hip: [116, 100], elbow: [78, 104], hand: [74, 126], elbow2: [88, 84], hand2: [92, 66], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
         { head: [72, 74], sh: [84, 82], hip: [116, 100], elbow: [78, 102], hand: [74, 126], elbow2: [90, 66], hand2: [94, 46], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
+        { head: [74, 78], sh: [84, 84], hip: [116, 100], elbow: [78, 104], hand: [74, 126], elbow2: [88, 84], hand2: [92, 66], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
+        { head: [76, 84], sh: [84, 88], hip: [116, 100], elbow: [80, 106], hand: [76, 124], elbow2: [88, 108], hand2: [86, 126], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
+        { head: [78, 88], sh: [84, 90], hip: [116, 100], elbow: [80, 108], hand: [76, 126], elbow2: [88, 110], hand2: [86, 130], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
       ],
-      A: { head: [76, 84], sh: [84, 88], hip: [116, 100], elbow: [80, 106], hand: [76, 124], elbow2: [88, 108], hand2: [86, 126], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
-      B: { head: [74, 78], sh: [84, 84], hip: [116, 100], elbow: [78, 104], hand: [74, 126], elbow2: [88, 84], hand2: [92, 66], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] } } },
+      A: { head: [72, 74], sh: [84, 82], hip: [116, 100], elbow: [78, 102], hand: [74, 126], elbow2: [90, 66], hand2: [94, 46], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] },
+      B: { head: [78, 88], sh: [84, 90], hip: [116, 100], elbow: [80, 108], hand: [76, 126], elbow2: [88, 110], hand2: [86, 130], knee: [84, 124], foot: [80, 148], knee2: [136, 124], foot2: [152, 146] } } },
 
   leg_swings: { ground: 150,
     side: { bones: SB2, spine: SP,
@@ -511,14 +289,77 @@ export const FIG: Record<string, FigureDef> = {
       A: { head: [112, 44], sh: [112, 62], hip: [112, 101], elbowL: [100, 78], handL: [98, 94], elbowR: [124, 78], handR: [126, 94], kneeL: [106, 125], footL: [104, 148], kneeR: [118, 125], footR: [120, 148] },
       B: { head: [100, 46], sh: [100, 64], hip: [100, 103], elbowL: [86, 80], handL: [84, 96], elbowR: [114, 80], handR: [116, 96], kneeL: [80, 126], footL: [70, 148], kneeR: [120, 126], footR: [130, 148] } } },
 
-  bike_easy: { ground: 150,
+  bike_easy: { ground: 150, cycle: true,
     side: { bones: SB2, spine: SP, static: [{ t: "line", x1: 120, y1: 128, x2: 120, y2: 150, c: "#737373", w: 4 }, { t: "line", x1: 120, y1: 84, x2: 120, y2: 128, c: "#525252", w: 3 }],
       frames: [
-        { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [112, 112], foot: [122, 118], knee2: [118, 120], foot2: [112, 138] },
-        { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [118, 120], foot: [122, 140], knee2: [112, 112], foot2: [130, 118] },
+        { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [112, 112], foot: [121, 118], knee2: [117, 121], foot2: [121, 140] },
+        { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [116, 116], foot: [132, 129], knee2: [111, 116], foot2: [110, 129] },
+        { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [117, 121], foot: [121, 140], knee2: [112, 112], foot2: [121, 118] },
+        { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [111, 116], foot: [110, 129], knee2: [116, 116], foot2: [132, 129] },
       ],
-      A: { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [112, 112], foot: [122, 118], knee2: [118, 120], foot2: [112, 138] },
-      B: { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [118, 120], foot: [122, 140], knee2: [112, 112], foot2: [130, 118] } } },
+      A: { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [112, 112], foot: [121, 118], knee2: [117, 121], foot2: [121, 140] },
+      B: { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [111, 116], foot: [110, 129], knee2: [116, 116], foot2: [132, 129] } } },
+
+  // Warmup v3: eigene Zeichnungen statt geliehener Übungs-Posen.
+  squat_pry: { ground: 150,
+    side: { bones: SB, spine: SP,
+      frames: [
+        { head: [112, 68], sh: [108, 86], hip: [100, 126], knee: [142, 122], foot: [119, 148], elbow: [122, 104], hand: [114, 113] },
+        { head: [112, 66], sh: [108, 84], hip: [100, 124], knee: [134, 124], foot: [119, 148], elbow: [118, 102], hand: [112, 112] },
+        { head: [108, 54], sh: [105, 73], hip: [100, 114], knee: [126, 123], foot: [119, 148], elbow: [114, 90], hand: [108, 102] },
+        { head: [101, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [110, 72], hand: [106, 88] },
+      ],
+      A: { head: [112, 68], sh: [108, 86], hip: [100, 126], knee: [142, 122], foot: [119, 148], elbow: [122, 104], hand: [114, 113] },
+      B: { head: [101, 30], sh: [100, 50], hip: [100, 93], knee: [100, 121], foot: [100, 148], elbow: [110, 72], hand: [106, 88] } } },
+
+  hip_flexor_dyn: { ground: 150,
+    side: { bones: SB2, spine: SP,
+      frames: [
+        { head: [96, 38], sh: [97, 56], hip: [100, 102], knee: [88, 124], foot: [84, 148], knee2: [126, 130], foot2: [148, 148], elbow: [100, 78], hand: [102, 96] },
+        { head: [100, 40], sh: [100, 58], hip: [104, 104], knee: [90, 125], foot: [84, 148], knee2: [128, 131], foot2: [148, 148], elbow: [103, 80], hand: [104, 98] },
+        { head: [104, 42], sh: [103, 60], hip: [108, 106], knee: [92, 126], foot: [84, 148], knee2: [130, 132], foot2: [148, 148], elbow: [106, 82], hand: [106, 100] },
+      ],
+      A: { head: [96, 38], sh: [97, 56], hip: [100, 102], knee: [88, 124], foot: [84, 148], knee2: [126, 130], foot2: [148, 148], elbow: [100, 78], hand: [102, 96] },
+      B: { head: [104, 42], sh: [103, 60], hip: [108, 106], knee: [92, 126], foot: [84, 148], knee2: [130, 132], foot2: [148, 148], elbow: [106, 82], hand: [106, 100] } } },
+
+  scap_pushup: { ground: 150, vb: "0 90 200 75",
+    side: { bones: SB, spine: SPL,
+      frames: [
+        { head: [58, 112], sh: [72, 116], hip: [120, 131], knee: [150, 138], foot: [182, 148], elbow: [72, 133], hand: [72, 150] },
+        { head: [58, 118], sh: [72, 122], hip: [120, 134], knee: [150, 140], foot: [182, 148], elbow: [72, 136], hand: [72, 150] },
+      ],
+      A: { head: [58, 112], sh: [72, 116], hip: [120, 131], knee: [150, 138], foot: [182, 148], elbow: [72, 133], hand: [72, 150] },
+      B: { head: [58, 118], sh: [72, 122], hip: [120, 134], knee: [150, 140], foot: [182, 148], elbow: [72, 136], hand: [72, 150] } } },
+
+  band_pullapart: { ground: 150,
+    side: { bones: FB, spine: SP, equip: { kind: "band2", hands: ["handL", "handR"] },
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [80, 52], handL: [62, 52], elbowR: [120, 52], handR: [138, 52], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [88, 54], handL: [78, 54], elbowR: [112, 54], handR: [122, 54], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [94, 56], handL: [90, 58], elbowR: [106, 56], handR: [110, 58], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+      ],
+      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [80, 52], handL: [62, 52], elbowR: [120, 52], handR: [138, 52], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [94, 56], handL: [90, 58], elbowR: [106, 56], handR: [110, 58], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] } } },
+
+  wall_slides: { ground: 150,
+    side: { bones: FB, spine: SP,
+      frames: [
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [88, 36], handL: [86, 18], elbowR: [112, 36], handR: [114, 18], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [84, 44], handL: [84, 28], elbowR: [116, 44], handR: [116, 28], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+        { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [80, 52], handL: [78, 34], elbowR: [120, 52], handR: [122, 34], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+      ],
+      A: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [88, 36], handL: [86, 18], elbowR: [112, 36], handR: [114, 18], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] },
+      B: { head: [100, 30], sh: [100, 50], hip: [100, 93], elbowL: [80, 52], handL: [78, 34], elbowR: [120, 52], handR: [122, 34], kneeL: [93, 121], footL: [92, 148], kneeR: [107, 121], footR: [108, 148] } } },
+
+  pogo_calf: { ground: 150,
+    side: { bones: SB, spine: SP,
+      frames: [
+        { head: [100, 32], sh: [100, 52], hip: [100, 95], knee: [100, 122], foot: [100, 148], elbow: [104, 74], hand: [106, 92] },
+        { head: [100, 26], sh: [100, 46], hip: [100, 89], knee: [100, 116], foot: [100, 143], elbow: [104, 68], hand: [106, 86] },
+        { head: [100, 18], sh: [100, 38], hip: [100, 81], knee: [100, 110], foot: [100, 138], elbow: [104, 60], hand: [106, 78] },
+      ],
+      A: { head: [100, 32], sh: [100, 52], hip: [100, 95], knee: [100, 122], foot: [100, 148], elbow: [104, 74], hand: [106, 92] },
+      B: { head: [100, 18], sh: [100, 38], hip: [100, 81], knee: [100, 110], foot: [100, 138], elbow: [104, 60], hand: [106, 78] } } },
 };
 
 export function lerp(a: number, b: number, f: number) {
