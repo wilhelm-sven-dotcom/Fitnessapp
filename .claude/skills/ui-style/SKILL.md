@@ -299,3 +299,28 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
   schon der nächste Drill, das muted iframe buffert im 5-s-Fenster und
   remountet beim Drill-Start nicht. `youtubeEmbedUrl(raw, {autoplay, loop})`
   bleibt ohne opts byte-identisch; mute=1 immer (Beeps + Ducking hörbar).
+
+## Signatur: Etappen-Profil & Piktogramm-Bühne
+
+- **Etappen-Profil** (`lib/etappen.ts` + `components/ui/EtappenProfil.tsx`)
+  ist DAS Signature-Element (Komoot-Prinzip: Daten werden zum Bild): jede
+  Einheit als Skyline — Breite = Arbeitssätze, Höhe = feste Muster-
+  Intensitätsklasse (squat/hinge 1.0 … core 0.4, cardio 0.25; NIE in-session
+  normalisieren), Farbe = Region. **Farbcode validiert (dataviz-Validator):
+  Beine=`--accent`, Druck=`--orange`, Zug=`--gruen`, Rumpf=`--fg` (TINTE —
+  bewusst NICHT Gelb: Gelb↔Grün fällt beim Protan-Check durch, Gelb bleibt
+  Warnfarbe), Cardio/unbekannt=`--muted`.** Identität nie farb-allein:
+  Legendenzeile, Höhenklassen, 2-px-Lücken. Renderer = Flex-Divs (KEIN SVG —
+  Live-Füllung braucht zuverlässige Height-Transitions auf Alt-iOS), Größen
+  hero h-16 / mini h-8 / strip h-5; beim Ansehen NULL Animation, nur die
+  Live-Füllung transitioniert (`transition-[height]`, reduced-motion-frei).
+  Platzierungen: SessionCard (geplant, mit Legende), ProgressHeader (live,
+  currentKey-Strich), HistoryTab (mini-Fingerabdruck je Einheit).
+- **Piktogramm-Bühne** (`components/figures/Pictogram.tsx`): 5 statische
+  Marken-Silhouetten (ganzkoerper/unterkoerper/push/pull/core) in
+  `currentColor`, Diagonal-Geometrie, Kreiskopf, kein Gerät/Boden/Animation.
+  Anti-Instruktions-Regeln: über die Feldkante croppen (Hero: absolute
+  -bottom/-right im blauen Feld, Texte bekommen pr-24), EINE Tinte, NIE
+  neben Übungsnamen oder im Guide. Pose via `poseForSession` (dominante
+  Region ≥ 50 % satzgewichtet, reset→core). Zweiter Auftritt: klein (44 px)
+  im Sieger-Moment (Pose VOR dem Save berechnen — active ist danach weg).

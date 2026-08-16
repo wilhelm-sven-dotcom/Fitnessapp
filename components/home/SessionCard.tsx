@@ -1,10 +1,13 @@
 "use client";
 
 import { Pencil, Play, RefreshCw, Sparkles } from "lucide-react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { EtappenProfil } from "@/components/ui/EtappenProfil";
 import { Pressable } from "@/components/ui/pressable";
 import { WishBar } from "@/components/home/WishBar";
+import { profileOfPlanned, REGION_LABEL, REGION_VAR, type Region } from "@/lib/etappen";
 import { muscleOf, MUSCLE_LABEL } from "@/lib/volume";
 import { tap } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -52,7 +55,18 @@ export function SessionCard({
   /** Slot für den „Rücken schonen”-Toggle der Startseite. */
   spareSlot?: React.ReactNode;
 }) {
-  const byId = new Map(allLib.map((e) => [e.id, e]));
+  const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
+
+  // Signatur: die heutige Einheit als Etappen-Profil (Skyline der Regionen).
+  const blocks = useMemo(
+    () => profileOfPlanned(session.items, byId),
+    [session.items, byId],
+  );
+  const legendRegions = useMemo(() => {
+    const seen = new Set<Region>();
+    for (const b of blocks) if (b.region) seen.add(b.region);
+    return (Object.keys(REGION_LABEL) as Region[]).filter((r) => seen.has(r));
+  }, [blocks]);
 
   return (
     <Card variant="elevated" className="mb-4 overflow-hidden rounded-card p-6">
@@ -75,6 +89,22 @@ export function SessionCard({
 
       {session.briefing && (
         <p className="mt-3 text-sm leading-relaxed text-muted">{session.briefing}</p>
+      )}
+
+      <EtappenProfil blocks={blocks} size="hero" className="mt-4" />
+      {legendRegions.length > 0 && (
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted">
+          {legendRegions.map((r) => (
+            <span key={r} className="flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="h-2 w-2"
+                style={{ backgroundColor: REGION_VAR[r] }}
+              />
+              {REGION_LABEL[r]}
+            </span>
+          ))}
+        </p>
       )}
 
       {/* Die Übungsliste — vollständig, mit Warum. Klarheit statt Überraschung. */}

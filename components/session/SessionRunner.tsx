@@ -40,6 +40,7 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
+import { poseForSession, profileOfActive, type PictogramPose } from "@/lib/etappen";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
@@ -107,6 +108,8 @@ export function SessionRunner() {
   const [active, setActive] = useState<ActiveSessionState | null>(null);
   const [boot, setBoot] = useState<Boot>("loading");
   const [complete, setComplete] = useState<SessionSummary | null>(null);
+  // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
+  const [completePose, setCompletePose] = useState<PictogramPose | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
@@ -676,6 +679,7 @@ export function SessionRunner() {
     cancelCoachCall();
     setCoachCall(null);
     const final: ActiveSessionState = { ...st, backTraffic, note };
+    setCompletePose(poseForSession(final.session.items, byId, final.session.variant));
     commit(final);
     const summary = await saveActiveSession(final);
     activeRef.current = null;
@@ -701,6 +705,7 @@ export function SessionRunner() {
       <SessionComplete
         summary={complete}
         name={todaySession?.name}
+        pose={completePose ?? undefined}
         onDone={() => router.replace("/")}
       />
     );
@@ -804,11 +809,12 @@ export function SessionRunner() {
   });
   const isExam = st.session.variant === "exam";
 
-  const headerItems = items.map((it) => {
+  // Live-Etappen-Profil für den Kopf: füllt sich Satz für Satz.
+  const headerBlocks = profileOfActive(st.session, st.entries, byId);
+  const openLeft = items.filter((it) => {
     const e = byId.get(it.exerciseId);
-    return { id: it.id, done: e ? itemDone(e, st.entries[it.id]) : false };
-  });
-  const openLeft = headerItems.filter((h) => !h.done).length;
+    return e ? !itemDone(e, st.entries[it.id]) : false;
+  }).length;
   const remainMin = estimateRemainingMin(
     items
       .map((it) => {
@@ -839,7 +845,8 @@ export function SessionRunner() {
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
       >
         <ProgressHeader
-          items={headerItems}
+          blocks={headerBlocks}
+          currentKey={item.id}
           currentIndex={st.currentIndex}
           remainMin={remainMin}
           onExit={() => setExitOpen(true)}

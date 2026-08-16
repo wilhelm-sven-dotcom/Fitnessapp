@@ -20,8 +20,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
+import { EtappenProfil } from "@/components/ui/EtappenProfil";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { weeklyCardio } from "@/lib/cardio";
+import { profileOfLogged } from "@/lib/etappen";
 import {
   intensityLabel,
   kmLabel,
@@ -81,7 +83,9 @@ type TimelineItem =
 /** Verlauf: EINE Timeline für Kraft und Ausdauer — löschen, manuell
  *  nachtragen, Strava-Import; Kraft-Einheiten klappen ins Satz-Detail auf. */
 export function HistoryTab() {
-  const { log, cardio, deleteSession, addManualCardio, removeCardio } = useTraining();
+  const { log, cardio, deleteSession, addManualCardio, removeCardio, allLib } =
+    useTraining();
+  const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
   const router = useRouter();
   const [expanded, setExpanded] = useState<number | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
@@ -313,6 +317,11 @@ export function HistoryTab() {
                 >
                   <Trash2 size={16} />
                 </Pressable>
+              </div>
+
+              {/* Fingerabdruck der Einheit: das Etappen-Profil dessen, was war. */}
+              <div className="px-4 pb-3">
+                <EtappenProfil blocks={profileOfLogged(s, byId)} size="mini" />
               </div>
 
               {isDel && (

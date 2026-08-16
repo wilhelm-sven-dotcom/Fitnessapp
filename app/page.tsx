@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Pictogram } from "@/components/figures/Pictogram";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { SessionCard } from "@/components/home/SessionCard";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
@@ -17,6 +18,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { greeting, homeChips } from "@/lib/coaching";
+import { poseForSession } from "@/lib/etappen";
 import { isoWeek } from "@/lib/format";
 import { tap } from "@/lib/haptics";
 import { loadActiveState } from "@/lib/active-session";
@@ -224,12 +226,30 @@ export default function HomePage() {
 
   const actionCards = coach.filter((c) => c.severity !== "info" || c.action);
 
+  // Piktogramm-Bühne: die Pose des Tages (dominante Region der Einheit) —
+  // reine Grafik im Hero, absichtlich über die Feldkante gecropt.
+  const heroPose =
+    todaySession && todaySession.items.length > 0 && !todaySession.completedAt
+      ? poseForSession(
+          todaySession.items,
+          new Map(allLib.map((e) => [e.id, e])),
+          todaySession.variant,
+        )
+      : null;
+
   return (
     <div className="relative">
       {/* Das blaue Farbfeld — Zustand und Tagesauftrag in einem Blick.
           Untere Zeile (ATLAS-Direktive) öffnet den Coach. */}
       <header className="mb-4 overflow-hidden rounded-card bg-accent-sessions text-on-accent shadow-card">
-        <div className="px-5 pb-5 pt-4">
+        <div className="relative px-5 pb-5 pt-4">
+          {heroPose && (
+            <Pictogram
+              pose={heroPose}
+              size={116}
+              className="absolute -bottom-4 -right-2 text-on-accent"
+            />
+          )}
           <div className="flex items-baseline justify-between gap-2 font-mono text-xs uppercase tracking-widest">
             <span className="whitespace-nowrap">
               {today} · KW <span className="tabular-nums">{kw}</span>
@@ -238,10 +258,10 @@ export default function HomePage() {
               Lv {level.level} · {weekCount}/3
             </span>
           </div>
-          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">
+          <h1 className={cn("mt-3 font-display text-3xl font-bold tracking-tight", heroPose && "pr-24")}>
             {greeting({ name: settings.userName, seed: greetingSeed })}
           </h1>
-          <p className="mt-1 text-sm">
+          <p className={cn("mt-1 text-sm", heroPose && "pr-24")}>
             {lastLabel}.{streak > 0 ? ` ${streak} ${streak === 1 ? "Woche" : "Wochen"} in Serie.` : ""}
           </p>
         </div>
