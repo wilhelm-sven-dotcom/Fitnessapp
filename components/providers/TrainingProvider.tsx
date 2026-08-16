@@ -140,6 +140,8 @@ export interface ExportEnvelope {
   gyms: GymProfile[];
   exerciseVideos: Record<string, string>;
   exerciseNotes: Record<string, string>;
+  /** Eigene YouTube-Links je Aufwärm-Drill (additiv — alte Backups bleiben gültig). */
+  warmupVideos?: Record<string, string>;
   settings?: AppSettings;
 }
 
@@ -244,6 +246,8 @@ interface TrainingContextValue {
   custom: Exercise[];
   exerciseVideos: Record<string, string>;
   exerciseNotes: Record<string, string>;
+  /** Eigene YouTube-Links je Aufwärm-Drill (Aufwärm-Player). */
+  warmupVideos: Record<string, string>;
   body: BodyMetric[];
   loading: boolean;
   saving: boolean;
@@ -282,6 +286,7 @@ interface TrainingContextValue {
   disabledExercises: string[];
   toggleExerciseDisabled: (id: string) => void;
   setExerciseVideo: (exId: string, url: string | null) => void;
+  setWarmupVideo: (drillId: string, url: string | null) => void;
   setExerciseNote: (exId: string, note: string | null) => void;
   days: WorkoutDay[];
   addDay: (day: WorkoutDay) => void;
@@ -390,6 +395,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [days, setDays] = useState<WorkoutDay[]>([]);
   const [gyms, setGyms] = useState<GymProfile[]>([]);
   const [exerciseVideos, setExerciseVideos] = useState<Record<string, string>>({});
+  const [warmupVideos, setWarmupVideos] = useState<Record<string, string>>({});
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({});
   const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -408,7 +414,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en, td, dx] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en, td, dx, wv] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -424,6 +430,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<Record<string, string>>(KEYS.exerciseNotes, {}),
       storage.getJSON<DailySession | null>(KEYS.today, null),
       storage.getJSON<string[]>(KEYS.disabledExercises, []),
+      storage.getJSON<Record<string, string>>(KEYS.warmupVideos, {}),
     ]);
     // Alles durch die Sanitizer VOR setState — vergiftete Sync-/Legacy-Daten
     // dürfen den Render nie erreichen (sonst global-error auf jeder Route).
@@ -477,6 +484,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setDays(sanitizeDays(da));
     setGyms(gymsLoaded);
     setExerciseVideos(sanitizeVideoMap(ev));
+    setWarmupVideos(sanitizeVideoMap(wv));
     setExerciseNotes(sanitizeStringMap(en));
     // Mission nur mit einem echten targets-OBJEKT (der Rollover liest
     // mission.targets.weekKey — ein Nicht-Objekt würfe dort).
@@ -900,6 +908,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setExerciseVideos(next);
     await storage.setJSON(KEYS.exerciseVideos, next);
   }, []);
+  const saveWarmupVideos = useCallback(async (next: Record<string, string>) => {
+    setWarmupVideos(next);
+    await storage.setJSON(KEYS.warmupVideos, next);
+  }, []);
   const saveExerciseNotes = useCallback(async (next: Record<string, string>) => {
     setExerciseNotes(next);
     await storage.setJSON(KEYS.exerciseNotes, next);
@@ -1038,7 +1050,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         // Only a filled WORKING set counts as a performance — a warmup-only entry
         // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
         if (ex && ex.sets && ex.sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null))
-          return { sets: ex.sets, date: log[i].date };
+          return { sets: ex.sets, date: log[i].date, note: ex.note };
       }
       return null;
     };
@@ -1060,6 +1072,14 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       if (!trimmed || !youtubeEmbedUrl(trimmed)) delete next[exId];
       else next[exId] = trimmed;
       void saveExerciseVideos(next);
+    };
+    // Dasselbe für Aufwärm-Drills (Aufwärm-Player) — identische Validierung.
+    const setWarmupVideo = (drillId: string, url: string | null) => {
+      const trimmed = (url ?? "").trim();
+      const next = { ...warmupVideos };
+      if (!trimmed || !youtubeEmbedUrl(trimmed)) delete next[drillId];
+      else next[drillId] = trimmed;
+      void saveWarmupVideos(next);
     };
     // Hilfsmittel-/Ausführungs-Notiz je Übung setzen/löschen (z. B. „Unterstützungs-
     // band"). Dauerhaft je Übungs-Id gemerkt und beim Speichern auf die Einheit
@@ -1373,6 +1393,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       gyms,
       exerciseVideos,
       exerciseNotes,
+      warmupVideos,
       settings,
     });
 
@@ -1392,6 +1413,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const nextGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
       const nextExerciseVideos =
         d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
+      const nextWarmupVideos =
+        d.warmupVideos !== undefined ? sanitizeVideoMap(d.warmupVideos) : warmupVideos;
       const nextExerciseNotes =
         d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : exerciseNotes;
       const nextSettings =
@@ -1407,6 +1430,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setDays(nextDays);
       setGyms(nextGyms);
       setExerciseVideos(nextExerciseVideos);
+      setWarmupVideos(nextWarmupVideos);
       setExerciseNotes(nextExerciseNotes);
       setSettings(nextSettings);
       await Promise.all([
@@ -1419,6 +1443,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         storage.setJSON(KEYS.days, nextDays),
         storage.setJSON(KEYS.gyms, nextGyms),
         storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
+        storage.setJSON(KEYS.warmupVideos, nextWarmupVideos),
         storage.setJSON(KEYS.exerciseNotes, nextExerciseNotes),
         storage.setJSON(KEYS.settings, nextSettings),
       ]);
@@ -1431,6 +1456,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       choices,
       custom,
       exerciseVideos,
+      warmupVideos,
       exerciseNotes,
       body,
       loading,
@@ -1467,6 +1493,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       disabledExercises,
       toggleExerciseDisabled,
       setExerciseVideo,
+      setWarmupVideo,
       setExerciseNote,
       days,
       addDay,
@@ -1523,6 +1550,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     choices,
     custom,
     exerciseVideos,
+    warmupVideos,
     exerciseNotes,
     body,
     loading,
@@ -1565,6 +1593,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     saveDays,
     saveCardio,
     saveExerciseVideos,
+    saveWarmupVideos,
     saveExerciseNotes,
     strava,
     spotify,

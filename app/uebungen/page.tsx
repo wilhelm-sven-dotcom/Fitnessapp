@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
 import { GuideSheet } from "@/components/workout/GuideSheet";
+import { WarmupCatalogSection } from "@/components/warmup/WarmupCatalogSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import { reqOk } from "@/lib/progression";
@@ -280,9 +281,13 @@ export default function ExerciseCatalogPage() {
         ))
       )}
 
-      <p className={cn("mt-1 px-1 text-xs text-faint", groups.length === 0 && "hidden")}>
+      <p className={cn("mt-1 mb-4 px-1 text-xs text-faint", groups.length === 0 && "hidden")}>
         Ausgegraut = Equipment fehlt. Übung antippen → Ausführung, Video und Notizen.
       </p>
+
+      {/* Aufwärm-Drills sind kein Teil der filterbaren Übungs-Lib — die Sektion
+          erscheint nur im ungefilterten Grundzustand. */}
+      {!q && !patFilter && !muscleFilter && !onlyAvailable && <WarmupCatalogSection />}
 
       <GuideSheet open={!!selected} onClose={() => setSelected(null)} ex={selected} />
       <CustomExerciseEditor

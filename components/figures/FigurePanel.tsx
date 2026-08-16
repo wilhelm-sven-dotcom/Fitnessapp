@@ -23,60 +23,48 @@ function Equip({ P, eq }: { P: Frame; eq?: EquipDef }) {
       const p = g(h);
       if (p) e.push(<rect key={"db" + i} x={p[0] - 5} y={p[1] - 9} width="10" height="18" rx="2" fill="#fbbf24" />);
     });
-  } else if (eq.kind === "goblet") {
-    const hs = (eq.hands || []).map(g).filter(Boolean) as Frame[string][];
-    if (hs.length) {
-      const cx = hs.reduce((s, p) => s + p[0], 0) / hs.length;
-      const cy = hs.reduce((s, p) => s + p[1], 0) / hs.length;
-      e.push(<rect key="g" x={cx - 8} y={cy - 8} width="16" height="16" rx="3" fill="#fbbf24" />);
-    }
-  } else if (eq.kind === "kbHip") {
-    const p = g(eq.at || "hip");
-    if (p) e.push(<rect key="kb" x={p[0] - 11} y={p[1] - 6} width="22" height="11" rx="3" fill="#fbbf24" />);
   } else if (eq.kind === "band") {
     const t = eq.to ? g(eq.to) : undefined;
     if (t && eq.from) e.push(<line key="bd" x1={eq.from[0]} y1={eq.from[1]} x2={t[0]} y2={t[1]} stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 5" />);
-  } else if (eq.kind === "strap") {
-    (eq.lines || []).forEach(([from, to], i) => {
-      const t = g(to);
-      if (t) e.push(<line key={"s" + i} x1={from[0]} y1={from[1]} x2={t[0]} y2={t[1]} stroke="#737373" strokeWidth="3" />);
-    });
+  } else if (eq.kind === "band2") {
+    // Band zwischen BEIDEN Händen (z. B. Pull-Apart) — spannt sich mit.
+    const [h1, h2] = (eq.hands || []).map(g);
+    if (h1 && h2) e.push(<line key="b2" x1={h1[0]} y1={h1[1]} x2={h2[0]} y2={h2[1]} stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 5" />);
   }
   return <>{e}</>;
 }
 
 /**
  * Animated body figure (filled "capsule" limbs over the shared pose engine).
- * `accentBones` (keys "a>b") tints the worked muscles in the skin accent;
- * the spine stays green as a neutral-back cue. Colours are tokens, so the
- * figure adapts to skin + theme. prefers-reduced-motion freezes on pose 0.
+ * Konsumenten: Muskel-Heatmap (frozen + boneTint) und Aufwärm-Player (Loop mit
+ * `periodMs` je Drill). Colours are tokens, so the figure adapts to skin +
+ * theme. prefers-reduced-motion freezes on pose 0 (= charakteristische Pose).
  */
 export function FigurePanel({
   label,
   fig,
   viewKey,
-  flip,
-  accentBones,
   boneTint,
   freeze,
+  periodMs,
 }: {
   label: string;
   fig: FigureDef;
   viewKey: "side" | "front";
-  flip?: boolean;
-  accentBones?: Set<string>;
   /** Per-bone colour override ("a>b" → CSS colour) — the muscle heatmap tint.
-   *  Wins over accentBones; unlisted bones keep the figure colour. */
+   *  Unlisted bones keep the figure colour. */
   boneTint?: Record<string, string>;
-  /** Render one static phase (0..1) instead of looping — for the 3-pose filmstrip. */
+  /** Render one static phase (0..1) instead of looping. */
   freeze?: number;
+  /** Loop-Tempo in ms je Zyklus (Drill-Semantik) — Default 2600. */
+  periodMs?: number;
 }) {
   const v = fig[viewKey];
   const [animF, setAnimF] = useState(0);
   const f = freeze ?? animF;
 
   // Pause the rAF loop while scrolled offscreen — a looping figure otherwise
-  // burns ~60 state updates/s for something nobody sees (home hero, GuideSheet).
+  // burns ~60 state updates/s for something nobody sees (Warmup-Player, Sheets).
   const svgRef = useRef<SVGSVGElement>(null);
   const [inView, setInView] = useState(true);
   useEffect(() => {
@@ -90,8 +78,9 @@ export function FigurePanel({
     return () => obs.disconnect();
   }, []);
 
+  const cycle = !!fig.cycle;
   useEffect(() => {
-    if (freeze != null) return; // static pose (filmstrip) — no animation loop
+    if (freeze != null) return; // static pose — no animation loop
     if (!inView) return; // offscreen — loop paused, resumes on re-entry
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       setAnimF(0);
@@ -99,20 +88,23 @@ export function FigurePanel({
     }
     let raf = 0;
     let st = 0;
-    const per = 2600;
+    const per = periodMs ?? 2600;
     const loop = (ts: number) => {
       if (!st) st = ts;
       const ph = ((ts - st) % per) / per;
-      setAnimF((1 - Math.cos(ph * 2 * Math.PI)) / 2);
+      // cycle = geschlossener Kreis (Sägezahn), sonst Ping-Pong (Cosinus).
+      setAnimF(cycle ? ph : (1 - Math.cos(ph * 2 * Math.PI)) / 2);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [freeze, inView]);
+  }, [freeze, inView, periodMs, cycle]);
 
   if (!v) return null;
-  const frames = framesOf(v);
-  if (!frames.length) return null;
+  const base = framesOf(v);
+  if (!base.length) return null;
+  // Kreis-Loop: letzten→ersten Frame nahtlos interpolieren.
+  const frames = cycle && base.length > 1 ? [...base, base[0]] : base;
   const { i, next, t } = frameAt(frames.length, f);
   const P = lerpPts(frames[i], frames[next], t);
   const bones = v.bones || SB;
@@ -128,45 +120,33 @@ export function FigurePanel({
     );
   };
 
-  const inner = (
-    <>
-      {fig.ground != null && <line x1="18" y1={fig.ground} x2="182" y2={fig.ground} stroke="var(--line)" strokeWidth="3" strokeLinecap="round" />}
-      {(v.static || []).map((s, idx) =>
-        s.t === "line" ? (
-          <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "#737373"} strokeWidth={s.w || 3} strokeLinecap="round" />
-        ) : (
-          <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="var(--surface-2)" stroke="var(--line)" strokeWidth="2" />
-        ),
-      )}
-      {/* Outlines first (card colour) so overlapping limbs read separately. */}
-      {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--base)", "o" + bn[0] + bn[1]))}
-      {/* Body fills — heatmap tint wins, else worked-muscle accent, else figure colour. */}
-      {bones.map((bn) =>
-        cap(
-          bn,
-          boneWidth(bn),
-          boneTint?.[bn[0] + ">" + bn[1]] ??
-            (accentBones?.has(bn[0] + ">" + bn[1]) ? "var(--accent)" : "var(--fg)"),
-          "f" + bn[0] + bn[1],
-        ),
-      )}
-      {/* Neutral-spine cue — in der Heatmap (boneTint) nur Hairline-Naht,
-          damit das Grün der Wirbelsäule nicht wie eine Heat-Stufe liest. */}
-      {spine.map((sp, idx) => cap(sp, 3.5, boneTint ? "var(--line)" : "#34d399", "sp" + idx))}
-      {P[headKey] && (
-        <>
-          <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />
-          <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10.5" fill="var(--fg)" />
-        </>
-      )}
-      <Equip P={P} eq={v.equip} />
-    </>
-  );
-
   return (
     <div className="min-w-0 flex-1">
       <svg ref={svgRef} viewBox={fig.vb || "0 0 200 165"} style={{ display: "block", width: "100%", height: "auto" }}>
-        {flip ? <g transform="translate(200,0) scale(-1,1)">{inner}</g> : inner}
+        {fig.ground != null && <line x1="18" y1={fig.ground} x2="182" y2={fig.ground} stroke="var(--line)" strokeWidth="3" strokeLinecap="round" />}
+        {(v.static || []).map((s, idx) =>
+          s.t === "line" ? (
+            <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "#737373"} strokeWidth={s.w || 3} strokeLinecap="round" />
+          ) : (
+            <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="var(--surface-2)" stroke="var(--line)" strokeWidth="2" />
+          ),
+        )}
+        {/* Outlines first (card colour) so overlapping limbs read separately. */}
+        {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--base)", "o" + bn[0] + bn[1]))}
+        {/* Body fills — heatmap tint wins, else figure colour. */}
+        {bones.map((bn) =>
+          cap(bn, boneWidth(bn), boneTint?.[bn[0] + ">" + bn[1]] ?? "var(--fg)", "f" + bn[0] + bn[1]),
+        )}
+        {/* Neutral-spine cue — in der Heatmap (boneTint) nur Hairline-Naht,
+            damit das Grün der Wirbelsäule nicht wie eine Heat-Stufe liest. */}
+        {spine.map((sp, idx) => cap(sp, 3.5, boneTint ? "var(--line)" : "#34d399", "sp" + idx))}
+        {P[headKey] && (
+          <>
+            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />
+            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10.5" fill="var(--fg)" />
+          </>
+        )}
+        <Equip P={P} eq={v.equip} />
       </svg>
       <p className="mt-1 text-center font-mono text-xs text-muted">{label}</p>
     </div>

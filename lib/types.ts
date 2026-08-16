@@ -304,6 +304,8 @@ export interface CardioSession {
 export interface LastPerf {
   sets: SetEntry[];
   date: string;
+  /** Hilfsmittel-/Ausführungs-Notiz der Einheit (Snapshot aus SessionExercise.note). */
+  note?: string;
 }
 
 export type PrescReason = "start" | "up" | "rep" | "down" | "hold" | "lighter";

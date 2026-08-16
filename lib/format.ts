@@ -27,6 +27,26 @@ export function fmtKg(kg: number): string {
 
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
+/** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,
+ *  damit „gestern Abend → heute früh" nicht auf 0 Tage kippt. Nie negativ. */
+export function daysSince(iso: string): number {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return 0;
+  d.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((today.getTime() - d.getTime()) / 86_400_000));
+}
+
+/** „heute" · „gestern" · „vor N Tagen" — für die Letztes-Mal-Karte. */
+export function fmtDaysAgo(iso: string): string {
+  if (isNaN(new Date(iso).getTime())) return "—";
+  const n = daysSince(iso);
+  if (n === 0) return "heute";
+  if (n === 1) return "gestern";
+  return `vor ${n} Tagen`;
+}
+
 /** ISO-Kalenderwoche (Mo-basiert) — von lib/trainer re-exportiert. */
 export function isoWeek(ref: Date = new Date()): number {
   const t = new Date(ref.getTime());

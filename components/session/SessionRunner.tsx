@@ -11,6 +11,7 @@ import { RestPanel } from "@/components/session/RestPanel";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
 import { useSpotifyDuck } from "@/components/spotify/useSpotifyDuck";
+import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { SessionComplete } from "@/components/workout/SessionComplete";
@@ -39,11 +40,15 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import type { DailySession } from "@/lib/session-model";
+import { poseForSession, profileOfActive, type PictogramPose } from "@/lib/etappen";
+import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords } from "@/lib/records";
 import { beep, beepEnd, primeAudio } from "@/lib/beep";
+import { startWeight } from "@/lib/start-weight";
+import { swapPoolFor } from "@/lib/swap-pool";
+import { toast } from "@/lib/toast";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
@@ -97,11 +102,14 @@ export function SessionRunner() {
     discardActive,
     saving,
     exerciseNotes,
+    disabledExercises,
   } = useTraining();
 
   const [active, setActive] = useState<ActiveSessionState | null>(null);
   const [boot, setBoot] = useState<Boot>("loading");
   const [complete, setComplete] = useState<SessionSummary | null>(null);
+  // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
+  const [completePose, setCompletePose] = useState<PictogramPose | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
@@ -111,6 +119,7 @@ export function SessionRunner() {
   const [editOpen, setEditOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
 
   // Refs für Handler, die frischen State brauchen, ohne pro Render neu zu binden.
   const activeRef = useRef<ActiveSessionState | null>(null);
@@ -148,6 +157,8 @@ export function SessionRunner() {
     () => startScale(settings, active?.readiness ?? null),
     [settings, active?.readiness],
   );
+  // EINE Profil-Quelle für Startgewichts-Schätzung + Coach-Persona.
+  const profile = useMemo(() => effectiveProfile(settings, body), [settings, body]);
   const prefillOpts = (variant: DailySession["variant"]): PrefillOpts => ({
     allLib,
     lastPerf,
@@ -155,7 +166,27 @@ export function SessionRunner() {
     weightStep: settings.weightStep,
     scale,
     variant,
+    profile,
   });
+
+  // Letzte Leistung der AKTUELLEN Übung einmal je (Übung, Log) rechnen —
+  // vorher scannte jeder Render das ganze Log dreifach.
+  const curExId = active
+    ? (active.session.items[active.currentIndex]?.exerciseId ?? null)
+    : null;
+  const curLp = useMemo(
+    () => (curExId ? lastPerf(curExId) : null),
+    [lastPerf, curExId],
+  );
+
+  // Schnell-Tausch: Pool für das aktuelle Item (geteilte Politik mit dem
+  // Edit-Sheet — same-pattern zuerst, deaktivierte Übungen raus).
+  const stagePool = useMemo(() => {
+    if (!active || active.phase !== "exercise") return [];
+    const it = active.session.items[active.currentIndex];
+    if (!it) return [];
+    return swapPoolFor(active.session, it.id, allLib, has, disabledExercises);
+  }, [active, allLib, has, disabledExercises]);
 
   /** Frisch starten: Tagesform-Skalierung einfrieren, Sätze vorbelegen. */
   const begin = (readiness?: Readiness, spare?: boolean) => {
@@ -183,6 +214,7 @@ export function SessionRunner() {
       daysAgo,
       weightStep: settings.weightStep,
       scale: sc,
+      profile,
     });
     const st: ActiveSessionState = {
       session,
@@ -366,8 +398,8 @@ export function SessionRunner() {
   /* ── ATLAS live: KI-Reaktion je Satz (Cap, Debounce, Generation) ── */
 
   const persona = useMemo(
-    () => athletePersona(effectiveProfile(settings, body), settings.userName),
-    [settings, body],
+    () => athletePersona(profile, settings.userName),
+    [profile, settings.userName],
   );
 
   const cancelCoachCall = () => {
@@ -573,6 +605,34 @@ export function SessionRunner() {
     setTodaySession(next);
   };
 
+  /** Schnell-Tausch der aktuellen Übung aus der Bühne (1 Tap → Picker → fertig).
+   *  reconcileEntries übernimmt das Schwere: gefüllte Sätze bleiben, der Rest
+   *  kommt frisch für die neue Übung (inkl. deren Startgewicht). */
+  const quickSwap = (id: string) => {
+    const st = activeRef.current;
+    const it = st?.session.items[st.currentIndex];
+    const nx = byId.get(id);
+    if (!st || !it || !nx || nx.id === it.exerciseId) return;
+    cancelCoachCall();
+    setCoachCall(null); // alte Live-Ansage ist gegenstandslos
+    recordCelebratedRef.current.delete(it.id); // neue Übung darf wieder feiern
+    applyEdit(swapItem(st.session, it.id, nx));
+    // Pausen-Dock re-ankern: Warmups der alten Übung fallen weg → Indizes
+    // verschoben; sonst editiert der RIR-Regler des Docks den falschen Satz.
+    setRest((r) => {
+      if (!r || r.itemId !== it.id) return r;
+      const sets = activeRef.current?.entries[it.id] ?? [];
+      let idx = -1;
+      for (let k = 0; k < sets.length; k++) {
+        const s = sets[k];
+        if (!s.warmup && s.reps !== "" && s.reps != null) idx = k;
+      }
+      return idx >= 0 ? { ...r, setIdx: idx } : null;
+    });
+    tap();
+    toast(`Getauscht: ${nx.name}`);
+  };
+
   /* ── Abschluss ── */
 
   /** ATLAS-Debrief streamen: ersetzt die deterministischen Zeilen im
@@ -619,6 +679,7 @@ export function SessionRunner() {
     cancelCoachCall();
     setCoachCall(null);
     const final: ActiveSessionState = { ...st, backTraffic, note };
+    setCompletePose(poseForSession(final.session.items, byId, final.session.variant));
     commit(final);
     const summary = await saveActiveSession(final);
     activeRef.current = null;
@@ -644,6 +705,7 @@ export function SessionRunner() {
       <SessionComplete
         summary={complete}
         name={todaySession?.name}
+        pose={completePose ?? undefined}
         onDone={() => router.replace("/")}
       />
     );
@@ -731,19 +793,28 @@ export function SessionRunner() {
     repHigh: item.repHigh,
   };
   const sets = st.entries[item.id] ?? [];
-  const p = presc(ex, lastPerf(ex.id), {
+  // Ohne Historie liefert die Startgewichts-Engine den Anker — presc macht
+  // daraus Vorschlag, Ghost und Ein-Tap-Commit.
+  const startW = curLp
+    ? undefined
+    : ex.weighted
+      ? startWeight(ex, profile, { step: settings.weightStep })?.w
+      : undefined;
+  const p = presc(ex, curLp, {
     lighter,
     loadMult: scale.loadMult,
     cap: scale.cap,
     step: settings.weightStep,
+    startW,
   });
   const isExam = st.session.variant === "exam";
 
-  const headerItems = items.map((it) => {
+  // Live-Etappen-Profil für den Kopf: füllt sich Satz für Satz.
+  const headerBlocks = profileOfActive(st.session, st.entries, byId);
+  const openLeft = items.filter((it) => {
     const e = byId.get(it.exerciseId);
-    return { id: it.id, done: e ? itemDone(e, st.entries[it.id]) : false };
-  });
-  const openLeft = headerItems.filter((h) => !h.done).length;
+    return e ? !itemDone(e, st.entries[it.id]) : false;
+  }).length;
   const remainMin = estimateRemainingMin(
     items
       .map((it) => {
@@ -774,7 +845,8 @@ export function SessionRunner() {
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
       >
         <ProgressHeader
-          items={headerItems}
+          blocks={headerBlocks}
+          currentKey={item.id}
           currentIndex={st.currentIndex}
           remainMin={remainMin}
           onExit={() => setExitOpen(true)}
@@ -799,12 +871,17 @@ export function SessionRunner() {
         total={items.length}
         sets={sets}
         presc={p}
-        lastPerf={lastPerf(ex.id)}
+        lastPerf={curLp}
         record={recordMap.get(ex.id) ?? null}
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
         weightStep={settings.weightStep ?? 2.5}
         onOpenGuide={() => setGuideOpen(true)}
+        onSwap={
+          !isExam && ex.pattern !== "cardio" && stagePool.some((e) => e.id !== ex.id)
+            ? () => setSwapOpen(true)
+            : undefined
+        }
         onPrev={goPrev}
         onNext={goNext}
         onWeight={(i, val) => setFieldEffort(item.id, i, "weight", val)}
@@ -821,7 +898,7 @@ export function SessionRunner() {
         presc={p}
         record={recordMap.get(ex.id) ?? null}
         readiness={scale}
-        lastPerf={lastPerf(ex.id)}
+        lastPerf={curLp}
         isExam={isExam}
         motivateOn={settings.coachMotivation !== false}
         voiceOn={!!settings.voiceCues}
@@ -907,6 +984,15 @@ export function SessionRunner() {
         allLib={allLib}
         has={has}
         onChange={applyEdit}
+      />
+
+      {/* Schnell-Tausch aus der Bühne — gleicher Picker wie im Edit-Sheet. */}
+      <ExercisePicker
+        open={swapOpen}
+        onClose={() => setSwapOpen(false)}
+        pool={stagePool}
+        currentId={item.exerciseId}
+        onPick={quickSwap}
       />
 
       <GuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} ex={ex} />

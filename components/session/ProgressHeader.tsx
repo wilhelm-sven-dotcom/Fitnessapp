@@ -1,27 +1,27 @@
 "use client";
 
 import { LayoutList, X } from "lucide-react";
+import { EtappenProfil } from "@/components/ui/EtappenProfil";
 import { Odometer } from "@/components/ui/Odometer";
 import { Pressable } from "@/components/ui/pressable";
-import { cn } from "@/lib/utils";
-
-export interface HeaderItem {
-  id: string;
-  done: boolean;
-}
+import type { EtappenBlock } from "@/lib/etappen";
 
 /**
- * Kopfzeile des Fokus-Steppers: Ausstieg links, Stationspunkte in der Mitte
- * (Tipp öffnet die Übersicht), Restzeit rechts. Ruhig — keine Animationen.
+ * Kopfzeile des Fokus-Steppers: Ausstieg links, das LIVE-Etappen-Profil in
+ * der Mitte (füllt sich Satz für Satz; Tipp öffnet die Übersicht), Restzeit
+ * rechts. Ruhig — nur die Füllung reagiert auf Datenänderung.
  */
 export function ProgressHeader({
-  items,
+  blocks,
+  currentKey,
   currentIndex,
   remainMin,
   onExit,
   onOverview,
 }: {
-  items: HeaderItem[];
+  blocks: EtappenBlock[];
+  /** Item-Instanz-Id des aktiven Blocks (Tinte-Strich darunter). */
+  currentKey?: string;
   currentIndex: number;
   remainMin: number;
   onExit: () => void;
@@ -42,23 +42,15 @@ export function ProgressHeader({
         aria-label="Einheit im Überblick"
         className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-card px-2 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
       >
-        <span className="flex items-center gap-1.5">
-          {items.map((it, i) => (
-            <span
-              key={it.id}
-              className={cn(
-                "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
-                i === currentIndex
-                  ? "w-6 bg-accent-ink"
-                  : it.done
-                    ? "w-2.5 bg-accent-2"
-                    : "w-2.5 bg-surface-2",
-              )}
-            />
-          ))}
-        </span>
+        <EtappenProfil
+          blocks={blocks}
+          size="strip"
+          live
+          currentKey={currentKey}
+          className="max-w-40 flex-1"
+        />
         <span className="font-mono text-xs tabular-nums text-muted">
-          {Math.min(currentIndex + 1, items.length)}/{items.length}
+          {Math.min(currentIndex + 1, blocks.length)}/{blocks.length}
         </span>
         <LayoutList size={14} className="shrink-0 text-faint" aria-hidden />
       </Pressable>

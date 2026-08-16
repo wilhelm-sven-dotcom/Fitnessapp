@@ -32,12 +32,15 @@ export interface WarmupDrill {
   equipment?: "band"[];
   /** Figure key in `FIG` to animate. Defaults to the drill `id` when omitted. */
   figure?: string;
+  /** Animations-Tempo im Player (ms pro Zyklus) — Default 2600. */
+  periodMs?: number;
 }
 
 const D = {
   /* ── RAISE — Puls und Kerntemperatur heben ── */
   bike_easy: {
     id: "bike_easy",
+    periodMs: 1400,
     name: "Locker einrollen (Bike)",
     cue: "Locker auf dem Peloton, niedriger Widerstand — Kreislauf und Beine wach machen.",
     durationSec: 180,
@@ -49,6 +52,7 @@ const D = {
   },
   jumping_jacks: {
     id: "jumping_jacks",
+    periodMs: 950,
     name: "Hampelmänner",
     cue: "Locker federn, Arme groß über den Kopf — Tempo so, dass der Atem spürbar wird.",
     durationSec: 45,
@@ -60,6 +64,7 @@ const D = {
   },
   march_high: {
     id: "march_high",
+    periodMs: 1200,
     name: "Marschieren, Knie hoch",
     cue: "Auf der Stelle, Knie bis Hüfthöhe, Gegenarm schwingt mit — aufrecht bleiben.",
     durationSec: 45,
@@ -73,6 +78,7 @@ const D = {
   /* ── MOBILISE — dynamische Beweglichkeit in den heutigen Mustern ── */
   cat_cow: {
     id: "cat_cow",
+    periodMs: 3200,
     name: "Katze-Kuh",
     cue: "Im Vierfüßler Wirbelsäule sanft runden und strecken, im Atemrhythmus.",
     durationSec: 40,
@@ -84,6 +90,7 @@ const D = {
   },
   hip_circles: {
     id: "hip_circles",
+    periodMs: 2000,
     name: "Hüftkreisen",
     cue: "Im Stand große, langsame Kreise mit der Hüfte — je Richtung.",
     durationSec: 30,
@@ -95,6 +102,7 @@ const D = {
   },
   ankle_rocks: {
     id: "ankle_rocks",
+    periodMs: 1800,
     name: "Sprunggelenk mobilisieren",
     cue: "Knie über die Zehen nach vorne schieben, Ferse bleibt am Boden. Pro Seite.",
     durationSec: 25,
@@ -106,6 +114,7 @@ const D = {
   },
   thoracic_open: {
     id: "thoracic_open",
+    periodMs: 2800,
     name: "Brustwirbelsäule öffnen",
     cue: "Im Vierfüßler eine Hand hinter den Kopf, Ellbogen zur Decke drehen. Pro Seite.",
     durationSec: 30,
@@ -117,6 +126,7 @@ const D = {
   },
   shoulder_circles: {
     id: "shoulder_circles",
+    periodMs: 1600,
     name: "Schulterkreisen",
     cue: "Große Kreise rückwärts, Schultern locker, Nacken entspannt.",
     durationSec: 25,
@@ -128,6 +138,7 @@ const D = {
   },
   worlds_greatest: {
     id: "worlds_greatest",
+    periodMs: 3200,
     name: "Weltbester Stretch",
     cue: "Tiefer Ausfallschritt, Hände neben den Fuß, dann einen Arm zur Decke aufdrehen. Pro Seite.",
     durationSec: 45,
@@ -139,7 +150,7 @@ const D = {
   },
   squat_pry: {
     id: "squat_pry",
-    figure: "squat_bw",
+    periodMs: 2600,
     name: "Tiefe Kniebeuge, federn",
     cue: "In die tiefe Hocke, Ellbogen drücken die Knie sanft nach außen, kurz federn, aufrichten.",
     durationSec: 35,
@@ -151,6 +162,7 @@ const D = {
   },
   leg_swings: {
     id: "leg_swings",
+    periodMs: 1300,
     name: "Beinpendel",
     cue: "Am Standbein festhalten oder frei balancieren, Bein locker vor und zurück pendeln. Pro Seite.",
     durationSec: 30,
@@ -162,7 +174,7 @@ const D = {
   },
   hip_flexor_dyn: {
     id: "hip_flexor_dyn",
-    figure: "reverse_lunge",
+    periodMs: 3000,
     name: "Hüftbeuger dynamisch",
     cue: "Ausfallschritt zurück, Hüfte nach vorn schieben, kurz halten, wechseln — nicht wippen.",
     durationSec: 35,
@@ -174,6 +186,7 @@ const D = {
   },
   arm_crossswings: {
     id: "arm_crossswings",
+    periodMs: 1000,
     name: "Armschwünge über Kreuz",
     cue: "Arme weit öffnen und vor der Brust überkreuzen — locker schwingen, Tempo moderat.",
     durationSec: 25,
@@ -188,6 +201,7 @@ const D = {
   glute_bridge: {
     id: "glute_bridge",
     figure: "glutebridge",
+    periodMs: 2400,
     name: "Glute Bridge",
     cue: "Auf dem Rücken, Füße auf, Hüfte hoch, oben den Po fest anspannen.",
     durationSec: 30,
@@ -199,6 +213,7 @@ const D = {
   },
   gb_march: {
     id: "gb_march",
+    periodMs: 2000,
     name: "Glute-Bridge-March",
     cue: "In der Brücke bleiben und die Füße abwechselnd anheben — Becken bleibt still.",
     durationSec: 30,
@@ -211,6 +226,7 @@ const D = {
   bird_dog: {
     id: "bird_dog",
     figure: "birddog",
+    periodMs: 2800,
     name: "Bird Dog",
     cue: "Gegenüberliegende Hand und Bein strecken, Rumpf ruhig, Becken stabil.",
     durationSec: 30,
@@ -223,6 +239,7 @@ const D = {
   dead_bug: {
     id: "dead_bug",
     figure: "deadbug",
+    periodMs: 2800,
     name: "Dead Bug",
     cue: "Auf dem Rücken, unterer Rücken bleibt am Boden, Arm und Bein gegengleich absenken.",
     durationSec: 30,
@@ -235,6 +252,7 @@ const D = {
   side_plank_dip: {
     id: "side_plank_dip",
     figure: "sideplank",
+    periodMs: 2400,
     name: "Seitstütz mit Absenken",
     cue: "Im Seitstütz die Hüfte kontrolliert senken und heben — kurz je Seite.",
     durationSec: 35,
@@ -246,7 +264,7 @@ const D = {
   },
   scap_pushup: {
     id: "scap_pushup",
-    figure: "pushup",
+    periodMs: 2000,
     name: "Schulterblatt-Liegestütz",
     cue: "Im Stütz Arme gestreckt lassen, nur die Schulterblätter zusammenziehen und auseinanderschieben.",
     durationSec: 30,
@@ -258,7 +276,7 @@ const D = {
   },
   band_pullapart: {
     id: "band_pullapart",
-    figure: "face_pull",
+    periodMs: 2400,
     name: "Band auseinanderziehen",
     cue: "Band auf Brusthöhe auseinanderziehen, Schulterblätter zusammen — langsam zurück.",
     durationSec: 30,
@@ -271,7 +289,7 @@ const D = {
   },
   wall_slides: {
     id: "wall_slides",
-    figure: "ohp_stand",
+    periodMs: 2600,
     name: "Überkopf-Slides",
     cue: "Arme in U-Halte langsam über den Kopf schieben und zurück — Rippen unten lassen.",
     durationSec: 30,
@@ -283,6 +301,7 @@ const D = {
   },
   side_steps: {
     id: "side_steps",
+    periodMs: 1600,
     name: "Seitwärtsgänge",
     cue: "In halber Hocke seitwärts steigen, Knie bleiben über den Füßen — je Richtung.",
     durationSec: 30,
@@ -294,7 +313,7 @@ const D = {
   },
   pogo_calf: {
     id: "pogo_calf",
-    figure: "squat_bw",
+    periodMs: 700,
     name: "Waden-Federn",
     cue: "Kleine, schnelle Sprünge aus dem Sprunggelenk — Knie fast gestreckt, Fersen küssen den Boden.",
     durationSec: 25,
@@ -306,6 +325,7 @@ const D = {
   },
   pallof: {
     id: "pallof",
+    periodMs: 2600,
     name: "Anti-Rotations-Press",
     cue: "Band seitlich gespannt, Arme nach vorn strecken und der Drehung widerstehen. Pro Seite.",
     durationSec: 30,

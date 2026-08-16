@@ -48,7 +48,7 @@ export default function SpotifyCallbackPage() {
           : "Kein gültiger Code von Spotify.",
       );
       setDone(true);
-      const t = setTimeout(() => router.replace("/settings"), 2000);
+      const t = setTimeout(() => router.replace("/settings?seg=verbindungen"), 2000);
       return () => clearTimeout(t);
     }
 
@@ -69,12 +69,12 @@ export default function SpotifyCallbackPage() {
       if (auth) {
         await spotify.connect(auth);
         // Erfolg braucht keine Show — sofort zurück in die Einstellungen.
-        router.replace("/settings");
+        router.replace("/settings?seg=verbindungen");
         return;
       }
       setMsg("Verbindung fehlgeschlagen — bitte erneut versuchen.");
       setDone(true);
-      timer = setTimeout(() => router.replace("/settings"), 2000);
+      timer = setTimeout(() => router.replace("/settings?seg=verbindungen"), 2000);
     })();
     return () => clearTimeout(timer);
   }, [spotify, router]);

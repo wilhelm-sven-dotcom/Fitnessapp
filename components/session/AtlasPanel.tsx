@@ -49,6 +49,18 @@ export function AtlasPanel({
 
   const line = useMemo(() => {
     if (ex.pattern === "cardio") return null;
+    // Startgewichts-Vorschlag hat Vorrang vor dem Intro: ohne Historie ist
+    // „Start mit X kg" die eine Information, die der Nutzer JETZT braucht —
+    // das Intro (immer gesetzt) würde sie sonst dauerhaft verdecken.
+    if (
+      done === 0 &&
+      !isExam &&
+      presc.reason === "start" &&
+      presc.suggestedWeight != null
+    ) {
+      const live = liveLine({ ex, sets, presc, record, readiness, lastPerf });
+      if (live) return live;
+    }
     // Vor dem ersten Arbeitssatz spricht das Übungs-Intro der Komposition.
     if (done === 0 && item.intro) {
       return { text: item.intro, tone: "ok" as const, kind: "intro" as const };

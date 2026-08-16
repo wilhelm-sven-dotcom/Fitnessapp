@@ -42,7 +42,12 @@ function unionBy<T>(local: T[], cloud: T[], key: (x: T) => string): T[] {
 export function mergeCloudLocal(cloud: RawMap, local: RawMap): RawMap {
   const byDate = new Set<string>([KEYS.log, KEYS.cardio, KEYS.body]);
   const byId = new Set<string>([KEYS.days, KEYS.gyms, KEYS.custom]);
-  const byKey = new Set<string>([KEYS.choices, KEYS.exerciseVideos, KEYS.exerciseNotes]);
+  const byKey = new Set<string>([
+    KEYS.choices,
+    KEYS.exerciseVideos,
+    KEYS.warmupVideos,
+    KEYS.exerciseNotes,
+  ]);
   // Plain-String-Listen (Grabsteine/Deaktivierungen): Union — was ein Gerät
   // deaktiviert hat, bleibt auf beiden deaktiviert.
   const byValue = new Set<string>([KEYS.disabledExercises]);

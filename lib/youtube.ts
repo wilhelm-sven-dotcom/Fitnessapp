@@ -65,12 +65,20 @@ export function youtubeVideoId(raw: string | null | undefined): string | null {
  *   sound; the user can still unmute in the YouTube player, which then, by iOS
  *   design, pauses the music.)
  * · `playsinline=1` plays inline instead of forcing iOS fullscreen.
+ * `opts` (Aufwärm-Player): `autoplay` startet stumm von selbst, `loop` läuft
+ * endlos (YouTube verlangt dafür den playlist-Param). Ohne opts bleibt die
+ * URL byte-identisch zum bisherigen Verhalten.
  */
-export function youtubeEmbedUrl(raw: string | null | undefined): string | null {
+export function youtubeEmbedUrl(
+  raw: string | null | undefined,
+  opts?: { autoplay?: boolean; loop?: boolean },
+): string | null {
   const id = youtubeVideoId(raw);
-  return id
-    ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&mute=1&playsinline=1`
-    : null;
+  if (!id) return null;
+  let url = `https://www.youtube-nocookie.com/embed/${id}?rel=0&mute=1&playsinline=1`;
+  if (opts?.autoplay) url += "&autoplay=1";
+  if (opts?.loop) url += `&loop=1&playlist=${id}`;
+  return url;
 }
 
 /** Whether a raw string parses as a YouTube link. */

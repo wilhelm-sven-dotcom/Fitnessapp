@@ -273,3 +273,54 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
   Laufzeit via cssVar. Die PR-Textzeile entfällt im Figuren-Layout (die
   grüne REKORDE-Spalte sagt es schon); ohne `muscleVolumes` bleibt das
   kompakte Alt-Layout (Rückwärtskompatibilität).
+
+## Interaktions-Konventionen Video-Ära (Übungs-Guide, Warmup-Medien)
+
+- **Übungs-Guide = Video statt Figuren**: Die Ausführungs-Strichfiguren sind
+  BEWUSST entfernt (Nutzer-Urteil: zu ungenau) — der Guide zeigt das eigene
+  YouTube-Video (exerciseVideos, default) und sonst Schritte-first plus die
+  Einladungs-Karte („Video-Anleitung" / „YouTube-Link hinzufügen"). KEINE
+  neuen Ausführungs-Figuren anlegen. Link-UI = geteilte Komponente
+  `VideoLinkEditor` ({url, offline, prominent?, onChange}, parent setzt
+  `key` auf die Id); Offline-Status via `useOffline()` (lib/use-offline).
+- **Figuren-System nur noch**: Warmup-Player + WarmupDrillSheet (animiert)
+  und Muskel-Heatmap/Poster (`FIG.squat_bw` frozen, Frame A byte-stabil!).
+  FigurePanel-Props: `periodMs?` (Tempo je Drill, Default 2600) und
+  `FigureDef.cycle` (Sägezahn-Kreisloop, z. B. Pedaltritt/Schulterkreisen —
+  Sequenz wird intern [..frames, frames[0]]). Autoren-Regeln: Frame 0 = die
+  charakteristische Pose (reduced motion friert dort ein), identisches
+  Punkt-Key-Set je Frame, A/B = frames[0]/[last]. figFor/FIGURE_ALIAS/
+  PATTERN_FIGURE/muscleBones existieren nicht mehr.
+- **Warmup-Drill-Videos**: `warmupVideos` (KEYS.warmupVideos, Spiegel von
+  exerciseVideos: byKey-LOCAL-wins-Merge, sanitizeVideoMap, Export additiv).
+  Verwaltung NUR auf /uebungen (WarmupCatalogSection → WarmupDrillSheet),
+  nie im laufenden Player. Player: Media-Card mit EIGENEM
+  `key={showing.id}` VOR dem phasen-keyed Block — `showing` ist im Wechsel
+  schon der nächste Drill, das muted iframe buffert im 5-s-Fenster und
+  remountet beim Drill-Start nicht. `youtubeEmbedUrl(raw, {autoplay, loop})`
+  bleibt ohne opts byte-identisch; mute=1 immer (Beeps + Ducking hörbar).
+
+## Signatur: Etappen-Profil & Piktogramm-Bühne
+
+- **Etappen-Profil** (`lib/etappen.ts` + `components/ui/EtappenProfil.tsx`)
+  ist DAS Signature-Element (Komoot-Prinzip: Daten werden zum Bild): jede
+  Einheit als Skyline — Breite = Arbeitssätze, Höhe = feste Muster-
+  Intensitätsklasse (squat/hinge 1.0 … core 0.4, cardio 0.25; NIE in-session
+  normalisieren), Farbe = Region. **Farbcode validiert (dataviz-Validator):
+  Beine=`--accent`, Druck=`--orange`, Zug=`--gruen`, Rumpf=`--fg` (TINTE —
+  bewusst NICHT Gelb: Gelb↔Grün fällt beim Protan-Check durch, Gelb bleibt
+  Warnfarbe), Cardio/unbekannt=`--muted`.** Identität nie farb-allein:
+  Legendenzeile, Höhenklassen, 2-px-Lücken. Renderer = Flex-Divs (KEIN SVG —
+  Live-Füllung braucht zuverlässige Height-Transitions auf Alt-iOS), Größen
+  hero h-16 / mini h-8 / strip h-5; beim Ansehen NULL Animation, nur die
+  Live-Füllung transitioniert (`transition-[height]`, reduced-motion-frei).
+  Platzierungen: SessionCard (geplant, mit Legende), ProgressHeader (live,
+  currentKey-Strich), HistoryTab (mini-Fingerabdruck je Einheit).
+- **Piktogramm-Bühne** (`components/figures/Pictogram.tsx`): 5 statische
+  Marken-Silhouetten (ganzkoerper/unterkoerper/push/pull/core) in
+  `currentColor`, Diagonal-Geometrie, Kreiskopf, kein Gerät/Boden/Animation.
+  Anti-Instruktions-Regeln: über die Feldkante croppen (Hero: absolute
+  -bottom/-right im blauen Feld, Texte bekommen pr-24), EINE Tinte, NIE
+  neben Übungsnamen oder im Guide. Pose via `poseForSession` (dominante
+  Region ≥ 50 % satzgewichtet, reset→core). Zweiter Auftritt: klein (44 px)
+  im Sieger-Moment (Pose VOR dem Save berechnen — active ist danach weg).

@@ -1,9 +1,10 @@
 "use client";
 
-import { Camera, ShieldCheck, Star } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Camera, Plus, ShieldCheck, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { BeforeAfter } from "@/components/progress/BeforeAfter";
+import { BodyEntrySheet } from "@/components/fortschritt/BodyEntrySheet";
 import { PhotoImg } from "@/components/progress/PhotoImg";
 import { TrendChart, type TrendPoint } from "@/components/progress/TrendChart";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -13,7 +14,9 @@ import { Readout } from "@/components/ui/Readout";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { fmtDateShort } from "@/lib/format";
+import { SPRING } from "@/lib/motion";
 import { prTimeline } from "@/lib/records";
+import { toast } from "@/lib/toast";
 import { weekStartMon } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 
@@ -68,8 +71,10 @@ function BodyCard({
 /** Körper: Gewicht & Bauchumfang als Kurven, Fortschrittsfotos als
  *  Vorher/Nachher-Regler und die Timeline mit den Meilensteinen dazwischen. */
 export function BodyTab() {
-  const { body, log } = useTraining();
-  const router = useRouter();
+  const { body, log, deleteBodyMetric } = useTraining();
+  const reduce = useReducedMotion();
+  const [entryOpen, setEntryOpen] = useState(false);
+  const [confirmDel, setConfirmDel] = useState<string | null>(null);
 
   // Kurven-Punkte mit Datum (Zeitachse) und fertigem Readout-Text.
   const weightSeries = body
@@ -91,8 +96,10 @@ export function BodyTab() {
   const photos = useMemo(() => body.filter((b) => b.photoId), [body]);
   const [beforeIdx, setBeforeIdx] = useState<number | null>(null);
   const [afterIdx, setAfterIdx] = useState<number | null>(null);
-  const bIdx = beforeIdx ?? 0;
-  const aIdx = afterIdx ?? photos.length - 1;
+  // Nach einem Timeline-Delete kann eine gemerkte Auswahl über das Array
+  // hinauszeigen — klammern statt ins Leere greifen.
+  const bIdx = Math.min(beforeIdx ?? 0, Math.max(0, photos.length - 1));
+  const aIdx = Math.min(afterIdx ?? photos.length - 1, Math.max(0, photos.length - 1));
   const before = photos[bIdx];
   const after = photos[aIdx];
 
@@ -130,6 +137,14 @@ export function BodyTab() {
 
   return (
     <div>
+      <Pressable
+        onClick={() => setEntryOpen(true)}
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+      >
+        <Plus size={16} /> Körperdaten eintragen
+      </Pressable>
+      <BodyEntrySheet open={entryOpen} onClose={() => setEntryOpen(false)} />
+
       {(weightSeries.length > 0 || waistSeries.length > 0) && (
         <div className="mb-4 space-y-3">
           {weightSeries.length > 0 && (
@@ -168,9 +183,7 @@ export function BodyTab() {
           title="Noch keine Körperdaten"
           description="Halte Gewicht, Bauchumfang und ein Ausgangsfoto fest — künftige Vergleiche zeigen den Fortschritt, den die Waage verschweigt."
           action={
-            <Button onClick={() => router.push("/settings")}>
-              In den Einstellungen erfassen
-            </Button>
+            <Button onClick={() => setEntryOpen(true)}>Ersten Eintrag erfassen</Button>
           }
         />
       ) : null}
@@ -181,6 +194,7 @@ export function BodyTab() {
             Timeline
           </p>
           <div className="space-y-3">
+            <AnimatePresence initial={false}>
             {[...body].reverse().map((m, ri) => {
               const i = body.length - 1 - ri; // Index im aufsteigenden Array
               const prev = body[i - 1];
@@ -189,8 +203,15 @@ export function BodyTab() {
               const prs = prWeeks.get(wk) ?? 0;
               const exam = examWeeks.has(wk);
               const pIdx = m.photoId ? photos.findIndex((p) => p === m) : -1;
+              const delKey = m.date + ri;
               return (
-                <div key={m.date + ri} className="flex items-center gap-3">
+                <motion.div
+                  key={delKey}
+                  layout={reduce ? false : true}
+                  exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                  transition={SPRING.panel}
+                  className="flex items-center gap-3"
+                >
                   {m.photoId ? (
                     <PhotoImg id={m.photoId} className="h-16 w-16 shrink-0 rounded-card" />
                   ) : (
@@ -248,16 +269,37 @@ export function BodyTab() {
                       </Pressable>
                     </div>
                   )}
-                </div>
+                  {confirmDel === delKey ? (
+                    <Pressable
+                      onClick={() => {
+                        setConfirmDel(null);
+                        void deleteBodyMetric(i);
+                        toast("Eintrag gelöscht.");
+                      }}
+                      className="shrink-0 rounded-pill px-2 py-1 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    >
+                      Löschen?
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      onClick={() => setConfirmDel(delKey)}
+                      aria-label="Eintrag löschen"
+                      className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    >
+                      <Trash2 size={14} />
+                    </Pressable>
+                  )}
+                </motion.div>
               );
             })}
+            </AnimatePresence>
           </div>
         </Card>
       )}
 
       <p className="mt-4 text-center text-xs leading-relaxed text-faint">
         Fotos bleiben auf deinem Gerät — und in deiner privaten Cloud, wenn du
-        angemeldet bist. Neue Daten: Einstellungen → Körperdaten.
+        angemeldet bist.
       </p>
     </div>
   );

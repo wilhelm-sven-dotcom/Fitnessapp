@@ -58,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {cloud.configured &&
                     (cloud.email ? (
                       <PressableLink
-                        href="/settings"
+                        href="/settings?seg=verbindungen"
                         aria-label="Cloud-Sync aktiv"
                         className="flex h-11 w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                         style={{ color: "var(--accent-ink)" }}
@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </PressableLink>
                     ) : (
                       <PressableLink
-                        href="/settings"
+                        href="/settings?seg=verbindungen"
                         aria-label="Anmelden für Cloud-Sync"
                         className="flex h-11 w-11 items-center justify-center rounded-full text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
                       >

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Pictogram } from "@/components/figures/Pictogram";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Burst } from "@/components/ui/Burst";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ import { Readout } from "@/components/ui/Readout";
 import { useTraining, type SessionSummary } from "@/components/providers/TrainingProvider";
 import { success } from "@/lib/haptics";
 import { EASE_OUT } from "@/lib/motion";
+import type { PictogramPose } from "@/lib/etappen";
 import { renderShareCard } from "@/lib/share-card";
 import { speak } from "@/lib/voice";
 
@@ -23,11 +25,14 @@ import { speak } from "@/lib/voice";
 export function SessionComplete({
   summary,
   name,
+  pose,
   onDone,
 }: {
   summary: SessionSummary;
   /** Session-Name für die Share-Card („Ganzkörper A"). */
   name?: string;
+  /** Piktogramm-Pose der Einheit (vom Runner VOR dem Save berechnet). */
+  pose?: PictogramPose;
   onDone: () => void;
 }) {
   // muscleVolumes ist hier frisch: der Sieger-Moment mountet NACH dem Save,
@@ -116,6 +121,16 @@ export function SessionComplete({
     >
       {!reduce && <Burst />}
 
+      {pose && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={stagger(0)}
+          className="mb-3 text-accent-ink"
+        >
+          <Pictogram pose={pose} size={44} />
+        </motion.div>
+      )}
       <motion.p
         initial={reduce ? false : { opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}

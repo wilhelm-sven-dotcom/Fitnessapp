@@ -1,13 +1,11 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Camera, Download, Plus, RotateCcw, Trash2, Upload, Volume2, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { beepStart, primeAudio } from "@/lib/beep";
+import { Download, RotateCcw, Upload } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Pressable } from "@/components/ui/pressable";
-import { Toggle } from "@/components/ui/Toggle";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Pressable } from "@/components/ui/pressable";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { StravaSection } from "@/components/settings/StravaSection";
 import { SpotifySection } from "@/components/settings/SpotifySection";
@@ -15,79 +13,45 @@ import { AtlasSection } from "@/components/settings/AtlasSection";
 import { EquipmentSection } from "@/components/settings/EquipmentSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { AppIconSection } from "@/components/settings/AppIconSection";
+import { GymSection } from "@/components/settings/GymSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { downscaleImage, genPhotoId, putPhoto, uploadPhoto } from "@/lib/photo-store";
-import { fmtDateShort } from "@/lib/format";
-import { SPRING } from "@/lib/motion";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
-export default function SettingsPage() {
-  const reduce = useReducedMotion();
-  const {
-    resetAll,
-    body,
-    addBodyMetric,
-    deleteBodyMetric,
-    exportData,
-    importData,
-    settings,
-    setVoiceCues,
-    setCueVolume,
-    setWeightStep,
-    setBikeWarmup,
-    setDuckSpotify,
-    setCoachMotivation,
-    setKeepAwake,
-  } = useTraining();
+/** Vier ruhige Segmente statt zwölf gestapelter Karten (Muster: Fortschritt).
+ *  Körperdaten werden nicht mehr hier erfasst — das lebt bei Fortschritt →
+ *  Körper, wo sie auch angezeigt werden. */
+type Segment = "training" | "aussehen" | "verbindungen" | "daten";
+
+const SEGMENTS: { key: Segment; label: string }[] = [
+  { key: "training", label: "Training" },
+  { key: "aussehen", label: "Aussehen" },
+  { key: "verbindungen", label: "Verbindungen" },
+  { key: "daten", label: "Daten" },
+];
+
+function SettingsContent() {
+  const { resetAll, exportData, importData } = useTraining();
+  const sp = useSearchParams();
+
+  // Segment-Wechsel bleibt lokaler State (keine History-Einträge); nur der
+  // EINSTIEG liest die URL: ?seg=verbindungen (Cloud-Icon, OAuth-Callbacks)
+  // bzw. der Supabase-Magic-Link, der mit #access_token hierher zurückkehrt.
+  const [seg, setSeg] = useState<Segment>(() => {
+    const q = sp.get("seg");
+    if (q === "training" || q === "aussehen" || q === "verbindungen" || q === "daten")
+      return q;
+    if (
+      typeof window !== "undefined" &&
+      /access_token|error_description/.test(window.location.hash)
+    )
+      return "verbindungen";
+    return "training";
+  });
 
   const [confirmReset, setConfirmReset] = useState(false);
-  const [bw, setBw] = useState("");
-  const [waist, setWaist] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const photoRef = useRef<HTMLInputElement>(null);
-  const [photoId, setPhotoId] = useState<string | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [photoBusy, setPhotoBusy] = useState(false);
-
-  const clearPhoto = () => {
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
-    setPhotoUrl(null);
-    setPhotoId(null);
-  };
-
-  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setPhotoBusy(true);
-    try {
-      const blob = await downscaleImage(file);
-      const id = genPhotoId();
-      await putPhoto(id, blob);
-      void uploadPhoto(id, blob);
-      if (photoUrl) URL.revokeObjectURL(photoUrl);
-      setPhotoId(id);
-      setPhotoUrl(URL.createObjectURL(blob));
-    } finally {
-      setPhotoBusy(false);
-    }
-  };
-
-  const addBody = () => {
-    if (!bw.trim() && !waist.trim() && !photoId) return;
-    void addBodyMetric({
-      date: new Date().toISOString(),
-      weightKg: bw.trim() ? Number(bw) : undefined,
-      waistCm: waist.trim() ? Number(waist) : undefined,
-      photoId: photoId ?? undefined,
-    });
-    setBw("");
-    setWaist("");
-    clearPhoto();
-    toast("Eintrag gespeichert.", { kind: "success" });
-  };
 
   const exportFile = () => {
     const blob = new Blob([JSON.stringify(exportData(), null, 2)], {
@@ -119,286 +83,112 @@ export default function SettingsPage() {
     <div>
       <PageHeader title="Einstellungen" eyebrow="App" tone="var(--muted)" />
 
-      <AppearanceSection />
-
-      <AppIconSection />
-
-      <ProfileSection />
-
-      <AtlasSection />
-      <EquipmentSection />
-
-      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
-        <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
-          Körperdaten
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.1"
-            value={bw}
-            onChange={(e) => setBw(e.target.value)}
-            placeholder="Gewicht kg"
-            aria-label="Körpergewicht in kg"
-            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-          />
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.1"
-            value={waist}
-            onChange={(e) => setWaist(e.target.value)}
-            placeholder="Bauch cm"
-            aria-label="Bauchumfang in cm"
-            className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-          />
-        </div>
-        <input
-          ref={photoRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={onPhoto}
-          className="hidden"
-        />
-        {photoUrl ? (
-          <div className="mt-2 flex items-center gap-3 rounded-card bg-surface-2 p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photoUrl}
-              alt="Vorschau"
-              className="h-14 w-14 rounded-card object-cover"
-            />
-            <span className="flex-1 text-sm text-muted">Foto angehängt</span>
-            <Pressable
-              onClick={clearPhoto}
-              aria-label="Foto entfernen"
-              className="rounded-card p-1.5 text-muted focus:outline-none"
-            >
-              <X size={16} />
-            </Pressable>
-          </div>
-        ) : (
-          <Button
-            variant="secondary"
-            full
-            onClick={() => photoRef.current?.click()}
-            disabled={photoBusy}
-            className="mt-2"
+      <div className="mb-4 flex overflow-hidden rounded-card border border-line bg-surface-1 p-1 shadow-card">
+        {SEGMENTS.map((s) => (
+          <Pressable
+            key={s.key}
+            onClick={() => setSeg(s.key)}
+            aria-pressed={seg === s.key}
+            className={cn(
+              "flex-1 whitespace-nowrap rounded-card py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink",
+              seg === s.key ? "bg-surface-2 text-fg" : "text-muted",
+            )}
           >
-            <Camera size={16} /> {photoBusy ? "Lädt…" : "Fortschritts-Foto"}
-          </Button>
-        )}
-        <Button
-          variant="strong"
-          full
-          onClick={addBody}
-          disabled={!bw.trim() && !waist.trim() && !photoId}
-          className="mt-2"
-        >
-          <Plus size={16} strokeWidth={2.5} /> Eintragen
-        </Button>
-        {body.length > 0 && (
-          <div className="mt-3 space-y-1">
-            {/* Löschen gleitet raus statt zu springen; Nachbarn rücken per
-                Layout-FLIP nach (transform, unterbrechbar). */}
-            <AnimatePresence initial={false}>
-            {[...body]
-              .map((m, i) => ({ m, i }))
-              .reverse()
-              .map(({ m, i }) => (
-                <motion.div
-                  key={m.date}
-                  layout={reduce ? false : true}
-                  exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-                  transition={SPRING.panel}
-                  className="flex items-center justify-between gap-2 rounded-card bg-surface-0 px-3 py-2"
-                >
-                  <span className="flex items-center gap-1.5 text-sm text-muted">
-                    {fmtDateShort(m.date)}
-                    {m.weightKg != null ? ` · ${m.weightKg} kg` : ""}
-                    {m.waistCm != null ? ` · ${m.waistCm} cm` : ""}
-                    {m.photoId && <Camera size={13} className="text-muted" />}
-                  </span>
-                  <Pressable
-                    onClick={() => {
-                      void deleteBodyMetric(i);
-                      toast("Eintrag gelöscht.");
-                    }}
-                    aria-label="Eintrag löschen"
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
-                  >
-                    <Trash2 size={14} />
-                  </Pressable>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </section>
+            {s.label}
+          </Pressable>
+        ))}
+      </div>
 
-      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
-        <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
-          Gym-Modus
-        </p>
-        <div className="space-y-5">
-          <Toggle
-            checked={!!settings.voiceCues}
-            onChange={setVoiceCues}
-            label="Sprach-Ansagen"
-            hint="Sagt Satzpause-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
-          />
-          <Toggle
-            checked={settings.duckSpotify !== false}
-            onChange={setDuckSpotify}
-            label="Musik leiser bei Countdown"
-            hint="Senkt Spotify in den letzten Sekunden kurz ab und stellt danach zurück — braucht Premium und ein aktives Gerät."
-          />
-          <Toggle
-            checked={!!settings.bikeWarmup}
-            onChange={setBikeWarmup}
-            label="Auf dem Bike aufwärmen"
-            hint="Stellt jeder Einheit ein lockeres 3-Minuten-Einrollen auf dem Peloton voran (Bike muss im Gym aktiv sein)."
-          />
-          <Toggle
-            checked={settings.coachMotivation !== false}
-            onChange={setCoachMotivation}
-            label="Coach-Motivation im Training"
-            hint="ATLAS spornt dich zwischen den Sätzen kurz an — nur als Text, stört die Musik nie. Jederzeit abschaltbar."
-          />
-          <Toggle
-            checked={settings.keepAwake !== false}
-            onChange={setKeepAwake}
-            label="Display bleibt an"
-            hint="Der Bildschirm bleibt wach, solange die App offen ist — kein Sperrbildschirm im Gym, auch zwischen den Übungen."
-          />
-          <div>
-            <p className="text-sm font-medium text-fg">Gewichtsstufe</p>
-            <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
-              Kleinste Hantelstufe, die du laden kannst — die Vorschläge runden darauf.
+      {seg === "training" && (
+        <>
+          <ProfileSection />
+          <AtlasSection />
+          <EquipmentSection />
+          <GymSection />
+        </>
+      )}
+
+      {seg === "aussehen" && (
+        <>
+          <AppearanceSection />
+          <AppIconSection />
+        </>
+      )}
+
+      {seg === "verbindungen" && (
+        <>
+          <CloudSyncSection />
+          <StravaSection />
+          <SpotifySection />
+        </>
+      )}
+
+      {seg === "daten" && (
+        <>
+          <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
+            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">Daten</p>
+            <p className="mb-3 text-xs leading-relaxed text-muted">
+              Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als
+              Datei oder spiele ein Backup zurück.
             </p>
-            <div className="flex gap-1 rounded-card bg-surface-2 p-1">
-              {[1.25, 2.5, 5].map((s) => {
-                const active = (settings.weightStep ?? 2.5) === s;
-                return (
-                  <Pressable
-                    key={s}
-                    onClick={() => setWeightStep(s)}
-                    className={
-                      "flex-1 rounded-card py-2 text-sm font-medium tabular-nums focus:outline-none " +
-                      (active ? "bg-strong text-on-strong" : "text-muted")
-                    }
-                  >
-                    {`${s}`.replace(".", ",")} kg
-                  </Pressable>
-                );
-              })}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-fg">Signalton-Lautstärke</p>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  primeAudio();
-                  beepStart();
-                }}
-                className="px-3 py-1.5 text-xs"
-              >
-                <Volume2 size={14} />
-                Probehören
+            <div className="mb-4 flex flex-col gap-2">
+              <Button variant="secondary" full onClick={exportFile}>
+                <Download size={16} /> Export (JSON)
+              </Button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                onChange={onImport}
+                className="hidden"
+              />
+              <Button variant="secondary" full onClick={() => fileRef.current?.click()}>
+                <Upload size={16} /> Import (JSON)
               </Button>
             </div>
-            <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
-              Countdown-Töne im Aufwärmen und beim Zünd-Check — lauter stellen, wenn nebenbei Musik läuft.
+            {!confirmReset ? (
+              <Button variant="ghost" onClick={() => setConfirmReset(true)} className="px-1">
+                <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    void resetAll().then(() => toast("Alle Einheiten zurückgesetzt."));
+                    setConfirmReset(false);
+                  }}
+                >
+                  Wirklich löschen
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirmReset(false)}>
+                  Abbrechen
+                </Button>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-card border border-line bg-surface-1 shadow-card p-5">
+            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+              Als App installieren
             </p>
-            <div className="flex gap-1 rounded-card bg-surface-2 p-1">
-              {[
-                { v: 0.5, l: "Leise" },
-                { v: 1, l: "Normal" },
-                { v: 2, l: "Laut" },
-                { v: 3, l: "Max" },
-              ].map((o) => {
-                const active = (settings.cueVolume ?? 1) === o.v;
-                return (
-                  <Pressable
-                    key={o.l}
-                    onClick={() => setCueVolume(o.v)}
-                    className={
-                      "flex-1 rounded-card py-2 text-sm font-medium focus:outline-none " +
-                      (active ? "bg-strong text-on-strong" : "text-muted")
-                    }
-                  >
-                    {o.l}
-                  </Pressable>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <CloudSyncSection />
-
-      <StravaSection />
-
-      <SpotifySection />
-
-      <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
-          Als App installieren
-        </p>
-        <p className="text-xs leading-relaxed text-muted">
-          iPhone: in Safari unten auf „Teilen“ tippen → „Zum Home-Bildschirm“.
-          Android: im Chrome-Menü „App installieren“. Danach startet Training im
-          Vollbild mit eigenem Icon — und läuft auch offline.
-        </p>
-      </section>
-
-      <section className="rounded-card border border-line bg-surface-1 shadow-card p-5">
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">Daten</p>
-        <p className="mb-3 text-xs leading-relaxed text-muted">
-          Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als
-          Datei oder spiele ein Backup zurück.
-        </p>
-        <div className="mb-4 flex flex-col gap-2">
-          <Button variant="secondary" full onClick={exportFile}>
-            <Download size={16} /> Export (JSON)
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            onChange={onImport}
-            className="hidden"
-          />
-          <Button variant="secondary" full onClick={() => fileRef.current?.click()}>
-            <Upload size={16} /> Import (JSON)
-          </Button>
-        </div>
-        {!confirmReset ? (
-          <Button variant="ghost" onClick={() => setConfirmReset(true)} className="px-1">
-            <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="danger"
-              onClick={() => {
-                void resetAll().then(() => toast("Alle Einheiten zurückgesetzt."));
-                setConfirmReset(false);
-              }}
-            >
-              Wirklich löschen
-            </Button>
-            <Button variant="ghost" onClick={() => setConfirmReset(false)}>
-              Abbrechen
-            </Button>
-          </div>
-        )}
-      </section>
+            <p className="text-xs leading-relaxed text-muted">
+              iPhone: in Safari unten auf „Teilen“ tippen → „Zum Home-Bildschirm“.
+              Android: im Chrome-Menü „App installieren“. Danach startet Training im
+              Vollbild mit eigenem Icon — und läuft auch offline.
+            </p>
+          </section>
+        </>
+      )}
     </div>
+  );
+}
+
+/** useSearchParams verlangt beim statischen Prerender eine Suspense-Grenze. */
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SettingsContent />
+    </Suspense>
   );
 }
