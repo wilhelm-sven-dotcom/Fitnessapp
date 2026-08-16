@@ -6,7 +6,7 @@ import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { reqOk } from "@/lib/progression";
+import { addPoolFor, swapPoolFor } from "@/lib/swap-pool";
 import {
   addItem,
   moveItem,
@@ -43,35 +43,17 @@ export function SessionEditSheet({
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
-  // Tausch-/Hinzufüge-Kandidaten: ohne Cardio, ohne fehlendes Equipment,
-  // ohne vom Nutzer deaktivierte Übungen (die GEPLANTEN Items bleiben —
-  // nur neue Vorschläge respektieren die Liste).
-  const available = useMemo(() => {
-    const blocked = new Set(disabledExercises);
-    return allLib.filter(
-      (e) => e.pattern !== "cardio" && reqOk(e, has) && !blocked.has(e.id),
-    );
-  }, [allLib, has, disabledExercises]);
-  const usedIds = new Set(session.items.map((it) => it.exerciseId));
-
-  // Tausch-Pool: gleiches Muster zuerst (naheliegende Alternativen), danach
-  // der ganze Rest des Katalogs — freie Wahl statt Muster-Korsett.
-  const swapPool = useMemo(() => {
-    if (!swapFor) return [];
-    const cur = byId.get(session.items.find((it) => it.id === swapFor)?.exerciseId ?? "");
-    const rest = available.filter((e) => !usedIds.has(e.id) || e.id === cur?.id);
-    if (!cur) return rest;
-    return [
-      ...rest.filter((e) => e.pattern === cur.pattern),
-      ...rest.filter((e) => e.pattern !== cur.pattern),
-    ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swapFor, available, session.items]);
+  // Pool-Politik lebt geteilt in lib/swap-pool (auch der Schnell-Tausch in
+  // der Trainings-Bühne nutzt sie) — Verhalten unverändert.
+  const swapPool = useMemo(
+    () =>
+      swapFor ? swapPoolFor(session, swapFor, allLib, has, disabledExercises) : [],
+    [swapFor, session, allLib, has, disabledExercises],
+  );
 
   const addPool = useMemo(
-    () => available.filter((e) => !usedIds.has(e.id)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [available, session.items],
+    () => addPoolFor(session, allLib, has, disabledExercises),
+    [session, allLib, has, disabledExercises],
   );
 
   return (

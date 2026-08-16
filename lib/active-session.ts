@@ -1,5 +1,7 @@
+import type { EffectiveProfile } from "@/lib/athlete";
 import { presc, warmupSets } from "@/lib/progression";
 import { NEUTRAL_SCALE, band, scaleFor, type ReadinessScale } from "@/lib/readiness";
+import { startWeight } from "@/lib/start-weight";
 import type { DailySession, PlannedExercise } from "@/lib/session-model";
 import { KEYS, storage } from "@/lib/storage";
 import type {
@@ -117,15 +119,21 @@ export interface PrefillOpts {
   weightStep?: number;
   scale: ReadinessScale;
   variant?: DailySession["variant"];
+  /** Athleten-Profil für die Startgewichts-Schätzung ohne Historie. */
+  profile?: EffectiveProfile;
 }
 
 /** Normale Vorbelegung: Aufwärmsätze + leere Arbeitssätze mit Gewichtsvorschlag. */
 function initSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
-  const p = presc(ex, o.lastPerf(ex.id), {
+  const lp = o.lastPerf(ex.id);
+  const startW =
+    !lp && o.profile ? startWeight(ex, o.profile, { step: o.weightStep })?.w : undefined;
+  const p = presc(ex, lp, {
     lighter: o.daysAgo != null && o.daysAgo > 5,
     loadMult: o.scale.loadMult,
     cap: o.scale.cap,
     step: o.weightStep,
+    startW,
   });
   const working: SetEntry[] = Array.from({ length: sets }, () => ({
     weight: p.w,

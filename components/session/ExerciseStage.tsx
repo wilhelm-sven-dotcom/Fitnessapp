@@ -1,8 +1,9 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Check, ChevronRight, Wrench } from "lucide-react";
+import { Check, ChevronRight, Repeat, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
+import { LastTimeCard } from "@/components/session/LastTimeCard";
 import { SetRow } from "@/components/workout/SetRow";
 import { Pressable } from "@/components/ui/pressable";
 import { beatsRecord } from "@/lib/records";
@@ -32,6 +33,7 @@ export function ExerciseStage({
   aidNote,
   weightStep,
   onOpenGuide,
+  onSwap,
   onPrev,
   onNext,
   onWeight,
@@ -53,6 +55,8 @@ export function ExerciseStage({
   /** Schrittweite der Gewichts-Stepper im Satz-Logbuch (settings.weightStep). */
   weightStep?: number;
   onOpenGuide: () => void;
+  /** Schnell-Tausch der aktuellen Übung — nur gereicht, wenn erlaubt & Pool da. */
+  onSwap?: () => void;
   /** Swipe auf dem Kopfbereich blättert zwischen Übungen (Buttons bleiben). */
   onPrev: () => void;
   onNext: () => void;
@@ -77,19 +81,6 @@ export function ExerciseStage({
   const prescLine = isExam
     ? "Prüfung: Rampe 5 · 4 · 3 — steigere zum schweren Test-Satz."
     : presc.line;
-
-  const ps = lastPerf
-    ? lastPerf.sets
-        .filter((s) => !s.warmup)
-        .map((s) =>
-          ex.unit === "Sek"
-            ? `${s.reps}s`
-            : s.weight !== "" && s.weight != null
-              ? `${s.weight}×${s.reps}`
-              : `${s.reps}`,
-        )
-        .join("   ")
-    : null;
 
   // Ghost-Werte fürs Logbuch (Vorschlag bzw. zuletzt bewegtes Gewicht).
   const lastW = [...sets]
@@ -225,11 +216,13 @@ export function ExerciseStage({
             )}
           </div>
 
-          <div className="mt-4 rounded-card border-l-2 border-accent-sessions bg-surface-2 px-3 py-2">
-            <p className="text-xs uppercase tracking-widest text-muted">Letztes Mal</p>
-            <p className="font-mono text-sm tabular-nums text-fg">{ps || "—"}</p>
-            <p className="mt-1 text-xs text-accent-ink">{prescLine}</p>
-          </div>
+          <LastTimeCard
+            ex={ex}
+            lastPerf={lastPerf}
+            record={record}
+            presc={presc}
+            prescLine={prescLine}
+          />
 
           <div className="mt-3 space-y-1">
             {(() => {
@@ -277,12 +270,25 @@ export function ExerciseStage({
         </>
       )}
 
-      <Pressable
-        onClick={onOpenGuide}
-        className="mt-2 -ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-xs text-accent-ink focus:outline-none"
-      >
-        <ChevronRight size={14} /> Ausführung & Technik
-      </Pressable>
+      {/* Fußzeile: Guide links, Schnell-Tausch rechts — bewusst AUSSERHALB der
+          Wischfläche oben, damit kein Swipe-Tap-Konflikt entsteht. */}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <Pressable
+          onClick={onOpenGuide}
+          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-xs text-accent-ink focus:outline-none"
+        >
+          <ChevronRight size={14} /> Ausführung & Technik
+        </Pressable>
+        {onSwap && (
+          <Pressable
+            onClick={onSwap}
+            aria-label={`${ex.name} tauschen`}
+            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill bg-surface-2 px-3 text-xs font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          >
+            <Repeat size={13} /> Tauschen
+          </Pressable>
+        )}
+      </div>
     </section>
   );
 }

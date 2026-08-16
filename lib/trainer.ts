@@ -759,7 +759,13 @@ export function liveLine(opts: {
     case "lighter":
       return { text: "Nach der Pause kontrolliert rein.", tone: "ok", kind: "presc" };
     case "start":
-      return { text: "Startgewicht finden — zwei bis drei im Tank lassen.", tone: "ok", kind: "presc" };
+      return {
+        text: presc.suggestedWeight
+          ? `Start mit ${fmtKg(presc.suggestedWeight)} kg — locker bleiben, zwei bis drei im Tank.`
+          : "Startgewicht finden — zwei bis drei im Tank lassen.",
+        tone: "ok",
+        kind: "presc",
+      };
     case "rep":
       return { text: "Eine Wiederholung mehr als letztes Mal — hol sie.", tone: "push", kind: "presc" };
     default:

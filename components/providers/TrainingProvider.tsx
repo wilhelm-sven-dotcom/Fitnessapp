@@ -1038,7 +1038,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         // Only a filled WORKING set counts as a performance — a warmup-only entry
         // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
         if (ex && ex.sets && ex.sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null))
-          return { sets: ex.sets, date: log[i].date };
+          return { sets: ex.sets, date: log[i].date, note: ex.note };
       }
       return null;
     };

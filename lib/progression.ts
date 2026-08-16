@@ -10,6 +10,7 @@ import type {
   WorkoutDay,
 } from "@/lib/types";
 import { pickPreferred } from "@/lib/affinity";
+import { fmtKg } from "@/lib/format";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
@@ -342,7 +343,15 @@ export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
 export function presc(
   ex: Exercise,
   lp: LastPerf | null,
-  opts: { lighter?: boolean; loadMult?: number; cap?: boolean; step?: number } = {},
+  opts: {
+    lighter?: boolean;
+    loadMult?: number;
+    cap?: boolean;
+    step?: number;
+    /** Startgewichts-Schätzung für Übungen ohne Historie (lib/start-weight) —
+     *  der Aufrufer rechnet, damit progression ↔ start-weight zyklusfrei bleibt. */
+    startW?: number;
+  } = {},
 ): Prescription {
   // Cardio blocks (Peloton/Bike) are guidance, not load — the actual ride is
   // recorded by Strava. Return the planned-minute range + the how-to cue.
@@ -361,6 +370,21 @@ export function presc(
   const repOf = (r: number) => (opts.cap ? ex.repLow : r);
 
   if (!lp) {
+    // Ohne Historie, aber mit Schätzung: konservativer Vorschlag statt leerem
+    // Feld — Tagesform/Deload (loadMult) greifen auch hier.
+    if (weighted && !timed && opts.startW && opts.startW > 0) {
+      const w = scaleW(opts.startW);
+      if (w > 0) {
+        const r = repOf(ex.repHigh);
+        return {
+          w: String(w),
+          r: String(r),
+          suggestedWeight: w,
+          reason: "start",
+          line: `Heute: ${ex.sets} × ${ex.repLow}–${ex.repHigh} · Vorschlag ${fmtKg(w)} kg — Startgewicht, 2–3 Wdh im Tank`,
+        };
+      }
+    }
     return {
       w: "",
       r: "",
