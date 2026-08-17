@@ -22,7 +22,7 @@ export function GymSection() {
   } = useTraining();
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
+    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
       <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
         Gym-Modus
       </p>

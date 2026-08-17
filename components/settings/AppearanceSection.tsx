@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
+import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { type ThemePref } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -18,12 +19,12 @@ const THEMES: { id: ThemePref; label: string }[] = [
 ];
 
 export function AppearanceSection() {
-  const { settings, setTheme, setUserName } = useTraining();
+  const { settings, setTheme, setUserName, setZoetrope } = useTraining();
   const theme = settings.theme ?? "light";
   const [name, setName] = useState(settings.userName ?? "");
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-surface-1 p-5">
+    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
       <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
         Darstellung
       </p>
@@ -35,14 +36,14 @@ export function AppearanceSection() {
         onChange={(e) => setName(e.target.value)}
         onBlur={() => setUserName(name)}
         placeholder="z. B. J. Weber"
-        className="w-full rounded-pill border border-line bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+        className="w-full rounded-pill border border-line-card bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
       />
       <p className="mb-5 mt-1.5 text-xs text-muted">
         Für die Anrede im Protokoll und auf der Startseite.
       </p>
 
       <p className="mb-2 text-sm font-medium text-fg">Modus</p>
-      <div className="flex gap-1 rounded-pill border border-line bg-surface-1 p-1">
+      <div className="flex gap-1 rounded-pill border border-line-card bg-surface-1 p-1">
         {THEMES.map((t) => (
           <Pressable
             key={t.id}
@@ -60,6 +61,15 @@ export function AppearanceSection() {
       <p className="mt-1.5 text-xs text-muted">
         Der Fokus-Modus (laufende Studie) arbeitet immer im Atelier.
       </p>
+
+      <div className="mt-5 border-t border-line-card pt-4">
+        <Toggle
+          checked={settings.zoetrope !== false}
+          onChange={setZoetrope}
+          label="Zoetrop-Animationen"
+          hint="Phasenfiguren blinken mit 8 Bildern/s durch ihre Kader — aus: stehendes Endbild."
+        />
+      </div>
     </section>
   );
 }

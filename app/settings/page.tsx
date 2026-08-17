@@ -15,6 +15,7 @@ import { AppearanceSection } from "@/components/settings/AppearanceSection";
 import { GymSection } from "@/components/settings/GymSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -82,7 +83,7 @@ function SettingsContent() {
     <div>
       <PageHeader title="Einstellungen" eyebrow="Apparatur · Konfiguration" />
 
-      <div className="mb-4 flex overflow-hidden rounded-card border border-line bg-surface-1 p-1 shadow-card">
+      <div className="mb-4 flex overflow-hidden rounded-card border border-line-card bg-surface-1 p-1">
         {SEGMENTS.map((s) => (
           <Pressable
             key={s.key}
@@ -119,15 +120,17 @@ function SettingsContent() {
 
       {seg === "daten" && (
         <>
-          <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
-            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">Daten</p>
+          <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
+            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+              Archiv · Daten
+            </p>
             <p className="mb-3 text-xs leading-relaxed text-muted">
-              Alle Einheiten werden auf diesem Gerät gespeichert. Sichere sie als
-              Datei oder spiele ein Backup zurück.
+              Alle Platten liegen auf diesem Gerät. Sichere das Archiv als Datei
+              oder spiele ein Backup zurück.
             </p>
             <div className="mb-4 flex flex-col gap-2">
               <Button variant="secondary" full onClick={exportFile}>
-                <Download size={16} /> Export (JSON)
+                <Download size={16} /> Archiv exportieren
               </Button>
               <input
                 ref={fileRef}
@@ -137,32 +140,42 @@ function SettingsContent() {
                 className="hidden"
               />
               <Button variant="secondary" full onClick={() => fileRef.current?.click()}>
-                <Upload size={16} /> Import (JSON)
+                <Upload size={16} /> Backup einspielen
               </Button>
             </div>
-            {!confirmReset ? (
-              <Button variant="ghost" onClick={() => setConfirmReset(true)} className="px-1">
-                <RotateCcw size={15} /> Ganzen Verlauf zurücksetzen
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    void resetAll().then(() => toast("Alle Einheiten zurückgesetzt."));
-                    setConfirmReset(false);
-                  }}
-                >
-                  Wirklich löschen
-                </Button>
-                <Button variant="ghost" onClick={() => setConfirmReset(false)}>
-                  Abbrechen
-                </Button>
-              </div>
-            )}
+            <Button variant="danger" onClick={() => setConfirmReset(true)}>
+              <RotateCcw size={15} /> Alle Platten löschen
+            </Button>
           </section>
 
-          <section className="rounded-card border border-line bg-surface-1 shadow-card p-5">
+          {/* Destruktives bestätigt ein Sheet — nie inline (Handoff-Rezept). */}
+          <Sheet
+            open={confirmReset}
+            onClose={() => setConfirmReset(false)}
+            title="Alle Platten löschen?"
+          >
+            <p className="mb-4 text-sm leading-relaxed text-muted">
+              Das gesamte Archiv — alle Platten, Rekorde und Messreihen — wird
+              unwiderruflich gelöscht. Ein Export vorher sichert alles als Datei.
+            </p>
+            <div className="flex flex-col gap-2 pb-2">
+              <Button
+                variant="danger"
+                full
+                onClick={() => {
+                  void resetAll().then(() => toast("Alle Platten gelöscht."));
+                  setConfirmReset(false);
+                }}
+              >
+                Unwiderruflich löschen
+              </Button>
+              <Button variant="ghost" full onClick={() => setConfirmReset(false)}>
+                Abbrechen
+              </Button>
+            </div>
+          </Sheet>
+
+          <section className="rounded-card border border-line-card bg-surface-1 p-5">
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
               Als App installieren
             </p>

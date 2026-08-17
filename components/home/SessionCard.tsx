@@ -215,7 +215,12 @@ export function SessionCard({
             Phasenband · <span className="tabular-nums">{kaderZahl}</span> Kader
           </span>
         </div>
-        <Phasenband gruppen={gruppen} groesse="hero" className="mt-2.5" />
+        <Phasenband
+          gruppen={gruppen}
+          groesse="hero"
+          zoetropOn={settings.zoetrope !== false}
+          className="mt-2.5"
+        />
         {gruppen.length > 1 && (
           <div className="mt-2 flex justify-between gap-2 font-mono text-5xs uppercase tracking-gesperrt text-muted">
             {gruppen.map((g) => (

@@ -234,6 +234,8 @@ export interface AppSettings {
   superset?: boolean;
   /** Darstellung: „Archiv" (light, Default) · „Atelier" (dark) · Auto. */
   theme?: "dark" | "light" | "system";
+  /** Zoetrop-Animationen der Phasenfiguren (Default an). */
+  zoetrope?: boolean;
   /** Einmal-Migration gelaufen: alter Dunkel-Default wurde auf Hell gehoben. */
   themeMigratedM72?: boolean;
   /** @deprecated Alt-Akzent des früheren Icon-Designers — nur Alt-Daten. */

@@ -299,6 +299,7 @@ interface TrainingContextValue {
   setVoiceCues: (on: boolean) => void;
   setCueVolume: (v: number) => void;
   setTheme: (t: ThemePref) => void;
+  setZoetrope: (on: boolean) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
@@ -1118,6 +1119,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, cueVolume: v });
     const setTheme = (t: ThemePref) =>
       void saveSettings({ ...settings, theme: t });
+    const setZoetrope = (on: boolean) =>
+      void saveSettings({ ...settings, zoetrope: on });
     const setUserName = (name: string) =>
       void saveSettings({ ...settings, userName: name.trim() || undefined });
     const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
@@ -1477,6 +1480,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setVoiceCues,
       setCueVolume,
       setTheme,
+      setZoetrope,
       setWeightStep,
       setBikeWarmup,
       setCoachMotivation,
