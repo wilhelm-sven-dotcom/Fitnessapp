@@ -4,323 +4,250 @@ description: >-
   Verbindliches Design-System dieser Fitness-PWA. MUSS bei JEDER UI-Arbeit
   geladen werden: React/Next.js-Komponenten, Seiten, Tailwind-Klassen, Layouts,
   Farben, Fonts, Buttons, Cards, Inputs, Focus-States, Animationen. EIN Design:
-  „München ’72" — deutsches Sportsystemdesign nach Aicher: heller Silbergrund
-  (Dunkel als Variante über `data-theme`), flache Farbfelder, 1px-Hairline-
-  Raster, Farbcode je Bereich (Blau/Orange/Grün/Gelb/Rot), Archivo +
-  JetBrains Mono, Radius 12. Enthält die echten Tokens, Material-/Motion-
-  Regeln und Don'ts gegen generische AI-Optik. Werte hier nachschlagen statt
-  erfinden.
+  „Platte 311" — Muybridge-Bewegungslabor: Albumin-Papier hell („Archiv"),
+  Kollodium-Dunkelkammer („Atelier", Fokus-Modus immer dunkel), Siegellack-
+  Akzent, Cyanotypie & Messing, Old Standard TT (Kursive) + IBM Plex Mono
+  (trägt Body), Radius 3/2/1 px, NULL Schatten, Filmtransport-Motion,
+  Phasenfiguren & Phasenband, volles Sprachregister (Studie/Platte/Kader/
+  Maximum). Enthält die echten Tokens, Rezepte, Verbote und Smoke-Invarianten.
+  Werte hier nachschlagen statt erfinden.
 ---
 
-# UI-Style — Design-System „München ’72" (echte Werte aus dem Code)
+# UI-Style — Design-System „Platte 311" (echte Werte aus dem Code)
 
 Stack: **Next.js 14 App Router · React 18 · TypeScript strict · Tailwind 3.4 ·
 Framer Motion 11 · lucide-react · `cn()` (clsx + tailwind-merge)**. Mobile-first
 PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 
-## EIN Design: „München ’72"
+## EIN Design: „Platte 311" — das Bewegungslabor
 
-- Deutsches Sportsystemdesign nach Otl Aicher: **heller Silbergrund ist der
-  Grundzustand**, flache satte Farbfelder statt Verläufen/Glows/Glas,
-  1px-Hairlines (`--line`) tragen die Trennung. These: Training als System,
-  nicht als Nachtclub.
-- **Farbcode je Bereich (Wegleitsystem):** Blau = Heute/Session/Primär-CTA ·
-  Orange = ATLAS/Coach/Live · Grün = Fortschritt/Erfolg/Volumen · Gelb =
-  Warnung/über Ziel · Rot = Gefahr (sparsam). BottomNav-Tab, PageHeader-Quadrat
-  und die Bereichsflächen tragen dieselbe Farbe.
-- **`data-theme`** = `light` (Default) | `dark` (Anthrazit-Variante, gleiche
-  Hues angehoben) auf `<html>`; pre-paint im No-Flash-Script (`app/layout.tsx`),
-  Laufzeit über `applyTheme` (`lib/theme.ts`), Wahl in `settings.theme`.
-- `settings.accentOverride` (hex) darf den Akzent app-weit ersetzen — der
-  Provider setzt dann `--accent`/`--on-accent`/`--accent-ink` inline.
-- **Immer Tokens nutzen, nie rohe Hex/feste Radien im JSX** (Ausnahme:
-  SVG-Strokes dürfen `var(--…)` tragen; `global-error.tsx` ist eigenständig).
+- **These:** 1887 zerlegte Muybridge den Gewichtheber in Einzelbilder; die App
+  setzt die Reihe fort. Training als fotografische Studie: jede Einheit eine
+  **Studie** (gespeichert eine **Platte** mit laufender Nummer), jeder Satz ein
+  **Kader**, die Satzpause die **Verschlusszeit**, ein Rekord ein **Maximum**
+  auf der „Tafel des Maximums". ATLAS ist der **Studienleiter**.
+- **Zwei Führungen:** „Archiv" = helles Albumin-Papier (Grundzustand),
+  „Atelier" = Kollodium-Dunkelkammer (`data-theme="dark"`). Wahl in
+  `settings.theme` (Segment Archiv/Atelier/Auto), Laufzeit `applyTheme`
+  (`lib/theme.ts`), No-Flash pre-paint in `app/layout.tsx`.
+- **Fokus-Modus IMMER Atelier:** `/workout` erzwingt Dunkel — pre-paint-Zweig
+  im Layout-Skript UND `setThemeLock("dark")`-Effekt in `app/workout/page.tsx`
+  (Cleanup restauriert). `applyTheme` konsultiert den Lock zuerst.
+- **EINE Farbtafel:** Akzent-Override und Icon-Designer sind ENTFERNT. Ein
+  Icon („311", ob-lift auf Kollodium), eine Marke (`LiftMark`).
+- **Immer Tokens nutzen, nie rohe Hex/feste Radien im JSX** (Ausnahmen:
+  SVG-Strokes mit `var(--…)`; `global-error.tsx` eigenständig; die
+  App-Icon-Replik im Onboarding trägt ihre fixen Icon-Hexes + 18px inline).
 
-## Farben — Tokens (hell / dunkel), alle Paare WCAG-geprüft (≥ 4.5:1)
+## Farben — Token-Tafel (hell „Archiv" / dunkel „Atelier")
 
-| Tailwind            | CSS-Var       | Hell      | Dunkel    | Zweck |
-|---------------------|---------------|-----------|-----------|-------|
-| `surface-0`         | `--base`      | `#f2f4f2` | `#14171a` | App-Hintergrund (Silber) |
-| `surface-1`         | `--card`      | `#ffffff` | `#1b1f24` | DIE Panel-Fläche |
-| `surface-2`         | `--surface-2` | `#e8ebe8` | `#22272c` | Inputs, Chips, eingelassen |
-| `surface-3`/`line`  | `--line`      | `#d4d9d4` | `#2e343a` | Hairlines/Raster |
-| `fg`                | `--fg`        | `#121619` | `#edf0f2` | Text |
-| `muted`/`faint`     | `--muted`/`--faint` | `#4d5a5e`/`#5f6b73` | `#a3adb3`/`#808b92` | Sekundär/Tertiär |
-| `strong`/`on-strong`| `--strong`/`--on-strong` | `#121619`/`#ffffff` | `#edf0f2`/`#14171a` | Mono-CTA / Text darauf |
+| Tailwind             | CSS-Var        | Hell      | Dunkel    | Zweck |
+|----------------------|----------------|-----------|-----------|-------|
+| `surface-0`          | `--base`       | `#F2ECDD` | `#141210` | Grund: Albumin / Kollodium |
+| `surface-1`          | `--card`       | `#FAF6EA` | `#1D1A16` | DIE Karten-/Plattenfläche |
+| `surface-2`          | `--surface-2`  | `#E4DBC5` | `#342E24` | eingelassene Flächen |
+| `line`               | `--line`       | `#D4C9B0` | `#2E2921` | Hairlines auf dem Grund |
+| `line-card`          | `--line-card`  | `#E4DBC5` | `#342E24` | Hairlines/Raster AUF Karten |
+| `fg` / `strong`      | `--fg`/`--strong` | `#221C14` | `#E9E1CE` | Tinte (Text, Füllungen) |
+| `muted`/`faint`/`accent-2` | `--muted`… | `#C0B396` | `#57503F` | **Schleier** — EINE Sekundärstufe (hell 1,76:1 = bewusster Design-Entscheid, blasse Meta-Schrift) |
+| `accent-sessions`    | `--accent`     | `#B23A1E` | `#E06A45` | **Siegellack** — CTAs, aktiver Kader, Live |
+| `accent-press`       | `--accent-press` | `#9E3319` | `#C85A38` | Button-Down (8 % dunkler, hart) |
+| `on-accent`/`on-color` | `--on-accent` | `#FAF6EA` | `#141210` | Tinte auf Siegellack |
+| `cyanotypie`         | `--cyanotypie` | `#1F5C86` | `#6FA7CC` | Hypothesen, Charts, Fokus-Ringe, Register-Aktiv |
+| `messing`            | `--messing`    | `#97711F` | `#D4A649` | Maxima/Rekorde, Plattenschilder |
+| `stufe-1..4`         | `--stufe-1..4` | `#D8E4EE #A8C4DA #5F93B8 #1F5C86` | `#24313D #33526B #4F7FA3 #6FA7CC` | Myologie-Blaustufen (diskret!) |
+| `iwf-rot/blau/gelb/gruen` | `--iwf-*` | `#C1332B #2B6390 #D2A32C #3A7D54` | modusgleich | IWF-Scheibenfarben (Phasenband-Basislinie) |
+| `blaupause`/`kreide-blau` | `--blaupause`/`--kreide-blau` | `#1F5C86`/`#F4F9FC` | gleich | Poster-Cyanotypie |
 
-## Bereichsfarben & Status
+- **Legacy-Aliasse** (Alt-Code läuft weiter): `--orange` & `--gruen` :=
+  `var(--cyanotypie)`, `--gelb` := `var(--messing)`, `--rot` & `--live` :=
+  `var(--accent)`. Neue Arbeit nutzt die echten Namen.
+- `text-accent-ink` = Siegellack als Schriftfarbe (danger-Buttons, aktive Tabs).
+- **Radius:** `rounded-card` **3px** · `rounded-pill` **2px** · `rounded-xs`
+  **1px**. Nichts anderes. Eckig ist Programm.
+- **Schatten: NULL.** `--panel-shadow(-lg)` = none, `.glass` ist opak.
+  Trennung leisten Hairlines.
 
-- `accent-sessions` = **`--accent`** Lichtblau `#0c6a99` / `#4aa9d9` — CTAs,
-  Heute-Hero, DER Primärton.
-- `coach` = **`--orange`** `#bc4708` / `#ff6a2a` — ATLAS-Bereich, Chat-Bubble,
-  `live`-Marker („heute/empfohlen").
-- `accent-volume` = **`--gruen`** `#0a7248` / `#33bf7f` — Fortschritt, Erfolg,
-  Rekord-Badges, Charts.
-- `accent-coverage` = `--orange` (Ring-/Abdeckungs-Semantik).
-- **Status:** under `--accent` · in `--gruen` · over `--gelb` (`#956600`/`#f2b63c`)
-  · danger `--rot` (`#bf2f1e`/`#ff5a47`).
-- **Tinte auf Farbfeldern:** `text-on-accent` (Akzentfläche) bzw. `text-on-color`
-  (Orange/Grün/Gelb/Rot-Fläche) — hell: Weiß, dunkel: Anthrazit. Nie `text-muted`
-  auf farbigen Flächen.
-- `accent-2` = neutrale Eyebrows/Labels (= muted).
+## Typographie (nur ZWEI Familien, via `next/font/google`)
 
-## Fonts (via `next/font/google`, self-hosted — nur ZWEI Familien)
+- `font-display` (`--font-oldstandard`): **Old Standard TT** 400/700 +
+  *italic*. Titel stehen IMMER in der Kursive (`font-display italic`),
+  Buchsatz-Absätze (ATLAS-Protokoll, Briefings) in der Antiqua 15–16px/1.6.
+  Nur 400/700 vorhanden — kein font-medium/semibold auf Display.
+- `font-mono` = `font-sans` = Body (`--font-plexmono`): **IBM Plex Mono**
+  400–700 — DER Werkstoff für Meta, Labels, Zahlen. `tabular-nums` bei Zahlen
+  Pflicht. **Mono trägt den Body** — Fließtext ist die Ausnahme (Display).
+- **Schriftgrade** (Tailwind fontSize): `text-5xs` 8px · `4xs` 9px · `3xs`
+  10px · `2xs` 11px · `titel` 28px · `readout` 44px · `readout-lg` 56px.
+- **Sperrung** (letterSpacing): `tracking-gesperrt` .14em · `gesperrt-2`
+  .24em · `gesperrt-3` .28em (CTAs) · `gesperrt-4` .32em (große Kicker).
+- Versalien via CSS `uppercase` — im DOM Normalschreibung (Screenreader!).
+- Kicker-Muster: `font-mono text-3xs font-semibold uppercase tracking-gesperrt-2
+  text-muted`; Karten-Titel: `font-display italic text-…`.
 
-- `font-display` + `font-sans` (`--font-archivo`): **Archivo** (variable,
-  Weiten-Achse) — Headings, Body, große Zahlen. Für Scoreboard-Ziffern
-  (Countdown, Hero-Readouts) zusätzlich **`.stretch-display`** (font-stretch
-  118 %) + `tabular-nums`.
-- `font-mono` (`--font-jbmono`): **JetBrains Mono** — Eyebrows/Labels und
-  Messwerte/Readouts (`tabular-nums` bei Zahlen Pflicht).
-- Eyebrow-Muster: `font-mono text-xs uppercase tracking-widest text-accent-2`
-  — im `PageHeader` mit vorangestelltem Bereichs-Quadrat (`h-2 w-2` +
-  `backgroundColor: tone`). Headings `tracking-tight`.
+## Komponenten-Rezepte (`components/ui/`)
 
-## Material · Spacing · Radius · Schatten
+- **Button:** Versal-Mono `tracking-gesperrt-2`, `rounded-pill` (2px).
+  `primary` Siegellack-Fläche + `active:bg-accent-press` (hart, kein Fade);
+  `secondary` 1px `border-strong`, transparent; `ghost` Text Schleier;
+  `danger` 1px Rand + Text `accent-ink` (kein roter Block). Kein Schatten.
+- **Card:** `rounded-card border border-line-card bg-surface-1 p-3.5` —
+  alle Varianten identisch, kein elevated/glass-Unterschied mehr.
+- **Chip:** `rounded-pill border border-line`, `text-3xs uppercase
+  tracking-gesperrt`; Ton = Schriftfarbe, aktiv Fläche Tinte/Text Grund.
+- **Toggle:** 38×20, `rounded-pill`; Knopf 16px `rounded-xs` (eckig!);
+  Wechsel HART ohne Gleiten; an = Siegellack/Knopf on-accent, aus =
+  border-line/Knopf Schleier. `role="switch"` bleibt.
+- **Input:** `rounded-pill border border-line bg-transparent px-3 …
+  focus-visible:ring-2 focus-visible:ring-cyanotypie` (Fokus-Ringe sind
+  Cyanotypie, nie Siegellack).
+- **Sheet:** oben `rounded-card`, Grabber `h-1 w-9 bg-muted`; Titel
+  `font-display italic`; Scrim HART `rgba(34,28,20,.4)` (keine Fade-Kurve);
+  Einfahrt = RASTE (s. Motion). A11y/Drag-Verhalten unangetastet.
+- **Toast** (`ToastItem`): Fläche Tinte (`bg-strong`), `text-2xs`; Eintritt
+  120 ms transform, Abgang HART.
+- **Skeleton:** `bg-muted rounded-xs`, Puls = `skel-blink` (1s step-end
+  35↔14 %, reduced-motion: statisch 24 %) — kein Framer.
+- **Pressable/PressableLink:** whileTap `scale .985` bei Dauer 0 (hart
+  runter), Release `FILM.press` mit `TRANSPORT_EIN`; Fokus-Ring Cyanotypie.
+- **PageHeader:** Kicker (gesperrt-2, Schleier) über Titel (`italic text-3xl`).
+- **Focus/Touch:** `focus-visible:ring-2` (nie bloßes `focus:`), Ziele ≥
+  44px (`-m-2 h-11 w-11`-Trick), `aria-pressed` auf Selected-States,
+  `disabled:opacity-40/50`.
 
-- Tailwind-Default-Spacing (4px-Skala). Seiten-Container: `mx-auto max-w-md
-  px-5 pt-5 pb-28`. Sektionsabstand `mb-4`/`mb-5`.
-- **Radius = Token:** Karten/Buttons **`rounded-card`** (12px), Chips/Pills/
-  Inputs **`rounded-pill`**, Icon-Buttons `rounded-full`, Mini-Marken
-  (Streak-Quadrate, Badges) `rounded-sm`. Keine festen `rounded-2xl/3xl`.
-- **DAS Panel-Rezept:** `rounded-card border border-line bg-surface-1
-  shadow-card` — als `<Card>` (base/elevated/glass) oder identisch auf
-  `<section>`, wo Semantik es verlangt. KEIN `bg-panel`/Verlauf mehr.
-- Schatten: `shadow-card` (leiser Offset) / `shadow-card-lg` (schwebendes
-  Chrome: Sheet, Toast). **Keine Glows, keine farbigen Halos, kein edge-top.**
-- Farbfelder: `bg-accent-sessions text-on-accent` als Block (Heute-Hero);
-  innere Zonen über `rgba(0,0,0,…)` via Inline-`style` abdunkeln.
-- Browser-Oberflächen gehören zum Design: `::selection` und Caret tragen den
-  Akzent (globals.css), Daten stehen in `tabular-nums`.
+## Motion — „Filmtransport" (Apparat, kein Easing-Allerlei)
 
-## Komponenten-Konventionen
+Konstanten in `lib/motion.ts`: `TRANSPORT_EIN` = cubic-bezier(.55,0,1,1),
+`TRANSPORT_AUS` = cubic-bezier(.45,0,1,1) — nur `transform`/`opacity`.
+`FILM` = { blitz .06, press .08, toast .12, liste .14, screen .16,
+sheetZu .18, fuellung .24, sheetAuf .26 } (Sekunden). Sieger-Moment ~900 ms
+ist DIE Ausnahme. `SPRING`/`EASE_OUT` sind Alt-Bestand (Welcome-Stagger,
+Odometer) — nicht neu verwenden.
 
-- **Buttons: IMMER `components/ui/Button.tsx`** — Varianten `primary`
-  (Blaufeld) / `strong` / `secondary` / `ghost` / `danger` (rote Schrift, kein
-  roter Block); Größen `lg` (`rounded-card py-4 text-lg font-bold`, +
-  `shadow-card-lg` bei primary/strong) / `sm` (`rounded-pill px-4 py-2.5
-  text-sm font-medium`); `full` für Screen-CTAs. Basis ist `<Pressable>`
-  (whileTap scale .97 + Fokus-Ring).
-- **Card:** `components/ui/Card.tsx` statt Copy-Paste.
-- **Input:** `rounded-pill bg-surface-2 px-3 py-2.5 text-sm text-fg
-  placeholder:text-faint focus:outline-none focus-visible:ring-2
-  focus-visible:ring-accent-sessions`.
-- **Feedback:** `toast()` aus `lib/toast` (Erfolge transient; Fehler, die
-  Kontext brauchen, inline). **Loading:** `<Skeleton>` statt Blank/Spinner
-  (Puls nur bei echter Wartezeit). Wiederverwenden: `PageHeader` (mit `tone`),
-  `EmptyState`, `Readout`, `Chip`, `Odometer`, `Sheet`, `Toaster`.
-- **Focus:** `focus-visible:ring-2` (nie bloßes `focus:`). **Touch-Ziele ≥
-  44px** — bei kleinen Icons `-m-2 h-11 w-11` (negative Margin frisst das
-  Padding). Selected-States tragen `aria-pressed`. **Disabled:**
-  `disabled:opacity-40`/`50`.
-- Icons: lucide-react, `size={16..22}`, EIN Strichgewicht (CTA-Icon
-  `strokeWidth={2.5}`); Muskel-Piktogramme aus `components/figures`.
+| Moment | Verhalten |
+|---|---|
+| Button-Press | down: hart (0 ms) `scale .985` + `accent-press`; release 80 ms TRANSPORT |
+| Screenwechsel | `PageTransition`: 24px-Ruck, 160 ms TRANSPORT_EIN, KEIN Fade des alten Screens |
+| Sheet auf | „RASTE": y 103 % → −6px @82 % (step-end) → 0, 260 ms (Framer-Keyframes `times`) |
+| Sheet zu / Scrim | 180 ms TRANSPORT_AUS; Scrim erscheint/verschwindet HART |
+| Toast | 12px, 120 ms rein; Abgang hart |
+| Zahlen (kg, Countdown) | 0 ms — Zahlen springen wie ein Zählwerk |
+| Verschlusszeit | 24 Striche fallen HART im Sekundentakt (opacity .14), letzte 3 Siegellack |
+| Satz-Commit | BLITZ: 60 ms Kreide-Frame (steps), Füllung 240 ms, Silhouette hart |
+| Sieger | Doppelblitz (2 Kreide-Frames, ~80 ms Abstand) + Stagger + Messing-scaleX |
+| Skeleton | 1 s step-end 35↔14 % |
+| Phasenband | füllt NUR im Commit (`FILM.fuellung`), nie beim Ansehen |
+| Zoetrop | `.zp1/.zp2/.zp3` CSS step-end 0.5 s (8 B/s, Phasen 1-2-3-2) |
+| Charts | statisch — keine Einzeichnung |
 
-## Motion — RUHE ist die Regel (Emil-Kowalski-Bar)
+**Reduced motion:** Dauern → 0 (Zustände springen), Zoetrop zeigt die
+Hauptphase, Skeleton statisch. `useReducedMotion()` + CSS-Gates vorhanden.
+Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
 
-- **Navigation ist SOFORT:** keine Seiten-Übergänge (`PageTransition` bleibt
-  Passthrough), keine Mount-Reveals/Stagger auf Seiten, keine Chart-Einzeichnung,
-  keine Zähler beim Bloßen-Ansehen. Ausnahme: Welcome (einmalig) darf gestaffelt
-  erscheinen.
-- Animation NUR als Reaktion auf Nutzeraktion oder Datenänderung: Press-Scale,
-  Satz-Abschluss, Rekord-Badge, Odometer, Listen-Mutation (AnimatePresence +
-  Layout-FLIP), Sieger-Moment (Farbbalken-`Burst`).
-- Dauer ≤ 200–300 ms; Enter/Exit `ease-out`; Fortschrittsbalken `linear`;
-  **nie `transition-all`** — Properties benennen (`transition-[width]
-  duration-1000 ease-linear`). Konstanten aus `lib/motion.ts` (`EASE_OUT`,
-  `SPRING.press/panel/pop`) — nie lokal duplizieren.
-- Nur `transform`/`opacity` animieren (GPU); Springs für Gesten (Sheet-Drag);
-  Transitions statt Keyframes für alles schnell Auslösbare (Toasts!).
-- **`prefers-reduced-motion` respektieren:** `useReducedMotion()` — Bewegung
-  weg, Opacity darf bleiben; `initial={reduce ? false : …}`.
+## Signatur-Elemente
+
+- **Phasenfiguren** (`lib/phasen/figuren.ts` + `components/phasen/PhasenFigur.tsx`):
+  typisierte Primitive (torso w9 · limb Polyline w5 · head r3.5 · bar w2 +
+  Scheiben r2.5 · strich · scheibe) auf 48er-Raster, Gelenke auf
+  8er-Schnittpunkten. 12 `PATTERN_FIGUR` à 3 Phasen + `EXERCISE_FIGUR`-Overrides
+  + `figurFor(ex)`. Modi: `freeze` (Endphase), `zoetrop` (CSS zp1-3;
+  Doppel-Gate `settings.zoetrope !== false` UND reduced-motion), `marey`
+  (Ghost-Phasen 0.22/0.4 versetzt, aktive voll). EINE Farbe (`color`-Prop),
+  Outline/Kopf-Ring `var(--card)`, optional `raster` (0.5px line-card alle 8).
+  Figuren werden NIE gemorpht — nur Phasen geschaltet. Max 2 Zoetrope
+  gleichzeitig (Bühne + aktiver Hero-Kader).
+- **Phasenband** (`lib/phasen/band.ts` + `components/ui/Phasenband.tsx`) —
+  DAS Signature-Element: die Einheit als Filmstreifen. Kader-Breite =
+  `widthReps` (clamp 3..15; Sek: /5; Cardio 8), Füllung = `fillRatio`
+  (e1RM/Best via `bestForExercise`; ohne Rekord 0.62; Anzeige-Floor 0.12),
+  Status offen (Raster + 3px-IWF-Basislinie 45 %) / aktiv (Siegellack-Rahmen +
+  Zoetrop) / belichtet (Tintenfüllung + Card-Silhouette 56 %, nur hero).
+  Größen: hero 64 · zeile 28 · mini 24 · live 14 (Vollbalken) · punkt 12;
+  1px-Fugen, Gruppen-Trennung. Builder: bandOfPlanned/bandOfActive/bandOfLogged.
+- **Myologie** (`lib/heat.ts`: `stufeFor`, `muskelStufen` + `MyologieFigur`):
+  Wochenvolumen je Muskel → DISKRETE Stufen I–IV in `var(--stufe-n)`,
+  untrainiert = line-card-Kontur. Immer mit „Schema, keine Anatomie".
+- **Platten-Nummern** (`lib/platte.ts`): `plattenNummer(log)` = length+1,
+  `plattenNummerOf`, `plattenNummern` (Map), `katalogNummern` +
+  `fmtKatalogNr` („Nr. 311-07"), `fmtPlatteDatum` („SO 17. AUG") — IMMER
+  abgeleitet, NIE persistiert (Löschen renummeriert, akzeptiert).
+- **Marke:** `components/brand/LiftMark.tsx` (ob-lift, currentColor,
+  viewBox 0 0 48 50); Icon-Routen aus `lib/icon-art.tsx` (Satori, fixe
+  Hexes #141210/#E9E1CE, „311"-Strokes). EIN Icon.
+- **Poster** (`lib/share-card.ts`): Cyanotypie 1080×1350, FESTE Farben
+  `#1F5C86/#F4F9FC/#D4A649` (ein Abzug kennt kein Theme — bewusst kein
+  getComputedStyle für Farben), Kreide-Raster 0.5px alle 40 (Referenz 400×500),
+  Phasenfigur-Endphase direkt auf Canvas, Titel-Breiteneinpassung, Varianten
+  `kind: "maximum" | "studie"`. Teilen gibt es NUR im Sieger-Moment.
+- **Navigation:** BottomNav = 4 TEXT-Register (HEUTE · KATALOG · FORTSCHRITT ·
+  ATLAS), `text-4xs` gesperrt, aktiv `text-accent-ink` + 2px-Oberkante.
+  Keine Icons, kein layoutId-Pill.
+
+## Sprachregister (volles Register — UI und ATLAS)
+
+| Alt | Platte 311 |
+|---|---|
+| Einheit/Training | **Studie** (laufend), **Platte Nr. n** (gespeichert) |
+| Satz / Satz n | **Kader** in Zählern/Etiketten („Kader 2", „12 Kader") |
+| Aufwärm-Satz | **Kalibr.** |
+| Satzpause | **Verschlusszeit** |
+| Aufwärmen | **Akt I · Kalibrierung der Apparatur** (Drills = „Apparat n") |
+| Training läuft | **Akt II** (Bühne, „Übung i/n · Bühne") |
+| Rekord/Bestmarke | **Maximum/Maxima**, „Tafel des Maximums" (Messing) |
+| Abschluss | **Auswertung** → „Platte archivieren" / „Platte belichtet" |
+| Coach | **ATLAS · Studienleiter**; Protokollzeilen `Beobachtung:` /
+  `Hypothese:` / `Versuchsanordnung:` / `Anpassung:` / `Hinweis:` —
+  `ProtokollBubble` parst genau diese Präfixe (case-insensitiv) |
+| Wochen-Rapport | **Wochen-Protokoll (Folio)** |
+| Übungskatalog | **Register** („Nr. 311-XX") |
+| Quelle | „Versuchsanordnung: ATLAS / Basisprotokoll (offline) / manuell" |
+
+DOM in Normalschreibung, Versalien via CSS. ATLAS-Systemtexte (Persona,
+Regeln, Tool-Descriptions) leben in `lib/atlas/*` + `app/api/atlas/*` und
+sprechen dasselbe Register (sparsam — Klarheit schlägt Metapher).
 
 ## HARTE Regeln (nicht verhandelbar)
 
-- **Keine** Tailwind-Arbitrary-Values `[...]`-Werte (kein `w-[327px]`, kein
-  `bg-[#123456]`); benannte Transition-Properties wie `transition-[width]`
-  sind erlaubt.
+- **Keine** Tailwind-Arbitrary-Values `[...]` (kein `w-[327px]`, kein
+  `bg-[#123456]`); benannte Transition-Properties (`transition-[width]`) ok.
 - **Keine** Slash-Opacity (`bg-black/50`) — Token oder `rgba(...)` via `style`.
-- **Kein** `animate-*` (Tailwind-Keyframes) — Bewegung über Framer Motion oder
-  gezielte CSS-Transition bei Datenänderung.
-- Dynamische Werte → inline `style`, SVG (`var(--…)` erlaubt), Framer Motion.
-- Eine Komponente pro Datei, `cn()` fürs Klassen-Merging, TypeScript strict.
-- UI-Texte **Deutsch**; deutsche Anführungszeichen „…" (kein rohes `"`/`'` im
-  JSX-Text → react/no-unescaped-entities).
+- **KEIN Schatten, KEIN Verlauf, kein Glow, kein Parallax, kein Blur.**
+  (Raster via `repeating-linear-gradient` ist Linienwerk, kein Verlauf — ok.)
+- **Keine neuen Easings** — nur TRANSPORT_EIN/AUS, steps(), linear.
+  Kein `animate-*` außer den definierten Keyframes (zp1-3, skel-blink).
+- Dynamische Werte → inline `style`, SVG (`var(--…)`), Framer Motion.
+- Eine Komponente pro Datei, `cn()` fürs Klassen-Merging, TS strict.
+- UI-Texte **Deutsch**, deutsche Anführungszeichen „…" (react/no-unescaped-entities).
+- Zahlen-Readouts in Plex Mono bold + `tabular-nums`; Zahlen animieren NIE.
+- lucide nur als Werkzeug-Icon (16–22, ein Strichgewicht), nie als Deko;
+  Piktogramme sind IMMER Phasenfiguren/FigurePanel.
 
-## Don'ts — gegen generische AI-Optik
+## Plattform-Basics (gelten weiter)
 
-- ❌ **Keine Glows, Verläufe, Glas-Deko, Neon** — das flache Farbfeld IST die
-  Aussage. Keine Lila/Violett-Töne, keine Emojis als Icons (lucide nutzen).
-- ❌ **Kein Inter / Roboto / „system default"** für Headings — Display = Archivo.
-- ❌ Keine willkürlichen Schatten/Radien/Spacings — nur die definierten Tokens.
-- ❌ Kein Zier-Theater: keine Splash-Screens, keine Load-Choreografie, keine
-  Animationen „weil es geht". Jede Bewegung braucht einen Anlass (Frequenz-
-  Regel: was 100×/Tag passiert, animiert nicht).
-- ❌ Nicht Hover-zentriert denken (Touch-PWA); reduced-motion nie ignorieren.
-- ✅ Leitbild: **ein Farbfeld mutig** (der blaue Heute-Hero, der Bereichscode),
-  drumherum Silber, Hairlines und Disziplin — Systematik statt Stimmung.
+`-webkit-tap-highlight-color: transparent`, `touch-action: manipulation`,
+`overscroll-behavior-y: none`, Formularschrift ≥1rem gegen iOS-Zoom
+(`text-base` an Feldern), Sheets `overscroll-contain`, Safe-Area-Paddings
+inline. **STICKY-FALLE:** Horizontal-Clip NUR auf `body { overflow-x:hidden }`
+— nie auf `html` oder innere Wrapper (tötet `position:sticky`).
+z-Ordnung: Sticky-Kopf 20 < Dock 30 < Sheets 50.
 
-## Interaktions-Konventionen Stufe 2 (Gym-Flow, Heatmap, Poster)
+## Smoke-Invarianten (`scripts/smoke.mjs`, Port 3199, prod build)
 
-- **Stepper statt Tastatur** im Satz-Logbuch: −/+ als `Pressable` 44 px
-  (`h-11 w-11 rounded-card bg-surface-2`), Gewicht in `settings.weightStep`,
-  Wiederholungen ±1; Ticks lokal puffern, Provider-Commit debounct (350 ms);
-  je Schritt Haptik `tick()`. Ein-Tap-Commit „Satz erledigt · X kg × Y" als
-  `Button` full über den bestehenden `onReps`-Pfad (Erst-Commit-Semantik!).
-- **Pausen-Dock**: die Satzpause ist ein FESTES Dock am unteren Rand
-  (`fixed inset-x-0 bottom-0 z-30`, innen `mx-auto max-w-md px-5` +
-  Safe-Area-`paddingBottom` inline), Panel-Rezept mit `shadow-card-lg`.
-  Letzte 5 s: Zahl+Balken wechseln per Token auf `var(--gelb)`
-  (`transition-colors`, Datenänderung = erlaubter Anlass); bei 0 EIN Puls
-  (`scale [1, 1.04, 1]`, ≤200 ms, reduced-motion-gesichert) und der Zustand
-  „Pause vorbei / Los" bleibt stehen — kein Auto-Unmount. Akustik wie im
-  Aufwärmen: `beep()` ≤3 s, `beepEnd()` bei 0, ungated (cueVolume regelt);
-  nur Sprache hängt an `voiceCues`. Container hinter dem Dock bekommt
-  `pb-36`, solange die Pause lebt.
-- **Layout-Ruhe auf der Bühne**: Zustands-Slots behalten ihre Höhe — der
-  „Jetzt"-Block zeigt nach dem letzten Satz „Übung geschafft / Fertig",
-  das ATLAS-Panel zeigt still „…" statt zu verschwinden (nur Cardio bleibt
-  ohne Panel).
-- **Muskel-Heatmap** (`MuscleHeatmapCard`): die EINE Heat-Wahrheit lebt in
-  **`lib/heat.ts`** — `MUSCLE_BONES_HEAT`, `HEAT_STEPS` {35, 55, 78, 100},
-  `heatStepFor` (Quartile auf `sets / volumeTargetFor(m).max`),
-  `boneHeatSteps` (Kombi-Segmente = MAX, 0 = untrainiert) und `mixHex`
-  (RGB-Lerp für Canvas). Die Card macht daraus `color-mix(in srgb,
-  var(--gruen) X%, var(--surface-2))`; `CSS.supports`-Fallback binär
-  (volles Grün), erst nach Mount aktivieren (SSR-stabil). Untrainiert =
-  `var(--surface-2)`. IMMER mit der Fußnote „Schema, keine Anatomie".
-  Spine wird unter `boneTint` zur Hairline; `boneWidth` lebt in figureData
-  (Poster zeichnet mit denselben Stärken).
-- **Share-Card** (`lib/share-card.ts`): 1080×1350 (4:5), Farben zur Laufzeit
-  aus den Tokens (`getComputedStyle` → respektiert Theme + accentOverride),
-  Schriften aus `--font-archivo`/`--font-jbmono` (`document.fonts.load`,
-  System-Fallback ok), Zahlen de-DE, rounded-rect via arcTo (kein
-  `ctx.roundRect` — altes iOS). Blob VORAB im Effekt rendern; Klick nutzt
-  `navigator.canShare({files})` → Share-Sheet, sonst PNG-Download. Teilen
-  gibt es NUR im Sieger-Moment (Frequenz-Regel).
-- **PressableLink** ist die Navigations-Schwester von `Pressable`
-  (motion(next/link), whileTap 0.97, `SPRING.press`) — für Tabs und
-  Header-Icons; Icon-Ziele grundsätzlich 44 px (`h-11 w-11` bzw.
-  `-m-2 h-11 w-11`, wenn das Raster kompakt bleiben soll).
-- **Plattform-Basis** (globals.css): `-webkit-tap-highlight-color: transparent`,
-  `touch-action: manipulation` auf Bedienelementen, `overscroll-behavior-y:
-  none` am Dokument (Pull-to-Refresh bewusst geopfert), Formularschrift
-  1rem gegen iOS-Zoom (an Feldern explizit `text-base`), `scroll-margin`
-  für fokussierte Felder, Sheets `overscroll-contain`. Theme-Wechsel läuft
-  als View-Transition-Crossfade in `applyTheme` (nur bei echtem Wechsel,
-  reduced-motion-gesichert); `theme-color` wird pre-paint im No-Flash-Script
-  gesetzt.
-- **STICKY-FALLE:** Der Horizontal-Clip liegt NUR auf `body { overflow-x:
-  hidden }` (propagiert zum Viewport, body bleibt scrollfrei). NIE
-  `overflow-x-hidden` auf `html` oder einen inneren Wrapper legen — das
-  macht den Wrapper zum toten Scrollport und entwaffnet jede
-  `position:sticky`-Leiste stumm (App-Header, Trainings-Kopf).
+Diese Strings/Anker klickt der Smoke — Änderung NUR mit Ko-Evolution von
+smoke.mjs im selben Commit:
 
-## Interaktions-Konventionen Folgestufe (Trends, Sheets, Sticky, Poster)
-
-- **TrendChart v2**: `points`-API (`{date?, value, label?}`) statt nackter
-  Werte — mit lückenlosen Daten wird die x-Achse ZEITproportional
-  (Trainingslücken ehrlich sichtbar), sonst Index-Fallback. Scrubbing nach
-  BeforeAfter-Muster (setPointerCapture, `e.buttons > 0`), Wrapper
-  `touch-pan-y select-none` (NIE `touch-none` — die Seite muss vertikal
-  scrollbar bleiben); Auswahl = nächstliegender Punkt; Marker = leise
-  Senkrechte + Ring; **Readout-Slot mit fester Höhe ÜBER dem SVG**
-  (kein Layout-Sprung unterm Finger). Keine Animationen (Frequenz-Regel).
-- **Aufklappen & springen**: Listen klappen per bedingtem Rendern auf
-  (kein Höhen-Theater), Toggle trägt `aria-expanded`. Sprung zu einer
-  Karte: Ref-Map + `pendingJump`-State — der Effekt scrollt NACH dem
-  Commit (Ziel ist gemountet), `scroll-mt-20` gegen Sticky-Chrome,
-  Highlight = `ring-2 ring-accent-volume` + `transition-shadow` für ~1,2 s
-  (Nutzeraktion als Anlass), reduced motion scrollt `auto`.
-- **Level-Sheet**: XP-Herleitung aus `trainingXpParts` (lib/achievements) —
-  `trainingLevel` summiert intern DIESELBEN Teile (Single Source, kein
-  Drift). Abzeichen aus `evaluateAchievements` als Hairline-Liste; Tier als
-  Mono-Text-Chip (KEINE Metallfarben ins Token-System), gesperrt =
-  `text-faint` + `h-1`-Progress in `bg-accent-volume`. Lazy rechnen
-  (`open` in den useMemo-Deps).
-- **Sticky-Trainings-Kopf** (SessionRunner): 1-px-Sentinel (`-mb-3 h-px`)
-  + Wrapper `sticky top-0 z-20 -mx-5 px-5 pb-2` mit Safe-Area-paddingTop
-  inline; IntersectionObserver auf dem Sentinel schaltet `glass border-b
-  border-line` NUR im kondensierten Zustand (Rezept = App-Header). Der
-  Observer-Effekt braucht `active?.phase` in den Deps — der Sentinel
-  existiert erst im Übungs-Baum. z-Ordnung: 20 < Dock 30 < Sheets 50.
-- **Listen-Gleiten**: Zeilen in `motion.div layout={reduce ? false :
-  "position"}` (SPRING.panel) — NUR Translation. NIE `layoutId`-Morph über
-  Zeilen ungleicher Höhe (Framer skaliert — Ring/Inputs verzerren).
-- **Signalton-Rezept** (`lib/beep.ts`, API-stabil: beep/beepEnd/beepStart):
-  Triangle-Oszillator + Lowpass (3·f, Q 0.8), Grundton 1568 Hz, Tick =
-  Doppel-Puls (2 × 40 ms); Basis-Gains 0.22/0.30, Kappe 0.9, lazy
-  DynamicsCompressor als Master-Bus. Beeps bleiben ungated (cueVolume regelt),
-  nur Sprache hängt an voiceCues. Keine neuen Töne erfinden — transponieren.
-- **Spotify-Ducking** (`useSpotifyDuck`): NUR in Countdown-Momenten
-  (`duckFor(ms)` bei Pause left===5 bzw. Warmup-Drill 5 s/Wechsel 3 s über die
-  WarmupPlayer-Prop `onCountdown` — der Player bleibt Spotify-frei). 40 % vom
-  Ist-Wert, Floor 20; restore-once + Epoch + Unmount-Cleanup; Fehler → stiller
-  5-min-Backoff. Setting `duckSpotify` (Default an, inert ohne Verbindung).
-- **Aufwärmen = RAMP** (`lib/warmup.ts`): Katalog-Drills tragen `phase`
-  (raise/mobilise/activate — Badge: Puls blau, Mobilität orange, Aktivierung
-  grün), `patterns`, `priority`, `backLoad` (safe/neutral/deep), `equipment`.
-  `warmupFor(items, lib, opts)` ist pur und deterministisch (FNV-Seed =
-  Datum aus startedAt, am Call-Site memoisiert — NIE Math.random): Budget je
-  Tagesform (450/360/270 s), Abdeckungsgarantie je Session-Muster, Core
-  immer, Rücken-Ampel entfernt „deep" und ergänzt „safe". KEINE gehaltenen
-  statischen Dehnungen in den Katalog aufnehmen (Simic 2013; McGowan 2015).
-  Player-Dots werden ab >8 Drills kompakt.
-- **Wochen-Poster** (share-card): mit `muscleVolumes` zeichnet
-  `drawFigure` die zwei Heat-Figuren (FigurePanel-Rezept: Outline
-  boneWidth+6 in Grundfarbe → Fill in `mixHex`-Tint → Spine → Kopf, round
-  caps, Frame A, ohne Boden/Gerät); Tints aus `lib/heat`, Farben zur
-  Laufzeit via cssVar. Die PR-Textzeile entfällt im Figuren-Layout (die
-  grüne REKORDE-Spalte sagt es schon); ohne `muscleVolumes` bleibt das
-  kompakte Alt-Layout (Rückwärtskompatibilität).
-
-## Interaktions-Konventionen Video-Ära (Übungs-Guide, Warmup-Medien)
-
-- **Übungs-Guide = Video statt Figuren**: Die Ausführungs-Strichfiguren sind
-  BEWUSST entfernt (Nutzer-Urteil: zu ungenau) — der Guide zeigt das eigene
-  YouTube-Video (exerciseVideos, default) und sonst Schritte-first plus die
-  Einladungs-Karte („Video-Anleitung" / „YouTube-Link hinzufügen"). KEINE
-  neuen Ausführungs-Figuren anlegen. Link-UI = geteilte Komponente
-  `VideoLinkEditor` ({url, offline, prominent?, onChange}, parent setzt
-  `key` auf die Id); Offline-Status via `useOffline()` (lib/use-offline).
-- **Figuren-System nur noch**: Warmup-Player + WarmupDrillSheet (animiert)
-  und Muskel-Heatmap/Poster (`FIG.squat_bw` frozen, Frame A byte-stabil!).
-  FigurePanel-Props: `periodMs?` (Tempo je Drill, Default 2600) und
-  `FigureDef.cycle` (Sägezahn-Kreisloop, z. B. Pedaltritt/Schulterkreisen —
-  Sequenz wird intern [..frames, frames[0]]). Autoren-Regeln: Frame 0 = die
-  charakteristische Pose (reduced motion friert dort ein), identisches
-  Punkt-Key-Set je Frame, A/B = frames[0]/[last]. figFor/FIGURE_ALIAS/
-  PATTERN_FIGURE/muscleBones existieren nicht mehr.
-- **Warmup-Drill-Videos**: `warmupVideos` (KEYS.warmupVideos, Spiegel von
-  exerciseVideos: byKey-LOCAL-wins-Merge, sanitizeVideoMap, Export additiv).
-  Verwaltung NUR auf /uebungen (WarmupCatalogSection → WarmupDrillSheet),
-  nie im laufenden Player. Player: Media-Card mit EIGENEM
-  `key={showing.id}` VOR dem phasen-keyed Block — `showing` ist im Wechsel
-  schon der nächste Drill, das muted iframe buffert im 5-s-Fenster und
-  remountet beim Drill-Start nicht. `youtubeEmbedUrl(raw, {autoplay, loop})`
-  bleibt ohne opts byte-identisch; mute=1 immer (Beeps + Ducking hörbar).
-
-## Signatur: Etappen-Profil & Piktogramm-Bühne
-
-- **Etappen-Profil** (`lib/etappen.ts` + `components/ui/EtappenProfil.tsx`)
-  ist DAS Signature-Element (Komoot-Prinzip: Daten werden zum Bild): jede
-  Einheit als Skyline — Breite = Arbeitssätze, Höhe = feste Muster-
-  Intensitätsklasse (squat/hinge 1.0 … core 0.4, cardio 0.25; NIE in-session
-  normalisieren), Farbe = Region. **Farbcode validiert (dataviz-Validator):
-  Beine=`--accent`, Druck=`--orange`, Zug=`--gruen`, Rumpf=`--fg` (TINTE —
-  bewusst NICHT Gelb: Gelb↔Grün fällt beim Protan-Check durch, Gelb bleibt
-  Warnfarbe), Cardio/unbekannt=`--muted`.** Identität nie farb-allein:
-  Legendenzeile, Höhenklassen, 2-px-Lücken. Renderer = Flex-Divs (KEIN SVG —
-  Live-Füllung braucht zuverlässige Height-Transitions auf Alt-iOS), Größen
-  hero h-16 / mini h-8 / strip h-5; beim Ansehen NULL Animation, nur die
-  Live-Füllung transitioniert (`transition-[height]`, reduced-motion-frei).
-  Platzierungen: SessionCard (geplant, mit Legende), ProgressHeader (live,
-  currentKey-Strich), HistoryTab (mini-Fingerabdruck je Einheit).
-- **Piktogramm-Bühne** (`components/figures/Pictogram.tsx`): 5 statische
-  Marken-Silhouetten (ganzkoerper/unterkoerper/push/pull/core) in
-  `currentColor`, Diagonal-Geometrie, Kreiskopf, kein Gerät/Boden/Animation.
-  Anti-Instruktions-Regeln: über die Feldkante croppen (Hero: absolute
-  -bottom/-right im blauen Feld, Texte bekommen pr-24), EINE Tinte, NIE
-  neben Übungsnamen oder im Guide. Pose via `poseForSession` (dominante
-  Region ≥ 50 % satzgewichtet, reset→core). Zweiter Auftritt: klein (44 px)
-  im Sieger-Moment (Pose VOR dem Save berechnen — active ist danach weg).
+- Heute: „Heutige Studie" · „Studie beginnen" · „Platte bearbeiten" ·
+  „Übung wählen" · „… tauschen" (Regex-Ende) · „Bearbeiten"
+- Check-in: „Tagesform" · „Überspringen"
+- Aufwärmen: aria-label „Aufwärmen beenden"
+- Bühne: `data-testid="stage-order"` (ExerciseStage-section) ·
+  `.set-active` mit 2 Inputs
+- Pause: „Verschlusszeit" (exact:false)
+- Abschluss: aria „Studie beenden" · „Zur Auswertung" · „Wie fühlt sich dein
+  unterer Rücken an?" + „Gut" (exact) · „Platte archivieren"
+- Fortschritt: „Verlauf" (exact) — Alt-Session „Ganzkörper A" muss rendern
+- Katalog: „Eigene Übung anlegen" · „z. B. Landmine Press" · „Übung anlegen" ·
+  „1 eigene" (Substring)
+- Settings: „Geräte" · „ATLAS"
+- Seed migriert `theme:"dark"` → hell (M72-Migration bleibt); /workout läuft
+  im erzwungenen Atelier.

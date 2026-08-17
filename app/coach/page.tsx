@@ -28,7 +28,7 @@ const CHAT_CAP = 40;
 
 const SUGGESTIONS = [
   "Wie läuft meine Mission?",
-  "Warum sieht meine heutige Einheit so aus?",
+  "Warum ist meine heutige Studie so angeordnet?",
   "Worauf soll ich diese Woche achten?",
 ];
 
@@ -88,7 +88,7 @@ export default function CoachPage() {
       "\n\nATLAS-Status:\n" +
       trainerContextBlock(trainer) +
       (backSafeActive
-        ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Einheit ist bereits rückenschonend aufgelöst."
+        ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Studie ist bereits rückenschonend aufgelöst."
         : ""),
     [log, allLib, body, cardio, exerciseNotes, trainer, nextSession, backSafeActive],
   );
@@ -237,7 +237,7 @@ export default function CoachPage() {
     >
       <span className="flex items-center gap-2">
         <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
-        Zur heutigen Einheit
+        Zur heutigen Studie
       </span>
       <ChevronRight size={15} className="shrink-0 text-faint" />
     </Pressable>
@@ -323,7 +323,7 @@ export default function CoachPage() {
             ))}
           </div>
           <p className="mb-2 mt-5 px-1 text-xs text-muted">
-            Oder direkt konkret — Wunsch rein, startbare Einheit raus:
+            Oder direkt konkret — Wunsch rein, startbare Studie raus:
           </p>
           {buildEl}
         </div>

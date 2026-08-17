@@ -10,7 +10,7 @@ import type { PlannedExercise, SessionVariant } from "@/lib/session-model";
 export const BUILD_DAILY_SESSION_TOOL: Anthropic.Tool = {
   name: "build_daily_session",
   description:
-    "Stelle die heutige Trainingseinheit zusammen: Name, Fokus, ein kurzes Briefing (warum die Einheit heute so aussieht) und die geordnete Übungsliste. Wähle Übungen ausschließlich über ihre exakte id aus der erlaubten Liste. Zu jeder Übung: Sätze, Wiederholungs-Spanne, ein kurzes Warum (bezogen auf Historie/Bedarf) und eine Coach-Ansage für den Start der Übung.",
+    "Stelle die heutige Studie zusammen: Name, Fokus, ein kurzes Briefing (warum die Studie heute so angeordnet ist) und die geordnete Übungsliste. Wähle Übungen ausschließlich über ihre exakte id aus der erlaubten Liste. Zu jeder Übung: Sätze, Wiederholungs-Spanne, ein kurzes Warum (bezogen auf Historie/Bedarf) und eine Ansage des Studienleiters für den Start der Übung.",
   input_schema: {
     type: "object",
     properties: {
@@ -25,7 +25,7 @@ export const BUILD_DAILY_SESSION_TOOL: Anthropic.Tool = {
       briefing: {
         type: "string",
         description:
-          "2–3 Sätze an den Athleten: warum diese Einheit heute so aussieht (Bedarf, Erholung, Tagesform). Max 400 Zeichen.",
+          "2–3 Sätze an den Athleten: warum diese Studie heute so angeordnet ist (Bedarf, Erholung, Tagesform). Max 400 Zeichen.",
       },
       items: {
         type: "array",
@@ -49,7 +49,7 @@ export const BUILD_DAILY_SESSION_TOOL: Anthropic.Tool = {
             intro: {
               type: "string",
               description:
-                "Coach-Ansage beim Start der Übung: worauf heute achten, was zählt. Max 200 Zeichen.",
+                "Ansage des Studienleiters beim Start der Übung: worauf heute achten, was zählt. Max 200 Zeichen.",
             },
           },
           required: ["exerciseId", "sets", "repLow", "repHigh", "why", "intro"],
@@ -113,14 +113,14 @@ export function sanitizeDailySession(
       sets: clampInt(r.sets, 1, 6, 3),
       repLow,
       repHigh: Math.max(repLow, clampInt(r.repHigh, 1, 999, repLow)),
-      why: trim(r.why, 140, "Passt heute in den Plan."),
+      why: trim(r.why, 140, "Gehört heute in die Versuchsanordnung."),
       intro: trim(r.intro, 200, "Sauber und kontrolliert — Qualität vor Last."),
     });
   }
   if (items.length < (variant === "reset" ? 2 : MIN_ITEMS)) return null;
 
   return {
-    name: trim(obj.name, 60, "Heutige Einheit"),
+    name: trim(obj.name, 60, "Heutige Studie"),
     focus: trim(obj.focus, 40, "Ganzkörper"),
     briefing: trim(obj.briefing, 400, ""),
     items,

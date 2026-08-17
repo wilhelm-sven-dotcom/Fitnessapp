@@ -559,7 +559,7 @@ export function SessionRunner() {
     if (rec && beatsRecord(ex, set, rec) && !recordCelebratedRef.current.has(itemId)) {
       recordCelebratedRef.current.add(itemId);
       success();
-      if (settings.voiceCues) speak("Neuer Rekord! Stark.");
+      if (settings.voiceCues) speak("Neues Maximum. Stark.");
     } else {
       tap();
     }
@@ -776,10 +776,10 @@ export function SessionRunner() {
       <>
         <div className="pt-10 text-center">
           <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-            Gleich geht&apos;s los
+            Studie · Check-in
           </p>
-          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-fg">
-            {todaySession?.name ?? "Deine Einheit"}
+          <h1 className="mt-1 font-display text-2xl italic tracking-tight text-fg">
+            {todaySession?.name ?? "Heutige Studie"}
           </h1>
         </div>
         <ReadinessGate

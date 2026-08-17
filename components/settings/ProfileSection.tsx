@@ -44,7 +44,7 @@ export function ProfileSection() {
         Profil · über mich
       </p>
       <p className="mb-4 text-xs leading-relaxed text-muted">
-        Je mehr du angibst, desto genauer planen Coach und App für dich. Leere
+        Je mehr du angibst, desto genauer plant ATLAS für dich. Leere
         Felder nutzen sinnvolle Standardwerte.
       </p>
 

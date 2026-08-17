@@ -32,11 +32,11 @@ interface SessionReqBody {
 
 const VARIANT_TASK: Record<SessionVariant, string> = {
   normal:
-    "Baue die HEUTIGE Einheit: bedarfsgerecht (unterversorgte Muskeln und lange nicht gesetzte Reize zuerst), abwechslungsreich (nutze die Breite des Katalogs, wiederhole nicht einfach die letzte Einheit), realistisch fürs Zeitfenster.",
+    "Baue die HEUTIGE Studie: bedarfsgerecht (unterversorgte Muskeln und lange nicht gesetzte Reize zuerst), abwechslungsreich (nutze die Breite des Katalogs, wiederhole nicht einfach die letzte Studie), realistisch fürs Zeitfenster.",
   reset:
-    "Baue einen RÜCKEN-RESET: gewichtsfreie bzw. sehr leichte Stabilitäts-Einheit, die den unteren Rücken beruhigt. Keine belasteten Beugen oder Hinges.",
+    "Baue einen RÜCKEN-RESET: gewichtsfreie bzw. sehr leichte Stabilitäts-Studie, die den unteren Rücken beruhigt. Keine belasteten Beugen oder Hinges.",
   exam:
-    "Baue einen MAXIMALKRAFT-TESTTAG: 3–5 vertraute Grundübungen, je 3 Arbeitssätze mit niedriger Wiederholungszahl (3–6). Technik vor Rekord.",
+    "Baue einen MAXIMALKRAFT-TESTTAG: 3–5 vertraute Grundübungen, je 3 Arbeitssätze mit niedriger Wiederholungszahl (3–6). Technik vor Maximum.",
 };
 
 export async function POST(req: Request) {
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     `HEUTE VERFÜGBAR sind ausschließlich diese Übungs-Ids (Equipment-gefiltert):\n${availableIds.join(", ")}`,
     `Aktuelle Trainingsdaten:\n${context.trim() || "keine"}`,
     wish ? `Wunsch des Athleten für heute: „${wish}” — beziehe ihn ein, solange er sinnvoll ist.` : "",
-    "Rufe danach das Tool build_daily_session mit der fertigen Einheit auf.",
+    "Rufe danach das Tool build_daily_session mit der fertigen Studie auf.",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: "Stell meine heutige Einheit zusammen.",
+          content: "Stell meine heutige Studie zusammen.",
         },
       ],
     });

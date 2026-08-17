@@ -39,7 +39,7 @@ export interface NextSessionInfo {
 function nextSessionLines(n: NextSessionInfo): string[] {
   return [
     "",
-    `Nächste geplante Einheit: ${n.name}${n.focus ? ` (${n.focus})` : ""}${n.estimatedMin ? ` · ~${n.estimatedMin} Min` : ""}. Übungen in dieser Reihenfolge:`,
+    `Nächste geplante Studie: ${n.name}${n.focus ? ` (${n.focus})` : ""}${n.estimatedMin ? ` · ~${n.estimatedMin} Min` : ""}. Übungen in dieser Reihenfolge:`,
     n.exercises
       .map((e) => (e.sets > 0 ? `${e.name} (${e.sets} Sätze)` : e.name))
       .join(", "),
