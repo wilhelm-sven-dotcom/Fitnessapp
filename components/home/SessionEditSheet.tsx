@@ -58,7 +58,7 @@ export function SessionEditSheet({
 
   return (
     <>
-      <Sheet open={open} onClose={onClose} title="Einheit bearbeiten">
+      <Sheet open={open} onClose={onClose} title="Platte bearbeiten">
         <div className="space-y-2">
           {session.items.map((it, i) => {
             const ex = byId.get(it.exerciseId);

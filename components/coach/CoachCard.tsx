@@ -6,17 +6,22 @@ import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 import type { CoachCard as CoachCardData, CoachSeverity } from "@/lib/advisor";
 
-// Token-based severity — the old rose-950 surface was dark-only and unreadable
-// on the light themes; a danger border + danger title reads in both.
+// Hinweis-Karte Platte 311: Kicker „HINWEIS · {KATEGORIE}", Dringlichkeit als
+// Siegellack-Rahmen/-Kicker — kein Farbfeld (das Archiv bleibt nüchtern).
 const sevSurface: Record<CoachSeverity, string> = {
-  urgent: "border-status-danger",
+  urgent: "border-accent-ink",
   warn: "",
   info: "",
 };
-const sevTitle: Record<CoachSeverity, string> = {
-  urgent: "text-status-danger",
-  warn: "text-status-over",
-  info: "text-fg",
+const sevKicker: Record<CoachSeverity, string> = {
+  urgent: "text-accent-ink",
+  warn: "text-messing",
+  info: "text-muted",
+};
+const sevLabel: Record<CoachSeverity, string> = {
+  urgent: "Dringend",
+  warn: "Achtung",
+  info: "Befund",
 };
 
 export function CoachCard({
@@ -31,9 +36,17 @@ export function CoachCard({
   return (
     <Card className={cn(sevSurface[card.severity])}>
       <div className="flex items-start justify-between gap-3">
-        <p className={cn("text-sm font-semibold", sevTitle[card.severity])}>
-          {card.title}
-        </p>
+        <div className="min-w-0">
+          <p
+            className={cn(
+              "font-mono text-3xs font-semibold uppercase tracking-gesperrt",
+              sevKicker[card.severity],
+            )}
+          >
+            Hinweis · {sevLabel[card.severity]}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-fg">{card.title}</p>
+        </div>
         {onDismiss && (
           <Pressable
             onClick={onDismiss}
@@ -49,7 +62,7 @@ export function CoachCard({
       {card.action === "deload" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-card bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+          className="mt-3 rounded-pill bg-accent-sessions px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
           Entlastungswoche starten
         </Pressable>
@@ -57,7 +70,7 @@ export function CoachCard({
       {card.action === "exam" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-card bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+          className="mt-3 rounded-pill bg-accent-sessions px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
           Prüfung antreten
         </Pressable>
@@ -65,7 +78,7 @@ export function CoachCard({
       {card.action === "back-reset" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-card bg-strong px-3 py-2 text-sm font-medium text-on-strong focus:outline-none"
+          className="mt-3 rounded-pill bg-accent-sessions px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
           Rücken-Reset starten
         </Pressable>

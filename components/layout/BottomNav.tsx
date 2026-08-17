@@ -1,19 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Dumbbell, Sparkles, TrendingUp } from "lucide-react";
 import { PressableLink } from "@/components/ui/PressableLink";
-import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
-// Wegleitsystem München ’72: jeder Bereich trägt seine Farbe — Blau = Heute,
-// Orange = ATLAS/Coach, Grün = Fortschritt; der Katalog bleibt neutral.
+/** Registerleiste „Platte 311": vier Nur-Text-Tabs in Versal-Mono —
+ *  der aktive trägt Siegellack und eine 2-px-Oberkante (Registerreiter).
+ *  Keine Icons, kein gleitender Pill-Marker (Filmtransport: harte Zustände). */
 const tabs = [
-  { href: "/", label: "Heute", Icon: CalendarDays, tone: "var(--accent)" },
-  { href: "/coach", label: "Coach", Icon: Sparkles, tone: "var(--orange)" },
-  { href: "/uebungen", label: "Übungen", Icon: Dumbbell, tone: "var(--fg)" },
-  { href: "/fortschritt", label: "Fortschritt", Icon: TrendingUp, tone: "var(--gruen)" },
+  { href: "/", label: "Heute" },
+  { href: "/uebungen", label: "Katalog" },
+  { href: "/fortschritt", label: "Fortschritt" },
+  { href: "/coach", label: "ATLAS" },
 ] as const;
 
 export function BottomNav() {
@@ -24,39 +22,27 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-auto flex max-w-md">
-        {tabs.map(({ href, label, Icon, tone }) => {
+        {tabs.map(({ href, label }) => {
           const active =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <PressableLink
               key={href}
               href={href}
-              className="relative flex flex-1 flex-col items-center gap-1 rounded-card pb-2 pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink"
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "relative flex flex-1 items-center justify-center pb-4 pt-3.5 font-mono text-4xs font-semibold uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyanotypie",
+                active ? "text-accent-ink" : "text-muted",
+              )}
             >
-              <Icon
-                size={20}
-                strokeWidth={active ? 2.5 : 2}
-                className={cn("transition-colors", !active && "text-muted")}
-                style={active ? { color: tone } : undefined}
-              />
-              <span className="relative flex h-1 w-6 items-center justify-center">
-                {active && (
-                  <motion.span
-                    layoutId="navPill"
-                    className="absolute inset-0 rounded-full"
-                    style={{ backgroundColor: tone }}
-                    transition={SPRING.press}
-                  />
-                )}
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-medium transition-colors",
-                  active ? "text-fg" : "text-muted",
-                )}
-              >
-                {label}
-              </span>
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-0.5 bg-accent-sessions"
+                  style={{ marginTop: -1 }}
+                />
+              )}
+              {label}
             </PressableLink>
           );
         })}
