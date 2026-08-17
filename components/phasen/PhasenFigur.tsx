@@ -75,6 +75,7 @@ export function PhasenFigur({
   freezeIndex,
   zoetropOn = true,
   unten = false,
+  buehne = false,
   className,
 }: {
   figur: PhasenFigurDef;
@@ -89,6 +90,8 @@ export function PhasenFigur({
   zoetropOn?: boolean;
   /** Im Kader: Figur steht auf der Unterkante (xMidYMax), füllt die Box. */
   unten?: boolean;
+  /** Bühne des Fokus-Modus: 88×48-Raster, Figur bei x=20 (Fokus.dc). */
+  buehne?: boolean;
   className?: string;
 }) {
   const reduce = useReducedMotion();
@@ -103,8 +106,9 @@ export function PhasenFigur({
       : ({ display: "block", width: "100%" } as const),
   };
 
-  // Marey braucht die breite Bühne (Figur wandert nach rechts).
-  const vb = marey ? "0 0 88 48" : figur.vb ?? "0 0 48 48";
+  // Marey/Bühne brauchen die breite Bühne (88er-Raster).
+  const vb = marey || buehne ? "0 0 88 48" : figur.vb ?? "0 0 48 48";
+  const versatz = buehne ? "translate(20 0)" : undefined;
 
   if (marey) {
     const aktiv = phasen.length - 1;
@@ -129,9 +133,16 @@ export function PhasenFigur({
     const klassen = ["zp1", "zp2", "zp3"];
     return (
       <svg viewBox={vb} {...svgProps} style={{ ...svgProps.style, color }} aria-hidden="true">
-        {raster && <path d={RASTER_48} stroke="var(--line-card)" strokeWidth={0.5} fill="none" />}
+        {raster && (
+          <path
+            d={buehne ? RASTER_88 : RASTER_48}
+            stroke="var(--line-card)"
+            strokeWidth={buehne ? 0.4 : 0.5}
+            fill="none"
+          />
+        )}
         {phasen.map((prims, i) => (
-          <g key={i} className={klassen[i] ?? "zp3"}>
+          <g key={i} className={klassen[i] ?? "zp3"} transform={versatz}>
             <Phase prims={prims} />
           </g>
         ))}
@@ -143,8 +154,17 @@ export function PhasenFigur({
   const idx = Math.min(freezeIndex ?? figur.phases.length - 1, figur.phases.length - 1);
   return (
     <svg viewBox={vb} {...svgProps} style={{ ...svgProps.style, color }} aria-hidden="true">
-      {raster && <path d={RASTER_48} stroke="var(--line-card)" strokeWidth={0.5} fill="none" />}
-      <Phase prims={figur.phases[idx]} />
+      {raster && (
+        <path
+          d={buehne ? RASTER_88 : RASTER_48}
+          stroke="var(--line-card)"
+          strokeWidth={buehne ? 0.4 : 0.5}
+          fill="none"
+        />
+      )}
+      <g transform={versatz}>
+        <Phase prims={figur.phases[idx]} />
+      </g>
     </svg>
   );
 }

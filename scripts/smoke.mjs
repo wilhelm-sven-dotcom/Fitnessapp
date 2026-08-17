@@ -162,7 +162,7 @@ try {
     await inputs.nth(0).fill("12");
     await inputs.nth(0).press("Enter");
   }
-  await page.getByText("Pause", { exact: true }).first().waitFor({ timeout: 5000 });
+  await page.getByText("Verschlusszeit", { exact: false }).first().waitFor({ timeout: 5000 });
   const stageTxt = (await page.textContent("body")) ?? "";
   if (!/ATLAS/.test(stageTxt)) throw new Error("ATLAS-Panel fehlt");
   console.log("OK satz: Inline-Pause läuft, ATLAS-Zeile steht");
@@ -175,11 +175,11 @@ try {
 
   // ── 7 · Abschluss speichern → Sieger-Moment ──
   step = "abschluss";
-  await page.getByLabel("Training beenden").click();
-  await page.getByText("Zum Abschluss").first().click();
+  await page.getByLabel("Studie beenden").click();
+  await page.getByText("Zur Auswertung").first().click();
   await page.getByText("Wie fühlt sich dein unterer Rücken an?").waitFor({ timeout: 5000 });
   await page.getByText("Gut", { exact: true }).click();
-  await page.getByText("Beenden & speichern").click();
+  await page.getByText("Platte archivieren").click();
   await page.waitForTimeout(1500);
   console.log("OK abschluss: Einheit gespeichert");
 

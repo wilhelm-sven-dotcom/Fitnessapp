@@ -101,18 +101,21 @@ export function AtlasPanel({
   return (
     <section
       className={cn(
-        "rounded-card border border-line bg-surface-1 px-4 py-3 shadow-card",
-        (override || line?.tone === "push") && "border-l-2 border-l-accent-sessions",
+        "rounded-card border bg-surface-1 px-3.5 py-3",
+        override || line?.tone === "push" ? "border-accent-ink" : "border-line-card",
       )}
     >
       <p className="flex items-center gap-2">
-        <AtlasMark size={13} live={!!override} className="shrink-0 text-fg" />
-        <span className="font-mono text-xs uppercase tracking-widest text-accent-2">
+        <AtlasMark size={13} live={!!override} className="shrink-0 text-muted" />
+        <span className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
           ATLAS
         </span>
       </p>
       <p
-        className={cn("mt-1 text-sm leading-snug", quiet ? "text-faint" : "text-fg")}
+        className={cn(
+          "mt-1 font-display text-base leading-relaxed",
+          quiet ? "text-faint" : "text-fg",
+        )}
         aria-hidden={quiet || undefined}
       >
         {override ? override.text : quiet ? "…" : line!.text}
@@ -120,7 +123,7 @@ export function AtlasPanel({
       {override?.actionLabel && override.onApply && (
         <Pressable
           onClick={override.onApply}
-          className="mt-2 inline-flex min-h-11 items-center rounded-pill bg-surface-2 px-4 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+          className="mt-2 inline-flex min-h-11 items-center rounded-pill border border-strong px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
           {override.actionLabel}
         </Pressable>

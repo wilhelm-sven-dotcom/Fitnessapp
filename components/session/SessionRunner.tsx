@@ -41,6 +41,7 @@ import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { bandOfActive } from "@/lib/phasen/band";
+import { plattenNummer } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
@@ -631,7 +632,7 @@ export function SessionRunner() {
       return idx >= 0 ? { ...r, setIdx: idx } : null;
     });
     tap();
-    toast(`Getauscht: ${nx.name}`);
+    toast(`Apparat getauscht: ${nx.name}`);
   };
 
   /* ── Abschluss ── */
@@ -852,6 +853,7 @@ export function SessionRunner() {
       >
         <ProgressHeader
           gruppen={headerGruppen}
+          plattenNr={plattenNummer(log)}
           currentIndex={st.currentIndex}
           remainMin={remainMin}
           onExit={() => setExitOpen(true)}
@@ -860,7 +862,7 @@ export function SessionRunner() {
       </div>
 
       <div className="px-1">
-        <p className="truncate text-sm text-muted">
+        <p className="truncate font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
           {st.session.name}
           {st.session.focus ? ` · ${st.session.focus}` : ""}
         </p>
@@ -939,7 +941,7 @@ export function SessionRunner() {
         >
           {openLeft === 0 ? (
             <>
-              <Flag size={16} /> Zum Abschluss
+              <Flag size={16} /> Zur Auswertung
             </>
           ) : (
             <>
@@ -1002,11 +1004,11 @@ export function SessionRunner() {
 
       <GuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} ex={ex} />
 
-      <Sheet open={exitOpen} onClose={() => setExitOpen(false)} title="Training beenden?">
+      <Sheet open={exitOpen} onClose={() => setExitOpen(false)} title="Studie beenden?">
         {doneCount > 0 ? (
           <>
             <p className="mb-4 text-sm text-muted">
-              Du hast {doneCount} {doneCount === 1 ? "Satz" : "Sätze"} erledigt.
+              Du hast {doneCount} {doneCount === 1 ? "Kader" : "Kader"} belichtet.
               Beenden speichert diese — der Rest wird verworfen.
             </p>
             <div className="flex flex-col gap-2">
@@ -1017,13 +1019,13 @@ export function SessionRunner() {
                 }}
                 className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Zum Abschluss
+                Zur Auswertung
               </Pressable>
               <Pressable
                 onClick={() => setExitOpen(false)}
                 className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Weiter trainieren
+                Weiter belichten
               </Pressable>
               <Pressable
                 onClick={doDiscard}
@@ -1036,7 +1038,7 @@ export function SessionRunner() {
         ) : (
           <>
             <p className="mb-4 text-sm text-muted">
-              Noch keine Sätze erledigt. Training wirklich verlassen? Es wird
+              Noch kein Kader belichtet. Studie wirklich verlassen? Es wird
               nichts gespeichert.
             </p>
             <div className="flex flex-col gap-2">
@@ -1044,13 +1046,13 @@ export function SessionRunner() {
                 onClick={doDiscard}
                 className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Training verlassen
+                Studie verlassen
               </Pressable>
               <Pressable
                 onClick={() => setExitOpen(false)}
                 className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Weiter trainieren
+                Weiter belichten
               </Pressable>
             </div>
           </>
