@@ -24,6 +24,15 @@ export function plattenNummerOf(log: LoggedSession[], session: LoggedSession): n
   return (idx === -1 ? sorted.length : idx) + 1;
 }
 
+/** Plattennummern aller gespeicherten Platten auf einmal (chronologisch,
+ *  abgeleitet) — für Listen, die jede Zeile beschildern (Verlauf). */
+export function plattenNummern(log: LoggedSession[]): Map<LoggedSession, number> {
+  const sorted = [...log].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+  return new Map(sorted.map((s, i) => [s, i + 1]));
+}
+
 /** Katalognummern des Übungsregisters: „Nr. 311-07" — Bibliotheks-Übungen in
  *  Lib-Reihenfolge, eigene dahinter (abgeleitet aus der Position, nie
  *  persistiert; wie die Plattennummer renummeriert Löschen die Folgenden). */

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LevelCard } from "@/components/progress/LevelCard";
 import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
-import { MuscleHeatmapCard } from "@/components/progress/MuscleHeatmapCard";
 import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { PhaseCard } from "@/components/progress/PhaseCard";
 import { RecordsBoard } from "@/components/progress/RecordsBoard";
@@ -79,6 +78,24 @@ export function OverviewTab() {
   );
 
   const totalT = Math.round(log.reduce((a, s) => a + sessionVolume(s), 0) / 100) / 10;
+
+  // 7 Kalenderwochen Tonnage (Mo-basiert), älteste zuerst — für die Balkenreihe.
+  const wochenTonnage = useMemo(() => {
+    const monday = (d: Date) => {
+      const x = new Date(d);
+      const day = (x.getDay() + 6) % 7;
+      x.setHours(0, 0, 0, 0);
+      x.setDate(x.getDate() - day);
+      return x.getTime();
+    };
+    const start = monday(new Date()) - 6 * 7 * 86400000;
+    const buckets = Array.from({ length: 7 }, () => 0);
+    log.forEach((s) => {
+      const idx = Math.round((monday(new Date(s.date)) - start) / (7 * 86400000));
+      if (idx >= 0 && idx < 7) buckets[idx] += sessionVolume(s);
+    });
+    return buckets;
+  }, [log]);
 
   const list = useMemo(() => {
     const m: Record<string, ExSeries> = {};
@@ -166,18 +183,43 @@ export function OverviewTab() {
 
   return (
     <div>
-      <Card variant="elevated" className="mb-4 rounded-card p-5">
+      <Card className="mb-4 p-5">
         <Readout
-          eyebrow="Gesamt gestemmt"
+          eyebrow="Bewegte Masse gesamt"
           value={totalT}
           unit="t"
           decimals={1}
           size="lg"
-          hint={`über ${log.length} ${log.length === 1 ? "Einheit" : "Einheiten"}`}
+          hint={`über ${log.length} ${log.length === 1 ? "Platte" : "Platten"}`}
         />
       </Card>
 
-      <MuscleHeatmapCard muscleVolumes={muscleVolumes} />
+      {/* Volumen je Woche: 7-Wochen-Tonnage als Balkenreihe (45 % Opazität,
+          die laufende Woche voll) — diskrete Reihe, kein Verlauf. */}
+      <Card className="mb-4">
+        <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          <span>Volumen je Woche</span>
+          <span className="tabular-nums">
+            {(wochenTonnage[6] / 1000).toLocaleString("de-DE", { maximumFractionDigits: 1 })} t
+          </span>
+        </div>
+        <div className="mt-2.5 flex items-end gap-1" style={{ height: 56 }} aria-hidden>
+          {wochenTonnage.map((v, i) => (
+            <div
+              key={i}
+              className="flex-1 bg-cyanotypie"
+              style={{
+                height: `${Math.max(v > 0 ? 8 : 2, Math.round((v / Math.max(...wochenTonnage, 1)) * 100))}%`,
+                opacity: i === 6 ? 1 : 0.45,
+              }}
+            />
+          ))}
+        </div>
+        <div className="mt-1.5 flex justify-between font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+          <span>Vor 6 Wochen</span>
+          <span>Diese Woche</span>
+        </div>
+      </Card>
 
       <LevelCard />
 
@@ -191,8 +233,8 @@ export function OverviewTab() {
 
       {list.length > 0 && (
         <div className="space-y-3">
-          <p className="mt-5 px-1 font-mono text-xs uppercase tracking-widest text-muted">
-            Übungs-Trends · {list.length}
+          <p className="mt-5 px-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+            Messreihen · {list.length}
           </p>
           {trends.map((e) => (
             <div
@@ -206,13 +248,17 @@ export function OverviewTab() {
               <Card
                 className={cn(
                   "transition-shadow duration-300",
-                  flashId === e.id && "ring-2 ring-accent-volume",
+                  flashId === e.id && "ring-2 ring-cyanotypie",
                 )}
               >
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="truncate font-semibold leading-tight">{e.name}</h3>
-                    <p className="mt-0.5 text-xs text-muted">{kindLabel[e.kind]}</p>
+                    <h3 className="truncate font-display text-lg italic leading-tight text-fg">
+                      {e.name}
+                    </h3>
+                    <p className="mt-0.5 font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+                      {kindLabel[e.kind]}
+                    </p>
                   </div>
                   <div className="shrink-0 text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -221,12 +267,12 @@ export function OverviewTab() {
                           initial={reduce ? false : { scale: 0.7, opacity: 0 }}
                           animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
                           transition={{ duration: 0.5, ease: "easeOut" }}
-                          className="rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
+                          className="rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
                         >
-                          Rekord
+                          Maximum
                         </motion.span>
                       )}
-                      <p className="font-display text-lg font-semibold leading-none tabular-nums text-accent-volume">
+                      <p className="font-mono text-lg font-bold leading-none tabular-nums text-cyanotypie">
                         {e.top}
                       </p>
                     </div>

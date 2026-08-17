@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +24,7 @@ import { Phasenband } from "@/components/ui/Phasenband";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { weeklyCardio } from "@/lib/cardio";
 import { bandOfLogged } from "@/lib/phasen/band";
+import { prTimeline } from "@/lib/records";
 import {
   intensityLabel,
   kmLabel,
@@ -33,8 +34,9 @@ import {
   sportLabel,
   type Sport,
 } from "@/lib/cardio-sport";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, isoWeek } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
+import { plattenNummern } from "@/lib/platte";
 import { weekStartMon } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 import type { CardioSession, LoggedSession, TrafficLight } from "@/lib/types";
@@ -86,6 +88,13 @@ export function HistoryTab() {
   const { log, cardio, deleteSession, addManualCardio, removeCardio, allLib } =
     useTraining();
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
+  // Plattennummern (chronologisch, abgeleitet) + Rekordzahl je Platte.
+  const plattenNr = useMemo(() => plattenNummern(log), [log]);
+  const rekordeJePlatte = useMemo(() => {
+    const m = new Map<string, number>();
+    prTimeline(log).forEach((e) => m.set(e.date, (m.get(e.date) ?? 0) + 1));
+    return m;
+  }, [log]);
   const router = useRouter();
   const [expanded, setExpanded] = useState<number | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
@@ -216,14 +225,25 @@ export function HistoryTab() {
       </Pressable>
 
       <div className="space-y-2">
-        {items.map((it) => {
+        {items.map((it, idx) => {
+          const dateOf = (x: (typeof items)[number]) =>
+            x.kind === "cardio" ? x.c.date : x.s.date;
+          const wk = weekStartMon(new Date(dateOf(it))).getTime();
+          const neueWoche =
+            idx === 0 || weekStartMon(new Date(dateOf(items[idx - 1]))).getTime() !== wk;
+          const folio = neueWoche ? (
+            <p className="pt-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+              Folio · KW {isoWeek(new Date(dateOf(it)))}
+            </p>
+          ) : null;
           if (it.kind === "cardio") {
             const c = it.c;
             const Icon = SPORT_ICON[c.sport ?? "other"];
             return (
+              <Fragment key={`c-${c.id}`}>
+              {folio}
               <div
-                key={`c-${c.id}`}
-                className="flex items-center gap-3 rounded-card border border-line bg-surface-1 p-3 shadow-card"
+                className="flex items-center gap-3 rounded-card border border-line-card bg-surface-1 p-3"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accent-ink">
                   <Icon size={17} />
@@ -266,6 +286,7 @@ export function HistoryTab() {
                   )}
                 </div>
               </div>
+              </Fragment>
             );
           }
 
@@ -273,20 +294,25 @@ export function HistoryTab() {
           const isOpen = expanded === realIdx;
           const isDel = confirmDel === `s-${realIdx}`;
           const v = sessionVolume(s);
+          const gruppen = bandOfLogged(s, byId, log);
+          const kaderZahl = gruppen.reduce((n, g) => n + g.kader.length, 0);
+          const rekorde = rekordeJePlatte.get(s.date) ?? 0;
           return (
+            <Fragment key={`s-${s.date}-${realIdx}`}>
+            {folio}
             <div
-              key={`s-${s.date}-${realIdx}`}
-              className="overflow-hidden rounded-card border border-line bg-surface-1 shadow-card"
+              className="overflow-hidden rounded-card border border-line-card bg-surface-1"
             >
               <div className="flex items-center justify-between gap-2 px-4 py-3">
                 <Pressable
                   onClick={() => setExpanded(isOpen ? null : realIdx)}
-                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <Dumbbell size={13} className="shrink-0 text-accent-ink" aria-hidden />
-                      <span className="truncate font-medium">{s.dayName}</span>
+                      <p className="truncate font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
+                        Platte Nr. <span className="tabular-nums">{plattenNr.get(s) ?? "–"}</span> · {fmtDate(s.date)}
+                      </p>
                       {s.backTraffic && (
                         <span
                           className={cn(
@@ -297,17 +323,19 @@ export function HistoryTab() {
                         />
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-muted">
-                      {fmtDate(s.date)} · {s.focus}
-                    </p>
+                    <span className="mt-0.5 block truncate font-display text-lg italic text-fg">
+                      {s.dayName}
+                    </span>
                   </div>
                   <div className="ml-2 shrink-0 text-right">
                     {v > 0 && (
-                      <p className="font-mono text-sm tabular-nums text-accent-ink">
+                      <p className="font-mono text-sm font-bold tabular-nums text-fg">
                         {v.toLocaleString("de-DE")} kg
                       </p>
                     )}
-                    <p className="text-xs uppercase tracking-wider text-faint">Volumen</p>
+                    <p className="font-mono text-4xs font-medium uppercase tracking-gesperrt text-faint">
+                      Volumen
+                    </p>
                   </div>
                 </Pressable>
                 <Pressable
@@ -319,9 +347,20 @@ export function HistoryTab() {
                 </Pressable>
               </div>
 
-              {/* Fingerabdruck der Einheit: das Phasenband dessen, was war. */}
-              <div className="px-4 pb-3">
-                <Phasenband gruppen={bandOfLogged(s, byId, log)} groesse="mini" />
+              {/* Fingerabdruck der Platte: das Phasenband dessen, was war. */}
+              <div className="px-4 pb-2">
+                <Phasenband gruppen={gruppen} groesse="mini" />
+              </div>
+              <div className="flex items-baseline justify-between gap-2 px-4 pb-3 font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+                <span>
+                  <span className="tabular-nums">{kaderZahl}</span> Kader · alle belichtet
+                </span>
+                {rekorde > 0 && (
+                  <span className="text-messing">
+                    <span className="tabular-nums">{rekorde}</span>{" "}
+                    {rekorde === 1 ? "Rekord" : "Rekorde"}
+                  </span>
+                )}
               </div>
 
               {isDel && (
@@ -388,6 +427,7 @@ export function HistoryTab() {
                 </div>
               )}
             </div>
+            </Fragment>
           );
         })}
       </div>

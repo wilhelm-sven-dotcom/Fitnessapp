@@ -41,15 +41,15 @@ const RASTER_200 =
 
 /**
  * Animated body figure (filled "capsule" limbs over the shared pose engine).
- * Konsumenten: Muskel-Heatmap (frozen + boneTint) und Aufwärm-Player (Loop mit
- * `periodMs` je Drill). Colours are tokens, so the figure adapts to skin +
- * theme. prefers-reduced-motion freezes on pose 0 (= charakteristische Pose).
+ * Konsument: der Aufwärm-Player (Loop mit `periodMs` je Drill) — die alte
+ * Muskel-Heatmap ist durch die Myologie-Tafel ersetzt. Colours are tokens,
+ * so the figure adapts to skin + theme. prefers-reduced-motion freezes on
+ * pose 0 (= charakteristische Pose).
  */
 export function FigurePanel({
   label,
   fig,
   viewKey,
-  boneTint,
   freeze,
   periodMs,
   color = "var(--fg)",
@@ -58,9 +58,6 @@ export function FigurePanel({
   label: string;
   fig: FigureDef;
   viewKey: "side" | "front";
-  /** Per-bone colour override ("a>b" → CSS colour) — the muscle heatmap tint.
-   *  Unlisted bones keep the figure colour. */
-  boneTint?: Record<string, string>;
   /** Render one static phase (0..1) instead of looping. */
   freeze?: number;
   /** Loop-Tempo in ms je Zyklus (Drill-Semantik) — Default 2600. */
@@ -145,12 +142,9 @@ export function FigurePanel({
         )}
         {/* Outlines first (Karton-Farbe) so overlapping limbs read separately. */}
         {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--card)", "o" + bn[0] + bn[1]))}
-        {/* Body fills — heatmap tint wins, else DIE eine Figur-Farbe. */}
-        {bones.map((bn) =>
-          cap(bn, boneWidth(bn), boneTint?.[bn[0] + ">" + bn[1]] ?? color, "f" + bn[0] + bn[1]),
-        )}
-        {/* Rücken-Naht als Hairline — EINE Figur-Farbe (Platte 311), das alte
-            Grün-Cue entfällt; in der Heatmap (boneTint) galt das schon immer. */}
+        {/* Body fills — DIE eine Figur-Farbe (Regel 6). */}
+        {bones.map((bn) => cap(bn, boneWidth(bn), color, "f" + bn[0] + bn[1]))}
+        {/* Rücken-Naht als Hairline. */}
         {spine.map((sp, idx) => cap(sp, 3.5, "var(--line)", "sp" + idx))}
         {P[headKey] && (
           <>
