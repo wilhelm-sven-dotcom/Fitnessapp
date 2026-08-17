@@ -89,7 +89,7 @@ function SettingsContent() {
             onClick={() => setSeg(s.key)}
             aria-pressed={seg === s.key}
             className={cn(
-              "flex-1 whitespace-nowrap rounded-card py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink",
+              "min-w-0 flex-1 truncate rounded-card py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink",
               seg === s.key ? "bg-surface-2 text-fg" : "text-muted",
             )}
           >

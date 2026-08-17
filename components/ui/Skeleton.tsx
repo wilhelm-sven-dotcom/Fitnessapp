@@ -1,12 +1,11 @@
-"use client";
-
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 /**
- * Lade-Platzhalter. Default STATISCH (der App-Boot dauert Millisekunden —
- * ein Puls wäre Flacker-Theater); `pulse` nur dort, wo echte Wartezeit
- * entsteht (z. B. Workout-Resume). Container trägt `aria-busy`.
+ * Lade-Platzhalter: Schleier-Fläche, Radius 1. Default STATISCH (der
+ * App-Boot dauert Millisekunden — Blinken wäre Flacker-Theater); `pulse`
+ * nur bei echter Wartezeit → hartes step-end-Blinken 35 ↔ 14 % (CSS-Klasse
+ * skel-blink in globals.css, inkl. Reduced-Motion-Gate auf statisch 24 %).
+ * Container trägt `aria-busy`.
  */
 export function Skeleton({
   className,
@@ -15,15 +14,11 @@ export function Skeleton({
   className?: string;
   pulse?: boolean;
 }) {
-  const reduce = useReducedMotion();
-  const animated = pulse && !reduce;
   return (
-    <motion.div
+    <div
       aria-hidden
-      className={cn("rounded-card bg-surface-2", className)}
-      style={{ opacity: 0.6 }}
-      animate={animated ? { opacity: [0.45, 0.75, 0.45] } : undefined}
-      transition={animated ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : undefined}
+      className={cn("rounded-xs bg-muted", pulse && "skel-blink", className)}
+      style={pulse ? undefined : { opacity: 0.35 }}
     />
   );
 }

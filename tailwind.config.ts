@@ -76,6 +76,8 @@ const config: Config = {
         live: "var(--live)",
         cyanotypie: "var(--cyanotypie)",
         messing: "var(--messing)",
+        // Button-Down-Fläche: Siegellack 8 % dunkler, harter Wechsel.
+        "accent-press": "var(--accent-press)",
         blaupause: "var(--blaupause)",
         "kreide-blau": "var(--kreide-blau)",
         // Myologie-Quartile (diskrete Stufen I–IV, keine Verläufe).

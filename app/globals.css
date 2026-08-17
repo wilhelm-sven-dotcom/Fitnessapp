@@ -31,6 +31,7 @@
   --glass: #f2ecdd; /* opak — das Labor kennt kein Milchglas */
 
   --accent: #b23a1e; /* Siegellack — Akzent, Aktiv-Markierung, CTA */
+  --accent-press: #9e3319; /* Siegellack 8 % dunkler — Button-Down, hart */
   --on-accent: #faf6ea; /* Tinte auf Siegellack-Fläche */
   --ink-on-color: #faf6ea;
   --accent-ink: #b23a1e; /* Siegellack als Vordergrund-Marke (5,5:1) */
@@ -89,6 +90,7 @@
   --glass: #141210;
 
   --accent: #e06a45;
+  --accent-press: #c85a38;
   --on-accent: #141210;
   --ink-on-color: #141210;
   --accent-ink: #e06a45;
@@ -269,5 +271,28 @@ body {
   .zp2,
   .zp3 {
     animation: none;
+  }
+}
+
+/* Skeleton: hartes Blinken 35 ↔ 14 % (step-end, 1 s) — kein weicher Puls.
+   Reduced motion: statisch bei 24 % (Motion-Handoff). */
+@keyframes skel-blink {
+  0%,
+  49% {
+    opacity: 0.35;
+  }
+  50%,
+  100% {
+    opacity: 0.14;
+  }
+}
+.skel-blink {
+  opacity: 0.35;
+  animation: skel-blink 1s step-end infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel-blink {
+    animation: none;
+    opacity: 0.24;
   }
 }
