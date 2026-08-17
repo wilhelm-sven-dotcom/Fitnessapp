@@ -14,7 +14,7 @@ import { useSpotifyDuck } from "@/components/spotify/useSpotifyDuck";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
-import { SessionComplete } from "@/components/workout/SessionComplete";
+import { SessionComplete, type SiegerTafel } from "@/components/workout/SessionComplete";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
@@ -41,12 +41,12 @@ import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { bandOfActive } from "@/lib/phasen/band";
-import { plattenNummer } from "@/lib/platte";
+import { plattenNummer, plattenNummern } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
-import { beatsRecord, exerciseRecords } from "@/lib/records";
+import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
 import { beep, beepEnd, primeAudio } from "@/lib/beep";
 import { startWeight } from "@/lib/start-weight";
 import { swapPoolFor } from "@/lib/swap-pool";
@@ -112,6 +112,9 @@ export function SessionRunner() {
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
   const [completeFigur, setCompleteFigur] = useState<PhasenFigurDef | null>(null);
+  // Rekord-Tafel des Sieger-Moments — ebenfalls VOR dem Save (recordMap kennt
+  // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
+  const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
@@ -682,11 +685,44 @@ export function SessionRunner() {
     setCoachCall(null);
     const final: ActiveSessionState = { ...st, backTraffic, note };
     // Figur für den Sieger-Moment VOR dem Save wählen (active ist danach weg):
-    // vorerst die Hauptübung; das Sieger-Paket verfeinert auf die Rekord-Übung.
+    // die Hauptübung trägt das Poster der Studie ohne Maximum.
     const hauptEx = final.session.items[0]
       ? byId.get(final.session.items[0].exerciseId)
       : undefined;
     setCompleteFigur(hauptEx ? figurFor(hauptEx) : null);
+    // Tafel des Maximums: bester rekordschlagender Arbeitssatz der Studie.
+    // recordMap kennt nur das Archiv — die laufende Studie ist noch nicht im
+    // Log, `best` ist also genau die Marke, die es zu schlagen galt. Bei
+    // mehreren Maxima gewinnt der größte RELATIVE Sprung (kg-e1RM, Wdh und
+    // Sekunden sind absolut nicht vergleichbar).
+    let sieger: SiegerTafel | null = null;
+    let siegerSprung = 0;
+    const nummern = plattenNummern(log);
+    for (const it of final.session.items) {
+      const ex = byId.get(it.exerciseId);
+      const best = recordMap.get(it.exerciseId);
+      if (!ex || !best) continue;
+      let wert = 0;
+      for (const set of final.entries[it.id] ?? []) {
+        if (!beatsRecord(ex, set, best)) continue;
+        const m = setMetric(ex, set);
+        if (m > wert) wert = m;
+      }
+      if (wert <= 0) continue;
+      const sprung = (wert - best.best) / best.best;
+      if (sieger && sprung <= siegerSprung) continue;
+      const prevSession = log.find((s) => s.date === best.date);
+      sieger = {
+        figur: figurFor(ex),
+        exName: ex.name,
+        wert,
+        einheit: recordUnit(best.kind),
+        delta: wert - best.best,
+        prevPlattenNr: prevSession ? nummern.get(prevSession) : undefined,
+      };
+      siegerSprung = sprung;
+    }
+    setCompleteSieger(sieger);
     commit(final);
     const summary = await saveActiveSession(final);
     activeRef.current = null;
@@ -713,6 +749,7 @@ export function SessionRunner() {
         summary={complete}
         name={todaySession?.name}
         figur={completeFigur ?? undefined}
+        sieger={completeSieger ?? undefined}
         onDone={() => router.replace("/")}
       />
     );

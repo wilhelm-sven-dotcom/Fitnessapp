@@ -1,7 +1,7 @@
-/* ===================== Figuren (animiert, datengetrieben). Grün = Wirbelsäule. ===================== */
-/* Seit dem Video-Umbau zeigen NUR noch Aufwärm-Player, Muskel-Heatmap und
- * Wochen-Poster Figuren — die Übungs-Ausführung erklärt das eigene Video.
- * `squat_bw` ist der Heatmap-/Poster-Körper (Frame A bleibt byte-stabil). */
+/* ===================== Figuren (animiert, datengetrieben). ===================== */
+/* Seit dem Video-Umbau zeigt NUR noch der Aufwärm-Player diese Figuren —
+ * die Übungs-Ausführung erklärt das eigene Video, Heatmap und Wochen-Poster
+ * sind mit „Platte 311" entfallen (Myologie-Tafel/Cyanotypie-Poster). */
 
 export type Pt = [number, number];
 export type Frame = Record<string, Pt>;
