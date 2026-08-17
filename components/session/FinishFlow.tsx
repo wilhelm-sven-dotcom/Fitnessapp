@@ -10,14 +10,14 @@ import type { TrafficLight } from "@/lib/types";
 
 // Selected state as a tinted outline chip — token-pure on both themes.
 const BACK_OPTIONS: { v: TrafficLight; label: string; on: string }[] = [
-  { v: "green", label: "Gut", on: "border-status-in text-status-in bg-surface-2" },
-  { v: "yellow", label: "Mittel", on: "border-status-over text-status-over bg-surface-2" },
-  { v: "red", label: "Gereizt", on: "border-status-danger text-status-danger bg-surface-2" },
+  { v: "green", label: "Gut", on: "border-status-in text-status-in" },
+  { v: "yellow", label: "Mittel", on: "border-status-over text-status-over" },
+  { v: "red", label: "Gereizt", on: "border-status-danger text-status-danger" },
 ];
 
 /**
- * Der Abschluss: kurze Rücken-Ampel (steuert die nächste Einheit), optionale
- * Notiz, speichern. Danach übernimmt der Sieger-Moment (SessionComplete).
+ * Die Auswertung: kurze Rücken-Ampel (steuert die nächste Studie), optionale
+ * Notiz, archivieren. Danach übernimmt der Sieger-Moment (SessionComplete).
  */
 export function FinishFlow({
   state,
@@ -40,27 +40,32 @@ export function FinishFlow({
         onClick={onBack}
         className="mb-4 -ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-sm text-muted focus:outline-none"
       >
-        <ArrowLeft size={18} /> Zurück ins Training
+        <ArrowLeft size={18} /> Zurück zur Studie
       </Pressable>
 
-      <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-        Abschluss
+      <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-3 text-muted">
+        Auswertung
       </p>
-      <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-fg">
+      <h2 className="mt-1 font-display text-2xl italic text-fg">
         {state.session.name}
       </h2>
-      <p className="mt-1 text-sm text-muted">
-        {done === 0
-          ? "Noch keine Sätze protokolliert — Beenden speichert nichts."
-          : `${done} ${done === 1 ? "Satz" : "Sätze"} protokolliert.`}
+      <p className="mt-1 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+        {done === 0 ? (
+          "Kein Kader belichtet — Beenden speichert nichts."
+        ) : (
+          <>
+            <span className="tabular-nums">{done}</span>{" "}
+            {done === 1 ? "Kader" : "Kader"} belichtet.
+          </>
+        )}
       </p>
 
-      <div className="mt-5 rounded-card border border-line bg-surface-1 p-4 shadow-card">
+      <div className="mt-5 rounded-card border border-line-card bg-surface-1 p-3.5">
         <p className="text-sm font-medium text-fg">
           Wie fühlt sich dein unterer Rücken an?
         </p>
         <p className="mb-3 mt-0.5 text-xs text-muted">
-          Kurz einschätzen — steuert die nächste Einheit.
+          Kurz einschätzen — steuert die nächste Studie.
         </p>
         <div className="flex gap-2">
           {BACK_OPTIONS.map((o) => (
@@ -68,8 +73,8 @@ export function FinishFlow({
               key={o.v}
               onClick={() => setBack((b) => (b === o.v ? null : o.v))}
               className={cn(
-                "flex-1 rounded-card border py-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
-                back === o.v ? o.on : "border-transparent bg-surface-2 text-muted",
+                "flex-1 rounded-pill border py-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+                back === o.v ? o.on : "border-line text-muted",
               )}
             >
               {o.label}
@@ -79,23 +84,23 @@ export function FinishFlow({
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Notiz zur Einheit — wie war's?"
+          placeholder="Notiz zur Platte — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="mt-4 w-full resize-none rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         />
       </div>
 
       <Pressable
         onClick={() => onSave(back, note)}
         disabled={saving}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-card bg-strong py-4 text-lg font-semibold text-on-strong focus:outline-none disabled:opacity-60"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-pill bg-accent-sessions py-4 font-mono text-sm font-semibold uppercase tracking-gesperrt-3 text-on-accent active:bg-accent-press focus:outline-none disabled:opacity-60"
       >
         <Save size={18} strokeWidth={2.5} />
         {saving
-          ? "Speichert…"
+          ? "Archiviert …"
           : done === 0
-            ? "Training verlassen"
-            : "Beenden & speichern"}
+            ? "Studie verlassen"
+            : "Platte archivieren"}
       </Pressable>
     </div>
   );

@@ -3,6 +3,8 @@
 import { Pencil, Trash2, Wrench, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { fmtKatalogNr, katalogNummern } from "@/lib/platte";
+import { MUSCLE_LABEL, muscleOf } from "@/lib/volume";
 import { VideoLinkEditor } from "@/components/workout/VideoLinkEditor";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
@@ -24,7 +26,9 @@ export function GuideSheet({
   onClose: () => void;
   ex: Exercise | null;
 }) {
-  const { exerciseVideos, setExerciseVideo, exerciseNotes, setExerciseNote } = useTraining();
+  const { allLib, exerciseVideos, setExerciseVideo, exerciseNotes, setExerciseNote } =
+    useTraining();
+  const katalogNr = ex ? katalogNummern(allLib).get(ex.id) : undefined;
 
   // Clip resolution, highest priority first: a user-pasted YouTube link (shown
   // as an embed), then the exercise's own `videoUrl` (YouTube → embed, else an
@@ -87,12 +91,15 @@ export function GuideSheet({
     <Sheet open={open} onClose={onClose} title={ex?.name}>
       {ex && (
         <>
+          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+            Guide · {fmtKatalogNr(katalogNr)} · {MUSCLE_LABEL[muscleOf(ex).primary]}
+          </p>
           {/* Media-Slot: das Video IST die Ausführungs-Anleitung. */}
           {hasVideo &&
             (embedUrl ? (
               <div className="mb-3 flex justify-center">
                 <div
-                  className="overflow-hidden rounded-card border border-line bg-surface-0"
+                  className="overflow-hidden rounded-card border border-line-card bg-surface-0"
                   style={{ height: "min(60vh, 480px)", aspectRatio: "9 / 16" }}
                 >
                   <iframe
@@ -110,7 +117,7 @@ export function GuideSheet({
             ) : (
               <video
                 src={nativeSrc}
-                className="mb-3 w-full rounded-card border border-line bg-surface-0"
+                className="mb-3 w-full rounded-card border border-line-card bg-surface-0"
                 loop
                 muted
                 playsInline
@@ -133,20 +140,30 @@ export function GuideSheet({
           )}
 
           {ex.cue && (
-            <p className="mb-3 rounded-card border border-line bg-surface-1 px-3 py-2 text-sm text-fg">
-              <span className="font-medium text-accent-ink">Technik: </span>
-              {ex.cue}
-            </p>
+            <div className="mb-3">
+              <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+                Technik
+              </p>
+              <p className="mt-1 font-display text-base leading-relaxed text-fg">{ex.cue}</p>
+            </div>
           )}
 
           {(ex.steps?.length ?? 0) > 0 ? (
-            <ol className="mb-3 list-decimal space-y-1.5 pl-5 marker:font-mono marker:text-faint">
-              {(ex.steps ?? []).map((s, i) => (
-                <li key={i} className="text-sm text-fg">
-                  {s}
-                </li>
-              ))}
-            </ol>
+            <div className="mb-3">
+              <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+                Versuchsablauf
+              </p>
+              <ol className="space-y-1.5">
+                {(ex.steps ?? []).map((s, i) => (
+                  <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-fg">
+                    <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-cyanotypie">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           ) : (
             !hasVideo && (
               <p className="mb-3 text-sm text-muted">

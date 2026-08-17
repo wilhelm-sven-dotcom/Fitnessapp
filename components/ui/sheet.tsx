@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useRef } from "react";
-import { SPRING } from "@/lib/motion";
+import { FILM, TRANSPORT_AUS, TRANSPORT_EIN } from "@/lib/motion";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -11,8 +11,11 @@ const FOCUSABLE =
  * Bottom sheet used by every modal in the app. Accessibility contract:
  * focus moves INTO the panel on open, Tab cycles inside it (trap), Escape
  * closes, and focus returns to the trigger on close — otherwise keyboard/
- * VoiceOver users keep operating the page behind the backdrop. Honors
- * reduced motion (fade instead of the spring slide).
+ * VoiceOver users keep operating the page behind the backdrop.
+ * Motion = Filmtransport (Handoff motion/): Scrim steht SOFORT auf 40 %
+ * Tinte und fällt hart; das Sheet transportiert in 213 ms von unten mit
+ * leichtem Überschuss und rastet nach 47 ms ein (Keyframe 82 % + Sprung),
+ * Abgang 180 ms Transport-aus. Reduced motion: harte Schnitte (0 ms).
  */
 export function Sheet({
   open,
@@ -76,22 +79,40 @@ export function Sheet({
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50">
+          {/* Scrim: flache 40 % Tinte (Archiv-Tinte in beiden Modi — das
+              Atelier kennt keinen hellen Schleier), erscheint und fällt HART. */}
           <motion.div
-            className="absolute inset-0 bg-black backdrop-blur-sm"
+            className="absolute inset-0"
+            style={{ backgroundColor: "rgba(34, 28, 20, 0.4)" }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            animate={{ opacity: 1, transition: { duration: 0 } }}
+            exit={{ opacity: 0, transition: { duration: 0 } }}
             onClick={onClose}
           />
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-line bg-surface-1 shadow-card focus:outline-none"
-            initial={reduce ? { opacity: 0 } : { y: "100%" }}
-            animate={reduce ? { opacity: 1 } : { y: 0 }}
-            exit={reduce ? { opacity: 0 } : { y: "100%" }}
-            transition={reduce ? { duration: 0.15 } : SPRING.panel}
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-line-card bg-surface-1 focus:outline-none"
+            initial={reduce ? { opacity: 0 } : { y: "103%" }}
+            animate={
+              reduce
+                ? { opacity: 1, transition: { duration: 0 } }
+                : {
+                    // Überschuss in % statt px (Framer mischt keine Einheiten):
+                    // −1,2 % ≈ 4–7 px je Sheet-Höhe, Raste = gehaltener Frame + Sprung.
+                    y: ["103%", "-1.2%", "-1.2%", "0%"],
+                    transition: {
+                      duration: FILM.sheetAuf,
+                      times: [0, 0.82, 0.999, 1],
+                      ease: [TRANSPORT_EIN, "linear", "linear"],
+                    },
+                  }
+            }
+            exit={
+              reduce
+                ? { opacity: 0, transition: { duration: 0 } }
+                : { y: "103%", transition: { duration: FILM.sheetZu, ease: TRANSPORT_AUS } }
+            }
             drag="y"
             dragControls={dragControls}
             dragListener={false}
@@ -117,11 +138,11 @@ export function Sheet({
               style={{ touchAction: "none" }}
             >
               <div className="flex justify-center pb-1 pt-3">
-                <span className="h-1.5 w-10 rounded-full bg-surface-3" />
+                <span className="h-1 w-9 rounded-pill bg-muted" />
               </div>
               {title && (
-                <div className="px-5 pb-1 pt-3">
-                  <h3 id={titleId} className="text-lg font-semibold tracking-tight">
+                <div className="px-5 pb-1 pt-2">
+                  <h3 id={titleId} className="font-display text-2xl italic">
                     {title}
                   </h3>
                 </div>

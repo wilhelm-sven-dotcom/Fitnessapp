@@ -5,7 +5,7 @@
  *   npm run build && npm run smoke
  *
  * Startet selbst `next start` auf Port 3199, fährt die Kern-Reise ab:
- * Boot ohne Splash → Heute komponiert → Editor-Tausch → Training starten →
+ * Boot ohne Splash → Heute angesetzt → Editor-Tausch → Studie beginnen →
  * Check-in überspringen → Aufwärmen → Satz loggen (Inline-Pause, ATLAS-Zeile)
  * → Reload mitten in der Einheit (Resume!) → Abschluss speichern → Verlauf
  * zeigt die Einheit → Katalog-Filter + eigene Übung → Alt-Log (A/B/C) rendert.
@@ -104,14 +104,14 @@ try {
   step = "boot";
   const t0 = Date.now();
   await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
-  await page.getByText("Deine Einheit heute", { exact: false }).first().waitFor({ timeout: 1500 }).catch(async () => {
-    await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 3000 });
+  await page.getByText("Heutige Studie", { exact: false }).first().waitFor({ timeout: 1500 }).catch(async () => {
+    await page.getByText("Studie beginnen", { exact: false }).first().waitFor({ timeout: 3000 });
   });
   console.log(`OK boot: Inhalt nach ${Date.now() - t0} ms, kein Splash`);
 
   // ── 2 · Heute: komponierte Einheit mit ≥3 Übungen + why-Zeilen ──
   step = "heute";
-  await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 8000 });
+  await page.getByText("Studie beginnen", { exact: false }).first().waitFor({ timeout: 8000 });
   const items = await page.locator("main, body").first().textContent();
   if (!/0[123]/.test(items ?? "")) throw new Error("Nummerierte Übungsliste fehlt");
   console.log("OK heute: Einheit frisch komponiert (Fallback-Generator)");
@@ -119,7 +119,7 @@ try {
   // ── 3 · Editor: Übung tauschen greift ──
   step = "editor";
   await page.getByText("Bearbeiten", { exact: false }).first().click();
-  await page.getByText("Einheit bearbeiten").waitFor({ timeout: 5000 });
+  await page.getByText("Platte bearbeiten").waitFor({ timeout: 5000 });
   const firstName = (
     await page.locator(".rounded-card .truncate.text-sm.font-medium").first().textContent()
   )?.trim();
@@ -143,7 +143,7 @@ try {
 
   // ── 4 · Start → Check-in überspringen → Aufwärmen → Bühne ──
   step = "start";
-  await page.getByText("Training starten", { exact: false }).first().click();
+  await page.getByText("Studie beginnen", { exact: false }).first().click();
   await page.waitForURL("**/workout", { timeout: 8000 });
   await page.getByText("Tagesform").first().waitFor({ timeout: 8000 });
   await page.getByText("Überspringen").first().click();
@@ -162,7 +162,7 @@ try {
     await inputs.nth(0).fill("12");
     await inputs.nth(0).press("Enter");
   }
-  await page.getByText("Pause", { exact: true }).first().waitFor({ timeout: 5000 });
+  await page.getByText("Verschlusszeit", { exact: false }).first().waitFor({ timeout: 5000 });
   const stageTxt = (await page.textContent("body")) ?? "";
   if (!/ATLAS/.test(stageTxt)) throw new Error("ATLAS-Panel fehlt");
   console.log("OK satz: Inline-Pause läuft, ATLAS-Zeile steht");
@@ -175,11 +175,11 @@ try {
 
   // ── 7 · Abschluss speichern → Sieger-Moment ──
   step = "abschluss";
-  await page.getByLabel("Training beenden").click();
-  await page.getByText("Zum Abschluss").first().click();
+  await page.getByLabel("Studie beenden").click();
+  await page.getByText("Zur Auswertung").first().click();
   await page.getByText("Wie fühlt sich dein unterer Rücken an?").waitFor({ timeout: 5000 });
   await page.getByText("Gut", { exact: true }).click();
-  await page.getByText("Beenden & speichern").click();
+  await page.getByText("Platte archivieren").click();
   await page.waitForTimeout(1500);
   console.log("OK abschluss: Einheit gespeichert");
 

@@ -198,8 +198,11 @@ export interface AthleteProfile {
   injuries?: InjuryArea[];
 }
 
-/** App-icon designer: a preset (background + glyph) or an uploaded image. */
+/** @deprecated Icon-Designer wurde mit „Platte 311" entfernt (EIN Icon).
+ *  Typ + Felder bleiben, damit merge.ts alte Cloud-/Backup-Daten weiter
+ *  konsolidieren kann und Alt-Settings beim Laden nicht brechen. */
 export type IconGlyph = "chevron" | "dumbbell" | "letter";
+/** @deprecated Siehe IconGlyph — nur noch für Alt-Daten/merge.ts. */
 export interface IconConfig {
   kind: "preset" | "image";
   /** Background hex (preset). */
@@ -229,15 +232,17 @@ export interface AppSettings {
   cueVolume?: number;
   /** Pair the last two accessory slots as a superset — saves rest time. */
   superset?: boolean;
-  /** Appearance: color theme preference (default 'light' — München ’72). */
+  /** Darstellung: „Archiv" (light, Default) · „Atelier" (dark) · Auto. */
   theme?: "dark" | "light" | "system";
+  /** Zoetrop-Animationen der Phasenfiguren (Default an). */
+  zoetrope?: boolean;
   /** Einmal-Migration gelaufen: alter Dunkel-Default wurde auf Hell gehoben. */
   themeMigratedM72?: boolean;
-  /** Appearance: legacy brand accent (id from lib/theme ACCENTS) — fallback icon only. */
+  /** @deprecated Alt-Akzent des früheren Icon-Designers — nur Alt-Daten. */
   accentColor?: string;
-  /** App-icon design (custom home-screen icon). Unset = generated default. */
+  /** @deprecated Eigenes App-Icon (Designer entfernt) — nur Alt-Daten. */
   icon?: IconConfig;
-  /** Optional accent override (hex) — replaces the design's amber app-wide. */
+  /** @deprecated App-weiter Akzent-Override (entfernt) — nur Alt-Daten. */
   accentOverride?: string;
   /** Display name for the personalized greeting ("Guten Abend, Sven"). */
   userName?: string;

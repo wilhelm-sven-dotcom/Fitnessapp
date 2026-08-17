@@ -39,12 +39,12 @@ export function ProfileSection() {
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
+    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
       <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">
         Profil · über mich
       </p>
       <p className="mb-4 text-xs leading-relaxed text-muted">
-        Je mehr du angibst, desto genauer planen Coach und App für dich. Leere
+        Je mehr du angibst, desto genauer plant ATLAS für dich. Leere
         Felder nutzen sinnvolle Standardwerte.
       </p>
 

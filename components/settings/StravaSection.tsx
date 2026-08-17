@@ -29,7 +29,7 @@ export function StravaSection() {
   };
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-surface-1 p-5 shadow-card">
+    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
       <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
         <Activity size={13} /> Strava
       </p>
@@ -41,7 +41,7 @@ export function StravaSection() {
           <span className="font-mono text-muted">STRAVA_CLIENT_SECRET</span> (Vercel →
           Environment Variables) und lege eine Strava-API-App an. Dann kannst du dein
           Konto verbinden — Peloton-Fahrten landen über „Connect to Strava“ automatisch
-          hier und der Coach plant sie ein.
+          hier und ATLAS plant sie ein.
         </p>
       ) : strava.connected ? (
         <div className="space-y-3">
@@ -72,7 +72,7 @@ export function StravaSection() {
       ) : (
         <div className="space-y-2">
           <p className="text-xs leading-relaxed text-muted">
-            Verbinde dein Strava-Konto, damit der Coach deine Fahrten in den Plan einbezieht.
+            Verbinde dein Strava-Konto, damit ATLAS deine Fahrten in den Plan einbezieht.
             Aktiviere im Peloton-Konto „Connect to Strava“, dann kommen deine Bike-Einheiten
             automatisch an.
           </p>

@@ -124,7 +124,7 @@ export function ReadinessGate({
         disabled={!complete}
         className="mt-5 w-full rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
       >
-        Los geht&apos;s
+        Zur Kalibrierung
       </Pressable>
       <Pressable
         onClick={onClose}

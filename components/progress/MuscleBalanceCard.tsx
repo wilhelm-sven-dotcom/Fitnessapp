@@ -47,7 +47,7 @@ export function MuscleBalanceCard({
       <div className="mb-1 flex min-h-10 items-baseline gap-2">
         {sel ? (
           <>
-            <span className="stretch-display font-display text-3xl font-bold tabular-nums leading-none text-fg">
+            <span className="font-mono text-3xl font-bold tabular-nums leading-none text-fg">
               {fmt(sel.sets)}
             </span>
             <span className="text-sm text-muted">
@@ -56,7 +56,7 @@ export function MuscleBalanceCard({
           </>
         ) : (
           <>
-            <span className="stretch-display font-display text-3xl font-bold tabular-nums leading-none text-fg">
+            <span className="font-mono text-3xl font-bold tabular-nums leading-none text-fg">
               {fmt(total)}
             </span>
             <span className="text-sm text-muted">Sätze diese Woche</span>

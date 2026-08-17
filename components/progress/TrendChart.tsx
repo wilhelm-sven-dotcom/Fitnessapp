@@ -1,13 +1,13 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { fmtDateShort } from "@/lib/format";
 
 const W = 300;
 const H = 56;
 const pad = 6;
-const GRID = "var(--line)"; // theme-aware — the old fixed dark grey vanished on light
-const GREEN = "var(--gruen)"; // Fortschritts-Grün (== accent-volume token)
+const GRID = "var(--line-card)"; // Faden auf der Kartenfläche
+const LINIE = "var(--cyanotypie)"; // Messkurven sprechen Cyanotypie
 
 export interface TrendPoint {
   /** ISO-Datum — tragen ALLE Punkte eins, wird die x-Achse zeitproportional. */
@@ -18,12 +18,14 @@ export interface TrendPoint {
 }
 
 /**
- * Statisches Datenbild — kein Einzeichnen beim Mounten: die Kurve ist
- * Information, keine Choreografie (Frequenz-Regel: wird oft gesehen).
- * v2: x zeitproportional (Trainingslücken werden ehrlich sichtbar; Fallback
- * Index-Achse ohne lückenlose Daten) und Finger-Scrubbing — horizontal ziehen
- * liest Wert + Datum im festen Slot über der Kurve ab; `touch-pan-y` lässt
- * das vertikale Scrollen der Seite in Ruhe.
+ * Statisches Datenbild „Platte 311": der Befund liegt vor, er tritt nicht
+ * auf (Motion-Handoff: Chart-Einstieg bewusst statisch). Kurvenform =
+ * TREPPENSTUFEN (step-after, H/V-Segmente — nie interpolierte Kurven: eine
+ * Messung gilt, bis die nächste sie ablöst), Endpunkt als Kreis.
+ * x zeitproportional (Trainingslücken ehrlich sichtbar; Fallback Index);
+ * mehrere Messungen desselben Tages verschmelzen zur letzten (Dedupe —
+ * sonst stapeln sich Stufen auf einer Senkrechten). Finger-Scrubbing liest
+ * Wert + Datum im festen Slot ab; `touch-pan-y` lässt das Scrollen in Ruhe.
  */
 export function TrendChart({
   points,
@@ -33,11 +35,20 @@ export function TrendChart({
   /** Alt-API (nur Werte, Index-Achse) — Aufrufer nutzen `points`. */
   values?: number[];
 }) {
-  const uid = useId().replace(/:/g, "");
   const wrapRef = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<number | null>(null);
 
-  const pts: TrendPoint[] = points ?? (values ?? []).map((v) => ({ value: v }));
+  const roh: TrendPoint[] = points ?? (values ?? []).map((v) => ({ value: v }));
+  // Tages-Dedupe: gleicher Kalendertag → die letzte Messung zählt.
+  const pts: TrendPoint[] = [];
+  for (const p of roh) {
+    const prev = pts[pts.length - 1];
+    if (p.date && prev?.date && p.date.slice(0, 10) === prev.date.slice(0, 10)) {
+      pts[pts.length - 1] = p;
+    } else {
+      pts.push(p);
+    }
+  }
   const n = pts.length;
   if (n === 0) return null;
 
@@ -62,10 +73,14 @@ export function TrendChart({
     n === 1 ? H / 2 : H - pad - ((v - min) / span) * (H - 2 * pad),
   );
 
-  const line = xs.map((xx, i) => `${i ? "L" : "M"}${xx.toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
-  const area = `${line} L${xs[n - 1].toFixed(1)} ${H - pad} L${xs[0].toFixed(1)} ${H - pad} Z`;
-  const maxIdx = vals.indexOf(max);
-  const gradId = `trend-${uid}`;
+  // Treppenpfad: waagerecht bis zur nächsten Messung, dann senkrecht.
+  const line = xs
+    .map((xx, i) =>
+      i === 0
+        ? `M${xx.toFixed(1)} ${ys[0].toFixed(1)}`
+        : `H${xx.toFixed(1)} V${ys[i].toFixed(1)}`,
+    )
+    .join(" ");
   const rows = [pad, H / 2, H - pad];
 
   // Scrub: nächstliegender Punkt zur Finger-x (Zeitachse kann clustern).
@@ -118,37 +133,23 @@ export function TrendChart({
           style={{ display: "block", width: "100%", height: "auto" }}
           aria-hidden
         >
-          {n > 1 && (
-            <defs>
-              <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={GREEN} stopOpacity={0.3} />
-                <stop offset="55%" stopColor={GREEN} stopOpacity={0.1} />
-                <stop offset="100%" stopColor={GREEN} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-          )}
           {/* Faint reference gridlines. */}
           {rows.map((ry) => (
             <line key={ry} x1={pad} y1={ry} x2={W - pad} y2={ry} stroke={GRID} strokeWidth={1} />
           ))}
-          {n > 1 && <path d={area} fill={`url(#${gradId})`} />}
           {n > 1 && (
             <path
               d={line}
               fill="none"
-              stroke={GREEN}
+              stroke={LINIE}
               strokeWidth={2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
+              strokeLinejoin="miter"
+              strokeLinecap="butt"
               vectorEffect="non-scaling-stroke"
             />
           )}
-          {/* Small dot at every sample point. */}
-          {pts.map((_, i) => (
-            <circle key={i} cx={xs[i]} cy={ys[i]} r="1.6" fill={GREEN} opacity={0.85} />
-          ))}
-          {n > 1 && <circle cx={xs[maxIdx]} cy={ys[maxIdx]} r="3.5" fill={GREEN} />}
-          <circle cx={xs[n - 1]} cy={ys[n - 1]} r={n > 1 ? 3 : 3.5} fill={n > 1 ? "var(--fg)" : GREEN} />
+          {/* Endpunkt-Kreis: der aktuelle Messwert. */}
+          <circle cx={xs[n - 1]} cy={ys[n - 1]} r={3.5} fill={LINIE} />
           {/* Scrub-Marker: leise Senkrechte + Ring am gewählten Sample. */}
           {sel != null && (
             <>

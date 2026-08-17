@@ -22,7 +22,7 @@ export function GymSection() {
   } = useTraining();
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-surface-1 shadow-card p-5">
+    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
       <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
         Gym-Modus
       </p>
@@ -31,7 +31,7 @@ export function GymSection() {
           checked={!!settings.voiceCues}
           onChange={setVoiceCues}
           label="Sprach-Ansagen"
-          hint="Sagt Satzpause-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
+          hint="Sagt Verschlusszeit-Countdown und neue Maxima an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
         />
         <Toggle
           checked={settings.duckSpotify !== false}
@@ -48,8 +48,8 @@ export function GymSection() {
         <Toggle
           checked={settings.coachMotivation !== false}
           onChange={setCoachMotivation}
-          label="Coach-Motivation im Training"
-          hint="ATLAS spornt dich zwischen den Sätzen kurz an — nur als Text, stört die Musik nie. Jederzeit abschaltbar."
+          label="ATLAS-Zuspruch in der Studie"
+          hint="ATLAS spornt dich zwischen den Kadern kurz an — nur als Text, stört die Musik nie. Jederzeit abschaltbar."
         />
         <Toggle
           checked={settings.keepAwake !== false}

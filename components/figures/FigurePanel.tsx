@@ -14,50 +14,58 @@ import {
   type Frame,
 } from "./figureData";
 
-function Equip({ P, eq }: { P: Frame; eq?: EquipDef }) {
+function Equip({ P, eq, color }: { P: Frame; eq?: EquipDef; color: string }) {
   if (!eq) return null;
   const e: React.ReactNode[] = [];
   const g = (n: string) => P[n];
   if (eq.kind === "db") {
     (eq.hands || []).forEach((h, i) => {
       const p = g(h);
-      if (p) e.push(<rect key={"db" + i} x={p[0] - 5} y={p[1] - 9} width="10" height="18" rx="2" fill="#fbbf24" />);
+      if (p) e.push(<rect key={"db" + i} x={p[0] - 5} y={p[1] - 9} width="10" height="18" rx="2" fill={color} />);
     });
   } else if (eq.kind === "band") {
     const t = eq.to ? g(eq.to) : undefined;
-    if (t && eq.from) e.push(<line key="bd" x1={eq.from[0]} y1={eq.from[1]} x2={t[0]} y2={t[1]} stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 5" />);
+    if (t && eq.from) e.push(<line key="bd" x1={eq.from[0]} y1={eq.from[1]} x2={t[0]} y2={t[1]} stroke={color} strokeWidth="3" strokeDasharray="6 5" />);
   } else if (eq.kind === "band2") {
     // Band zwischen BEIDEN Händen (z. B. Pull-Apart) — spannt sich mit.
     const [h1, h2] = (eq.hands || []).map(g);
-    if (h1 && h2) e.push(<line key="b2" x1={h1[0]} y1={h1[1]} x2={h2[0]} y2={h2[1]} stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 5" />);
+    if (h1 && h2) e.push(<line key="b2" x1={h1[0]} y1={h1[1]} x2={h2[0]} y2={h2[1]} stroke={color} strokeWidth="3" strokeDasharray="6 5" />);
   }
   return <>{e}</>;
 }
 
+/** Fadenraster der Aufwärm-Bühne — 200×165-Zeichenfläche, Teilung 20. */
+const RASTER_200 =
+  "M20 0V165M40 0V165M60 0V165M80 0V165M100 0V165M120 0V165M140 0V165M160 0V165M180 0V165" +
+  "M0 20H200M0 40H200M0 60H200M0 80H200M0 100H200M0 120H200M0 140H200M0 160H200";
+
 /**
  * Animated body figure (filled "capsule" limbs over the shared pose engine).
- * Konsumenten: Muskel-Heatmap (frozen + boneTint) und Aufwärm-Player (Loop mit
- * `periodMs` je Drill). Colours are tokens, so the figure adapts to skin +
- * theme. prefers-reduced-motion freezes on pose 0 (= charakteristische Pose).
+ * Konsument: der Aufwärm-Player (Loop mit `periodMs` je Drill) — die alte
+ * Muskel-Heatmap ist durch die Myologie-Tafel ersetzt. Colours are tokens,
+ * so the figure adapts to skin + theme. prefers-reduced-motion freezes on
+ * pose 0 (= charakteristische Pose).
  */
 export function FigurePanel({
   label,
   fig,
   viewKey,
-  boneTint,
   freeze,
   periodMs,
+  color = "var(--fg)",
+  raster = false,
 }: {
   label: string;
   fig: FigureDef;
   viewKey: "side" | "front";
-  /** Per-bone colour override ("a>b" → CSS colour) — the muscle heatmap tint.
-   *  Unlisted bones keep the figure colour. */
-  boneTint?: Record<string, string>;
   /** Render one static phase (0..1) instead of looping. */
   freeze?: number;
   /** Loop-Tempo in ms je Zyklus (Drill-Semantik) — Default 2600. */
   periodMs?: number;
+  /** DIE eine Farbe der Figur (Platte 311, Regel 6) — Tinte oder Siegellack. */
+  color?: string;
+  /** Fadenraster hinterlegen (Aufwärm-Bühne). */
+  raster?: boolean;
 }) {
   const v = fig[viewKey];
   const [animF, setAnimF] = useState(0);
@@ -123,30 +131,28 @@ export function FigurePanel({
   return (
     <div className="min-w-0 flex-1">
       <svg ref={svgRef} viewBox={fig.vb || "0 0 200 165"} style={{ display: "block", width: "100%", height: "auto" }}>
-        {fig.ground != null && <line x1="18" y1={fig.ground} x2="182" y2={fig.ground} stroke="var(--line)" strokeWidth="3" strokeLinecap="round" />}
+        {/* Kein Boden mehr — die Figur steht auf dem Faden-Raster (optional). */}
+        {raster && <path d={RASTER_200} stroke="var(--line-card)" strokeWidth="0.6" fill="none" />}
         {(v.static || []).map((s, idx) =>
           s.t === "line" ? (
-            <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "#737373"} strokeWidth={s.w || 3} strokeLinecap="round" />
+            <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || color} strokeWidth={s.w || 3} strokeLinecap="round" />
           ) : (
-            <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="var(--surface-2)" stroke="var(--line)" strokeWidth="2" />
+            <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="none" stroke={color} strokeWidth="2" />
           ),
         )}
-        {/* Outlines first (card colour) so overlapping limbs read separately. */}
-        {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--base)", "o" + bn[0] + bn[1]))}
-        {/* Body fills — heatmap tint wins, else figure colour. */}
-        {bones.map((bn) =>
-          cap(bn, boneWidth(bn), boneTint?.[bn[0] + ">" + bn[1]] ?? "var(--fg)", "f" + bn[0] + bn[1]),
-        )}
-        {/* Neutral-spine cue — in der Heatmap (boneTint) nur Hairline-Naht,
-            damit das Grün der Wirbelsäule nicht wie eine Heat-Stufe liest. */}
-        {spine.map((sp, idx) => cap(sp, 3.5, boneTint ? "var(--line)" : "#34d399", "sp" + idx))}
+        {/* Outlines first (Karton-Farbe) so overlapping limbs read separately. */}
+        {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--card)", "o" + bn[0] + bn[1]))}
+        {/* Body fills — DIE eine Figur-Farbe (Regel 6). */}
+        {bones.map((bn) => cap(bn, boneWidth(bn), color, "f" + bn[0] + bn[1]))}
+        {/* Rücken-Naht als Hairline. */}
+        {spine.map((sp, idx) => cap(sp, 3.5, "var(--line)", "sp" + idx))}
         {P[headKey] && (
           <>
-            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />
-            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10.5" fill="var(--fg)" />
+            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--card)" />
+            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10.5" fill={color} />
           </>
         )}
-        <Equip P={P} eq={v.equip} />
+        <Equip P={P} eq={v.equip} color={color} />
       </svg>
       <p className="mt-1 text-center font-mono text-xs text-muted">{label}</p>
     </div>

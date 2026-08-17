@@ -32,10 +32,10 @@ export function RecordsBoard({
 
   return (
     <div>
-      <Card variant="elevated" className="mb-4 rounded-card p-5">
+      <Card className="mb-4 p-5">
         <div className="mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
-            <Trophy size={13} className="text-accent-ink" /> Rekorde
+          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-messing">
+            <Trophy size={13} /> Tafel des Maximums
           </span>
           <span className="font-mono text-xs text-faint">
             {events.length} gesamt{streak > 1 ? ` · Serie ${streak} Wo` : ""}
@@ -56,7 +56,7 @@ export function RecordsBoard({
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-display text-lg font-semibold leading-tight tabular-nums text-accent-ink">
+                  <p className="font-mono text-lg font-bold leading-tight tabular-nums text-messing">
                     {e.value} {recordUnit(e.kind)}
                   </p>
                   {e.kind === "weight" && (

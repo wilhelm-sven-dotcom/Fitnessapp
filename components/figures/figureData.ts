@@ -1,7 +1,7 @@
-/* ===================== Figuren (animiert, datengetrieben). Grün = Wirbelsäule. ===================== */
-/* Seit dem Video-Umbau zeigen NUR noch Aufwärm-Player, Muskel-Heatmap und
- * Wochen-Poster Figuren — die Übungs-Ausführung erklärt das eigene Video.
- * `squat_bw` ist der Heatmap-/Poster-Körper (Frame A bleibt byte-stabil). */
+/* ===================== Figuren (animiert, datengetrieben). ===================== */
+/* Seit dem Video-Umbau zeigt NUR noch der Aufwärm-Player diese Figuren —
+ * die Übungs-Ausführung erklärt das eigene Video, Heatmap und Wochen-Poster
+ * sind mit „Platte 311" entfallen (Myologie-Tafel/Cyanotypie-Poster). */
 
 export type Pt = [number, number];
 export type Frame = Record<string, Pt>;
@@ -290,7 +290,7 @@ export const FIG: Record<string, FigureDef> = {
       B: { head: [100, 46], sh: [100, 64], hip: [100, 103], elbowL: [86, 80], handL: [84, 96], elbowR: [114, 80], handR: [116, 96], kneeL: [80, 126], footL: [70, 148], kneeR: [120, 126], footR: [130, 148] } } },
 
   bike_easy: { ground: 150, cycle: true,
-    side: { bones: SB2, spine: SP, static: [{ t: "line", x1: 120, y1: 128, x2: 120, y2: 150, c: "#737373", w: 4 }, { t: "line", x1: 120, y1: 84, x2: 120, y2: 128, c: "#525252", w: 3 }],
+    side: { bones: SB2, spine: SP, static: [{ t: "line", x1: 120, y1: 128, x2: 120, y2: 150, w: 4 }, { t: "line", x1: 120, y1: 84, x2: 120, y2: 128, w: 3 }],
       frames: [
         { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [112, 112], foot: [121, 118], knee2: [117, 121], foot2: [121, 140] },
         { head: [84, 44], sh: [90, 62], hip: [100, 100], elbow: [106, 78], hand: [120, 84], knee: [116, 116], foot: [132, 129], knee2: [111, 116], foot2: [110, 129] },

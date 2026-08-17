@@ -1,41 +1,41 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Old_Standard_TT } from "next/font/google";
 import "./globals.css";
 import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
-import { AppIconInstaller } from "@/components/pwa/AppIconInstaller";
 import { Toaster } from "@/components/ui/Toaster";
 
-// Zwei Schriften, ein System: Archivo (variable, inkl. Weiten-Achse für
-// Scoreboard-Ziffern) für Display/Body, JetBrains Mono nur für Messwerte.
-// Self-hosted at build by next/font (no runtime fetch).
-const archivo = Archivo({
+// Zwei Schriften, ein Labor: IBM Plex Mono trägt ALLE UI inkl. Body
+// (Messgeräte-Beschriftung), Old Standard TT (1900er-Buchsatz) nur für
+// Benanntes — Titel kursiv, Buchsatz-Absätze. Self-hosted via next/font.
+const oldstandard = Old_Standard_TT({
   subsets: ["latin"],
-  axes: ["wdth"],
-  variable: "--font-archivo",
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-oldstandard",
   display: "swap",
 });
-const jbmono = JetBrains_Mono({
+const plexmono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-jbmono",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plexmono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Training",
-  description: "Dein persönlicher Trainingsplan — Muskelaufbau mit ATLAS.",
+  title: "Platte 311",
+  description: "Das Bewegungslabor — Muskelaufbau mit ATLAS als Studienleiter.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Training",
+    title: "Platte 311",
   },
   formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f2f4f2",
+  themeColor: "#f2ecdd",
   width: "device-width",
   initialScale: 1,
   // Kein maximumScale: Pinch-Zoom bleibt möglich (WCAG 1.4.4).
@@ -52,56 +52,54 @@ export default function RootLayout({
     <html
       lang="de"
       data-theme="light"
-      // The pre-paint script below rewrites data-theme/--accent on <html> from
+      // The pre-paint script below rewrites data-theme on <html> from
       // localStorage before hydration, so React would flag an attribute
       // mismatch on this element. Suppress it (scoped to <html>'s own
       // attributes only; descendant mismatches still surface).
       suppressHydrationWarning
-      className={`${archivo.variable} ${jbmono.variable}`}
+      className={`${oldstandard.variable} ${plexmono.variable}`}
     >
       <body>
-        {/* Richtungsvertrag München ’72 — als inertes <script> statt JSX-
+        {/* Richtungsvertrag Platte 311 — als inertes <script> statt JSX-
             Kommentar, damit er den Produktions-Build überlebt und im
             ausgelieferten HTML auditierbar bleibt. */}
         <script
           type="text/x-direction-contract"
           dangerouslySetInnerHTML={{
             __html: `
-THESIS: Training als System, nicht als Nachtclub — deutsches Sportsystemdesign
-(Aicher, München 1972); verweigert wird die Kategorie-Schablone
-„dunkel + Neonakzent + Glow".
-OWN-WORLD: Silberweißer Grund, 1px-Hairline-Raster, flache satte Farbfelder;
-Farbcode je Bereich: Blau=Heute/Session, Orange=ATLAS, Grün=Fortschritt,
-Gelb=Warnung, Rot=Gefahr. Archivo (wdth-Achse für Scoreboard-Ziffern) +
-JetBrains Mono für Labels und Messwerte; Radius 12, Elevation als Hairline +
-ein leiser Offset-Schatten.
-STORY: öffnen → Zustand und Tagesauftrag in Sekunden lesen → starten → Sätze
-gegen große Tabellenziffern loggen → präzises, knappes Feedback; Feier nur
-nach dem Speichern.
-FIRST VIEWPORT: blaues Farbfeld-Hero (Datum/Zustand, Direktive), darunter
-gerasterte Zeilenliste; Primäraktion als blaues Vollfeld.
-FORM: Aicher-Systemraster; Hell ist Default (helles Gym), Dunkel ist die
-Anthrazit-Variante über data-theme.
+THESIS: Training als fotografische Studie — Muybridges Bewegungslabor (1887):
+jede Wiederholung ein Kader, jede Einheit eine Platte; verweigert werden
+Neon-Gym-Schablone UND Fitness-App-Konfetti.
+OWN-WORLD: Albumin-Papier („Archiv", hell) als Grundzustand, Kollodium-Dunkel
+(„Atelier") als Variante — der Fokus-Modus läuft IMMER im Atelier. Fäden statt
+Schatten, Radius 1/2/3 px. Funktionsfarben: Siegellack = Akzent/aktiv,
+Cyanotypie = Daten/Hypothese, Messing = Rekord, IWF-Scheibenfarben = Last.
+IBM Plex Mono trägt alle UI inkl. Body; Old Standard TT nur Benanntes.
+Phasenfiguren nach Muybridge-Regeln (48er-Raster, 3 Kader, Zoetrop 8 B/s).
+STORY: öffnen → die heutige Studie als Platte lesen → Apparatur kalibrieren →
+Kader für Kader belichten → ATLAS führt das Protokoll → die Platte wandert
+ins Archiv; Maxima landen auf der Tafel.
+FIRST VIEWPORT: Karteikopf PLATTE Nr./Datum, Titel in Old-Standard-Kursive,
+Marey-Karte mit Phasenfigur, Stempel-CTA „Studie beginnen".
 FINISH: unreviewed and undocumented is unfinished; this build ends with the
 finish review, the verdict, and DESIGN.md (ui-style).
 `,
           }}
         />
         {/* Apply saved theme before paint (no flash of the wrong look).
-            Enthält die Einmal-Migration auf den hellen Default: ein gespeichertes
-            "dark" ohne themeMigratedM72-Flag stammt vom alten Dunkel-Default und
-            wird wie "light" behandelt (loadAll persistiert die Migration).
-            Setzt auch das theme-color-Meta pre-paint — sonst blitzt die
-            Systemleiste beim Dunkel-Kaltstart hell auf (Werte = lib/theme.ts). */}
+            Enthält die Einmal-Migration auf den hellen Default (altes
+            gespeichertes "dark" ohne themeMigratedM72-Flag zählt als hell;
+            loadAll persistiert die Migration) UND den Atelier-Zwang des
+            Fokus-Modus: /workout rendert IMMER dunkel (Theme-Lock, siehe
+            lib/theme.ts). Setzt auch das theme-color-Meta pre-paint. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#14171a':'#f2f4f2');if(s.accentOverride)d.style.setProperty('--accent',s.accentOverride);}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');if(location.pathname.indexOf('/workout')===0)r='dark';d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#141210':'#f2ecdd');}catch(e){}})();`,
           }}
         />
         <TrainingProvider>
           <AppShell>{children}</AppShell>
           <Toaster />
-          <AppIconInstaller />
         </TrainingProvider>
         <ServiceWorkerRegister />
       </body>

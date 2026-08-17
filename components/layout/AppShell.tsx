@@ -3,7 +3,7 @@
 import { Cloud, CloudOff, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { PressableLink } from "@/components/ui/PressableLink";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { LiftMark } from "@/components/brand/LiftMark";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -50,9 +50,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
-                <div className="flex items-center gap-2">
-                  <BrandMark size={24} className="rounded-md" />
-                  <span className="font-display text-base font-semibold tracking-tight">Training</span>
+                <div className="flex items-center gap-2 text-fg">
+                  <LiftMark size={17} />
+                  <span className="font-mono text-2xs font-semibold uppercase tracking-gesperrt-3">
+                    Platte 311
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   {cloud.configured &&

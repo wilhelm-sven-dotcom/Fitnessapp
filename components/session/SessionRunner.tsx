@@ -14,7 +14,7 @@ import { useSpotifyDuck } from "@/components/spotify/useSpotifyDuck";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
-import { SessionComplete } from "@/components/workout/SessionComplete";
+import { SessionComplete, type SiegerTafel } from "@/components/workout/SessionComplete";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
@@ -40,11 +40,13 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { poseForSession, profileOfActive, type PictogramPose } from "@/lib/etappen";
+import { bandOfActive } from "@/lib/phasen/band";
+import { plattenNummer, plattenNummern } from "@/lib/platte";
+import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
-import { beatsRecord, exerciseRecords } from "@/lib/records";
+import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
 import { beep, beepEnd, primeAudio } from "@/lib/beep";
 import { startWeight } from "@/lib/start-weight";
 import { swapPoolFor } from "@/lib/swap-pool";
@@ -109,7 +111,10 @@ export function SessionRunner() {
   const [boot, setBoot] = useState<Boot>("loading");
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
-  const [completePose, setCompletePose] = useState<PictogramPose | null>(null);
+  const [completeFigur, setCompleteFigur] = useState<PhasenFigurDef | null>(null);
+  // Rekord-Tafel des Sieger-Moments — ebenfalls VOR dem Save (recordMap kennt
+  // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
+  const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
@@ -554,7 +559,7 @@ export function SessionRunner() {
     if (rec && beatsRecord(ex, set, rec) && !recordCelebratedRef.current.has(itemId)) {
       recordCelebratedRef.current.add(itemId);
       success();
-      if (settings.voiceCues) speak("Neuer Rekord! Stark.");
+      if (settings.voiceCues) speak("Neues Maximum. Stark.");
     } else {
       tap();
     }
@@ -630,7 +635,7 @@ export function SessionRunner() {
       return idx >= 0 ? { ...r, setIdx: idx } : null;
     });
     tap();
-    toast(`Getauscht: ${nx.name}`);
+    toast(`Apparat getauscht: ${nx.name}`);
   };
 
   /* ── Abschluss ── */
@@ -679,7 +684,45 @@ export function SessionRunner() {
     cancelCoachCall();
     setCoachCall(null);
     const final: ActiveSessionState = { ...st, backTraffic, note };
-    setCompletePose(poseForSession(final.session.items, byId, final.session.variant));
+    // Figur für den Sieger-Moment VOR dem Save wählen (active ist danach weg):
+    // die Hauptübung trägt das Poster der Studie ohne Maximum.
+    const hauptEx = final.session.items[0]
+      ? byId.get(final.session.items[0].exerciseId)
+      : undefined;
+    setCompleteFigur(hauptEx ? figurFor(hauptEx) : null);
+    // Tafel des Maximums: bester rekordschlagender Arbeitssatz der Studie.
+    // recordMap kennt nur das Archiv — die laufende Studie ist noch nicht im
+    // Log, `best` ist also genau die Marke, die es zu schlagen galt. Bei
+    // mehreren Maxima gewinnt der größte RELATIVE Sprung (kg-e1RM, Wdh und
+    // Sekunden sind absolut nicht vergleichbar).
+    let sieger: SiegerTafel | null = null;
+    let siegerSprung = 0;
+    const nummern = plattenNummern(log);
+    for (const it of final.session.items) {
+      const ex = byId.get(it.exerciseId);
+      const best = recordMap.get(it.exerciseId);
+      if (!ex || !best) continue;
+      let wert = 0;
+      for (const set of final.entries[it.id] ?? []) {
+        if (!beatsRecord(ex, set, best)) continue;
+        const m = setMetric(ex, set);
+        if (m > wert) wert = m;
+      }
+      if (wert <= 0) continue;
+      const sprung = (wert - best.best) / best.best;
+      if (sieger && sprung <= siegerSprung) continue;
+      const prevSession = log.find((s) => s.date === best.date);
+      sieger = {
+        figur: figurFor(ex),
+        exName: ex.name,
+        wert,
+        einheit: recordUnit(best.kind),
+        delta: wert - best.best,
+        prevPlattenNr: prevSession ? nummern.get(prevSession) : undefined,
+      };
+      siegerSprung = sprung;
+    }
+    setCompleteSieger(sieger);
     commit(final);
     const summary = await saveActiveSession(final);
     activeRef.current = null;
@@ -705,7 +748,8 @@ export function SessionRunner() {
       <SessionComplete
         summary={complete}
         name={todaySession?.name}
-        pose={completePose ?? undefined}
+        figur={completeFigur ?? undefined}
+        sieger={completeSieger ?? undefined}
         onDone={() => router.replace("/")}
       />
     );
@@ -732,10 +776,10 @@ export function SessionRunner() {
       <>
         <div className="pt-10 text-center">
           <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-            Gleich geht&apos;s los
+            Studie · Check-in
           </p>
-          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-fg">
-            {todaySession?.name ?? "Deine Einheit"}
+          <h1 className="mt-1 font-display text-2xl italic tracking-tight text-fg">
+            {todaySession?.name ?? "Heutige Studie"}
           </h1>
         </div>
         <ReadinessGate
@@ -809,8 +853,8 @@ export function SessionRunner() {
   });
   const isExam = st.session.variant === "exam";
 
-  // Live-Etappen-Profil für den Kopf: füllt sich Satz für Satz.
-  const headerBlocks = profileOfActive(st.session, st.entries, byId);
+  // Live-Phasenband für den Kopf: belichtet sich Kader für Kader.
+  const headerGruppen = bandOfActive(st.session, st.entries, byId, log);
   const openLeft = items.filter((it) => {
     const e = byId.get(it.exerciseId);
     return e ? !itemDone(e, st.entries[it.id]) : false;
@@ -845,8 +889,8 @@ export function SessionRunner() {
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
       >
         <ProgressHeader
-          blocks={headerBlocks}
-          currentKey={item.id}
+          gruppen={headerGruppen}
+          plattenNr={plattenNummer(log)}
           currentIndex={st.currentIndex}
           remainMin={remainMin}
           onExit={() => setExitOpen(true)}
@@ -855,7 +899,7 @@ export function SessionRunner() {
       </div>
 
       <div className="px-1">
-        <p className="truncate text-sm text-muted">
+        <p className="truncate font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
           {st.session.name}
           {st.session.focus ? ` · ${st.session.focus}` : ""}
         </p>
@@ -934,7 +978,7 @@ export function SessionRunner() {
         >
           {openLeft === 0 ? (
             <>
-              <Flag size={16} /> Zum Abschluss
+              <Flag size={16} /> Zur Auswertung
             </>
           ) : (
             <>
@@ -997,11 +1041,11 @@ export function SessionRunner() {
 
       <GuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} ex={ex} />
 
-      <Sheet open={exitOpen} onClose={() => setExitOpen(false)} title="Training beenden?">
+      <Sheet open={exitOpen} onClose={() => setExitOpen(false)} title="Studie beenden?">
         {doneCount > 0 ? (
           <>
             <p className="mb-4 text-sm text-muted">
-              Du hast {doneCount} {doneCount === 1 ? "Satz" : "Sätze"} erledigt.
+              Du hast {doneCount} {doneCount === 1 ? "Kader" : "Kader"} belichtet.
               Beenden speichert diese — der Rest wird verworfen.
             </p>
             <div className="flex flex-col gap-2">
@@ -1012,13 +1056,13 @@ export function SessionRunner() {
                 }}
                 className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Zum Abschluss
+                Zur Auswertung
               </Pressable>
               <Pressable
                 onClick={() => setExitOpen(false)}
                 className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Weiter trainieren
+                Weiter belichten
               </Pressable>
               <Pressable
                 onClick={doDiscard}
@@ -1031,7 +1075,7 @@ export function SessionRunner() {
         ) : (
           <>
             <p className="mb-4 text-sm text-muted">
-              Noch keine Sätze erledigt. Training wirklich verlassen? Es wird
+              Noch kein Kader belichtet. Studie wirklich verlassen? Es wird
               nichts gespeichert.
             </p>
             <div className="flex flex-col gap-2">
@@ -1039,13 +1083,13 @@ export function SessionRunner() {
                 onClick={doDiscard}
                 className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Training verlassen
+                Studie verlassen
               </Pressable>
               <Pressable
                 onClick={() => setExitOpen(false)}
                 className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Weiter trainieren
+                Weiter belichten
               </Pressable>
             </div>
           </>

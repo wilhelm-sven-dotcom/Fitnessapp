@@ -31,7 +31,7 @@ export function SpotifySection() {
   };
 
   return (
-    <section className="mb-4 rounded-card border border-line bg-surface-1 p-5 shadow-card">
+    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
       <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
         <Music size={13} /> Spotify
       </p>

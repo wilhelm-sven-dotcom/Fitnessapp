@@ -12,7 +12,7 @@ import { tick } from "@/lib/haptics";
 import { SPRING } from "@/lib/motion";
 import type { SetEntry, Unit } from "@/lib/types";
 
-/** Stepper-Taste des Instruments — 44-px-Ziel, ohne Tastatur bedienbar. */
+/** Stepper-Taste des Apparats — 44 × 44, Faden-Rahmen, harte Zustände. */
 function StepBtn({
   dir,
   label,
@@ -26,7 +26,7 @@ function StepBtn({
     <Pressable
       onClick={onStep}
       aria-label={label}
-      className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-card bg-surface-2 text-fg focus:outline-none"
+      className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-pill border border-line-card bg-transparent text-fg focus:outline-none"
     >
       {dir === 1 ? <Plus size={18} strokeWidth={2.5} /> : <Minus size={18} strokeWidth={2.5} />}
     </Pressable>
@@ -36,11 +36,12 @@ function StepBtn({
 export type SetState = "done" | "active" | "upcoming";
 
 const inputClass =
-  "min-w-0 flex-1 rounded-pill bg-surface-2 py-3 text-center font-mono text-2xl tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions";
+  "min-w-0 flex-1 rounded-pill bg-transparent py-1 text-center font-mono text-readout font-bold leading-none tabular-nums text-fg placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
 
-/** One logged set in three states — the focus-logbook: a done set is a compact
- *  ledger line (effort still editable), the active set is the big instrument
- *  with the suggestion ghosted in, an upcoming set is a quiet ghost line. */
+/** One logged set in three states — das Kader-Logbuch: ein belichteter Kader
+ *  ist eine kompakte Registerzeile (Anstrengung bleibt editierbar), der
+ *  OFFENE KADER ist das Instrument mit Siegellack-Rahmen (Fokus.dc), ein
+ *  kommender Kader eine stille Geisterzeile. */
 export function SetRow({
   label,
   isWarmup,
@@ -51,6 +52,9 @@ export function SetRow({
   ghostWeight,
   ghostReps,
   weightStep = 2.5,
+  zielLabel,
+  lastLabel,
+  prescLine,
   onWeight,
   onReps,
   onRir,
@@ -66,9 +70,9 @@ export function SetRow({
   set: SetEntry;
   isDumbbell?: boolean;
   state: SetState;
-  /** All-time best to beat ("60 × 8") — shown as a target on the active set. */
+  /** All-time best to beat ("60 × 8") — Messing-Zeile im offenen Kader. */
   recordLabel?: string;
-  /** This logged set beats the all-time best → celebrate with a "Rekord" badge. */
+  /** This logged set beats the all-time best → „Neues Maximum". */
   isRecord?: boolean;
   /** Suggested weight (autoregulation / carried from the last set) — ghosted in. */
   ghostWeight?: string;
@@ -76,6 +80,12 @@ export function SetRow({
   ghostReps?: string;
   /** Schrittweite der Gewichts-Stepper (settings.weightStep, z. B. 1,25/2,5/5). */
   weightStep?: number;
+  /** Kicker rechts im offenen Kader: „Ziel 4 × 6". */
+  zielLabel?: string;
+  /** Inline-Referenz „Letztes Mal 80,0 × 6 · RIR 2" (ersetzt die alte Karte). */
+  lastLabel?: string | null;
+  /** Verordnungszeile der Progression („Heute: 3 × 10 @ 20 kg — hoch!"). */
+  prescLine?: string;
   onWeight: (val: string) => void;
   onReps: (oldVal: string, val: string) => void;
   onRir: (val: number) => void;
@@ -162,7 +172,7 @@ export function SetRow({
     onReps(set.reps, v.reps);
   };
 
-  // ── DONE — compact ledger line; effort stays editable. ──
+  // ── DONE — belichteter Kader: kompakte Registerzeile. ──
   if (state === "done") {
     const summary = timed
       ? `${set.reps} s`
@@ -174,19 +184,23 @@ export function SetRow({
         <Pressable
           onClick={onActivate}
           aria-label={`${label} bearbeiten`}
-          className="flex w-full items-center gap-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="flex w-full items-center gap-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
-          <Check size={15} strokeWidth={2.5} className="shrink-0 text-accent-2" />
-          <span className="w-12 shrink-0 font-mono text-xs text-faint">{label}</span>
-          <span className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-fg">{summary}</span>
+          <Check size={15} strokeWidth={2.5} className="shrink-0 text-cyanotypie" />
+          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+            {label}
+          </span>
+          <span className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-fg">
+            {summary}
+          </span>
           {isRecord && (
             <motion.span
               initial={reduce ? false : { scale: 0.7, opacity: 0 }}
               animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex shrink-0 items-center gap-1 rounded-sm bg-accent-volume px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-on-color"
+              className="flex shrink-0 items-center gap-1 rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
             >
-              <Trophy size={11} strokeWidth={2.5} /> Rekord
+              <Trophy size={11} strokeWidth={2.5} /> Maximum
             </motion.span>
           )}
         </Pressable>
@@ -200,7 +214,7 @@ export function SetRow({
     );
   }
 
-  // ── UPCOMING — quiet ghost line; tap to jump here. ──
+  // ── UPCOMING — stille Geisterzeile; Tipp springt hierher. ──
   if (state === "upcoming") {
     const ghost = timed
       ? ghostReps
@@ -213,114 +227,142 @@ export function SetRow({
       <Pressable
         onClick={onActivate}
         aria-label={`${label} starten`}
-        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
       >
-        <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-full border border-line" />
-        <span className="w-12 shrink-0 font-mono text-xs">{label}</span>
+        <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-xs border border-line" />
+        <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt">
+          {label}
+        </span>
         <span className="flex-1 truncate font-mono text-sm tabular-nums">{ghost}</span>
       </Pressable>
     );
   }
 
-  // ── ACTIVE — the instrument. ──
+  // ── ACTIVE — der OFFENE KADER: das Instrument (Fokus.dc). ──
   const dbHint = isDumbbell && !timed ? dumbbellHint(Number(w) || 0) : null;
   const oneTapReady = !timed && oneTapValues() != null && (set.reps === "" || set.reps == null);
   return (
     <motion.div
-      className="set-active space-y-1.5 rounded-card p-2 ring-1 ring-accent-sessions"
+      className="set-active space-y-3 rounded-card p-3.5"
       initial={reduce ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}
     >
-      {!isWarmup && isRecord ? (
+      <div className="flex justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-accent-ink">
+        <span>{isWarmup ? `Kalibrierung · ${label}` : `Offener Kader · ${label}`}</span>
+        {zielLabel && <span className="tabular-nums">{zielLabel}</span>}
+      </div>
+      {isRecord && !isWarmup && (
         <motion.p
           initial={reduce ? false : { scale: 0.9, opacity: 0 }}
           animate={reduce ? undefined : { scale: [0.9, 1.08, 1], opacity: 1 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-accent-volume"
+          className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
         >
-          <Trophy size={12} className="shrink-0" /> Neuer Rekord!
+          <Trophy size={12} className="shrink-0" /> Neues Maximum
         </motion.p>
-      ) : !isWarmup && recordLabel ? (
-        <p className="flex items-center gap-1.5 font-mono text-xs text-accent-2">
-          <Trophy size={12} className="shrink-0" /> Bestmarke {recordLabel} schlagen
-        </p>
-      ) : null}
+      )}
       {timed ? (
         <div className="flex items-center gap-2">
-          <span className="w-12 shrink-0 font-mono text-xs text-muted">{label}</span>
+          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+            {label}
+          </span>
           <TimedSet value={set.reps} onChange={(val) => onReps(set.reps, val)} />
         </div>
       ) : (
         <>
           {/* Gewicht: ±Stepper in weightStep-Schritten — Tastatur nur bei
               direktem Tap ins Feld (Fokus selektiert den Inhalt komplett). */}
-          <div className="flex items-center gap-2">
-            <span className="w-12 shrink-0 font-mono text-xs text-muted">{label}</span>
-            <StepBtn dir={-1} label={`Gewicht ${weightStep} kg weniger`} onStep={() => stepWeight(-1)} />
-            <input
-              type="number"
-              inputMode="decimal"
-              step={String(weightStep)}
-              value={w}
-              onFocus={(e) => {
-                onActivate();
-                e.currentTarget.select();
-              }}
-              onBlur={() => {
-                commitWeight();
-                if (r !== "" && r != null) onDeactivate?.();
-              }}
-              onKeyDown={blurOnEnter}
-              onChange={(e) => setW(e.target.value)}
-              placeholder={ghostWeight ?? "kg"}
-              aria-label="Gewicht in kg"
-              className={inputClass}
-            />
-            <StepBtn dir={1} label={`Gewicht ${weightStep} kg mehr`} onStep={() => stepWeight(1)} />
+          <div>
+            <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+              Last kg
+            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <StepBtn dir={-1} label={`Gewicht ${weightStep} kg weniger`} onStep={() => stepWeight(-1)} />
+              <input
+                type="number"
+                inputMode="decimal"
+                step={String(weightStep)}
+                value={w}
+                onFocus={(e) => {
+                  onActivate();
+                  e.currentTarget.select();
+                }}
+                onBlur={() => {
+                  commitWeight();
+                  if (r !== "" && r != null) onDeactivate?.();
+                }}
+                onKeyDown={blurOnEnter}
+                onChange={(e) => setW(e.target.value)}
+                placeholder={ghostWeight ?? "kg"}
+                aria-label="Gewicht in kg"
+                className={inputClass}
+              />
+              <StepBtn dir={1} label={`Gewicht ${weightStep} kg mehr`} onStep={() => stepWeight(1)} />
+            </div>
           </div>
           {/* Wiederholungen: ±1-Stepper, Basis ist die Zielvorgabe. */}
-          <div className="flex items-center gap-2">
-            <span aria-hidden className="w-12 shrink-0" />
-            <StepBtn dir={-1} label="Eine Wiederholung weniger" onStep={() => stepReps(-1)} />
-            <input
-              type="number"
-              inputMode="numeric"
-              value={r}
-              onFocus={(e) => {
-                onActivate();
-                e.currentTarget.select();
-              }}
-              onBlur={() => {
-                commitReps();
-                if (r !== "" && r != null) onDeactivate?.();
-              }}
-              onKeyDown={blurOnEnter}
-              onChange={(e) => setR(e.target.value)}
-              placeholder={ghostReps ?? "Wdh"}
-              aria-label="Wiederholungen"
-              className={inputClass}
-            />
-            <StepBtn dir={1} label="Eine Wiederholung mehr" onStep={() => stepReps(1)} />
+          <div>
+            <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+              Wiederholungen
+            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <StepBtn dir={-1} label="Eine Wiederholung weniger" onStep={() => stepReps(-1)} />
+              <input
+                type="number"
+                inputMode="numeric"
+                value={r}
+                onFocus={(e) => {
+                  onActivate();
+                  e.currentTarget.select();
+                }}
+                onBlur={() => {
+                  commitReps();
+                  if (r !== "" && r != null) onDeactivate?.();
+                }}
+                onKeyDown={blurOnEnter}
+                onChange={(e) => setR(e.target.value)}
+                placeholder={ghostReps ?? "Wdh"}
+                aria-label="Wiederholungen"
+                className={inputClass}
+              />
+              <StepBtn dir={1} label="Eine Wiederholung mehr" onStep={() => stepReps(1)} />
+            </div>
           </div>
         </>
       )}
-      {dbHint && <p className="pl-12 font-mono text-xs text-muted">{dbHint}</p>}
+      {/* Referenzzeile: Letztes Mal (Schleier) · Rekord (Messing). */}
+      {!isWarmup && (lastLabel || recordLabel) && (
+        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 font-mono text-3xs font-medium uppercase tracking-gesperrt">
+          <span className="text-muted">
+            {lastLabel ? `Letztes Mal ${lastLabel}` : "Erstes Mal"}
+          </span>
+          {recordLabel && !isRecord && (
+            <span className="text-messing">Rekord {recordLabel}</span>
+          )}
+        </div>
+      )}
+      {prescLine && !isWarmup && (
+        <p className="font-mono text-3xs leading-relaxed text-muted">{prescLine}</p>
+      )}
+      {dbHint && <p className="font-mono text-3xs text-muted">{dbHint}</p>}
       {oneTapReady && (
-        <Button size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation">
+        <Button size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation tracking-gesperrt-3">
           <Check size={16} strokeWidth={2.5} />
           {(() => {
             const v = oneTapValues();
             if (!v) return null;
-            return v.weight ? `Satz erledigt · ${v.weight} kg × ${v.reps}` : `Satz erledigt · ${v.reps} Wdh`;
+            return v.weight
+              ? `Satz protokollieren · ${v.weight} kg × ${v.reps}`
+              : `Satz protokollieren · ${v.reps} Wdh`;
           })()}
         </Button>
       )}
       {!isWarmup &&
         (timed ? (
-          <Scale className="pl-12" label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
+          <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
         ) : (
-          <Scale className="pl-12" label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
+          <Scale label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
         ))}
     </motion.div>
   );

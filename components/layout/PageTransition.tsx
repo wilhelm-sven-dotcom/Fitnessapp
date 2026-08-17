@@ -1,9 +1,27 @@
+"use client";
+
+import { motion, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { FILM, TRANSPORT_EIN } from "@/lib/motion";
+
 /**
- * Navigation ist absichtlich sofort: kein gekeyter Remount, keine
- * Eintritts-Animation pro Routenwechsel. Der frühere `key={pathname}`-Wrapper
- * hat bei jeder Navigation den ganzen Seitenbaum neu aufgebaut und alle
- * Mount-Animationen erneut abgespielt — das las sich wie ein Ladebildschirm.
+ * Screenwechsel = Filmtransport (Motion-Handoff): der neue Screen ruckt
+ * 24 px in Filmrichtung ein (160 ms, Transport-Kurve, toter Stopp), der
+ * alte verschwindet OHNE Fade (der Remount ersetzt ihn hart). Nur
+ * transform; reduced motion = harter Schnitt.
  */
 export function PageTransition({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  const pathname = usePathname();
+  const reduce = useReducedMotion();
+  if (reduce) return <>{children}</>;
+  return (
+    <motion.div
+      key={pathname}
+      initial={{ x: 24 }}
+      animate={{ x: 0 }}
+      transition={{ duration: FILM.screen, ease: TRANSPORT_EIN }}
+    >
+      {children}
+    </motion.div>
+  );
 }
