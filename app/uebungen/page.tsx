@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Eye, EyeOff, Pencil, Plus, Search, Youtube } from "lucide-react";
+import { Eye, EyeOff, Pencil, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CustomExerciseEditor } from "@/components/exercises/CustomExerciseEditor";
 import { Button } from "@/components/ui/Button";
@@ -8,6 +8,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pressable } from "@/components/ui/pressable";
 import { GuideSheet } from "@/components/workout/GuideSheet";
+import { PhasenFigur } from "@/components/phasen/PhasenFigur";
+import { figurFor } from "@/lib/phasen/figuren";
+import { fmtKatalogNr, katalogNummern } from "@/lib/platte";
 import { WarmupCatalogSection } from "@/components/warmup/WarmupCatalogSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
@@ -45,8 +48,8 @@ function FilterChip({
     <Pressable
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
-        active ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+        "shrink-0 rounded-pill px-2.5 py-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+        active ? "bg-strong text-on-strong" : "border border-line bg-transparent text-muted",
       )}
     >
       {children}
@@ -65,6 +68,7 @@ export default function ExerciseCatalogPage() {
   const [editing, setEditing] = useState<Exercise | null>(null);
 
   const customCount = useMemo(() => allLib.filter((e) => e.custom).length, [allLib]);
+  const nummern = useMemo(() => katalogNummern(allLib), [allLib]);
 
   // Suche + Muster-/Muskel-/Equipment-Filter, dann nach Muster gruppieren.
   const groups = useMemo(() => {
@@ -99,10 +103,8 @@ export default function ExerciseCatalogPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Katalog"
-        title="Übungen"
-        tone="var(--fg)"
-        subtitle={`${allLib.length} Übungen${customCount ? ` · ${customCount} eigene` : ""}`}
+        eyebrow={`Register · ${allLib.length} Einträge${customCount ? ` · ${customCount} eigene` : ""}`}
+        title="Übungskatalog"
       />
 
       <div className="mb-3 flex gap-2">
@@ -120,7 +122,7 @@ export default function ExerciseCatalogPage() {
             autoCapitalize="off"
             placeholder="Übung suchen…"
             aria-label="Übung suchen"
-            className="w-full rounded-card bg-surface-2 py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            className="w-full rounded-pill border border-line bg-transparent py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           />
         </div>
         <Pressable
@@ -129,7 +131,7 @@ export default function ExerciseCatalogPage() {
             setEditorOpen(true);
           }}
           aria-label="Eigene Übung anlegen"
-          className="flex shrink-0 items-center gap-1.5 rounded-card bg-strong px-3.5 text-sm font-semibold text-on-strong focus:outline-none"
+          className="flex shrink-0 items-center gap-1.5 rounded-pill bg-strong px-3.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-strong focus:outline-none"
         >
           <Plus size={16} strokeWidth={2.5} /> Neu
         </Pressable>
@@ -194,58 +196,68 @@ export default function ExerciseCatalogPage() {
         />
       ) : (
         groups.map((g) => (
-          <section
-            key={g.pat}
-            className="mb-4 overflow-hidden rounded-card border border-line bg-surface-1 shadow-card"
-          >
-            <p className="border-b border-line px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted">
+          <section key={g.pat} className="mb-5">
+            <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
               {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>
             </p>
-            <div className="px-2 py-1">
-              {g.list.map((ex) => {
+            <div>
+              {g.list.map((ex, rowIdx) => {
                 const hasVideo = !!exerciseVideos[ex.id];
                 const available = reqOk(ex, has);
                 const off = disabledExercises.includes(ex.id);
                 const m = muscleOf(ex);
                 return (
-                  <div key={ex.id} className="flex items-center gap-1">
+                  <div
+                    key={ex.id}
+                    className={cn(
+                      "flex items-center gap-1 border-t border-line",
+                      rowIdx === g.list.length - 1 && "border-b",
+                    )}
+                  >
                     <Pressable
                       onClick={() => setSelected(ex)}
-                      className="flex min-w-0 flex-1 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                      className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-0.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                     >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span
-                          className={cn(
-                            "truncate text-sm",
-                            available && !off ? "text-fg" : "text-faint",
-                            off && "line-through",
-                          )}
-                        >
-                          {ex.name}
-                        </span>
-                        {ex.custom && (
-                          <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 text-xs text-accent-2">
-                            Eigene
-                          </span>
-                        )}
-                        {off && (
-                          <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 text-xs text-faint">
-                            Aus
-                          </span>
-                        )}
+                      <span
+                        aria-hidden
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border border-line-card bg-surface-1 p-1"
+                      >
+                        <PhasenFigur
+                          figur={figurFor(ex)}
+                          mode="freeze"
+                          color={available && !off ? "var(--fg)" : "var(--muted)"}
+                        />
                       </span>
-                      <span className="flex shrink-0 items-center gap-2">
-                        <span className="text-xs text-muted">
-                          {ex.pattern === "cardio" ? ex.tag : MUSCLE_LABEL[m.primary]}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={cn(
+                              "truncate font-display text-lg italic",
+                              available && !off ? "text-fg" : "text-faint",
+                              off && "line-through",
+                            )}
+                          >
+                            {ex.name}
+                          </span>
+                          {ex.custom && (
+                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-gesperrt text-muted">
+                              Eigene
+                            </span>
+                          )}
+                          {off && (
+                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-gesperrt text-faint">
+                              Aus
+                            </span>
+                          )}
                         </span>
-                        {hasVideo && (
-                          <Youtube
-                            size={15}
-                            className="text-accent-ink"
-                            aria-label="Video verknüpft"
-                          />
-                        )}
-                        <ChevronRight size={15} className="text-faint" aria-hidden />
+                        <span className="mt-0.5 block truncate font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+                          {ex.pattern === "cardio" ? ex.tag : MUSCLE_LABEL[m.primary]} ·{" "}
+                          {fmtKatalogNr(nummern.get(ex.id))}
+                          {hasVideo ? " · Video" : ""}
+                        </span>
+                      </span>
+                      <span aria-hidden className="shrink-0 font-mono text-xs text-muted">
+                        →
                       </span>
                     </Pressable>
                     {ex.custom && (
@@ -255,7 +267,7 @@ export default function ExerciseCatalogPage() {
                           setEditorOpen(true);
                         }}
                         aria-label={`${ex.name} bearbeiten`}
-                        className="shrink-0 rounded-full p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="shrink-0 rounded-full p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                       >
                         <Pencil size={14} />
                       </Pressable>
@@ -266,7 +278,7 @@ export default function ExerciseCatalogPage() {
                         aria-label={`${ex.name} ${off ? "aktivieren" : "deaktivieren"}`}
                         aria-pressed={off}
                         className={cn(
-                          "shrink-0 rounded-full p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
+                          "shrink-0 rounded-full p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
                           off ? "text-status-over" : "text-faint",
                         )}
                       >

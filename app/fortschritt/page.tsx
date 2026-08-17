@@ -23,7 +23,7 @@ export default function FortschrittPage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Deine Entwicklung" title="Fortschritt" tone="var(--gruen)" />
+      <PageHeader eyebrow="Messreihe · Archiv" title="Fortschritt" />
 
       <div className="mb-4 flex overflow-hidden rounded-card border border-line bg-surface-1 p-1 shadow-card">
         {SEGMENTS.map((s) => (

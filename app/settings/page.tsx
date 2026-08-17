@@ -80,7 +80,7 @@ function SettingsContent() {
 
   return (
     <div>
-      <PageHeader title="Einstellungen" eyebrow="App" tone="var(--muted)" />
+      <PageHeader title="Einstellungen" eyebrow="Apparatur · Konfiguration" />
 
       <div className="mb-4 flex overflow-hidden rounded-card border border-line bg-surface-1 p-1 shadow-card">
         {SEGMENTS.map((s) => (
