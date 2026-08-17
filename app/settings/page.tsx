@@ -12,7 +12,6 @@ import { SpotifySection } from "@/components/settings/SpotifySection";
 import { AtlasSection } from "@/components/settings/AtlasSection";
 import { EquipmentSection } from "@/components/settings/EquipmentSection";
 import { AppearanceSection } from "@/components/settings/AppearanceSection";
-import { AppIconSection } from "@/components/settings/AppIconSection";
 import { GymSection } from "@/components/settings/GymSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -108,12 +107,7 @@ function SettingsContent() {
         </>
       )}
 
-      {seg === "aussehen" && (
-        <>
-          <AppearanceSection />
-          <AppIconSection />
-        </>
-      )}
+      {seg === "aussehen" && <AppearanceSection />}
 
       {seg === "verbindungen" && (
         <>

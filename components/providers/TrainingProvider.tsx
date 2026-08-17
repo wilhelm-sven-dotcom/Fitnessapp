@@ -61,14 +61,7 @@ import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import { getSupabase, isCloudConfigured } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
-import {
-  accentInk,
-  applyTheme,
-  DEFAULT_ACCENT,
-  onAccent,
-  resolveTheme,
-  type ThemePref,
-} from "@/lib/theme";
+import { applyTheme, type ThemePref } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
 import type { SpotifyAuth } from "@/lib/spotify";
 import type {
@@ -80,7 +73,6 @@ import type {
   Readiness,
   Exercise,
   GymProfile,
-  IconConfig,
   LastPerf,
   LoggedSession,
   Muscle,
@@ -151,7 +143,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceCues: false,
   superset: false,
   theme: "light",
-  accentColor: DEFAULT_ACCENT,
 };
 
 /** A deload overrides readiness with a clearly lighter week. */
@@ -308,9 +299,6 @@ interface TrainingContextValue {
   setVoiceCues: (on: boolean) => void;
   setCueVolume: (v: number) => void;
   setTheme: (t: ThemePref) => void;
-  setIcon: (icon: IconConfig | undefined) => void;
-  setAccentOverride: (hex: string | undefined) => void;
-  setAccent: (id: string) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
@@ -508,33 +496,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   // Apply theme to <html>; follow system changes when theme is "system".
   // Skip while loading so the pre-paint script's result never flashes over.
+  // (Ein Theme-Lock des Fokus-Modus gewinnt innerhalb von applyTheme.)
   useEffect(() => {
     if (loading) return;
-    // Optional accent override wins over the design's --accent (inline > CSS).
-    const applyAccent = () => {
-      const root = document.documentElement;
-      if (settings.accentOverride) {
-        const baseIsLight = resolveTheme(settings.theme) === "light";
-        root.style.setProperty("--accent", settings.accentOverride);
-        root.style.setProperty("--on-accent", onAccent(settings.accentOverride));
-        root.style.setProperty("--accent-ink", accentInk(settings.accentOverride, baseIsLight));
-      } else {
-        root.style.removeProperty("--accent");
-        root.style.removeProperty("--on-accent");
-        root.style.removeProperty("--accent-ink");
-      }
-    };
     applyTheme(settings.theme);
-    applyAccent();
     if (settings.theme !== "system" || typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
-    const onChange = () => {
-      applyTheme(settings.theme);
-      applyAccent();
-    };
+    const onChange = () => applyTheme(settings.theme);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [loading, settings.theme, settings.accentOverride]);
+  }, [loading, settings.theme]);
 
   // --- Cloud-Sync: pull on login, seed an empty cloud, observe auth state. ---
   const cloudConfigured = isCloudConfigured();
@@ -1147,12 +1118,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, cueVolume: v });
     const setTheme = (t: ThemePref) =>
       void saveSettings({ ...settings, theme: t });
-    const setIcon = (icon: IconConfig | undefined) =>
-      void saveSettings({ ...settings, icon });
-    const setAccentOverride = (hex: string | undefined) =>
-      void saveSettings({ ...settings, accentOverride: hex });
-    const setAccent = (id: string) =>
-      void saveSettings({ ...settings, accentColor: id });
     const setUserName = (name: string) =>
       void saveSettings({ ...settings, userName: name.trim() || undefined });
     const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
@@ -1512,9 +1477,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setVoiceCues,
       setCueVolume,
       setTheme,
-      setIcon,
-      setAccentOverride,
-      setAccent,
       setWeightStep,
       setBikeWarmup,
       setCoachMotivation,

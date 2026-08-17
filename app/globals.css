@@ -3,84 +3,103 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────────────────────
-   EIN Design: „München ’72" — deutsches Sportsystemdesign nach Aicher.
-   Heller Silbergrund ist der Grundzustand; [data-theme="dark"] ist die
-   Anthrazit-Variante (gleiche Hues, angehoben). Flache satte Farbfelder,
-   Hairline-Raster, keine Verläufe/Glows. EIN Farbcode pro Bereich:
-   Blau = Heute/Session · Orange = ATLAS/Live · Grün = Fortschritt ·
-   Gelb = Warnung · Rot = Gefahr. Fonts aus layout.tsx
-   (next/font → --font-archivo/--font-jbmono). Alle Paare WCAG-geprüft
-   (Text ≥ 4.5:1, große Schrift/Flächen ≥ 3:1).
+   EIN Design: „Platte 311" — das Bewegungslabor (Muybridge, 1887).
+   Jede Wiederholung ein Kader, jede Einheit eine fotografische Platte.
+   „Archiv" (Albumin-Hell) ist der Grundzustand; [data-theme="dark"] ist das
+   „Atelier" (Kollodium-Dunkel) — der Fokus-Modus (/workout) läuft IMMER im
+   Atelier (Theme-Lock in lib/theme.ts). Flache Felder, 0,5–1px-Fäden,
+   KEINE Schatten, Radius 1/2/3 px. Funktionsfarben: Siegellack = Akzent/
+   Aktiv/CTA · Cyanotypie = Daten/Hypothese · Messing = Rekord/Maximum ·
+   IWF-Scheibenfarben = Lastcodierung (modusgleich). Fonts aus layout.tsx:
+   IBM Plex Mono trägt ALLE UI inkl. Body, Old Standard TT nur Benanntes
+   (Titel kursiv, Buchsatz). Kontraste: tinte 14,3:1 · siegellack-Fläche
+   5,5:1 · cyanotypie 6,1:1; schleier 1,76:1 (hell) ist der bewusste
+   Design-Entscheid „Bleistift-Notiz" für Sekundärtext.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
-  --base: #f2f4f2; /* Silberweiß, kühl — Papier des Systems */
-  --card: #ffffff;
-  --surface-2: #e8ebe8;
-  --line: #d4d9d4; /* das 1px-Raster */
-  --fg: #121619;
-  --muted: #4d5a5e;
-  --faint: #5f6b73; /* ≥4.5:1 auf Weiß — Hinweise/Placeholder lesbar */
-  --strong: #121619;
-  --on-strong: #ffffff;
-  --glass: rgba(242, 244, 242, 0.82);
+  --base: #f2ecdd; /* Grund — Albumin-Papier des Archivs */
+  --card: #faf6ea; /* Fläche — die Platte/Karteikarte */
+  --surface-2: #e4dbc5; /* eingelassene Fläche (Inputs, Chips) */
+  --line: #d4c9b0; /* der Faden — Hairlines auf dem Grund */
+  --line-card: #e4dbc5; /* Faden auf der Fläche (Raster in Karten) */
+  --fg: #221c14; /* Tinte */
+  --muted: #c0b396; /* Schleier — Sekundärtext (Bleistift-Notiz) */
+  --faint: #c0b396; /* = Schleier: das Design kennt EINE Sekundärstufe */
+  --strong: #221c14;
+  --on-strong: #f2ecdd;
+  --glass: #f2ecdd; /* opak — das Labor kennt kein Milchglas */
 
-  --accent: #0c6a99; /* Lichtblau — Heute/Session, DER Primärton */
-  --on-accent: #ffffff; /* Tinte auf Farbfeldern (hell: Weiß) */
-  --ink-on-color: #ffffff;
-  --accent-ink: #0c6a99; /* Akzent als Vordergrund-Marke (≥4.5 auf Grund) */
-  --accent-2: #4d5a5e; /* neutrale Eyebrows/Labels */
+  --accent: #b23a1e; /* Siegellack — Akzent, Aktiv-Markierung, CTA */
+  --on-accent: #faf6ea; /* Tinte auf Siegellack-Fläche */
+  --ink-on-color: #faf6ea;
+  --accent-ink: #b23a1e; /* Siegellack als Vordergrund-Marke (5,5:1) */
+  --accent-2: #c0b396; /* neutrale Eyebrows/Labels = Schleier */
 
-  --orange: #bc4708; /* Leuchtorange — ATLAS, Live-Marker */
-  --gruen: #0a7248; /* Grün — Fortschritt, Erfolg, Volumen */
-  --gelb: #956600; /* Gelb — Warnung, über Ziel */
-  --rot: #bf2f1e; /* Signalrot — Gefahr (sparsam) */
-  --live: #bc4708; /* „heute/empfohlen"-Marker = Orange */
+  --cyanotypie: #1f5c86; /* Daten, Hypothesen, Charts (6,1:1) */
+  --messing: #97711f; /* Rekord/Maximum — Messingplakette */
+  --stufe-1: #d8e4ee; /* Myologie-Quartile (diskret, I→IV) */
+  --stufe-2: #a8c4da;
+  --stufe-3: #5f93b8;
+  --stufe-4: #1f5c86;
+  --iwf-rot: #c1332b; /* IWF-Scheibenfarben — modusgleich */
+  --iwf-blau: #2b6390;
+  --iwf-gelb: #d2a32c;
+  --iwf-gruen: #3a7d54;
+  --blaupause: #1f5c86; /* Poster-Festfarben (Cyanotypie-Druck) */
+  --kreide-blau: #f4f9fc;
 
-  --font-display: var(--font-archivo);
-  --font-body: var(--font-archivo);
-  --font-mono: var(--font-jbmono);
+  /* Legacy-Aliasse (München-’72-Namen) — Werte zeigen auf die neuen
+     Funktionsfarben, damit alle Alt-Nutzstellen bis zu ihrem Umbau korrekt
+     rendern: Orange/Grün → Cyanotypie (Daten), Gelb → Messing (Warnstufe),
+     Rot/Live → Siegellack. getComputedStyle liefert substituierte Hexes. */
+  --orange: var(--cyanotypie);
+  --gruen: var(--cyanotypie);
+  --gelb: var(--messing);
+  --rot: var(--accent);
+  --live: var(--accent);
 
-  --radius-card: 12px;
-  --radius-pill: 999px;
+  --font-display: var(--font-oldstandard);
+  --font-body: var(--font-plexmono);
+  --font-mono: var(--font-plexmono);
 
-  /* Flache Module: weiße Fläche + Hairline; Elevation nur als leiser
-     Offset-Schatten (schwebendes Chrome nimmt --panel-shadow-lg). */
-  --panel-shadow: 0 1px 2px rgba(18, 22, 25, 0.05);
-  --panel-shadow-lg: 0 2px 6px rgba(18, 22, 25, 0.06), 0 16px 32px -20px rgba(18, 22, 25, 0.25);
-  --page-bg: none;
-  --page-bg-size: auto;
-  --page-bg-repeat: no-repeat;
+  --radius-card: 3px; /* Fotoecken, keine Pillen */
+  --radius-pill: 2px;
+  --radius-xs: 1px;
+
+  /* Das Labor wirft keine Schatten: Trennung leisten Fäden (Hairlines). */
+  --panel-shadow: none;
+  --panel-shadow-lg: none;
 }
 
-/* Dunkel: Anthrazit-Variante — Hues angehoben, Tinte auf Farbfeldern dunkel. */
+/* Atelier: Kollodium-Dunkel — gleiche Anatomie, Töne gedreht. Poster- und
+   IWF-Farben bleiben modusgleich (physische Referenz: Scheiben, Druck). */
 [data-theme="dark"] {
   color-scheme: dark;
-  --base: #14171a;
-  --card: #1b1f24;
-  --surface-2: #22272c;
-  --line: #2e343a;
-  --fg: #edf0f2;
-  --muted: #a3adb3;
-  --faint: #808b92;
-  --strong: #edf0f2;
-  --on-strong: #14171a;
-  --glass: rgba(20, 23, 26, 0.82);
+  --base: #141210;
+  --card: #1d1a16;
+  --surface-2: #342e24;
+  --line: #2e2921;
+  --line-card: #342e24;
+  --fg: #e9e1ce;
+  --muted: #57503f;
+  --faint: #57503f;
+  --strong: #e9e1ce;
+  --on-strong: #141210;
+  --glass: #141210;
 
-  --accent: #4aa9d9;
-  --on-accent: #0e1417;
-  --ink-on-color: #0e1417;
-  --accent-ink: #4aa9d9;
-  --accent-2: #a3adb3;
+  --accent: #e06a45;
+  --on-accent: #141210;
+  --ink-on-color: #141210;
+  --accent-ink: #e06a45;
+  --accent-2: #57503f;
 
-  --orange: #ff6a2a;
-  --gruen: #33bf7f;
-  --gelb: #f2b63c;
-  --rot: #ff5a47;
-  --live: #ff6a2a;
-
-  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --panel-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 16px 34px -20px rgba(0, 0, 0, 0.6);
+  --cyanotypie: #6fa7cc;
+  --messing: #d4a649;
+  --stufe-1: #24313d;
+  --stufe-2: #33526b;
+  --stufe-3: #4f7fa3;
+  --stufe-4: #6fa7cc;
 }
 
 html {
@@ -164,17 +183,10 @@ body {
   background-color: var(--base);
 }
 
-/* Frosted material for floating chrome (nav, sheet header, top bar) */
+/* Ehemals Milchglas: das Labor kennt keine Unschärfe — sticky Chrome steht
+   opak auf dem Grund, die Trennung leistet der Faden (border-line). */
 .glass {
   background-color: var(--glass);
-  -webkit-backdrop-filter: saturate(160%) blur(20px);
-  backdrop-filter: saturate(160%) blur(20px);
-}
-
-/* Scoreboard-Ziffern: Archivo auf der Weiten-Achse gespannt — für große
-   Readouts/Hero-Zahlen (immer mit tabular-nums kombinieren). */
-.stretch-display {
-  font-stretch: 118%;
 }
 
 /* Horizontal scroller without a visible scrollbar — the row's own nodes
@@ -190,7 +202,72 @@ body {
 /* Satz-Logbuch: der aktive Satz hebt sich als flaches Modul mit Hairline. */
 .set-active {
   background: var(--card);
-  box-shadow:
-    inset 0 0 0 1px var(--line),
-    var(--panel-shadow);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* ── Zoetrop — die EINE Bewegung des Labors ─────────────────────────────────
+   Drei Phasenbilder blinken hart (step-end, 8 B/s) in der Folge 1-2-3-2,
+   wie eine Wundertrommel: 0,5 s Zyklus = 4 Ticks à 125 ms. Nur opacity;
+   Basiswerte zeigen ohne Animation (reduced motion) Phase 1 statisch —
+   die Komponente (PhasenFigur) rendert dann ohnehin den Freeze-Modus. */
+@keyframes zp1 {
+  0%,
+  24% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes zp2 {
+  0%,
+  24% {
+    opacity: 0;
+  }
+  25%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  74% {
+    opacity: 0;
+  }
+  75%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes zp3 {
+  0%,
+  49% {
+    opacity: 0;
+  }
+  50%,
+  74% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0;
+  }
+}
+.zp1 {
+  opacity: 1;
+  animation: zp1 0.5s step-end infinite;
+}
+.zp2 {
+  opacity: 0;
+  animation: zp2 0.5s step-end infinite;
+}
+.zp3 {
+  opacity: 0;
+  animation: zp3 0.5s step-end infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .zp1,
+  .zp2,
+  .zp3 {
+    animation: none;
+  }
 }

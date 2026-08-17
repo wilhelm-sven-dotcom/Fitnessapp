@@ -61,7 +61,7 @@ export function RestPanel({
                 animate={over && !reduce ? { scale: [1, 1.04, 1] } : undefined}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className={cn(
-                  "origin-left stretch-display font-display text-5xl font-bold tabular-nums leading-none transition-colors",
+                  "origin-left font-mono text-5xl font-bold tabular-nums leading-none transition-colors",
                   finale ? "text-status-over" : "text-fg",
                 )}
               >

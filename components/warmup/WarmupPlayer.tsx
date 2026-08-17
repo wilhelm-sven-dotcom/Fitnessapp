@@ -305,7 +305,7 @@ export function WarmupPlayer({
             {switching ? "Position wechseln — es geht gleich weiter." : showing.cue}
           </p>
         </motion.div>
-        <p className="stretch-display mt-8 font-display text-7xl font-semibold tabular-nums text-fg">{left}</p>
+        <p className="mt-8 font-mono text-7xl font-semibold tabular-nums text-fg">{left}</p>
         <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
           <div
             className="h-full rounded-full bg-accent-sessions transition-[width] duration-1000 ease-linear"

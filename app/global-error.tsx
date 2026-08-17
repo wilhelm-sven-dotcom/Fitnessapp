@@ -71,28 +71,30 @@ export default function GlobalError({
 
   // Dieses Dokument ersetzt den kompletten App-Baum — globals.css und die
   // Theme-Mechanik sind hier NICHT geladen. Deshalb eigene, minimale Styles
-  // (München-’72-Neutrals) mit prefers-color-scheme-Variante und sichtbarem
-  // Tastatur-Fokus. Rohe Hex sind hier die einzige Möglichkeit — bewusst.
+  // (Platte-311-Töne: Grund/Fläche/Faden/Tinte/Siegellack; muted ist der
+  // GEGENMODIGE Schleier, damit der Hinweistext hier sicher lesbar bleibt)
+  // mit prefers-color-scheme-Variante und sichtbarem Tastatur-Fokus.
+  // Rohe Hex sind hier die einzige Möglichkeit — bewusst.
   return (
     <html lang="de">
       <body className="ge-body">
         <style
           dangerouslySetInnerHTML={{
             __html: `
-:root { --ge-base:#f2f4f2; --ge-card:#ffffff; --ge-line:#d4d9d4; --ge-fg:#121619; --ge-muted:#4d5a5e; --ge-blau:#0c6a99; }
+:root { --ge-base:#f2ecdd; --ge-card:#faf6ea; --ge-line:#d4c9b0; --ge-fg:#221c14; --ge-muted:#57503f; --ge-akzent:#b23a1e; }
 @media (prefers-color-scheme: dark) {
-  :root { --ge-base:#14171a; --ge-card:#1b1f24; --ge-line:#2e343a; --ge-fg:#edf0f2; --ge-muted:#a3adb3; --ge-blau:#4aa9d9; }
+  :root { --ge-base:#141210; --ge-card:#1d1a16; --ge-line:#2e2921; --ge-fg:#e9e1ce; --ge-muted:#c0b396; --ge-akzent:#e06a45; }
 }
 .ge-body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
   background:var(--ge-base); color:var(--ge-fg); -webkit-font-smoothing:antialiased;
-  font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
-.ge-btn { appearance:none; cursor:pointer; border-radius:12px; font:inherit; }
-.ge-btn:focus-visible, .ge-btn-quiet:focus-visible { outline:2px solid var(--ge-blau); outline-offset:2px; }
-.ge-primary { border:0; padding:13px 16px; font-size:16px; font-weight:600; color:#ffffff; background:var(--ge-blau); }
-@media (prefers-color-scheme: dark) { .ge-primary { color:#0e1417; } }
-.ge-quiet { border:1px solid var(--ge-line); padding:13px 16px; font-size:15px; font-weight:500; color:var(--ge-fg); background:transparent; }
-.ge-small { border:1px solid var(--ge-line); border-radius:8px; margin-top:8px; padding:8px 12px; font-size:13px; font-weight:500; color:var(--ge-fg); background:transparent; }
-.ge-btn:active { transform:scale(0.97); }
+  font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace; }
+.ge-btn { appearance:none; cursor:pointer; border-radius:2px; font:inherit; }
+.ge-btn:focus-visible, .ge-btn-quiet:focus-visible { outline:2px solid var(--ge-akzent); outline-offset:2px; }
+.ge-primary { border:0; padding:13px 16px; font-size:15px; font-weight:600; letter-spacing:0.04em; color:#faf6ea; background:var(--ge-akzent); }
+@media (prefers-color-scheme: dark) { .ge-primary { color:#141210; } }
+.ge-quiet { border:1px solid var(--ge-fg); padding:13px 16px; font-size:14px; font-weight:500; color:var(--ge-fg); background:transparent; }
+.ge-small { border:1px solid var(--ge-line); border-radius:2px; margin-top:8px; padding:8px 12px; font-size:12px; font-weight:500; color:var(--ge-fg); background:transparent; }
+.ge-btn:active { transform:scale(0.985); }
 `,
           }}
         />
@@ -103,7 +105,7 @@ export default function GlobalError({
             height="34"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="var(--ge-blau)"
+            stroke="var(--ge-akzent)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -160,7 +162,7 @@ export default function GlobalError({
                 color: "var(--ge-muted)",
                 background: "var(--ge-card)",
                 border: "1px solid var(--ge-line)",
-                borderRadius: 8,
+                borderRadius: 2,
                 padding: "10px 12px",
               }}
             >

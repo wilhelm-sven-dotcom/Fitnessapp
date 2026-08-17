@@ -1,17 +1,14 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { LiftMark } from "@/components/brand/LiftMark";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { EASE_OUT } from "@/lib/motion";
 
 export default function StravaCallbackPage() {
   const router = useRouter();
   const { strava } = useTraining();
   const [msg, setMsg] = useState("Verbinde mit Strava…");
-  const [done, setDone] = useState(false);
   const ran = useRef(false);
 
   useEffect(() => {
@@ -28,7 +25,6 @@ export default function StravaCallbackPage() {
           ? "Zugriff abgelehnt — du kannst es jederzeit erneut versuchen."
           : "Kein Code von Strava erhalten.",
       );
-      setDone(true);
       const t = setTimeout(() => router.replace("/settings?seg=verbindungen"), 2000);
       return () => clearTimeout(t);
     }
@@ -42,39 +38,18 @@ export default function StravaCallbackPage() {
         return;
       }
       setMsg(`Fehler: ${r.error ?? "unbekannt"}`);
-      setDone(true);
       timer = setTimeout(() => router.replace("/settings?seg=verbindungen"), 2000);
     })();
     return () => clearTimeout(timer);
   }, [strava, router]);
 
+  // Nüchterner Wartezustand des Labors: Marke in Tinte, Meldung darunter —
+  // kein Verlauf, keine Rotation (Verbotsliste Platte 311).
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5, ease: EASE_OUT }}
-        className="relative flex h-24 w-24 items-center justify-center"
-      >
-        <span
-          className="absolute inset-0 rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, var(--accent) 0%, rgba(0,0,0,0) 70%)",
-            opacity: 0.35,
-          }}
-        />
-        <motion.span
-          animate={done ? { rotate: 0 } : { rotate: 360 }}
-          transition={
-            done
-              ? { duration: 0.3 }
-              : { duration: 1.1, repeat: Infinity, ease: "linear" }
-          }
-        >
-          <BrandMark size={56} className="rounded-md" />
-        </motion.span>
-      </motion.div>
+      <div className="flex h-24 w-24 items-center justify-center text-fg">
+        <LiftMark size={56} />
+      </div>
       <p className="mt-6 max-w-xs text-sm leading-relaxed text-muted">{msg}</p>
     </div>
   );

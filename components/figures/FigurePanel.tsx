@@ -21,15 +21,15 @@ function Equip({ P, eq }: { P: Frame; eq?: EquipDef }) {
   if (eq.kind === "db") {
     (eq.hands || []).forEach((h, i) => {
       const p = g(h);
-      if (p) e.push(<rect key={"db" + i} x={p[0] - 5} y={p[1] - 9} width="10" height="18" rx="2" fill="#fbbf24" />);
+      if (p) e.push(<rect key={"db" + i} x={p[0] - 5} y={p[1] - 9} width="10" height="18" rx="2" fill="var(--fg)" />);
     });
   } else if (eq.kind === "band") {
     const t = eq.to ? g(eq.to) : undefined;
-    if (t && eq.from) e.push(<line key="bd" x1={eq.from[0]} y1={eq.from[1]} x2={t[0]} y2={t[1]} stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 5" />);
+    if (t && eq.from) e.push(<line key="bd" x1={eq.from[0]} y1={eq.from[1]} x2={t[0]} y2={t[1]} stroke="var(--fg)" strokeWidth="3" strokeDasharray="6 5" />);
   } else if (eq.kind === "band2") {
     // Band zwischen BEIDEN Händen (z. B. Pull-Apart) — spannt sich mit.
     const [h1, h2] = (eq.hands || []).map(g);
-    if (h1 && h2) e.push(<line key="b2" x1={h1[0]} y1={h1[1]} x2={h2[0]} y2={h2[1]} stroke="#fbbf24" strokeWidth="3" strokeDasharray="6 5" />);
+    if (h1 && h2) e.push(<line key="b2" x1={h1[0]} y1={h1[1]} x2={h2[0]} y2={h2[1]} stroke="var(--fg)" strokeWidth="3" strokeDasharray="6 5" />);
   }
   return <>{e}</>;
 }
@@ -126,7 +126,7 @@ export function FigurePanel({
         {fig.ground != null && <line x1="18" y1={fig.ground} x2="182" y2={fig.ground} stroke="var(--line)" strokeWidth="3" strokeLinecap="round" />}
         {(v.static || []).map((s, idx) =>
           s.t === "line" ? (
-            <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "#737373"} strokeWidth={s.w || 3} strokeLinecap="round" />
+            <line key={"st" + idx} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c || "var(--fg)"} strokeWidth={s.w || 3} strokeLinecap="round" />
           ) : (
             <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="var(--surface-2)" stroke="var(--line)" strokeWidth="2" />
           ),
@@ -137,9 +137,9 @@ export function FigurePanel({
         {bones.map((bn) =>
           cap(bn, boneWidth(bn), boneTint?.[bn[0] + ">" + bn[1]] ?? "var(--fg)", "f" + bn[0] + bn[1]),
         )}
-        {/* Neutral-spine cue — in der Heatmap (boneTint) nur Hairline-Naht,
-            damit das Grün der Wirbelsäule nicht wie eine Heat-Stufe liest. */}
-        {spine.map((sp, idx) => cap(sp, 3.5, boneTint ? "var(--line)" : "#34d399", "sp" + idx))}
+        {/* Rücken-Naht als Hairline — EINE Figur-Farbe (Platte 311), das alte
+            Grün-Cue entfällt; in der Heatmap (boneTint) galt das schon immer. */}
+        {spine.map((sp, idx) => cap(sp, 3.5, "var(--line)", "sp" + idx))}
         {P[headKey] && (
           <>
             <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />

@@ -50,7 +50,7 @@ export function MuscleHeatmapCard({ muscleVolumes }: { muscleVolumes: MuscleVolu
           <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
             Muskel-Heatmap
           </p>
-          <p className="mt-1 stretch-display font-display text-3xl font-bold leading-none tabular-nums text-fg">
+          <p className="mt-1 font-mono text-3xl font-bold leading-none tabular-nums text-fg">
             {hit}
             <span className="text-base font-medium tracking-normal text-muted">
               {" "}

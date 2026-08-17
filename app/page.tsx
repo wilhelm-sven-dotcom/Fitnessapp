@@ -269,7 +269,7 @@ export default function HomePage() {
           onClick={() => router.push("/coach")}
           aria-label="ATLAS öffnen"
           className="block w-full px-5 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-on-accent"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.16)" }}
+          style={{ backgroundColor: "rgba(34, 28, 20, 0.16)" }}
         >
           <span className="flex items-center gap-2">
             <AtlasMark size={15} className="shrink-0" />

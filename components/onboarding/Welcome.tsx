@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Dumbbell, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { BrandMark } from "@/components/brand/BrandMark";
+import { LiftMark } from "@/components/brand/LiftMark";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -68,7 +68,13 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          <BrandMark size={72} className="rounded-md" />
+          {/* Icon-Platte: Kollodium-dunkel auch im Archiv (Handoff-Regel). */}
+          <span
+            className="flex h-20 w-20 items-center justify-center rounded-card"
+            style={{ backgroundColor: "#141210", color: "#e9e1ce" }}
+          >
+            <LiftMark size={52} />
+          </span>
           <p className="mt-6 font-display text-3xl font-semibold tracking-tight text-fg">
             {greeting()}
           </p>

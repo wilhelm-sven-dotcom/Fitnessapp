@@ -119,8 +119,8 @@ function drawFigure(
 }
 
 export async function renderShareCard(data: ShareCardData): Promise<Blob> {
-  const display = cssVar("--font-archivo", "'Archivo', system-ui, sans-serif");
-  const mono = cssVar("--font-jbmono", "'JetBrains Mono', ui-monospace, monospace");
+  const display = cssVar("--font-oldstandard", "'Old Standard TT', Georgia, serif");
+  const mono = cssVar("--font-plexmono", "'IBM Plex Mono', ui-monospace, monospace");
 
   // Schriften anwärmen (best effort) — load() akzeptiert die Familien-Stacks.
   if (typeof document !== "undefined" && document.fonts?.load) {
