@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ChevronRight, Pause, Play, Volume2, X } from "lucide-react";
+import { Pause, Play, Volume2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
@@ -130,7 +130,7 @@ export function WarmupPlayer({
         } else {
           setDone(true);
           vibrate([60, 40, 60]);
-          if (voiceOn) speak("Aufgewärmt. Los geht's.", { interrupt: true });
+          if (voiceOn) speak("Apparatur kalibriert. Die Studie kann beginnen.", { interrupt: true });
         }
       } else {
         // Atomar in den nächsten Drill: left SOFORT mitsetzen — sonst sieht
@@ -160,15 +160,15 @@ export function WarmupPlayer({
   if (done) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 app-bg px-8 text-center">
-        <p className="text-4xl font-semibold tracking-tight text-fg">Aufgewärmt 💪</p>
-        <p className="max-w-xs text-sm text-muted">
-          Gelenke warm, Rücken aktiviert. Jetzt sauber und kontrolliert trainieren.
+        <p className="font-display text-4xl italic text-fg">Apparatur kalibriert.</p>
+        <p className="max-w-xs font-mono text-2xs uppercase tracking-gesperrt text-muted">
+          Die Studie kann beginnen.
         </p>
         <Pressable
           onClick={onFinished ?? onClose}
-          className="mt-2 rounded-card bg-strong px-6 py-3 text-base font-semibold text-on-strong focus:outline-none"
+          className="mt-2 rounded-pill bg-accent-sessions px-6 py-3 font-mono text-sm font-semibold uppercase tracking-gesperrt-3 text-on-accent active:bg-accent-press focus:outline-none"
         >
-          Los geht&apos;s
+          Zur ersten Übung
         </Pressable>
       </div>
     );
@@ -190,15 +190,13 @@ export function WarmupPlayer({
   const switching = phase === "switch";
   const next = drills[index + 1];
   const showing = switching && next ? next : current;
-  const phaseTotal = switching ? SWITCH_SEC : current.durationSec;
-  const pct = phaseTotal > 0 ? (left / phaseTotal) * 100 : 0;
-  // RAMP-Badge: Puls (Blau) / Mobilität (Orange) / Aktivierung (Grün).
+  // RAMP-Etikett: Puls / Mobilität / Aktivierung — als Katalogschild.
   const badge =
     showing.phase === "raise"
-      ? { label: "Puls", cls: "bg-accent-sessions text-on-accent" }
+      ? { label: "Puls" }
       : showing.phase === "mobilise"
-        ? { label: "Mobilität", cls: "bg-accent-coverage text-on-strong" }
-        : { label: "Aktivierung", cls: "bg-accent-volume text-on-strong" };
+        ? { label: "Mobilität" }
+        : { label: "Aktivierung" };
   const fig = FIG[showing.figure ?? showing.id];
   // Eigenes Drill-Video (stumm, loopend): Countdown-Töne und Spotify-Ducking
   // bleiben by construction hörbar (mute=1). Offline → Figur-Fallback.
@@ -233,10 +231,14 @@ export function WarmupPlayer({
             <span className="font-mono text-xs tabular-nums">{VOL_LABEL[cueVol] ?? "Normal"}</span>
           </Pressable>
           <span className="font-mono text-xs tabular-nums text-muted">
-            {index + 1}/{total} · Aufwärmen
+            {index + 1}/{total}
           </span>
         </div>
       </div>
+
+      <p className="mt-2 px-5 text-center font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+        Akt I · Kalibrierung der Apparatur
+      </p>
 
       {/* progress dots — ab >8 Drills kompakt, damit die Reihe auf 320 px trägt */}
       <div className={cn("mt-3 flex justify-center px-5", total > 8 ? "gap-1" : "gap-1.5")}>
@@ -244,12 +246,13 @@ export function WarmupPlayer({
           <span
             key={d.id}
             className={cn(
-              "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
+              "rounded-xs",
+              total > 8 ? "h-1.5 w-1.5" : "h-2 w-2",
               i === index
-                ? total > 8
-                  ? "w-4 bg-accent-sessions"
-                  : "w-8 bg-accent-sessions"
-                : cn(total > 8 ? "w-1.5" : "w-4", i < index ? "bg-faint" : "bg-surface-2"),
+                ? "bg-accent-sessions"
+                : i < index
+                  ? "bg-fg"
+                  : "border border-line bg-transparent",
             )}
           />
         ))}
@@ -268,7 +271,7 @@ export function WarmupPlayer({
         >
           {embed ? (
             <div
-              className="mb-3 overflow-hidden rounded-card border border-line bg-surface-0"
+              className="mb-3 overflow-hidden rounded-card border border-line-card bg-surface-0"
               style={{ height: "min(32vh, 300px)", aspectRatio: "9 / 16" }}
             >
               <iframe
@@ -281,8 +284,18 @@ export function WarmupPlayer({
               />
             </div>
           ) : fig ? (
-            <div className="mb-3 w-72 rounded-card border border-line bg-surface-1 p-2 shadow-card">
-              <FigurePanel label="" fig={fig} viewKey="side" periodMs={showing.periodMs} />
+            <div className="mb-3 w-72 rounded-card border border-line-card bg-surface-1 p-2">
+              <p className="px-1 pt-0.5 text-left font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+                Apparat {index + (switching ? 2 : 1)}
+              </p>
+              <FigurePanel
+                label=""
+                fig={fig}
+                viewKey="side"
+                periodMs={showing.periodMs}
+                color="var(--accent)"
+                raster
+              />
             </div>
           ) : null}
         </motion.div>
@@ -293,43 +306,35 @@ export function WarmupPlayer({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE_OUT }}
         >
-          <span
-            className={cn("mb-4 rounded-full px-3 py-1 text-xs font-medium", badge.cls)}
-          >
+          <span className="mb-4 rounded-pill border border-line px-2.5 py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
             {switching ? "Wechsel" : badge.label}
           </span>
-          <h2 className="font-display text-4xl font-semibold tracking-tight text-fg">
-            {switching ? `Gleich: ${showing.name}` : showing.name}
+          <h2 className="font-display text-2xl italic text-fg">
+            {switching ? `Nächster Apparat: ${showing.name}` : showing.name}
           </h2>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
-            {switching ? "Position wechseln — es geht gleich weiter." : showing.cue}
+          <p className="mt-3 max-w-sm font-mono text-3xs font-medium uppercase leading-relaxed tracking-gesperrt text-muted">
+            {switching ? "Position wechseln — gleich weiter" : showing.cue}
           </p>
         </motion.div>
-        <p className="mt-8 font-mono text-7xl font-semibold tabular-nums text-fg">{left}</p>
-        <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
-          <div
-            className="h-full rounded-full bg-accent-sessions transition-[width] duration-1000 ease-linear"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+        <p className="mt-8 font-mono text-readout-lg font-bold tabular-nums text-fg">{left}</p>
       </div>
 
       {/* controls */}
       <div className="flex items-center gap-2 px-5">
         <Pressable
+          onClick={skip}
+          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-line py-3.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-muted focus:outline-none"
+        >
+          Überspringen
+        </Pressable>
+        <Pressable
           onClick={() => {
             primeAudio();
             setPaused((p) => !p);
           }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-3.5 text-sm font-medium text-fg focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-strong py-3.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none"
         >
           {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Weiter" : "Pause"}
-        </Pressable>
-        <Pressable
-          onClick={skip}
-          className="flex flex-1 items-center justify-center gap-2 rounded-card bg-strong py-3.5 text-sm font-semibold text-on-strong focus:outline-none"
-        >
-          Nächste <ChevronRight size={16} strokeWidth={2.5} />
         </Pressable>
       </div>
     </div>

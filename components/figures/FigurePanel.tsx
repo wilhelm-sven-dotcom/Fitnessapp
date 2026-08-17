@@ -143,8 +143,8 @@ export function FigurePanel({
             <rect key={"st" + idx} x={s.x} y={s.y} width={s.w} height={s.h} rx="3" fill="none" stroke={color} strokeWidth="2" />
           ),
         )}
-        {/* Outlines first (Grund-Farbe) so overlapping limbs read separately. */}
-        {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--base)", "o" + bn[0] + bn[1]))}
+        {/* Outlines first (Karton-Farbe) so overlapping limbs read separately. */}
+        {bones.map((bn) => cap(bn, boneWidth(bn) + 6, "var(--card)", "o" + bn[0] + bn[1]))}
         {/* Body fills — heatmap tint wins, else DIE eine Figur-Farbe. */}
         {bones.map((bn) =>
           cap(bn, boneWidth(bn), boneTint?.[bn[0] + ">" + bn[1]] ?? color, "f" + bn[0] + bn[1]),
@@ -154,7 +154,7 @@ export function FigurePanel({
         {spine.map((sp, idx) => cap(sp, 3.5, "var(--line)", "sp" + idx))}
         {P[headKey] && (
           <>
-            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--base)" />
+            <circle cx={P[headKey][0]} cy={P[headKey][1]} r="12" fill="var(--card)" />
             <circle cx={P[headKey][0]} cy={P[headKey][1]} r="10.5" fill={color} />
           </>
         )}
