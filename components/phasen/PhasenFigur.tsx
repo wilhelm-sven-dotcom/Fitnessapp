@@ -74,6 +74,7 @@ export function PhasenFigur({
   raster = false,
   freezeIndex,
   zoetropOn = true,
+  unten = false,
   className,
 }: {
   figur: PhasenFigurDef;
@@ -86,12 +87,21 @@ export function PhasenFigur({
   freezeIndex?: number;
   /** Zoetrop-Gate (settings.zoetrope) — false ⇒ Freeze auf Endphase. */
   zoetropOn?: boolean;
+  /** Im Kader: Figur steht auf der Unterkante (xMidYMax), füllt die Box. */
+  unten?: boolean;
   className?: string;
 }) {
   const reduce = useReducedMotion();
   const laufend = mode === "zoetrop" && zoetropOn && !reduce;
   const marey = mode === "marey";
   const phasen = dreiPhasen(figur);
+  const svgProps = {
+    className,
+    preserveAspectRatio: unten ? ("xMidYMax meet" as const) : undefined,
+    style: unten
+      ? ({ display: "block", width: "100%", height: "100%" } as const)
+      : ({ display: "block", width: "100%" } as const),
+  };
 
   // Marey braucht die breite Bühne (Figur wandert nach rechts).
   const vb = marey ? "0 0 88 48" : figur.vb ?? "0 0 48 48";
@@ -99,7 +109,7 @@ export function PhasenFigur({
   if (marey) {
     const aktiv = phasen.length - 1;
     return (
-      <svg viewBox={vb} className={className} style={{ display: "block", width: "100%" }} aria-hidden="true">
+      <svg viewBox={vb} {...svgProps} aria-hidden="true">
         {raster && <path d={RASTER_88} stroke="var(--line-card)" strokeWidth={0.4} fill="none" />}
         {phasen.map((prims, i) => (
           <g
@@ -118,7 +128,7 @@ export function PhasenFigur({
   if (laufend) {
     const klassen = ["zp1", "zp2", "zp3"];
     return (
-      <svg viewBox={vb} className={className} style={{ display: "block", width: "100%", color }} aria-hidden="true">
+      <svg viewBox={vb} {...svgProps} style={{ ...svgProps.style, color }} aria-hidden="true">
         {raster && <path d={RASTER_48} stroke="var(--line-card)" strokeWidth={0.5} fill="none" />}
         {phasen.map((prims, i) => (
           <g key={i} className={klassen[i] ?? "zp3"}>
@@ -132,7 +142,7 @@ export function PhasenFigur({
   // Freeze: Endphase (Regel 9), außer freezeIndex sagt etwas anderes.
   const idx = Math.min(freezeIndex ?? figur.phases.length - 1, figur.phases.length - 1);
   return (
-    <svg viewBox={vb} className={className} style={{ display: "block", width: "100%", color }} aria-hidden="true">
+    <svg viewBox={vb} {...svgProps} style={{ ...svgProps.style, color }} aria-hidden="true">
       {raster && <path d={RASTER_48} stroke="var(--line-card)" strokeWidth={0.5} fill="none" />}
       <Phase prims={figur.phases[idx]} />
     </svg>

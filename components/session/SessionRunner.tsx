@@ -40,7 +40,7 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { profileOfActive } from "@/lib/etappen";
+import { bandOfActive } from "@/lib/phasen/band";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
@@ -815,8 +815,8 @@ export function SessionRunner() {
   });
   const isExam = st.session.variant === "exam";
 
-  // Live-Etappen-Profil für den Kopf: füllt sich Satz für Satz.
-  const headerBlocks = profileOfActive(st.session, st.entries, byId);
+  // Live-Phasenband für den Kopf: belichtet sich Kader für Kader.
+  const headerGruppen = bandOfActive(st.session, st.entries, byId, log);
   const openLeft = items.filter((it) => {
     const e = byId.get(it.exerciseId);
     return e ? !itemDone(e, st.entries[it.id]) : false;
@@ -851,8 +851,7 @@ export function SessionRunner() {
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
       >
         <ProgressHeader
-          blocks={headerBlocks}
-          currentKey={item.id}
+          gruppen={headerGruppen}
           currentIndex={st.currentIndex}
           remainMin={remainMin}
           onExit={() => setExitOpen(true)}

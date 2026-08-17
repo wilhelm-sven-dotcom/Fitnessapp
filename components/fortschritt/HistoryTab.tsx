@@ -20,10 +20,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
-import { EtappenProfil } from "@/components/ui/EtappenProfil";
+import { Phasenband } from "@/components/ui/Phasenband";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { weeklyCardio } from "@/lib/cardio";
-import { profileOfLogged } from "@/lib/etappen";
+import { bandOfLogged } from "@/lib/phasen/band";
 import {
   intensityLabel,
   kmLabel,
@@ -319,9 +319,9 @@ export function HistoryTab() {
                 </Pressable>
               </div>
 
-              {/* Fingerabdruck der Einheit: das Etappen-Profil dessen, was war. */}
+              {/* Fingerabdruck der Einheit: das Phasenband dessen, was war. */}
               <div className="px-4 pb-3">
-                <EtappenProfil blocks={profileOfLogged(s, byId)} size="mini" />
+                <Phasenband gruppen={bandOfLogged(s, byId, log)} groesse="mini" />
               </div>
 
               {isDel && (
