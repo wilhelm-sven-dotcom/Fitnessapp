@@ -40,7 +40,8 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { poseForSession, profileOfActive, type PictogramPose } from "@/lib/etappen";
+import { profileOfActive } from "@/lib/etappen";
+import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { presc, roundStep } from "@/lib/progression";
@@ -109,7 +110,7 @@ export function SessionRunner() {
   const [boot, setBoot] = useState<Boot>("loading");
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
-  const [completePose, setCompletePose] = useState<PictogramPose | null>(null);
+  const [completeFigur, setCompleteFigur] = useState<PhasenFigurDef | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
@@ -679,7 +680,12 @@ export function SessionRunner() {
     cancelCoachCall();
     setCoachCall(null);
     const final: ActiveSessionState = { ...st, backTraffic, note };
-    setCompletePose(poseForSession(final.session.items, byId, final.session.variant));
+    // Figur für den Sieger-Moment VOR dem Save wählen (active ist danach weg):
+    // vorerst die Hauptübung; das Sieger-Paket verfeinert auf die Rekord-Übung.
+    const hauptEx = final.session.items[0]
+      ? byId.get(final.session.items[0].exerciseId)
+      : undefined;
+    setCompleteFigur(hauptEx ? figurFor(hauptEx) : null);
     commit(final);
     const summary = await saveActiveSession(final);
     activeRef.current = null;
@@ -705,7 +711,7 @@ export function SessionRunner() {
       <SessionComplete
         summary={complete}
         name={todaySession?.name}
-        pose={completePose ?? undefined}
+        figur={completeFigur ?? undefined}
         onDone={() => router.replace("/")}
       />
     );

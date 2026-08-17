@@ -1,6 +1,6 @@
 import { isFilled, workSets } from "@/lib/stats";
 import { muscleOf } from "@/lib/volume";
-import type { DailySession, PlannedExercise, SessionVariant } from "@/lib/session-model";
+import type { DailySession, PlannedExercise } from "@/lib/session-model";
 import type { Exercise, LoggedSession, Muscle, Pattern, SetEntry } from "@/lib/types";
 
 /**
@@ -151,33 +151,5 @@ export function profileOfLogged(
   });
 }
 
-/* ── Piktogramm-Pose der Einheit (Heute-Hero, Sieger-Moment) ── */
-
-export type PictogramPose = "ganzkoerper" | "unterkoerper" | "push" | "pull" | "core";
-
-/** Dominante Region (satzgewichtet, ≥ 50 %) → deren Pose; sonst Ganzkörper.
- *  Reset-Einheiten sind per Definition Rumpf-Arbeit. */
-export function poseForSession(
-  items: PlannedExercise[],
-  byId: Map<string, Exercise>,
-  variant?: SessionVariant,
-): PictogramPose {
-  if (variant === "reset") return "core";
-  const weights = new Map<Region, number>();
-  let total = 0;
-  for (const it of items) {
-    const ex = byId.get(it.exerciseId);
-    if (!ex || ex.pattern === "cardio") continue;
-    const r = regionOf(ex);
-    weights.set(r, (weights.get(r) ?? 0) + it.sets);
-    total += it.sets;
-  }
-  if (!total) return "ganzkoerper";
-  for (const [r, w] of weights) {
-    if (w / total >= 0.5 && r !== "cardio")
-      return r === "unterkoerper" || r === "push" || r === "pull" || r === "core"
-        ? r
-        : "ganzkoerper";
-  }
-  return "ganzkoerper";
-}
+/* Die Piktogramm-Pose (poseForSession) ist mit dem Marken-Piktogramm
+   entfallen — Platte 311 zeigt Phasenfiguren je Übung (lib/phasen). */
