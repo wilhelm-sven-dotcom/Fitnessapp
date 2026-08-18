@@ -185,6 +185,17 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
   im DOM, Onboarding-Platte), `components/brand/LiftMark.tsx` (nur die
   Endphase, viewBox `8 11 36 36` — bei 17 px im Kopf würden Ghosts zu
   Grieß), `app/apple-splash/[spec]` (iOS-Startbild).
+  **Icon-Änderungen brauchen NEUE URLs — sonst kommen sie nie an.** Next
+  hasht `/icon?…` und `/apple-icon?…` aus den BYTES DER ROUTE-DATEI, nicht
+  aus `lib/icon-art.tsx`; `/manifest-icon/*` und `/apple-splash/*` sind gar
+  nicht gehasht. Wird nur die Zeichnung getauscht, bleibt jede URL gleich und
+  CDN, Service Worker (cacht alles gleich-origin cache-first) und der
+  Homescreen behalten das alte PNG — genau so beim Wechsel auf die
+  Marey-Spur passiert. Deshalb bei JEDER Icon-Änderung drei Dinge:
+  `ICON_VERSION` in `lib/icon-art.tsx` hochzählen (trägt das `?v=` in
+  Manifest und Startbildern), die Fassungszahl im Kommentar von
+  `app/icon.tsx` UND `app/apple-icon.tsx` mitziehen (ändert deren Bytes →
+  neuer Hash), und `CACHE` in `public/sw.js` bumpen.
 - **Poster** (`lib/share-card.ts`): Cyanotypie 1080×1350, FESTE Farben
   `#1F5C86/#F4F9FC/#D4A649` (ein Abzug kennt kein Theme — bewusst kein
   getComputedStyle für Farben), Kreide-Raster 0.5px alle 40 (Referenz 400×500),

@@ -16,6 +16,16 @@ import { mareyArt } from "@/lib/phasen/figur-art";
  * nie auseinanderlaufen.
  */
 
+/**
+ * Fassung der Zeichnung. Hochzählen, sobald sich das Icon ÄNDERT — die
+ * Manifest-Routen (`/manifest-icon/…`) tragen sie als `?v=` und bekommen
+ * dadurch eine neue URL; ohne das behalten CDN, Service Worker und
+ * Homescreen das alte PNG. `app/icon.tsx` und `app/apple-icon.tsx` müssen
+ * ZUSÄTZLICH mit (Next hasht dort die Route-Datei, nicht diese hier).
+ *  1 = ob-lift + Raster + „311" · 2 = Marey-Spur (Nachtrag 2)
+ */
+export const ICON_VERSION = 2;
+
 const TAFEL = "#141210";
 const TINTE = "#e9e1ce";
 
