@@ -69,8 +69,11 @@ Vorher/Nachher-Platten) und Myologie (Muskel-Tafel in vier Blaustufen).
 („Archiv") und Kollodium-Dunkelkammer („Atelier"), Siegellack-Akzent,
 Cyanotypie und Messing, Old Standard TT (Kursive) + IBM Plex Mono (trägt
 den Body), Radius 3/2/1 px, null Schatten, „Filmtransport"-Motion (harte
-Rucks, Kreide-Blitz, Zoetrop mit 8 B/s). Verbindliche Tokens, Rezepte und
-Verbote: `.claude/skills/ui-style/SKILL.md`.
+Rucks, Kreide-Blitz, Zoetrop mit 8 B/s). Das App-Icon ist die Marey-Spur:
+die Referenzfigur dreimal überlagert, Kreide auf Kollodium. Beim Kaltstart
+läuft eines von drei Startbildern („Belichtung", „Zoetrop", „Walze") — immer
+im Atelier, abschaltbar unter Einstellungen · Aussehen. Verbindliche Tokens,
+Rezepte und Verbote: `.claude/skills/ui-style/SKILL.md`.
 
 ## Stack
 

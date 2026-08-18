@@ -25,6 +25,20 @@ const plexmono = IBM_Plex_Mono({
   display: "swap",
 });
 
+// iOS baut seinen Standalone-Splash NICHT aus dem Manifest — ohne diese
+// Bilder blitzt Safari weiß auf, bevor das Startbild übernimmt. Gerätepixel
+// = CSS-Maß × DPR; die Route rendert dieselbe Marey-Spur wie das Icon.
+const IOS_SPLASH: { w: number; h: number; dw: number; dh: number; r: number }[] = [
+  { w: 1290, h: 2796, dw: 430, dh: 932, r: 3 },
+  { w: 1179, h: 2556, dw: 393, dh: 852, r: 3 },
+  { w: 1170, h: 2532, dw: 390, dh: 844, r: 3 },
+  { w: 1125, h: 2436, dw: 375, dh: 812, r: 3 },
+  { w: 1242, h: 2688, dw: 414, dh: 896, r: 3 },
+  { w: 828, h: 1792, dw: 414, dh: 896, r: 2 },
+  { w: 1242, h: 2208, dw: 414, dh: 736, r: 3 },
+  { w: 750, h: 1334, dw: 375, dh: 667, r: 2 },
+];
+
 export const metadata: Metadata = {
   title: "Platte 311",
   description: "Das Bewegungslabor — Muskelaufbau mit ATLAS als Studienleiter.",
@@ -32,6 +46,10 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Platte 311",
+    startupImage: IOS_SPLASH.map((s) => ({
+      url: `/apple-splash/${s.w}x${s.h}`,
+      media: `(device-width: ${s.dw}px) and (device-height: ${s.dh}px) and (-webkit-device-pixel-ratio: ${s.r}) and (orientation: portrait)`,
+    })),
   },
   formatDetection: { telephone: false },
 };
