@@ -49,7 +49,10 @@ const scheibe = (c: Punkt): PhasenPrimitive => ({ t: "scheibe", c });
 
 /* ── Referenz: Kniebeuge (Handoff Heute.dc, fig-p1/p2/p3 — 1:1) ─────────── */
 
-const KNIEBEUGE: PhasenFigurDef = {
+/** Die Referenzgeometrie des Labors — und zugleich das App-Icon: Nachtrag 2
+ *  überlagert genau diese drei Phasen zur „Marey-Spur" (components/brand/
+ *  marey-art.tsx). Deshalb exportiert: Icon und Katalog dürfen nie driften. */
+export const FIGUR_KNIEBEUGE: PhasenFigurDef = {
   id: "squat",
   phases: [
     [
@@ -428,7 +431,7 @@ const CARDIO: PhasenFigurDef = {
 
 /** Muster-Standard: jede der 12 Bewegungsfamilien hat EINE Figur. */
 export const PATTERN_FIGUR: Record<Pattern, PhasenFigurDef> = {
-  squat: KNIEBEUGE,
+  squat: FIGUR_KNIEBEUGE,
   lunge: LUNGE,
   hinge: HINGE,
   hpush: HPUSH,
@@ -448,5 +451,5 @@ export const EXERCISE_FIGUR: Record<string, PhasenFigurDef> = {};
 
 /** Die Figur einer Übung: Übungs-Override, sonst Muster-Standard. */
 export function figurFor(ex: Pick<Exercise, "id" | "pattern">): PhasenFigurDef {
-  return EXERCISE_FIGUR[ex.id] ?? PATTERN_FIGUR[ex.pattern] ?? KNIEBEUGE;
+  return EXERCISE_FIGUR[ex.id] ?? PATTERN_FIGUR[ex.pattern] ?? FIGUR_KNIEBEUGE;
 }
