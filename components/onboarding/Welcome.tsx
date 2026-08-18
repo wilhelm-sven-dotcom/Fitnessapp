@@ -79,9 +79,9 @@ export function Welcome() {
           </p>
           <h1 className="mt-2 font-display text-4xl italic text-fg">Platte 311</h1>
           <p className="mt-4 max-w-xs font-display text-base leading-relaxed text-fg">
-            1887 zerlegte Muybridge den Gewichtheber in Einzelbilder. Dieses
-            Labor setzt die Reihe fort: Jede Wiederholung ein Kader, jede
-            Einheit eine Platte — und ATLAS führt das Protokoll.
+            1887 zerlegte Muybridge Bewegung in Einzelbilder — Platte 311 zeigt
+            einen Gewichtheber. Diese App führt die Reihe fort: Du trainierst,
+            ATLAS schaut zu und stellt die nächste Einheit zusammen.
           </p>
         </motion.div>
 
@@ -142,10 +142,10 @@ export function Welcome() {
             full
             className="tracking-gesperrt-3"
           >
-            Apparatur einrichten
+            Los geht&apos;s
           </Button>
           <p className="mt-3 text-center font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
-            Lokales Archiv · Kein Konto nötig
+            Alles bleibt auf dem Gerät · Kein Konto nötig
           </p>
         </motion.div>
       </div>

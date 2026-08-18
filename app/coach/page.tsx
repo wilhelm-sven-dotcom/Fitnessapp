@@ -28,7 +28,7 @@ const CHAT_CAP = 40;
 
 const SUGGESTIONS = [
   "Wie läuft meine Mission?",
-  "Warum ist meine heutige Studie so angeordnet?",
+  "Warum sieht meine heutige Einheit so aus?",
   "Worauf soll ich diese Woche achten?",
 ];
 
@@ -88,7 +88,7 @@ export default function CoachPage() {
       "\n\nATLAS-Status:\n" +
       trainerContextBlock(trainer) +
       (backSafeActive
-        ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Studie ist bereits rückenschonend aufgelöst."
+        ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Einheit ist bereits rückenschonend aufgelöst."
         : ""),
     [log, allLib, body, cardio, exerciseNotes, trainer, nextSession, backSafeActive],
   );
@@ -237,7 +237,7 @@ export default function CoachPage() {
     >
       <span className="flex items-center gap-2">
         <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
-        Zur heutigen Studie
+        Zur heutigen Einheit
       </span>
       <ChevronRight size={15} className="shrink-0 text-faint" />
     </Pressable>
@@ -264,17 +264,17 @@ export default function CoachPage() {
 
   return (
     <div>
-      {/* Status-Kopf: der Studienleiter + Tages-Direktive. */}
+      {/* Status-Kopf: ATLAS + Tages-Direktive. */}
       <div className="mb-4 rounded-card border border-line-card bg-surface-1 p-3.5">
         <div className="flex items-baseline justify-between gap-2">
           <span className="flex items-center gap-2">
             <AtlasMark size={16} live className="text-fg" />
             <h1 className="font-mono text-2xs font-semibold uppercase tracking-gesperrt-2 text-fg">
-              ATLAS · Studienleiter
+              ATLAS · Coach
             </h1>
           </span>
           <span className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-            Protokoll <span className="tabular-nums">{plattenNummer(log)}</span> · Mission{" "}
+            Einheit <span className="tabular-nums">{plattenNummer(log)}</span> · Mission{" "}
             <span className="tabular-nums">{Math.round(trainer.mission.pct * 100)}</span> %
           </span>
         </div>
@@ -289,7 +289,7 @@ export default function CoachPage() {
       {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
       <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-3.5">
         <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
-          Wochen-Protokoll (Folio) · KW {isoWeek(new Date())}
+          Wochen-Rückblick · KW {isoWeek(new Date())}
         </p>
         <p className="mt-2 whitespace-pre-wrap font-display text-base leading-relaxed text-fg">
           {rapport || briefing.coachNote}
@@ -301,7 +301,7 @@ export default function CoachPage() {
             className="mt-3 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none disabled:opacity-50"
           >
             <Sparkles size={13} />
-            {rapportBusy ? "ATLAS schreibt …" : "Ausführliches Protokoll"}
+            {rapportBusy ? "ATLAS schreibt …" : "Ausführlicher Rückblick"}
           </Pressable>
         )}
       </section>
@@ -309,7 +309,7 @@ export default function CoachPage() {
       {/* Gespräch. */}
       {loaded && messages.length === 0 ? (
         <div>
-          <p className="mb-2 px-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">Meldung an den Studienleiter:</p>
+          <p className="mb-2 px-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">Frag ATLAS:</p>
           <div className="space-y-2">
             {SUGGESTIONS.map((s) => (
               <Pressable
@@ -323,7 +323,7 @@ export default function CoachPage() {
             ))}
           </div>
           <p className="mb-2 mt-5 px-1 text-xs text-muted">
-            Oder direkt konkret — Wunsch rein, startbare Studie raus:
+            Oder direkt konkret — Wunsch rein, fertige Einheit raus:
           </p>
           {buildEl}
         </div>
@@ -372,8 +372,8 @@ export default function CoachPage() {
             }
           }}
           rows={1}
-          placeholder="Meldung an den Studienleiter …"
-          aria-label="Nachricht an den Studienleiter"
+          placeholder="Frag ATLAS …"
+          aria-label="Nachricht an ATLAS"
           className="flex-1 resize-none rounded-pill border border-line bg-transparent px-4 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         />
         <Button

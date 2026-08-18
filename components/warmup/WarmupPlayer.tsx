@@ -130,7 +130,7 @@ export function WarmupPlayer({
         } else {
           setDone(true);
           vibrate([60, 40, 60]);
-          if (voiceOn) speak("Apparatur kalibriert. Die Studie kann beginnen.", { interrupt: true });
+          if (voiceOn) speak("Aufwärmen fertig. Los geht's.", { interrupt: true });
         }
       } else {
         // Atomar in den nächsten Drill: left SOFORT mitsetzen — sonst sieht
@@ -160,9 +160,9 @@ export function WarmupPlayer({
   if (done) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 app-bg px-8 text-center">
-        <p className="font-display text-4xl italic text-fg">Apparatur kalibriert.</p>
+        <p className="font-display text-4xl italic text-fg">Aufgewärmt.</p>
         <p className="max-w-xs font-mono text-2xs uppercase tracking-gesperrt text-muted">
-          Die Studie kann beginnen.
+          Jetzt kann es losgehen.
         </p>
         <Pressable
           onClick={onFinished ?? onClose}
@@ -237,7 +237,7 @@ export function WarmupPlayer({
       </div>
 
       <p className="mt-2 px-5 text-center font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
-        Akt I · Kalibrierung der Apparatur
+        Aufwärmen
       </p>
 
       {/* progress dots — ab >8 Drills kompakt, damit die Reihe auf 320 px trägt */}
@@ -286,7 +286,7 @@ export function WarmupPlayer({
           ) : fig ? (
             <div className="mb-3 w-72 rounded-card border border-line-card bg-surface-1 p-2">
               <p className="px-1 pt-0.5 text-left font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-                Apparat {index + (switching ? 2 : 1)}
+                Übung {index + (switching ? 2 : 1)}
               </p>
               <FigurePanel
                 label=""
@@ -310,7 +310,7 @@ export function WarmupPlayer({
             {switching ? "Wechsel" : badge.label}
           </span>
           <h2 className="font-display text-2xl italic text-fg">
-            {switching ? `Nächster Apparat: ${showing.name}` : showing.name}
+            {switching ? `Gleich: ${showing.name}` : showing.name}
           </h2>
           <p className="mt-3 max-w-sm font-mono text-3xs font-medium uppercase leading-relaxed tracking-gesperrt text-muted">
             {switching ? "Position wechseln — gleich weiter" : showing.cue}

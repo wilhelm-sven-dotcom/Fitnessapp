@@ -55,7 +55,7 @@ export function exerciseChips(opts: {
       now = Math.max(0, ...cur.map((s) => oneRm(Number(s.weight) || 0, Number(s.reps) || 0)));
     }
     if (best > 0 && now > best) {
-      chips.push({ tone: "emerald", text: "Neues Maximum — gut gemacht." });
+      chips.push({ tone: "emerald", text: "Neuer Rekord — gut gemacht." });
     }
   }
 

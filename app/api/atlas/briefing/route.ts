@@ -7,7 +7,7 @@ import { allowRequest, clientKey } from "@/lib/rate-limit";
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
 
-const RAPPORT_RULES = `Schreibe das Wochen-Protokoll (Folio) für deinen Athleten — unten stehen die Fakten der Woche. Form: 4–6 kurze Sätze Fließtext (keine Listen, keine Überschriften). Inhalt: was die Woche wirklich war (mit 1–2 echten Zahlen), was auffiel, und der klare Fokus für die kommende Woche. Bezieh dich, wenn vorhanden, auf die Missions-Bilanz. Keine Floskeln, Du-Form.`;
+const RAPPORT_RULES = `Schreibe den Wochen-Rückblick für deinen Athleten — unten stehen die Fakten der Woche. Form: 4–6 kurze Sätze Fließtext (keine Listen, keine Überschriften). Inhalt: was die Woche wirklich war (mit 1–2 echten Zahlen), was auffiel, und der klare Fokus für die kommende Woche. Bezieh dich, wenn vorhanden, auf die Missions-Bilanz. Keine Floskeln, Du-Form.`;
 
 interface BriefingBody {
   facts?: string;

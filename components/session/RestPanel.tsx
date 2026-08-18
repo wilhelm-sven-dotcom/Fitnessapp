@@ -64,7 +64,7 @@ export function RestPanel({
                 over ? "text-accent-ink" : "text-muted",
               )}
             >
-              {over ? "Verschlusszeit · Vorbei" : "Verschlusszeit · Pause"}
+              {over ? "Pause · Vorbei" : "Pause"}
             </p>
             <motion.p
               animate={over && !reduce ? { scale: [1, 1.04, 1] } : undefined}
@@ -122,7 +122,7 @@ export function RestPanel({
           {set && !set.warmup && (
             <div className="mt-3">
               <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-                Kader {setNo} — wie schwer war&apos;s?
+                Satz {setNo} — wie schwer war&apos;s?
               </p>
               {timed ? (
                 <Scale

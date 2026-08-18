@@ -164,7 +164,7 @@ function whyLine(
   const { primary } = muscleOf(ex);
   const label = MUSCLE_LABEL[primary];
   if (need && need.days >= 5) return `${label} war ${Math.round(need.days)} Tage nicht dran — Zeit für einen Reiz.`;
-  if (need && need.deficit > 2) return `${label} liegt diese Woche noch ${Math.ceil(need.deficit)} Kader unter dem Ziel.`;
+  if (need && need.deficit > 2) return `${label} liegt diese Woche noch ${Math.ceil(need.deficit)} Sätze unter dem Ziel.`;
   if (ex.pattern === "core") return "Stabile Mitte trägt alles andere.";
   return `Hält ${label} in der Rotation.`;
 }
@@ -191,7 +191,7 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
     name = "Rücken-Reset";
     focus = "Stabilität";
     briefing =
-      "Heute keine Lasten: eine gewichtsfreie Stabilitäts-Studie, die deinen unteren Rücken beruhigt und die Mitte wieder aufbaut.";
+      "Heute keine Lasten: eine gewichtsfreie Stabi-Einheit, die deinen unteren Rücken beruhigt und die Mitte wieder aufbaut.";
     const pull = opts.has("bands") ? "band_row" : opts.has("rings") ? "ringrow" : opts.has("pullup") ? "pullup" : null;
     const ids = [...RESET_IDS.slice(0, 2), ...(pull ? [pull] : []), ...RESET_IDS.slice(2)];
     for (const id of ids) {
@@ -202,7 +202,7 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
     name = "Die Prüfung";
     focus = "Maximalkraft-Test";
     briefing =
-      "Testtag: vier Grundmuster, jeweils sauber hochgerampt bis zum schweren Satz. Keine Maximum-Jagd um jeden Preis — Technik entscheidet.";
+      "Testtag: vier Grundmuster, jeweils sauber hochgerampt bis zum schweren Satz. Keine Rekordjagd um jeden Preis — Technik entscheidet.";
     for (const pat of EXAM_PATTERNS) {
       // Fürs Testen zählt Vertrautheit: die zuletzt trainierte Übung des Musters.
       const pool = poolFor(pat, opts.has, opts.allLib, blockedOf(opts));
@@ -263,7 +263,7 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
     const top = ranked.slice(0, 2).map(([m]) => MUSCLE_LABEL[m]);
     focus = top.length ? top.join(" & ") : "Ganzkörper";
     name = `Ganzkörper · ${focus}`;
-    briefing = `Heute liegt der Schwerpunkt auf ${top.join(" und ") || "dem ganzen Körper"} — dort ist diese Woche noch am meisten offen. Die Anordnung: große Übungen zuerst, dann Feinarbeit, zum Schluss die Mitte.`;
+    briefing = `Heute liegt der Schwerpunkt auf ${top.join(" und ") || "dem ganzen Körper"} — dort ist diese Woche noch am meisten offen. Große Übungen zuerst, dann Feinarbeit, zum Schluss die Mitte.`;
     if (opts.backSafe)
       briefing += " Dein Rücken wird dabei geschont: keine belasteten Beugen, Stabi statt Last.";
   }

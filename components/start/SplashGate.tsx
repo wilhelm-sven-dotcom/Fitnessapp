@@ -30,11 +30,14 @@ import { useTraining } from "@/components/providers/TrainingProvider";
  * V1 440 + 160 = 600 · V2 520 + 160 = 680 · V3 500 (hart). Darunter darf die
  * Untergrenze nicht liegen — sonst reißt der Abgang genau das Bild weg, auf
  * das die ganze Choreografie zuläuft (bei 440 ms sah man die Wortmarke nur
- * noch wegfliegen). Obendrauf ein Moment Halt, damit das fertige Bild auch
- * gelesen wird: rund eine halbe Sekunde, in der bei V1 die Belichtungsstriche
- * blinken, bei V2 das Zoetrop läuft, bei V3 der Registrierpunkt schlägt.
+ * noch wegfliegen). Der Rest ist Haltezeit, damit das fertige Bild in Ruhe
+ * gelesen wird: rund anderthalb Sekunden, in denen bei V3 der
+ * Registrierpunkt schlägt, bei V1 die Belichtungsstriche blinken und bei V2
+ * das Zoetrop läuft. Das ist bewusst großzügig — das Startbild ist der
+ * Moment, in dem die App sich vorstellt; wem das zu lang ist, der schaltet
+ * es unter Aussehen ab.
  */
-const MIN_MS = 1200;
+const MIN_MS = 2200;
 /** Abgangsdauer — deckungsgleich mit der CSS-Regel für data-splash="ab". */
 const AB_MS = 180;
 

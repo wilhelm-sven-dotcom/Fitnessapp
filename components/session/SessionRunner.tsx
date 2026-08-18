@@ -559,7 +559,7 @@ export function SessionRunner() {
     if (rec && beatsRecord(ex, set, rec) && !recordCelebratedRef.current.has(itemId)) {
       recordCelebratedRef.current.add(itemId);
       success();
-      if (settings.voiceCues) speak("Neues Maximum. Stark.");
+      if (settings.voiceCues) speak("Neuer Rekord. Stark.");
     } else {
       tap();
     }
@@ -635,7 +635,7 @@ export function SessionRunner() {
       return idx >= 0 ? { ...r, setIdx: idx } : null;
     });
     tap();
-    toast(`Apparat getauscht: ${nx.name}`);
+    toast(`Getauscht: ${nx.name}`);
   };
 
   /* ── Abschluss ── */
@@ -776,10 +776,10 @@ export function SessionRunner() {
       <>
         <div className="pt-10 text-center">
           <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
-            Studie · Check-in
+            Gleich geht&apos;s los
           </p>
           <h1 className="mt-1 font-display text-2xl italic tracking-tight text-fg">
-            {todaySession?.name ?? "Heutige Studie"}
+            {todaySession?.name ?? "Deine Einheit"}
           </h1>
         </div>
         <ReadinessGate
@@ -900,8 +900,12 @@ export function SessionRunner() {
 
       <div className="px-1">
         <p className="truncate font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          {/* Der Fokus steckt oft schon im Namen („Ganzkörper · Brust & Rücken") —
+              dann nicht doppelt anhängen. */}
           {st.session.name}
-          {st.session.focus ? ` · ${st.session.focus}` : ""}
+          {st.session.focus && !st.session.name.includes(st.session.focus)
+            ? ` · ${st.session.focus}`
+            : ""}
         </p>
       </div>
 
@@ -978,7 +982,7 @@ export function SessionRunner() {
         >
           {openLeft === 0 ? (
             <>
-              <Flag size={16} /> Zur Auswertung
+              <Flag size={16} /> Zum Abschluss
             </>
           ) : (
             <>
@@ -1041,11 +1045,11 @@ export function SessionRunner() {
 
       <GuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} ex={ex} />
 
-      <Sheet open={exitOpen} onClose={() => setExitOpen(false)} title="Studie beenden?">
+      <Sheet open={exitOpen} onClose={() => setExitOpen(false)} title="Training beenden?">
         {doneCount > 0 ? (
           <>
             <p className="mb-4 text-sm text-muted">
-              Du hast {doneCount} {doneCount === 1 ? "Kader" : "Kader"} belichtet.
+              Du hast {doneCount} {doneCount === 1 ? "Satz" : "Sätze"} erledigt.
               Beenden speichert diese — der Rest wird verworfen.
             </p>
             <div className="flex flex-col gap-2">
@@ -1056,13 +1060,13 @@ export function SessionRunner() {
                 }}
                 className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Zur Auswertung
+                Zum Abschluss
               </Pressable>
               <Pressable
                 onClick={() => setExitOpen(false)}
                 className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Weiter belichten
+                Weiter trainieren
               </Pressable>
               <Pressable
                 onClick={doDiscard}
@@ -1075,7 +1079,7 @@ export function SessionRunner() {
         ) : (
           <>
             <p className="mb-4 text-sm text-muted">
-              Noch kein Kader belichtet. Studie wirklich verlassen? Es wird
+              Noch kein Satz erledigt. Training wirklich verlassen? Es wird
               nichts gespeichert.
             </p>
             <div className="flex flex-col gap-2">
@@ -1089,7 +1093,7 @@ export function SessionRunner() {
                 onClick={() => setExitOpen(false)}
                 className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
-                Weiter belichten
+                Weiter trainieren
               </Pressable>
             </div>
           </>

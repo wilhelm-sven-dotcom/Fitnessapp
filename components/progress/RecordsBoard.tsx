@@ -35,7 +35,7 @@ export function RecordsBoard({
       <Card className="mb-4 p-5">
         <div className="mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-messing">
-            <Trophy size={13} /> Tafel des Maximums
+            <Trophy size={13} /> Deine Rekorde
           </span>
           <span className="font-mono text-xs text-faint">
             {events.length} gesamt{streak > 1 ? ` · Serie ${streak} Wo` : ""}

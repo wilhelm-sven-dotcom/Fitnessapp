@@ -7,10 +7,10 @@ import { allowRequest, clientKey } from "@/lib/rate-limit";
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
 
-const DEBRIEF_RULES = `Der Athlet hat GERADE eine Studie beendet, die Platte ist belichtet — unten stehen die Fakten. Gib dein Protokoll: GENAU drei kurze Zeilen, jede für sich stehend (durch Zeilenumbruch getrennt, ohne Nummerierung oder Spiegelstriche).
-Zeile 1: das Urteil zur Studie — konkret, mit einer echten Zahl.
+const DEBRIEF_RULES = `Der Athlet hat GERADE eine Einheit beendet — unten stehen die Fakten. Gib dein Debrief: GENAU drei kurze Zeilen, jede für sich stehend (durch Zeilenumbruch getrennt, ohne Nummerierung oder Spiegelstriche).
+Zeile 1: das Urteil zur Einheit — konkret, mit einer echten Zahl.
 Zeile 2: die wichtigste Beobachtung (stärkster Satz, auffälligster Verlauf, RIR-Muster).
-Zeile 3: die eine Anordnung für die nächste Studie.
+Zeile 3: der eine Auftrag für die nächste Einheit.
 Keine Floskeln, keine Emojis, Du-Form.`;
 
 interface DebriefBody {

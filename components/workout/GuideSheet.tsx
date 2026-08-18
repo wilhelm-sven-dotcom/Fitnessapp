@@ -151,7 +151,7 @@ export function GuideSheet({
           {(ex.steps?.length ?? 0) > 0 ? (
             <div className="mb-3">
               <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-                Versuchsablauf
+                Ausführung
               </p>
               <ol className="space-y-1.5">
                 {(ex.steps ?? []).map((s, i) => (

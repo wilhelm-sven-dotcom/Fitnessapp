@@ -40,22 +40,22 @@ export function FinishFlow({
         onClick={onBack}
         className="mb-4 -ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-sm text-muted focus:outline-none"
       >
-        <ArrowLeft size={18} /> Zurück zur Studie
+        <ArrowLeft size={18} /> Zurück zum Training
       </Pressable>
 
       <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-3 text-muted">
-        Auswertung
+        Abschluss
       </p>
       <h2 className="mt-1 font-display text-2xl italic text-fg">
         {state.session.name}
       </h2>
       <p className="mt-1 font-mono text-2xs uppercase tracking-gesperrt text-muted">
         {done === 0 ? (
-          "Kein Kader belichtet — Beenden speichert nichts."
+          "Kein Satz erledigt — Beenden speichert nichts."
         ) : (
           <>
             <span className="tabular-nums">{done}</span>{" "}
-            {done === 1 ? "Kader" : "Kader"} belichtet.
+            {done === 1 ? "Satz" : "Sätze"} erledigt.
           </>
         )}
       </p>
@@ -65,7 +65,7 @@ export function FinishFlow({
           Wie fühlt sich dein unterer Rücken an?
         </p>
         <p className="mb-3 mt-0.5 text-xs text-muted">
-          Kurz einschätzen — steuert die nächste Studie.
+          Kurz einschätzen — steuert die nächste Einheit.
         </p>
         <div className="flex gap-2">
           {BACK_OPTIONS.map((o) => (
@@ -84,7 +84,7 @@ export function FinishFlow({
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Notiz zur Platte — wie war's?"
+          placeholder="Notiz — wie war's?"
           rows={2}
           className="mt-4 w-full resize-none rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         />
@@ -97,10 +97,10 @@ export function FinishFlow({
       >
         <Save size={18} strokeWidth={2.5} />
         {saving
-          ? "Archiviert …"
+          ? "Speichert …"
           : done === 0
-            ? "Studie verlassen"
-            : "Platte archivieren"}
+            ? "Training verlassen"
+            : "Beenden & speichern"}
       </Pressable>
     </div>
   );

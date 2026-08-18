@@ -41,7 +41,7 @@ const IOS_SPLASH: { w: number; h: number; dw: number; dh: number; r: number }[] 
 
 export const metadata: Metadata = {
   title: "Platte 311",
-  description: "Das Bewegungslabor — Muskelaufbau mit ATLAS als Studienleiter.",
+  description: "Das Bewegungslabor — Muskelaufbau mit ATLAS als Coach.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -123,7 +123,7 @@ finish review, the verdict, and DESIGN.md (ui-style).
             Hydration scheitert und SplashGate nie zum Zug kommt. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');if(location.pathname.indexOf('/workout')===0)r='dark';d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#141210':'#f2ecdd');var p=s.splash||'zufall';if(p!=='aus'){var v=p==='zufall'?'v'+(1+Math.floor(Math.random()*3)):p;window.__sp0=performance.now();d.setAttribute('data-splash',v);setTimeout(function(){d.setAttribute('data-splash','weg')},4000);}}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');if(location.pathname.indexOf('/workout')===0)r='dark';d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#141210':'#f2ecdd');var p=s.splash||'v3';if(p!=='aus'){var v=p==='zufall'?'v'+(1+Math.floor(Math.random()*3)):p;window.__sp0=performance.now();d.setAttribute('data-splash',v);setTimeout(function(){d.setAttribute('data-splash','weg')},4000);}}catch(e){}})();`,
           }}
         />
         <Splash />

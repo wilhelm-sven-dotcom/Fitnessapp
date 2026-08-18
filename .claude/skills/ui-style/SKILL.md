@@ -9,7 +9,7 @@ description: >-
   Akzent, Cyanotypie & Messing, Old Standard TT (Kursive) + IBM Plex Mono
   (trägt Body), Radius 3/2/1 px, NULL Schatten, Filmtransport-Motion,
   Phasenfiguren & Phasenband, Marey-Spur als Icon, Startbild in drei
-  Choreografien, volles Sprachregister (Studie/Platte/Kader/Maximum).
+  Choreografien; Bediensprache ist schlichtes Alltagsdeutsch.
   Enthält die echten Tokens, Rezepte, Verbote und Smoke-Invarianten.
   Werte hier nachschlagen statt erfinden.
 ---
@@ -23,10 +23,9 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 ## EIN Design: „Platte 311" — das Bewegungslabor
 
 - **These:** 1887 zerlegte Muybridge den Gewichtheber in Einzelbilder; die App
-  setzt die Reihe fort. Training als fotografische Studie: jede Einheit eine
-  **Studie** (gespeichert eine **Platte** mit laufender Nummer), jeder Satz ein
-  **Kader**, die Satzpause die **Verschlusszeit**, ein Rekord ein **Maximum**
-  auf der „Tafel des Maximums". ATLAS ist der **Studienleiter**.
+  setzt die Reihe fort — als BILDSPRACHE: Phasenfiguren, Zoetrop, Raster,
+  Kollodium und Kreide. Die Metapher steckt im Aussehen, NICHT in den Wörtern:
+  die Bedienung sagt Einheit, Satz, Pause, Rekord (siehe „Sprache" unten).
 - **Zwei Führungen:** „Archiv" = helles Albumin-Papier (Grundzustand),
   „Atelier" = Kollodium-Dunkelkammer (`data-theme="dark"`). Wahl in
   `settings.theme` (Segment Archiv/Atelier/Auto), Laufzeit `applyTheme`
@@ -226,28 +225,48 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
   iOS baut den OS-Splash nicht aus dem Manifest — `apple-splash/[spec]`
   liefert dieselbe Marey-Spur, verlinkt über `appleWebApp.startupImage`.
 
-## Sprachregister (volles Register — UI und ATLAS)
+## Sprache: Alltagsdeutsch in der Bedienung
 
-| Alt | Platte 311 |
+**Die Laborsprache ist aus der Oberfläche entfernt** (Nutzer-Entscheid nach dem
+Praxistest: „Studie beginnen" usw. las sich im Training zäh). Die Bedienung
+spricht schlicht, das Design bleibt unverändert.
+
+| In der Oberfläche steht | NICHT |
 |---|---|
-| Einheit/Training | **Studie** (laufend), **Platte Nr. n** (gespeichert) |
-| Satz / Satz n | **Kader** in Zählern/Etiketten („Kader 2", „12 Kader") |
-| Aufwärm-Satz | **Kalibr.** |
-| Satzpause | **Verschlusszeit** |
-| Aufwärmen | **Akt I · Kalibrierung der Apparatur** (Drills = „Apparat n") |
-| Training läuft | **Akt II** (Bühne, „Übung i/n · Bühne") |
-| Rekord/Bestmarke | **Maximum/Maxima**, „Tafel des Maximums" (Messing) |
-| Abschluss | **Auswertung** → „Platte archivieren" / „Platte belichtet" |
-| Coach | **ATLAS · Studienleiter**; Protokollzeilen `Beobachtung:` /
-  `Hypothese:` / `Versuchsanordnung:` / `Anpassung:` / `Hinweis:` —
-  `ProtokollBubble` parst genau diese Präfixe (case-insensitiv) |
-| Wochen-Rapport | **Wochen-Protokoll (Folio)** |
-| Übungskatalog | **Register** („Nr. 311-XX") |
-| Quelle | „Versuchsanordnung: ATLAS / Basisprotokoll (offline) / manuell" |
+| Einheit · „Deine Einheit heute" · „Einheit 12" | Studie, Platte Nr. |
+| Training starten / fortsetzen | Studie beginnen |
+| Satz · „Satz 2" · „10 Sätze" · „Aufw." | Kader, Kalibr. |
+| Pause | Verschlusszeit |
+| Aufwärmen | Kalibrierung der Apparatur, Akt I, Apparat n |
+| Übung 1/5 · „Übung läuft" | Bühne, Akt II, Zoetrop 8 B/s |
+| Rekord · „Neuer Rekord" · „Persönlicher Rekord" | Maximum, Tafel des Maximums |
+| erledigt · gespeichert | belichtet, archiviert |
+| Abschluss · „Beenden & speichern" | Auswertung, Platte archivieren |
+| Plan · „Basisplan (offline)" | Versuchsanordnung, Basisprotokoll |
+| ATLAS · Coach | Studienleiter |
+| Wochen-Rückblick | Wochen-Protokoll (Folio) |
+| Hell / Dunkel | Archiv / Atelier |
+| Muskeln | Myologie |
+| Übungen · „114 Übungen" | Register |
 
-DOM in Normalschreibung, Versalien via CSS. ATLAS-Systemtexte (Persona,
-Regeln, Tool-Descriptions) leben in `lib/atlas/*` + `app/api/atlas/*` und
-sprechen dasselbe Register (sparsam — Klarheit schlägt Metapher).
+**Was bleibt:** der Name „Platte 311" (App-Titel, Wortmarke, Onboarding,
+Startbild, Poster-Kopf) und **ATLAS** als Name des Coaches. Beides sind
+Eigennamen, keine Fachsprache.
+
+**Der Code behält die Design-Sprache.** Bezeichner und Kommentare heißen
+weiter `Kader`, `plattenNummer`, `belichtet`, `PhasenFigur`, `sp-buehne` —
+das ist die Sprache des Systems, nicht der Oberfläche, und ein Umbenennen
+wäre reine Churn. Wer eine UI-Zeichenkette ändert, prüft also nicht die
+Bezeichner drumherum.
+
+**ATLAS spricht ebenfalls normal.** Die Persona in `lib/atlas/prompts.ts`
+verbietet ausdrücklich erfundene Fachsprache; die Chat-Protokollzeilen heißen
+`Beobachtung:` / `Einschätzung:` / `Plan:` / `Anpassung:` / `Hinweis:` — diese
+fünf Präfixe müssen in `app/api/atlas/chat/route.ts` und im Regex von
+`components/coach/ProtokollBubble.tsx` deckungsgleich bleiben, sonst rendert
+der Parser nichts mehr.
+
+DOM in Normalschreibung, Versalien via CSS.
 
 ## HARTE Regeln (nicht verhandelbar)
 
@@ -279,22 +298,22 @@ z-Ordnung: Sticky-Kopf 20 < Dock 30 < Sheets 50.
 Diese Strings/Anker klickt der Smoke — Änderung NUR mit Ko-Evolution von
 smoke.mjs im selben Commit:
 
-- Heute: „Heutige Studie" · „Studie beginnen" · „Platte bearbeiten" ·
+- Heute: „Deine Einheit heute" · „Training starten" · „Einheit bearbeiten" ·
   „Übung wählen" · „… tauschen" (Regex-Ende) · „Bearbeiten"
 - Check-in: „Tagesform" · „Überspringen"
 - Aufwärmen: aria-label „Aufwärmen beenden"
-- Bühne: `data-testid="stage-order"` (ExerciseStage-section) ·
+- Übungsansicht: `data-testid="stage-order"` (ExerciseStage-section) ·
   `.set-active` mit 2 Inputs
-- Pause: „Verschlusszeit" (exact:false)
-- Abschluss: aria „Studie beenden" · „Zur Auswertung" · „Wie fühlt sich dein
-  unterer Rücken an?" + „Gut" (exact) · „Platte archivieren"
+- Pause: „Pause" (exact:false)
+- Abschluss: aria „Training beenden" · „Zum Abschluss" · „Wie fühlt sich dein
+  unterer Rücken an?" + „Gut" (exact) · „Beenden & speichern"
 - Fortschritt: „Verlauf" (exact) — Alt-Session „Ganzkörper A" muss rendern
 - Katalog: „Eigene Übung anlegen" · „z. B. Landmine Press" · „Übung anlegen" ·
   „1 eigene" (Substring)
 - Settings: „Geräte" · „ATLAS"
 - Seed migriert `theme:"dark"` → hell (M72-Migration bleibt); /workout läuft
   im erzwungenen Atelier.
-- Seed setzt `splash: "aus"` — die Durchlauf-Checks sollen nicht 600 ms auf
+- Seed setzt `splash: "aus"` — die Durchlauf-Checks sollen nicht ~2,4 s auf
   die Choreografie warten. Schritt 11 „startbild" prüft sie dafür gezielt:
   `#splash` wird sichtbar und muss danach `hidden` sein (nicht bloß
-  transparent), dann steht „Heutige Studie".
+  transparent), dann steht „Deine Einheit heute".

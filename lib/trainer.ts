@@ -316,14 +316,14 @@ function directiveFor(input: TrainerInput, ref: Date, seed: number): TrainerDire
     };
   }
 
-  // 7 · Maximum-Chance.
+  // 7 · Rekord-Chance.
   const chance = prChance(log, recList);
   if (chance) {
     return {
       kind: "pr-chance",
       severity: "info",
-      text: pick(["Heute fällt ein Maximum.", "Maximum in Reichweite — nimm es mit."], seed),
-      reason: `${chance.name}: letzte Studie bei ${fmtPct(chance.ratio)} deines Maximums ${chance.recordLabel}.`,
+      text: pick(["Heute fällt ein Rekord.", "Bestmarke in Reichweite — nimm sie mit."], seed),
+      reason: `${chance.name}: letzte Einheit bei ${fmtPct(chance.ratio)} deines Rekords ${chance.recordLabel}.`,
       exId: chance.exId,
     };
   }
@@ -335,7 +335,7 @@ function directiveFor(input: TrainerInput, ref: Date, seed: number): TrainerDire
       kind: "streak",
       severity: "info",
       text: "Serie sichern — heute zählt.",
-      reason: `${streak} ${streak === 1 ? "Woche" : "Wochen"} Konstanz, diese Woche noch keine Studie.`,
+      reason: `${streak} ${streak === 1 ? "Woche" : "Wochen"} Konstanz, diese Woche noch keine Einheit.`,
     };
   }
 
@@ -344,8 +344,8 @@ function directiveFor(input: TrainerInput, ref: Date, seed: number): TrainerDire
     return {
       kind: "first",
       severity: "info",
-      text: "Erste Studie wartet. Ich beobachte ab Satz eins.",
-      reason: `${recTpl.name}, rund ${estimatedMin} Minuten — danach kalibriere ich deine Ziele.`,
+      text: "Erste Einheit wartet. Ich schaue ab Satz eins zu.",
+      reason: `${recTpl.name}, rund ${estimatedMin} Minuten — danach stelle ich deine Ziele schärfer.`,
     };
   }
   return {
@@ -409,15 +409,15 @@ export function missionProgress(
     meters.push({ id, label, current, target, pct, done: current >= target });
   };
 
-  meter("sessions", "Studien", input.weekCount, targets.sessionsTarget);
-  meter("sets", "Kader", input.weekSets.collected, targets.setsTarget);
+  meter("sessions", "Einheiten", input.weekCount, targets.sessionsTarget);
+  meter("sets", "Sätze", input.weekSets.collected, targets.setsTarget);
   if (targets.focusMuscle && targets.focusTarget) {
     const sets =
       input.muscleVolumes.find((m) => m.muscle === targets.focusMuscle)?.sets ?? 0;
     meter("focus", MUSCLE_LABEL[targets.focusMuscle], Math.round(sets), targets.focusTarget);
   }
   if (targets.prExId) {
-    meter("pr", "Maximum", Math.min(1, weeklyPrs(input.log, ref).length), 1);
+    meter("pr", "Rekord", Math.min(1, weeklyPrs(input.log, ref).length), 1);
   }
 
   const pct = meters.length
@@ -515,10 +515,10 @@ export function trainerState(input: TrainerInput): TrainerState {
 
   const statusLine =
     input.log.length === 0
-      ? "Kalibrierung läuft — ab der ersten Studie kenne ich dich."
+      ? "Ich lerne dich noch kennen — ab der ersten Einheit wird es genauer."
       : pick(
           [
-            `Alles im Blick — ${input.weekCount}/3 Studien erfasst.`,
+            `Alles im Blick — ${input.weekCount}/3 Einheiten erfasst.`,
             "Ich beobachte. Du lieferst.",
             `Mission bei ${fmtPct(mission.pct)} — Kurs halten.`,
             "Signale laufen. Ich melde mich, wenn etwas kippt.",
@@ -547,18 +547,18 @@ export function sessionDebrief(opts: {
   const { session, log, allLib, summary } = opts;
   const seed = daySeed(new Date(session.date));
   const t = fmtKg(Math.round(summary.tonnage / 100) / 10);
-  const saetze = `${summary.sets} Kader`;
+  const saetze = `${summary.sets} ${summary.sets === 1 ? "Satz" : "Sätze"}`;
 
   // ① Das Urteil.
   const line1 = session.isExam
     ? summary.prs > 0
-      ? `Prüfung bestanden — ${summary.prs === 1 ? "ein neues Maximum" : `${summary.prs} neue Maxima`} im Archiv. Deine Prognosen sind neu kalibriert.`
-      : "Prüfung abgelegt — Standort vermessen, das Archiv ist aktualisiert. Ab hier zählt der nächste Zyklus."
+      ? `Prüfung bestanden — ${summary.prs === 1 ? "ein neuer Rekord" : `${summary.prs} neue Rekorde`}. Deine Prognosen sind neu gesetzt.`
+      : "Prüfung abgelegt — Standort vermessen. Ab hier zählt der nächste Zyklus."
     : session.isBackReset
     ? pick(
         [
           `Reset gefahren — ${saetze} Stabilität statt Eisen. Genau richtig, wenn der Rücken meckert.`,
-          `Rücken-Reset im Buch: ${saetze}, null Last auf der Wirbelsäule — kluge Entscheidung.`,
+          `Rücken-Reset erledigt: ${saetze}, null Last auf der Wirbelsäule — kluge Entscheidung.`,
         ],
         seed,
       )
@@ -573,15 +573,15 @@ export function sessionDebrief(opts: {
     : summary.prs > 0
       ? pick(
           [
-            `${saetze}, ${t} Tonnen — und ${summary.prs === 1 ? "ein Maximum" : `${summary.prs} Maxima`}. Starker Auftritt.`,
-            `${summary.prs === 1 ? "Maximum gefallen" : `${summary.prs} Maxima gefallen`} — dazu ${saetze}, ${t} t bewegt.`,
+            `${saetze}, ${t} Tonnen — und ${summary.prs === 1 ? "ein Rekord" : `${summary.prs} Rekorde`}. Starker Auftritt.`,
+            `${summary.prs === 1 ? "Rekord gefallen" : `${summary.prs} Rekorde gefallen`} — dazu ${saetze}, ${t} t bewegt.`,
           ],
           seed,
         )
       : pick(
           [
             `Geliefert: ${saetze}, ${t} Tonnen bewegtes Eisen.`,
-            `${saetze} im Protokoll, ${t} t Eisen — solide Schicht.`,
+            `${saetze} im Buch, ${t} t Eisen — solide Schicht.`,
           ],
           seed,
         );
@@ -596,15 +596,15 @@ export function sessionDebrief(opts: {
   const avgRir = rirs.length ? rirs.reduce((a, b) => a + b, 0) / rirs.length : null;
   const line2 =
     session.backTraffic === "red"
-      ? "Der untere Rücken hat sich gemeldet — ernst nehmen, die nächste Studie entschärfe ich."
+      ? "Der untere Rücken hat sich gemeldet — ernst nehmen, die nächste Einheit entschärfe ich."
       : opts.readiness && band(opts.readiness.score) === "low"
         ? "Trotz mäßiger Bereitschaft durchgezogen — das zählt doppelt."
         : avgRir != null && avgRir < 1
           ? "Du warst nah an der Grenze — Mut ja, aber lass meist einen im Tank."
           : pick(
               [
-                `Die Woche steht bei ${summary.weekSets}/${summary.weekTarget} Kadern.`,
-                `Wochenstand: ${summary.weekSets} von ${summary.weekTarget} Kadern eingefahren.`,
+                `Die Woche steht bei ${summary.weekSets}/${summary.weekTarget} Sätzen.`,
+                `Wochenstand: ${summary.weekSets} von ${summary.weekTarget} Sätzen eingefahren.`,
               ],
               seed + 1,
             );
@@ -614,7 +614,7 @@ export function sessionDebrief(opts: {
   const line3 = under[0]
     ? pick(
         [
-          `Nächste Studie: ${MUSCLE_LABEL[under[0].muscle]} zuerst — da fehlt Volumen.`,
+          `Nächste Einheit: ${MUSCLE_LABEL[under[0].muscle]} zuerst — da fehlt Volumen.`,
           `Fokus fürs nächste Mal: ${MUSCLE_LABEL[under[0].muscle]}.`,
         ],
         seed + 2,
@@ -655,10 +655,10 @@ export function liveLine(opts: {
 
   const filled = (sets ?? []).filter((s) => !s.warmup && isFilled(s));
 
-  // ① Maximum gefallen.
+  // ① Rekord gefallen.
   if (record && filled.some((s) => beatsRecord(ex, s, record))) {
     return {
-      text: pick(["Maximum gefallen. Notiert.", "Neues Maximum — genau so."], seed),
+      text: pick(["Rekord gefallen. Notiert.", "Neuer Rekord — genau so."], seed),
       tone: "push",
       kind: "record",
     };
@@ -687,8 +687,8 @@ export function liveLine(opts: {
         return {
           text: pick(
             [
-              `Kader ${i + 1}: ${lbl(last)} — dein Schatten hatte ${lbl(shadow[i])}. Überholt.`,
-              `Schatten geschlagen — ${lbl(last)} gegen ${lbl(shadow[i])} in Kader ${i + 1}.`,
+              `Satz ${i + 1}: ${lbl(last)} — dein Schatten hatte ${lbl(shadow[i])}. Überholt.`,
+              `Schatten geschlagen — ${lbl(last)} gegen ${lbl(shadow[i])} in Satz ${i + 1}.`,
             ],
             seed + i,
           ),
@@ -699,7 +699,7 @@ export function liveLine(opts: {
     }
   }
 
-  // ② Maximum-Jagd: Vorschlag nahe am Bestwert.
+  // ② Rekordjagd: Vorschlag nahe am Bestwert.
   if (record && record.kind === "weight" && presc.suggestedWeight) {
     const gap = record.best - setMetric(ex, {
       weight: String(presc.suggestedWeight),
@@ -707,7 +707,7 @@ export function liveLine(opts: {
     } as SetEntry);
     if (gap > 0 && gap <= record.best * 0.06) {
       return {
-        text: `Maximum ${record.label} in Reichweite — greif zu.`,
+        text: `Rekord ${record.label} in Reichweite — greif zu.`,
         tone: "push",
         kind: "chase",
       };
@@ -719,7 +719,7 @@ export function liveLine(opts: {
   if (lastSet && lastSet.rir != null) {
     if (lastSet.rir === 0) {
       return {
-        text: "Grenze getroffen — Respekt. Nächster Kader ruhig.",
+        text: "Grenze getroffen — Respekt. Nächster Satz ruhig.",
         tone: "watch",
         kind: "rir",
       };
@@ -748,7 +748,7 @@ export function liveLine(opts: {
   switch (presc.reason) {
     case "up":
       return {
-        text: presc.w ? `Anordnung: ${presc.w} kg — du bist bereit.` : "Heute eine Stufe höher — du bist bereit.",
+        text: presc.w ? `Plan sagt ${presc.w} kg — du bist bereit.` : "Heute eine Stufe höher — du bist bereit.",
         tone: "push",
         kind: "presc",
       };
@@ -776,26 +776,26 @@ export function liveLine(opts: {
 /* ─────────────── Motivations-Zeile (Coach-Ansporn, an/aus) ─────────────── */
 
 const MOTIVATE_START = [
-  "Erster Kader — gib den Ton an.",
-  "Kamera läuft. Sauber, kontrolliert, voll da.",
+  "Erster Satz — gib den Ton an.",
+  "Los geht's. Sauber, kontrolliert, voll da.",
   "Kopf an, Fokus auf die Technik. Jetzt.",
-  "Die Platte ist eingespannt — leg los.",
+  "Anfangen ist die halbe Miete — leg los.",
 ];
 const MOTIVATE_MID = [
   "Dranbleiben — genau hier entsteht der Fortschritt.",
   "Technik hält, Tempo hält. Weiter so.",
-  "Sauber wie eben — nächster Kader.",
-  "Jeder Kader zählt. Bleib präsent.",
+  "Sauber wie eben — nächster Satz.",
+  "Jeder Satz zählt. Bleib präsent.",
 ];
 const MOTIVATE_LAST = [
-  "Letzter Kader — alles rein, was du hast.",
+  "Letzter Satz — alles rein, was du hast.",
   "Noch einer. Beiß dich sauber durch bis zum Schluss.",
   "Finish stark — dafür bist du hier.",
 ];
 const MOTIVATE_DONE = [
-  "Übung belichtet — stark gezogen.",
+  "Übung durch — stark gezogen.",
   "Abgehakt. Genau so weiter.",
-  "Sitzt. Nächste Bühne wartet.",
+  "Sitzt. Nächste Übung wartet.",
 ];
 
 /**
@@ -899,10 +899,10 @@ export function reviewMission(
 /** Eine Zeile fürs Facts-Paket des Rapports (und den deterministischen Fallback). */
 export function missionReviewFact(r: MissionReview): string {
   return (
-    `Mission KW ${r.kw}: ${r.sessions}/${r.sessionsTarget} Studien, ` +
-    `${r.sets}/${r.setsTarget} Kader (${fmtPct(r.outcomePct)}), ` +
+    `Mission KW ${r.kw}: ${r.sessions}/${r.sessionsTarget} Einheiten, ` +
+    `${r.sets}/${r.setsTarget} Sätze (${fmtPct(r.outcomePct)}), ` +
     `Fokus ${r.focusHit ? "erfüllt" : "offen"}, ` +
-    `${r.prs} ${r.prs === 1 ? "Maximum" : "Maxima"}.`
+    `${r.prs} ${r.prs === 1 ? "Rekord" : "Rekorde"}.`
   );
 }
 

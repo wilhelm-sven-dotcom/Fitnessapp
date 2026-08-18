@@ -27,7 +27,7 @@ const BUDGETS = [20, 25, 30, 45, 60, 75, 90];
 
 const SOURCE_BADGE: Record<DailySession["source"], string> = {
   atlas: "ATLAS",
-  fallback: "Basisprotokoll (offline)",
+  fallback: "Basisplan (offline)",
   manuell: "manuell",
 };
 
@@ -40,8 +40,8 @@ function zielVon(sets: number, lo: number, hi: number, sek: boolean): string {
 }
 
 /**
- * Die heutige Studie als Kartenfolge (Handoff Heute.dc): Marey-Karte der
- * Hauptübung (Chronofotografie + Gewichts-Hypothese), ATLAS-Protokollkarte,
+ * Die heutige Einheit als Kartenfolge (Handoff Heute.dc): Marey-Karte der
+ * Hauptübung (Chronofotografie + Gewichts-Vorschlag), ATLAS-Karte,
  * Phasenband-Karte, Übungsliste als Hairline-Zeilen, Stempel-CTA.
  * Alles Wichtige steht hier — kein Springen.
  */
@@ -71,14 +71,14 @@ export function SessionCard({
   locked?: boolean;
   /** Slot für den „Rücken schonen"-Toggle der Startseite. */
   spareSlot?: React.ReactNode;
-  /** ATLAS-Direktive des Tages — Zeile in der Protokollkarte, führt zu /coach. */
+  /** ATLAS-Direktive des Tages — Zeile in der ATLAS-Karte, führt zu /coach. */
   direktive?: string;
 }) {
   const router = useRouter();
   const { lastPerf, log, settings, body } = useTraining();
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
 
-  // Signatur: die heutige Einheit als Phasenband (jeder Arbeitssatz ein Kader).
+  // Signatur: die heutige Einheit als Phasenband (ein Feld je Arbeitssatz).
   const gruppen = useMemo(
     () => bandOfPlanned(session.items, byId),
     [session.items, byId],
@@ -125,14 +125,14 @@ export function SessionCard({
     const figur = figurFor(ex);
     const hypothese =
       weight == null
-        ? `Hypothese · ${zeile.ziel}`
+        ? `Vorschlag · ${zeile.ziel}`
         : delta != null && delta > 0
-          ? `Hypothese +${fmtKg(delta)} kg · ${zeile.ziel}`
+          ? `Vorschlag +${fmtKg(delta)} kg · ${zeile.ziel}`
           : delta != null && delta === 0
-            ? `Hypothese halten · ${zeile.ziel}`
+            ? `Vorschlag halten · ${zeile.ziel}`
             : lp
-              ? `Hypothese ${fmtKg(weight)} kg · ${zeile.ziel}`
-              : `Kalibrierung · ${zeile.ziel}`;
+              ? `Vorschlag ${fmtKg(weight)} kg · ${zeile.ziel}`
+              : `Aufwärmen · ${zeile.ziel}`;
     return {
       ex,
       figur,
@@ -180,12 +180,12 @@ export function SessionCard({
         </Card>
       )}
 
-      {/* ATLAS-Protokollkarte: Begründung + Direktive des Studienleiters. */}
+      {/* ATLAS-Karte: Begründung + Direktive des Coaches. */}
       {(session.briefing || direktive) && (
         <Card>
           <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-            <span>ATLAS · Protokoll</span>
-            <span className="tabular-nums">Nr. {plattenNr}-A</span>
+            <span>ATLAS · Ansage</span>
+            <span className="tabular-nums">Einheit {plattenNr}</span>
           </div>
           {session.briefing && (
             <p className="mt-2 font-display text-base leading-relaxed text-fg">
@@ -208,11 +208,11 @@ export function SessionCard({
         </Card>
       )}
 
-      {/* Phasenband-Karte: der Filmstreifen der geplanten Kader. */}
+      {/* Phasenband-Karte: der Filmstreifen der geplanten Sätze. */}
       <Card>
         <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
           <span>
-            Phasenband · <span className="tabular-nums">{kaderZahl}</span> Kader
+            Übersicht · <span className="tabular-nums">{kaderZahl}</span> Sätze
           </span>
         </div>
         <Phasenband
@@ -235,7 +235,7 @@ export function SessionCard({
       {/* Übungsliste: Hairline-Zeilen auf dem Grund — vollständig, mit Warum. */}
       <div>
         <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-          Versuchsanordnung: {SOURCE_BADGE[session.source]}
+          Plan: {SOURCE_BADGE[session.source]}
           {session.edited ? " · angepasst" : ""}
         </p>
         <ol>
@@ -303,7 +303,7 @@ export function SessionCard({
 
       {spareSlot && <div>{spareSlot}</div>}
 
-      {/* Stempel-CTA + Akt-Hinweis. */}
+      {/* Der große CTA + Hinweis, was zuerst kommt. */}
       <div>
         <Button
           onClick={() => {
@@ -314,10 +314,10 @@ export function SessionCard({
           full
           className="tracking-gesperrt-3"
         >
-          {locked ? "Studie fortsetzen" : "Studie beginnen"}
+          {locked ? "Training fortsetzen" : "Training starten"}
         </Button>
         <p className="mt-2 text-center font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
-          Akt I · Kalibrierung der Apparatur
+          Zuerst: Aufwärmen
         </p>
       </div>
 
