@@ -300,6 +300,7 @@ interface TrainingContextValue {
   setCueVolume: (v: number) => void;
   setTheme: (t: ThemePref) => void;
   setZoetrope: (on: boolean) => void;
+  setSplash: (v: NonNullable<AppSettings["splash"]>) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
   setCoachMotivation: (on: boolean) => void;
@@ -1121,6 +1122,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, theme: t });
     const setZoetrope = (on: boolean) =>
       void saveSettings({ ...settings, zoetrope: on });
+    // Greift erst beim nächsten Kaltstart: das Startbild wählt das
+    // Pre-Paint-Skript, lange bevor dieser Provider existiert.
+    const setSplash = (v: NonNullable<AppSettings["splash"]>) =>
+      void saveSettings({ ...settings, splash: v });
     const setUserName = (name: string) =>
       void saveSettings({ ...settings, userName: name.trim() || undefined });
     const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
@@ -1481,6 +1486,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setCueVolume,
       setTheme,
       setZoetrope,
+      setSplash,
       setWeightStep,
       setBikeWarmup,
       setCoachMotivation,

@@ -4,6 +4,8 @@ import "./globals.css";
 import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { Splash } from "@/components/start/Splash";
+import { SplashGate } from "@/components/start/SplashGate";
 import { Toaster } from "@/components/ui/Toaster";
 
 // Zwei Schriften, ein Labor: IBM Plex Mono trägt ALLE UI inkl. Body
@@ -91,15 +93,26 @@ finish review, the verdict, and DESIGN.md (ui-style).
             gespeichertes "dark" ohne themeMigratedM72-Flag zählt als hell;
             loadAll persistiert die Migration) UND den Atelier-Zwang des
             Fokus-Modus: /workout rendert IMMER dunkel (Theme-Lock, siehe
-            lib/theme.ts). Setzt auch das theme-color-Meta pre-paint. */}
+            lib/theme.ts). Setzt auch das theme-color-Meta pre-paint.
+
+            Zweite Aufgabe: die Wahl des Startbilds. Sie MUSS hier fallen —
+            vor dem ersten Paint und außerhalb von React —, denn das Markup
+            aller drei Varianten steht identisch im HTML (hydrationssicher),
+            und erst `data-splash` macht eine davon sichtbar. Ohne Attribut
+            bleibt der Splash unsichtbar: der Fail-Safe für „aus" und für den
+            Fall, dass dieses Skript gar nicht läuft. Der Notausgang nach 4 s
+            liegt bewusst ebenfalls hier — er greift auch dann noch, wenn die
+            Hydration scheitert und SplashGate nie zum Zug kommt. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');if(location.pathname.indexOf('/workout')===0)r='dark';d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#141210':'#f2ecdd');}catch(e){}})();`,
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('wilhelm-training-settings')||'{}');var d=document.documentElement;var t=s.theme||'light';if(t==='dark'&&!s.themeMigratedM72)t='light';var r=t==='dark'?'dark':(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');if(location.pathname.indexOf('/workout')===0)r='dark';d.setAttribute('data-theme',r);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',r==='dark'?'#141210':'#f2ecdd');var p=s.splash||'zufall';if(p!=='aus'){var v=p==='zufall'?'v'+(1+Math.floor(Math.random()*3)):p;d.setAttribute('data-splash',v);setTimeout(function(){d.setAttribute('data-splash','weg')},4000);}}catch(e){}})();`,
           }}
         />
+        <Splash />
         <TrainingProvider>
           <AppShell>{children}</AppShell>
           <Toaster />
+          <SplashGate />
         </TrainingProvider>
         <ServiceWorkerRegister />
       </body>
