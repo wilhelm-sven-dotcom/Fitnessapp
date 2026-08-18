@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { Splash } from "@/components/start/Splash";
 import { SplashGate } from "@/components/start/SplashGate";
 import { Toaster } from "@/components/ui/Toaster";
+import { ICON_VERSION } from "@/lib/icon-art";
 
 // Zwei Schriften, ein Labor: IBM Plex Mono trägt ALLE UI inkl. Body
 // (Messgeräte-Beschriftung), Old Standard TT (1900er-Buchsatz) nur für
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Platte 311",
     startupImage: IOS_SPLASH.map((s) => ({
-      url: `/apple-splash/${s.w}x${s.h}`,
+      url: `/apple-splash/${s.w}x${s.h}?v=${ICON_VERSION}`,
       media: `(device-width: ${s.dw}px) and (device-height: ${s.dh}px) and (-webkit-device-pixel-ratio: ${s.r}) and (orientation: portrait)`,
     })),
   },
