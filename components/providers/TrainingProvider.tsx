@@ -572,6 +572,22 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     };
   }, [cloudConfigured, pullOrSeed]);
 
+  // Supabase antwortet englisch und technisch. Die drei Fälle, die hier real
+  // vorkommen, brauchen einen Klartext MIT Ausweg — besonders das
+  // Mail-Limit: der eingebaute Supabase-Mailer erlaubt nur eine Handvoll
+  // Mails pro Stunde, und dagegen hilft kein zweiter Klick, sondern nur
+  // Warten oder eigenes SMTP.
+  const cloudFehler = (msg: string): string => {
+    const m = msg.toLowerCase();
+    if (m.includes("rate limit") || m.includes("too many requests"))
+      return "Mail-Limit erreicht — Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Warte etwa eine Stunde, oder melde dich mit Passwort an.";
+    if (m.includes("invalid") && (m.includes("token") || m.includes("otp")))
+      return "Code stimmt nicht oder ist abgelaufen — er gilt nur wenige Minuten.";
+    if (m.includes("invalid login credentials"))
+      return "E-Mail oder Passwort stimmt nicht.";
+    return msg;
+  };
+
   const cloud = useMemo<CloudApi>(() => ({
     configured: cloudConfigured,
     email: cloudEmail,
@@ -589,7 +605,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
               typeof window !== "undefined" ? window.location.origin + "/settings" : undefined,
           },
         });
-        return error ? { ok: false, error: error.message } : { ok: true };
+        return error ? { ok: false, error: cloudFehler(error.message) } : { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {
@@ -608,7 +624,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           token: token.trim(),
           type: "email",
         });
-        return error ? { ok: false, error: error.message } : { ok: true };
+        return error ? { ok: false, error: cloudFehler(error.message) } : { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {
@@ -626,7 +642,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           email: email.trim(),
           password,
         });
-        return error ? { ok: false, error: error.message } : { ok: true };
+        return error ? { ok: false, error: cloudFehler(error.message) } : { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {

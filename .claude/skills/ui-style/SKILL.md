@@ -171,12 +171,25 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
   `plattenNummerOf`, `plattenNummern` (Map), `katalogNummern` +
   `fmtKatalogNr` („Nr. 311-07"), `fmtPlatteDatum` („SO 17. AUG") — IMMER
   abgeleitet, NIE persistiert (Löschen renummeriert, akzeptiert).
-- **Icon & Marke — I1 „Marey-Spur"** (Nachtrag 2): Das App-Icon IST die
-  Referenzfigur, dreimal überlagert — Phasen von `FIGUR_KNIEBEUGE` mit
-  `translate(4 8)` / `(7.5 8)` / `(11 8)`, je `scale(.66)`, Opazität
-  0,24 / 0,40 / 1,0, Kreide `#E9E1CE` auf Kollodium `#141210`. Kein Raster,
-  keine Signatur, keine zweite Farbe; liegt komplett im Maskable-Kreis
-  (r 19,2 um 24/24), deshalb dieselbe Zeichnung in JEDER Größe.
+- **Icon & Marke — I1 „Marey-Spur"** (Nachtrag 2, Fassung 3): Das App-Icon IST
+  die Referenzfigur, dreimal überlagert — Phasen von `FIGUR_KNIEBEUGE` mit
+  `translate(-1.4 9.75)` / `(6.9 9.75)` / `(15.2 9.75)`, je `scale(.57)`,
+  Opazität 0,18 / 0,33 / 1,0, **Hantel nur in der Endphase**, Kreide
+  `#E9E1CE` auf Kollodium `#141210`. Kein Raster, keine Signatur, keine
+  zweite Farbe; liegt komplett im Maskable-Kreis (r 19,2 um 24/24 —
+  Tintenfläche 28,6 × 24,5, Halbdiagonale 18,8), deshalb dieselbe Zeichnung
+  in JEDER Größe. Zentriert wird über die ECHTE Tinte je Phase, nicht über
+  die Figur-Bounding-Box: ohne Hantel sind die Ghosts schmaler, sonst sitzt
+  die Spur sichtbar rechts außermittig.
+  **Warum nicht die Handoff-Zahlen** (`scale .66`, Versatz 3,5, Hantel
+  überall): nachgerechnet und gerendert verschmelzen die Torso-Kapseln
+  (Stroke 9 → 5,9) zu EINEM Klumpen, bei 32 px liest gar nichts mehr, und die
+  Bounding-Box ragt mit Halbdiagonale 19,8 aus dem Sicherheitskreis. Die
+  Hantel ist mit 24 Einheiten das breiteste Element und dreifach überlagert
+  der Hauptgrund. **Regel für überlagerte Figuren: Versatz ≥ Körperbreite,
+  Gerät nur in der Endphase** — sonst ist es keine Spur, sondern Matsch.
+  Bei jeder Änderung an der Zeichnung: gegen 180/48/32 px UND gegen eine
+  Rund-Maske ansehen, nicht nur gegen die 512er-Vorschau.
   **Eine Quelle:** `lib/phasen/figur-art.tsx` (`mareyArt` / `phaseArt`) —
   hookfrei und auf Satori-sicheres SVG beschränkt (nur `g`/`path`/`line`/
   `circle`, GENAU eine Transform-Ebene, kein `polyline`, kein `use`, Farbe
