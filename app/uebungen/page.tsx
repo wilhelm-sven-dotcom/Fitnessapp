@@ -103,7 +103,7 @@ export default function ExerciseCatalogPage() {
   return (
     <div>
       <PageHeader
-        eyebrow={`Register · ${allLib.length} Einträge${customCount ? ` · ${customCount} eigene` : ""}`}
+        eyebrow={`${allLib.length} Übungen${customCount ? ` · ${customCount} eigene` : ""}`}
         title="Übungskatalog"
       />
 

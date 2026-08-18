@@ -14,7 +14,7 @@ const ROEMISCH = ["I", "II", "III", "IV"];
 /**
  * Tafel: Myologie — die Wochenarbeit je Muskelgruppe als diskrete Blaustufen
  * (Quartile aufs Wochenziel) auf zwei Frontalfiguren (vorn/hinten), plus das
- * Gruppenregister mit 4er-Stufenblöcken. Ersetzt die alte Grün-Heatmap.
+ * Muskelgruppen im Detail mit 4er-Stufenblöcken. Ersetzt die alte Grün-Heatmap.
  */
 export function MyologieTab() {
   const { muscleVolumes } = useTraining();
@@ -32,7 +32,7 @@ export function MyologieTab() {
     <div>
       <Card className="mb-4">
         <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-          <span>Tafel · Myologie</span>
+          <span>Muskelgruppen</span>
           <span>Diese Woche</span>
         </div>
         <div className="mt-3 flex items-start justify-center gap-6">
@@ -70,9 +70,9 @@ export function MyologieTab() {
         </div>
       </Card>
 
-      {/* Gruppenregister: jede Muskelgruppe mit 4er-Stufenblock + Satz-Stand. */}
+      {/* Muskelgruppen im Detail: jede Muskelgruppe mit 4er-Stufenblock + Satz-Stand. */}
       <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
-        Gruppenregister
+        Muskelgruppen im Detail
       </p>
       <div>
         {MUSCLE_ORDER.map((m, i) => {

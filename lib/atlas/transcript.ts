@@ -49,7 +49,7 @@ export function buildSessionTranscript(opts: {
   }
 
   const head: string[] = [
-    `Studie: ${s.name}${s.focus ? ` (${s.focus})` : ""}${s.variant && s.variant !== "normal" ? ` · Variante ${s.variant}` : ""}.`,
+    `Einheit: ${s.name}${s.focus ? ` (${s.focus})` : ""}${s.variant && s.variant !== "normal" ? ` · Variante ${s.variant}` : ""}.`,
     `Zeit: läuft seit ${startedMin} Min, noch ~${Math.round(openSec / 60)} Min offen, Ziel ${opts.budgetMin} Min.`,
   ];
   if (state.readiness)
@@ -113,7 +113,7 @@ export function buildDebriefFacts(opts: {
   const s = state.session;
   const byId = new Map(opts.allLib.map((e) => [e.id, e]));
   const lines: string[] = [
-    `Studie: ${s.name}${s.focus ? ` (${s.focus})` : ""}${s.variant && s.variant !== "normal" ? ` · Variante ${s.variant}` : ""}.`,
+    `Einheit: ${s.name}${s.focus ? ` (${s.focus})` : ""}${s.variant && s.variant !== "normal" ? ` · Variante ${s.variant}` : ""}.`,
     `Ergebnis: ${opts.summary.sets} Arbeitssätze, ${Math.round(opts.summary.tonnage)} kg bewegt, ${opts.summary.prs} neue Bestwerte. Wochensätze ${opts.summary.weekSets}/${opts.summary.weekTarget}.`,
   ];
   if (state.readiness)
@@ -121,7 +121,7 @@ export function buildDebriefFacts(opts: {
       `Tagesform war: Schlaf ${state.readiness.sleep}/3, Energie ${state.readiness.energy}/3, Rücken ${state.readiness.back}/3.`,
     );
   if (state.backTraffic)
-    lines.push(`Rücken-Ampel nach der Studie: ${state.backTraffic}.`);
+    lines.push(`Rücken-Ampel nach der Einheit: ${state.backTraffic}.`);
   if (state.note) lines.push(`Notiz des Athleten: „${state.note.slice(0, 200)}”.`);
   lines.push("Sätze im Detail:");
   s.items.forEach((it, i) => {

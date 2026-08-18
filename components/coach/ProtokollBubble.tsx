@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  */
 
 const LABEL_RE =
-  /^\s*(Beobachtung|Hypothese|Versuchsanordnung|Anpassung|Hinweis)\s*:\s*(.*)$/i;
+  /^\s*(Beobachtung|Einschätzung|Plan|Anpassung|Hinweis)\s*:\s*(.*)$/i;
 const ANORDNUNG_RE = /(×|\d\s*kg|pause)/i;
 
 interface Block {
@@ -47,7 +47,7 @@ export function ProtokollBubble({ text, busy }: { text: string; busy?: boolean }
           )}
           <p
             className={cn(
-              b.label === "VERSUCHSANORDNUNG" && ANORDNUNG_RE.test(b.text)
+              b.label === "PLAN" && ANORDNUNG_RE.test(b.text)
                 ? "font-mono text-sm font-bold tabular-nums text-fg"
                 : "font-display text-base leading-relaxed text-fg",
               b.label && "mt-0.5",

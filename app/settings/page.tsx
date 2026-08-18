@@ -81,7 +81,7 @@ function SettingsContent() {
 
   return (
     <div>
-      <PageHeader title="Einstellungen" eyebrow="Apparatur · Konfiguration" />
+      <PageHeader title="Einstellungen" eyebrow="Einstellungen" />
 
       <div className="mb-4 flex overflow-hidden rounded-card border border-line-card bg-surface-1 p-1">
         {SEGMENTS.map((s) => (
@@ -122,15 +122,15 @@ function SettingsContent() {
         <>
           <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
             <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
-              Archiv · Daten
+              Daten
             </p>
             <p className="mb-3 text-xs leading-relaxed text-muted">
-              Alle Platten liegen auf diesem Gerät. Sichere das Archiv als Datei
+              Alle Einheiten liegen auf diesem Gerät. Sichere sie als Datei
               oder spiele ein Backup zurück.
             </p>
             <div className="mb-4 flex flex-col gap-2">
               <Button variant="secondary" full onClick={exportFile}>
-                <Download size={16} /> Archiv exportieren
+                <Download size={16} /> Daten exportieren
               </Button>
               <input
                 ref={fileRef}
@@ -144,7 +144,7 @@ function SettingsContent() {
               </Button>
             </div>
             <Button variant="danger" onClick={() => setConfirmReset(true)}>
-              <RotateCcw size={15} /> Alle Platten löschen
+              <RotateCcw size={15} /> Alle Daten löschen
             </Button>
           </section>
 
@@ -152,18 +152,18 @@ function SettingsContent() {
           <Sheet
             open={confirmReset}
             onClose={() => setConfirmReset(false)}
-            title="Alle Platten löschen?"
+            title="Wirklich alles löschen?"
           >
             <p className="mb-4 text-sm leading-relaxed text-muted">
-              Das gesamte Archiv — alle Platten, Rekorde und Messreihen — wird
-              unwiderruflich gelöscht. Ein Export vorher sichert alles als Datei.
+              Alle Einheiten, Rekorde und Messreihen werden unwiderruflich
+              gelöscht. Ein Export vorher sichert alles als Datei.
             </p>
             <div className="flex flex-col gap-2 pb-2">
               <Button
                 variant="danger"
                 full
                 onClick={() => {
-                  void resetAll().then(() => toast("Alle Platten gelöscht."));
+                  void resetAll().then(() => toast("Alle Daten gelöscht."));
                   setConfirmReset(false);
                 }}
               >

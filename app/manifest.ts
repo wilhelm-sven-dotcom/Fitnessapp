@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Platte 311",
     short_name: "Platte 311",
-    description: "Das Bewegungslabor — Muskelaufbau mit ATLAS als Studienleiter.",
+    description: "Das Bewegungslabor — Muskelaufbau mit ATLAS als Coach.",
     lang: "de",
     start_url: "/",
     scope: "/",

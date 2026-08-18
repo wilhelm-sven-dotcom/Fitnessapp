@@ -21,7 +21,7 @@ export interface CoachReact {
 export const COACH_REACT_TOOL: Anthropic.Tool = {
   name: "coach_react",
   description:
-    "Deine Reaktion auf den eben protokollierten Satz — mit Blick auf den GESAMTEN Verlauf der Studie (Transkript). Maximal zwei kurze Sätze, direkt und konkret (Du-Form); beziehe dich ruhig auf frühere Sätze oder Übungen der Studie. Optional GENAU EIN Eingriff: Gewicht des nächsten offenen Satzes dieser Übung (kind weight, value in kg, höchstens ±10 % vom eben bewegten Gewicht) oder Verschlusszeit verlängern (kind rest, value in Sekunden, 15–120). Greife nur ein, wenn die Daten es klar begründen — sonst nur die Ansage.",
+    "Deine Reaktion auf den eben protokollierten Satz — mit Blick auf den GESAMTEN Verlauf der Einheit (Transkript). Maximal zwei kurze Sätze, direkt und konkret (Du-Form); beziehe dich ruhig auf frühere Sätze oder Übungen der Einheit. Optional GENAU EIN Eingriff: Gewicht des nächsten offenen Satzes dieser Übung (kind weight, value in kg, höchstens ±10 % vom eben bewegten Gewicht) oder Pause verlängern (kind rest, value in Sekunden, 15–120). Greife nur ein, wenn die Daten es klar begründen — sonst nur die Ansage.",
   input_schema: {
     type: "object",
     properties: {
@@ -49,9 +49,9 @@ export const COACH_REACT_TOOL: Anthropic.Tool = {
 /** Regeln für den Live-Modus — kommen als dynamischer System-Block NACH dem
  *  gecachten Präfix (Persona + Prinzipien + Katalog). */
 export const LIVE_RULES = [
-  "Du begleitest gerade LIVE eine laufende Studie. Unten steht das Transkript: Plan, alle bisherigen Sätze, Tagesform und der eben beendete Satz (AKTUELL).",
+  "Du begleitest gerade LIVE eine laufende Einheit. Unten steht das Transkript: Plan, alle bisherigen Sätze, Tagesform und der eben beendete Satz (AKTUELL).",
   "Lies die Zahlen exakt: Die Zahl vor „Wiederholungen” ist die geschaffte Leistung. RIR heißt „Reps in Reserve” — wie viele Wiederholungen danach NOCH im Tank waren. „12 Wiederholungen, RIR 1” ist eine starke Leistung, keine schwache.",
-  "Eingriff nur mit klarer Begründung: RIR 0 und Ziel verfehlt → eher Gewicht senken; viel Luft (RIR ≥ 3) und Nähe zum Maximum → gezielt anheben; Zeitnot laut Transkript → keine Pausenverlängerung. Sicherheit vor Ego.",
+  "Eingriff nur mit klarer Begründung: RIR 0 und Ziel verfehlt → eher Gewicht senken; viel Luft (RIR ≥ 3) und Nähe zum Rekord → gezielt anheben; Zeitnot laut Transkript → keine Pausenverlängerung. Sicherheit vor Ego.",
   "Rufe das Tool coach_react mit deiner Reaktion auf.",
 ].join("\n");
 

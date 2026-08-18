@@ -65,7 +65,7 @@ export default function HomePage() {
   );
   const chips = homeChips({ daysAgo, weekCount });
   const now = new Date();
-  // Karteikopf: Plattennummer (abgeleitet, nie persistiert), Katalogdatum,
+  // Kopf: laufende Einheiten-Nummer (abgeleitet, nie persistiert), Datum,
   // Zykluswoche aus der Periodisierung.
   const plattenNr = plattenNummer(log);
   const plattenDatum = fmtPlatteDatum(now);
@@ -218,19 +218,19 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      {/* Karteikopf der heutigen Studie — Katalogschild, Titel in Kursive,
+      {/* Kopf der heutigen Einheit — Nummer und Datum, Titel in Kursive,
           Bestandszeile (die Wortmarke trägt der App-Header). ATLAS spricht
-          in der Protokollkarte der SessionCard. */}
+          in seiner eigenen Karte in der SessionCard. */}
       <header className="mb-5">
         <div className="flex items-baseline justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt-3 text-muted">
-          <span>Heutige Studie</span>
+          <span>Deine Einheit heute</span>
           <span className="whitespace-nowrap tabular-nums">Zyklus · W{zyklusWoche}</span>
         </div>
         <p className="mt-4 font-mono text-3xs font-medium uppercase tracking-gesperrt-3 text-muted">
-          Platte Nr. <span className="tabular-nums">{plattenNr}</span> · {plattenDatum}
+          Einheit <span className="tabular-nums">{plattenNr}</span> · {plattenDatum}
         </p>
         <h1 className="mt-1.5 font-display text-3xl italic leading-tight text-fg">
-          {todaySession?.name ?? "Studie wird angesetzt …"}
+          {todaySession?.name ?? "Einheit wird zusammengestellt …"}
         </h1>
         {todaySession && todaySession.items.length > 0 && (
           <p className="mt-2 font-mono text-2xs uppercase tracking-gesperrt text-muted">
@@ -269,20 +269,20 @@ export default function HomePage() {
       {todaySession?.completedAt ? (
         <Card className="mb-4 p-5">
           <p className="flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
-            <CheckCircle2 size={14} className="text-cyanotypie" /> Platte belichtet
+            <CheckCircle2 size={14} className="text-cyanotypie" /> Heute erledigt
           </p>
           <h2 className="mt-1 font-display text-2xl italic text-fg">
             {todaySession.name}
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Die Platte liegt im Archiv. Erholung gehört zur Studie — morgen
-            setzt ATLAS die nächste an.
+            Die Einheit ist gespeichert. Erholung gehört dazu — morgen stellt
+            ATLAS die nächste zusammen.
           </p>
           <Pressable
             onClick={() => compose()}
             className="mt-4 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           >
-            <RefreshCw size={13} /> Noch eine Studie ansetzen
+            <RefreshCw size={13} /> Noch eine Einheit
           </Pressable>
         </Card>
       ) : todaySession && todaySession.items.length > 0 ? (
@@ -307,9 +307,9 @@ export default function HomePage() {
       ) : (
         <Card className="mb-4 p-5">
           <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
-            Versuchsanordnung
+            Trainingsplan
           </p>
-          <p className="mt-2 text-sm text-muted">ATLAS ordnet die Studie an …</p>
+          <p className="mt-2 text-sm text-muted">ATLAS stellt die Einheit zusammen …</p>
         </Card>
       )}
 

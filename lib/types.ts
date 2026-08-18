@@ -236,8 +236,8 @@ export interface AppSettings {
   theme?: "dark" | "light" | "system";
   /** Zoetrop-Animationen der Phasenfiguren (Default an). */
   zoetrope?: boolean;
-  /** Startbild beim Öffnen: „zufall" (Default) würfelt je Start eine der drei
-   *  Choreografien, v1/v2/v3 fixieren eine, „aus" überspringt es ganz.
+  /** Startbild beim Öffnen: v3 („311") ist die Vorgabe, v1/v2 die beiden
+   *  anderen Choreografien, „zufall" würfelt je Start, „aus" überspringt es.
    *  Gelesen vom Pre-Paint-Skript in app/layout.tsx. */
   splash?: "zufall" | "v1" | "v2" | "v3" | "aus";
   /** Einmal-Migration gelaufen: alter Dunkel-Default wurde auf Hell gehoben. */

@@ -106,7 +106,7 @@ export function examSignal(
     kind: "exam",
     severity: "info",
     title: "Die Prüfung ist fällig",
-    body: "Zwölf Wochen Arbeit — Zeit, das Maximum zu messen. Ein geführter Testtag: Rampe zum schweren Satz je Kernübung. ATLAS trägt die Ergebnisse ins Archiv und kalibriert deine Prognosen neu.",
+    body: "Zwölf Wochen Arbeit — Zeit, deine Bestwerte zu messen. Ein geführter Testtag: Rampe zum schweren Satz je Kernübung. ATLAS speichert die Ergebnisse und setzt deine Prognosen neu.",
     action: "exam",
   };
 }

@@ -180,7 +180,7 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   ctx.font = `600 ${11 * S}px ${mono}`;
   setSpacing(0.34, 11 * S);
   ctx.fillText(
-    data.kind === "maximum" ? "TAFEL DES MAXIMUMS" : "PLATTE BELICHTET",
+    data.kind === "maximum" ? "PERSÖNLICHER REKORD" : "TRAINING ERLEDIGT",
     W / 2,
     64 * S,
   );
@@ -231,7 +231,7 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
     ctx.font = `500 ${10 * S}px ${mono}`;
     setSpacing(0.2, 10 * S);
     ctx.fillStyle = "rgba(244, 249, 252, 0.85)";
-    ctx.fillText(`${data.kaderZahl} KADER · ALLE BELICHTET`, W / 2, 382 * S);
+    ctx.fillText(`${data.kaderZahl} SÄTZE · ERLEDIGT`, W / 2, 382 * S);
     setSpacing(0, 0);
   }
 
@@ -244,7 +244,7 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   ctx.fillStyle = MESSING;
   ctx.font = `600 ${10 * S}px ${mono}`;
   setSpacing(0.2, 10 * S);
-  ctx.fillText(`PLATTE Nr. ${data.plattenNr}`, padX, H - 26 * S);
+  ctx.fillText(`EINHEIT ${data.plattenNr}`, padX, H - 26 * S);
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(244, 249, 252, 0.85)";
   ctx.font = `500 ${9 * S}px ${mono}`;

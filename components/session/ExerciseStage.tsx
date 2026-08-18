@@ -136,10 +136,10 @@ export function ExerciseStage({
       >
         <div className="flex justify-between gap-2 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
           <span>
-            Übung <span className="tabular-nums">{index + 1}/{total}</span> · Bühne
+            Übung <span className="tabular-nums">{index + 1}/{total}</span>
           </span>
           <span className={cn(alleBelichtet && "text-cyanotypie")}>
-            {alleBelichtet ? "Alle Kader belichtet" : "Zoetrop 8 B/s"}
+            {alleBelichtet ? "Alle Sätze erledigt" : "Übung läuft"}
           </span>
         </div>
         {ex.pattern !== "cardio" && (
@@ -213,7 +213,7 @@ export function ExerciseStage({
             )}
           >
             <Check size={16} strokeWidth={2.5} />
-            {cardioDone ? "Belichtet" : "Als belichtet markieren"}
+            {cardioDone ? "Erledigt" : "Als erledigt markieren"}
           </Pressable>
         </div>
       ) : (
@@ -221,7 +221,7 @@ export function ExerciseStage({
           {(() => {
             let workIdx = 0;
             return sets.map((s, i) => {
-              const label = s.warmup ? "Kalibr." : `Kader ${++workIdx}`;
+              const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
               const filled = s.reps !== "" && s.reps != null;
               const state: "active" | "done" | "upcoming" =
                 i === effActive ? "active" : filled ? "done" : "upcoming";

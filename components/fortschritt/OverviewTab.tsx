@@ -190,7 +190,7 @@ export function OverviewTab() {
           unit="t"
           decimals={1}
           size="lg"
-          hint={`über ${log.length} ${log.length === 1 ? "Platte" : "Platten"}`}
+          hint={`über ${log.length} ${log.length === 1 ? "Einheit" : "Einheiten"}`}
         />
       </Card>
 
@@ -269,7 +269,7 @@ export function OverviewTab() {
                           transition={{ duration: 0.5, ease: "easeOut" }}
                           className="rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
                         >
-                          Maximum
+                          Rekord
                         </motion.span>
                       )}
                       <p className="font-mono text-lg font-bold leading-none tabular-nums text-cyanotypie">

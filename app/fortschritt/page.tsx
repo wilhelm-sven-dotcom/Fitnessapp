@@ -15,7 +15,7 @@ const SEGMENTS: { key: Segment; label: string }[] = [
   { key: "uebersicht", label: "Übersicht" },
   { key: "verlauf", label: "Verlauf" },
   { key: "koerper", label: "Körper" },
-  { key: "myologie", label: "Myologie" },
+  { key: "myologie", label: "Muskeln" },
 ];
 
 /** Fortschritt: Trends, die vereinte Kraft+Cardio-Timeline und der Körper —
@@ -25,7 +25,7 @@ export default function FortschrittPage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Messreihe · Archiv" title="Fortschritt" />
+      <PageHeader eyebrow="Deine Zahlen" title="Fortschritt" />
 
       <div className="mb-4 flex border-b border-line">
         {SEGMENTS.map((s) => (

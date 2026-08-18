@@ -233,7 +233,7 @@ export function HistoryTab() {
             idx === 0 || weekStartMon(new Date(dateOf(items[idx - 1]))).getTime() !== wk;
           const folio = neueWoche ? (
             <p className="pt-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
-              Folio · KW {isoWeek(new Date(dateOf(it)))}
+              KW {isoWeek(new Date(dateOf(it)))}
             </p>
           ) : null;
           if (it.kind === "cardio") {
@@ -311,7 +311,7 @@ export function HistoryTab() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
-                        Platte Nr. <span className="tabular-nums">{plattenNr.get(s) ?? "–"}</span> · {fmtDate(s.date)}
+                        Einheit <span className="tabular-nums">{plattenNr.get(s) ?? "–"}</span> · {fmtDate(s.date)}
                       </p>
                       {s.backTraffic && (
                         <span
@@ -353,7 +353,7 @@ export function HistoryTab() {
               </div>
               <div className="flex items-baseline justify-between gap-2 px-4 pb-3 font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
                 <span>
-                  <span className="tabular-nums">{kaderZahl}</span> Kader · alle belichtet
+                  <span className="tabular-nums">{kaderZahl}</span> Sätze · alle erledigt
                 </span>
                 {rekorde > 0 && (
                   <span className="text-messing">

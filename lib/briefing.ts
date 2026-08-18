@@ -80,9 +80,9 @@ export function buildBriefing(opts: {
 
   // Deterministic coach note (fallback / always present).
   const prPart = prs.length
-    ? `${prs.length} ${prs.length === 1 ? "neues Maximum" : "neue Maxima"} diese Woche — stark. `
+    ? `${prs.length} ${prs.length === 1 ? "neuer Rekord" : "neue Rekorde"} diese Woche — stark. `
     : "";
-  const volPart = `${weekCount}/3 Studien, ${String(volT).replace(".", ",")} t bewegt${
+  const volPart = `${weekCount}/3 Einheiten, ${String(volT).replace(".", ",")} t bewegt${
     volDeltaT ? ` (${volDeltaT > 0 ? "+" : ""}${String(volDeltaT).replace(".", ",")} t ggü. Vorwoche)` : ""
   }. `;
   const loadPart = fatigue.enough ? `${fatigue.title}. ` : "";
@@ -98,12 +98,12 @@ export function buildBriefing(opts: {
   const facts = [
     buildCoachContext({ log, allLib, body, cardio, exerciseNotes: opts.exerciseNotes }),
     "",
-    `Diese Woche: ${weekCount}/3 Studien, ${String(volT).replace(".", ",")} t (${
+    `Diese Woche: ${weekCount}/3 Einheiten, ${String(volT).replace(".", ",")} t (${
       volDeltaT >= 0 ? "+" : ""
     }${String(volDeltaT).replace(".", ",")} t ggü. Vorwoche), Abdeckung ${coverage.hit}/${coverage.total}.`,
     prs.length
-      ? `Neue Maxima: ${prs.map((p) => `${p.name} ${p.value}`).join(", ")}.`
-      : "Keine neuen Maxima diese Woche.",
+      ? `Neue Rekorde: ${prs.map((p) => `${p.name} ${p.value}`).join(", ")}.`
+      : "Keine neuen Rekorde diese Woche.",
     fatigue.enough ? `Belastungs-Index: ${fatigue.title} (Akut/Schnitt ${fatigue.ratio.toFixed(2)}).` : "",
     `Phase: ${phase.title}, Woche ${phase.cycleWeek}/${phase.cycleLength}${phase.due ? " — Deload fällig" : ""}.`,
     opts.missionReview ? missionReviewFact(opts.missionReview) : "",

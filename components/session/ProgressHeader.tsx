@@ -31,7 +31,7 @@ export function ProgressHeader({
     <div>
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate font-mono text-2xs font-semibold uppercase tracking-gesperrt text-fg">
-          Studie Nr. <span className="tabular-nums">{plattenNr}</span> · Akt II
+          Einheit <span className="tabular-nums">{plattenNr}</span>
         </span>
         <span className="flex shrink-0 items-center gap-1">
           <span className="font-mono text-xs tabular-nums text-muted">
@@ -40,7 +40,7 @@ export function ProgressHeader({
           </span>
           <Pressable
             onClick={onExit}
-            aria-label="Studie beenden"
+            aria-label="Training beenden"
             className="-m-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           >
             <X size={18} />

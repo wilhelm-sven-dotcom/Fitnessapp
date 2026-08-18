@@ -200,7 +200,7 @@ export function SetRow({
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="flex shrink-0 items-center gap-1 rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
             >
-              <Trophy size={11} strokeWidth={2.5} /> Maximum
+              <Trophy size={11} strokeWidth={2.5} /> Rekord
             </motion.span>
           )}
         </Pressable>
@@ -249,7 +249,7 @@ export function SetRow({
       transition={SPRING.panel}
     >
       <div className="flex justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-accent-ink">
-        <span>{isWarmup ? `Kalibrierung · ${label}` : `Offener Kader · ${label}`}</span>
+        <span>{isWarmup ? `Aufwärmen · ${label}` : `Jetzt · ${label}`}</span>
         {zielLabel && <span className="tabular-nums">{zielLabel}</span>}
       </div>
       {isRecord && !isWarmup && (
@@ -259,7 +259,7 @@ export function SetRow({
           transition={{ duration: 0.45, ease: "easeOut" }}
           className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
         >
-          <Trophy size={12} className="shrink-0" /> Neues Maximum
+          <Trophy size={12} className="shrink-0" /> Neuer Rekord
         </motion.p>
       )}
       {timed ? (

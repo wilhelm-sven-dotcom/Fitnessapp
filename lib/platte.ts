@@ -43,7 +43,7 @@ export function katalogNummern(allLib: Exercise[]): Map<string, number> {
 
 /** Formatiert eine Katalognummer als Registerschild. */
 export function fmtKatalogNr(n: number | undefined): string {
-  return n == null ? "Nr. 311-–" : `Nr. 311-${String(n).padStart(2, "0")}`;
+  return n == null ? "Nr. –" : `Nr. ${String(n).padStart(2, "0")}`;
 }
 
 /** Katalogschild-Datum: „SO 17. AUG" — versal gesetzt via CSS. */

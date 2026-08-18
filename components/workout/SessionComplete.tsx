@@ -78,7 +78,7 @@ export function SessionComplete({
             plattenNr,
             dateISO: new Date().toISOString(),
             figur,
-            titel: name || "Studie",
+            titel: name || "Einheit",
             kaderZahl: summary.sets,
             tonnage: summary.tonnage,
             koerperKg,
@@ -119,7 +119,7 @@ export function SessionComplete({
   // Sieger-Haptik + gesprochene Zeile + XP-Füllung (Bestand).
   useEffect(() => {
     success();
-    if (sieger && settings.voiceCues) speak("Neues Maximum. Auf die Tafel damit.");
+    if (sieger && settings.voiceCues) speak("Neuer Rekord. Stark.");
     const t1 = setTimeout(() => setPct(summary.xpPctTo), reduce ? 0 : 350);
     const t2 = levelUp
       ? setTimeout(() => setLvl(summary.levelAfter), reduce ? 0 : 1100)
@@ -169,10 +169,10 @@ export function SessionComplete({
           className="flex w-full items-baseline justify-between font-mono text-2xs font-semibold uppercase tracking-gesperrt"
         >
           <span className="text-fg">
-            Studie Nr. <span className="tabular-nums">{plattenNr}</span>
+            Einheit <span className="tabular-nums">{plattenNr}</span>
           </span>
           <span className={sieger ? "text-messing" : "text-cyanotypie"}>
-            {sieger ? "Neues Maximum" : "Platte belichtet"}
+            {sieger ? "Neuer Rekord" : "Gespeichert"}
           </span>
         </motion.p>
 
@@ -184,7 +184,7 @@ export function SessionComplete({
               transition={stagger(1)}
               className="mt-8 font-mono text-2xs font-semibold uppercase tracking-gesperrt-4 text-messing"
             >
-              Tafel des Maximums
+              Persönlicher Rekord
             </motion.p>
             <motion.span
               initial={reduce ? false : { opacity: 0, scaleX: 0 }}
@@ -229,10 +229,10 @@ export function SessionComplete({
               {sieger.delta != null && sieger.delta > 0
                 ? `+${fmtDe(sieger.delta)} ${sieger.einheit} über ${
                     sieger.prevPlattenNr != null
-                      ? `Platte Nr. ${sieger.prevPlattenNr}`
-                      : "der bisherigen Tafel"
+                      ? `Einheit ${sieger.prevPlattenNr}`
+                      : "dem bisherigen Bestwert"
                   }`
-                : "Erster Eintrag auf der Tafel"}
+                : "Dein erster Wert hier"}
             </motion.p>
           </>
         ) : (
@@ -253,7 +253,7 @@ export function SessionComplete({
               transition={stagger(2)}
               className="mt-4 font-display text-3xl italic text-fg"
             >
-              {name || "Studie"}
+              {name || "Einheit"}
             </motion.h1>
           </>
         )}
@@ -264,7 +264,7 @@ export function SessionComplete({
           transition={stagger(7)}
           className="mt-8 flex items-start justify-center gap-8"
         >
-          <Readout eyebrow="Kader" value={summary.sets} size="md" />
+          <Readout eyebrow="Sätze" value={summary.sets} size="md" />
           <Readout
             eyebrow="Bewegt"
             value={summary.tonnage / 1000}
@@ -274,7 +274,7 @@ export function SessionComplete({
           />
           {summary.prs > 0 && (
             <Readout
-              eyebrow={summary.prs === 1 ? "Maximum" : "Maxima"}
+              eyebrow={summary.prs === 1 ? "Rekord" : "Rekorde"}
               value={summary.prs}
               size="md"
               tone="var(--messing)"
@@ -332,7 +332,7 @@ export function SessionComplete({
             className="mt-6 w-full rounded-card border border-line-card bg-surface-1 p-3.5 text-left"
           >
             <p className="mb-2 flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
-              <AtlasMark size={14} className="text-fg" /> ATLAS · Protokoll
+              <AtlasMark size={14} className="text-fg" /> ATLAS
             </p>
             <div className="space-y-1.5">
               {summary.debrief.map((l, i) => (
@@ -364,7 +364,7 @@ export function SessionComplete({
               onClick={share}
               className="flex-1 whitespace-nowrap tracking-gesperrt"
             >
-              Als Platte teilen
+              Teilen
             </Button>
           )}
         </motion.div>
