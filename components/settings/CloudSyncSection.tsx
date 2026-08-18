@@ -1,7 +1,7 @@
 "use client";
 
 import { Cloud, LogOut, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { toast } from "@/lib/toast";
@@ -16,6 +16,16 @@ export function CloudSyncSection() {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState("");
+  // Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Ein zweiter
+  // Klick bringt also keine zweite Mail, sondern verbrennt das Kontingent —
+  // deshalb nach dem Senden eine Minute sperren.
+  const [sperre, setSperre] = useState(0);
+
+  useEffect(() => {
+    if (sperre <= 0) return;
+    const t = setTimeout(() => setSperre((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [sperre]);
 
   if (!cloud.configured) {
     return (
@@ -38,9 +48,10 @@ export function CloudSyncSection() {
   const sendLink = async () => {
     setMsg("");
     const res = await cloud.signIn(email);
+    if (res.ok) setSperre(60);
     setMsg(
       res.ok
-        ? "Magic-Link gesendet — schau in deine Mails."
+        ? "Mail unterwegs — je nach Einstellung steht darin ein Link oder ein 6-stelliger Code."
         : res.error
           ? `Fehler: ${res.error}`
           : "Hat nicht geklappt.",
@@ -132,7 +143,7 @@ export function CloudSyncSection() {
           <p className="text-xs leading-relaxed text-muted">
             Melde dich an — am besten mit{" "}
             <span className="font-medium text-fg">Passwort</span>. Das funktioniert auch in
-            der installierten App auf dem iPhone (der Magic-Link öffnet dort nur Safari).
+            der installierten App auf dem iPhone (ein Mail-Link öffnet dort nur Safari).
           </p>
           <input
             type="email"
@@ -160,15 +171,19 @@ export function CloudSyncSection() {
           </Pressable>
 
           <p className="pt-2 text-xs leading-relaxed text-muted">
-            Noch kein Passwort? Einmalig per Magic-Link oder 6-stelligem Code anmelden —
-            dann oben ein Passwort setzen.
+            Noch kein Passwort? Einmalig per Mail anmelden — dann oben ein Passwort
+            setzen. Achtung: Es gehen nur wenige Anmelde-Mails pro Stunde durch.
           </p>
           <Pressable
             onClick={() => void sendLink()}
-            disabled={cloud.busy || !email.trim()}
+            disabled={cloud.busy || !email.trim() || sperre > 0}
             className="flex w-full items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
           >
-            {cloud.busy ? "Sendet…" : "Magic-Link senden"}
+            {cloud.busy
+              ? "Sendet…"
+              : sperre > 0
+                ? `Erneut senden in ${sperre} s`
+                : "Anmelde-Mail senden"}
           </Pressable>
           <div className="flex gap-2">
             <input
