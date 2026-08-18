@@ -9,7 +9,11 @@
 // device stuck on a stale build (an old session requesting chunks the new build
 // no longer has → ChunkLoadError on navigation). It only ever clears CODE
 // caches — never localStorage/IndexedDB, so training data is untouched.
-const CACHE = "training-v31";
+// v32: „Platte 311" — neues App-Icon (Marey-Spur) + Startbild. Die Icon-Routen
+// (/icon, /apple-icon, /manifest-icon/*) und das Manifest tragen KEINEN Hash im
+// Namen und liegen cache-first — ohne diesen Bump serviert ein installiertes
+// Gerät das alte Icon-PNG weiter, egal wie oft neu geladen wird.
+const CACHE = "training-v32";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only
