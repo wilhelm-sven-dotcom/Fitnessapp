@@ -5,6 +5,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { type ThemePref } from "@/lib/theme";
+import type { AppSettings } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 /** Darstellung „Platte 311": Name fürs Protokoll + Modus-Segment.
@@ -18,9 +19,19 @@ const THEMES: { id: ThemePref; label: string }[] = [
   { id: "system", label: "Auto" },
 ];
 
+/** Die drei Choreografien des Startbilds (Design-Nachtrag 2) + Zufall/aus. */
+const SPLASH: { id: NonNullable<AppSettings["splash"]>; label: string }[] = [
+  { id: "zufall", label: "Zufall" },
+  { id: "v1", label: "Belicht." },
+  { id: "v2", label: "Zoetrop" },
+  { id: "v3", label: "Walze" },
+  { id: "aus", label: "Aus" },
+];
+
 export function AppearanceSection() {
-  const { settings, setTheme, setUserName, setZoetrope } = useTraining();
+  const { settings, setTheme, setUserName, setZoetrope, setSplash } = useTraining();
   const theme = settings.theme ?? "light";
+  const splash = settings.splash ?? "zufall";
   const [name, setName] = useState(settings.userName ?? "");
 
   return (
@@ -69,6 +80,29 @@ export function AppearanceSection() {
           label="Zoetrop-Animationen"
           hint="Phasenfiguren blinken mit 8 Bildern/s durch ihre Kader — aus: stehendes Endbild."
         />
+      </div>
+
+      <div className="mt-5 border-t border-line-card pt-4">
+        <p className="mb-2 text-sm font-medium text-fg">Startbild</p>
+        <div className="flex gap-1 rounded-pill border border-line-card bg-surface-1 p-1">
+          {SPLASH.map((s) => (
+            <Pressable
+              key={s.id}
+              onClick={() => setSplash(s.id)}
+              aria-pressed={splash === s.id}
+              className={cn(
+                "min-w-0 flex-1 truncate rounded-pill py-2 font-mono text-3xs uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+                splash === s.id ? "bg-strong text-on-strong" : "text-muted",
+              )}
+            >
+              {s.label}
+            </Pressable>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-muted">
+          Beim Öffnen läuft eine kurze Belichtung im Atelier. Zufall wählt jedes Mal neu;
+          &bdquo;Aus&ldquo; springt sofort in die App.
+        </p>
       </div>
     </section>
   );

@@ -8,8 +8,9 @@ description: >-
   Kollodium-Dunkelkammer („Atelier", Fokus-Modus immer dunkel), Siegellack-
   Akzent, Cyanotypie & Messing, Old Standard TT (Kursive) + IBM Plex Mono
   (trägt Body), Radius 3/2/1 px, NULL Schatten, Filmtransport-Motion,
-  Phasenfiguren & Phasenband, volles Sprachregister (Studie/Platte/Kader/
-  Maximum). Enthält die echten Tokens, Rezepte, Verbote und Smoke-Invarianten.
+  Phasenfiguren & Phasenband, Marey-Spur als Icon, Startbild in drei
+  Choreografien, volles Sprachregister (Studie/Platte/Kader/Maximum).
+  Enthält die echten Tokens, Rezepte, Verbote und Smoke-Invarianten.
   Werte hier nachschlagen statt erfinden.
 ---
 
@@ -34,7 +35,7 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
   im Layout-Skript UND `setThemeLock("dark")`-Effekt in `app/workout/page.tsx`
   (Cleanup restauriert). `applyTheme` konsultiert den Lock zuerst.
 - **EINE Farbtafel:** Akzent-Override und Icon-Designer sind ENTFERNT. Ein
-  Icon („311", ob-lift auf Kollodium), eine Marke (`LiftMark`).
+  Icon (Marey-Spur auf Kollodium, siehe Signatur-Elemente), eine Marke.
 - **Immer Tokens nutzen, nie rohe Hex/feste Radien im JSX** (Ausnahmen:
   SVG-Strokes mit `var(--…)`; `global-error.tsx` eigenständig; die
   App-Icon-Replik im Onboarding trägt ihre fixen Icon-Hexes + 18px inline).
@@ -171,9 +172,20 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
   `plattenNummerOf`, `plattenNummern` (Map), `katalogNummern` +
   `fmtKatalogNr` („Nr. 311-07"), `fmtPlatteDatum` („SO 17. AUG") — IMMER
   abgeleitet, NIE persistiert (Löschen renummeriert, akzeptiert).
-- **Marke:** `components/brand/LiftMark.tsx` (ob-lift, currentColor,
-  viewBox 0 0 48 50); Icon-Routen aus `lib/icon-art.tsx` (Satori, fixe
-  Hexes #141210/#E9E1CE, „311"-Strokes). EIN Icon.
+- **Icon & Marke — I1 „Marey-Spur"** (Nachtrag 2): Das App-Icon IST die
+  Referenzfigur, dreimal überlagert — Phasen von `FIGUR_KNIEBEUGE` mit
+  `translate(4 8)` / `(7.5 8)` / `(11 8)`, je `scale(.66)`, Opazität
+  0,24 / 0,40 / 1,0, Kreide `#E9E1CE` auf Kollodium `#141210`. Kein Raster,
+  keine Signatur, keine zweite Farbe; liegt komplett im Maskable-Kreis
+  (r 19,2 um 24/24), deshalb dieselbe Zeichnung in JEDER Größe.
+  **Eine Quelle:** `lib/phasen/figur-art.tsx` (`mareyArt` / `phaseArt`) —
+  hookfrei und auf Satori-sicheres SVG beschränkt (nur `g`/`path`/`line`/
+  `circle`, GENAU eine Transform-Ebene, kein `polyline`, kein `use`, Farbe
+  als Argument statt CSS-Variable). Konsumenten: `lib/icon-art.tsx`
+  (Icon-Routen 32/180/192/512), `components/brand/MareySpur.tsx` (volle Spur
+  im DOM, Onboarding-Platte), `components/brand/LiftMark.tsx` (nur die
+  Endphase, viewBox `8 11 36 36` — bei 17 px im Kopf würden Ghosts zu
+  Grieß), `app/apple-splash/[spec]` (iOS-Startbild).
 - **Poster** (`lib/share-card.ts`): Cyanotypie 1080×1350, FESTE Farben
   `#1F5C86/#F4F9FC/#D4A649` (ein Abzug kennt kein Theme — bewusst kein
   getComputedStyle für Farben), Kreide-Raster 0.5px alle 40 (Referenz 400×500),
@@ -182,6 +194,34 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
 - **Navigation:** BottomNav = 4 TEXT-Register (HEUTE · KATALOG · FORTSCHRITT ·
   ATLAS), `text-4xs` gesperrt, aktiv `text-accent-ink` + 2px-Oberkante.
   Keine Icons, kein layoutId-Pill.
+- **Startbild** (`components/start/`): drei Choreografien, das Pre-Paint-
+  Skript in `app/layout.tsx` würfelt je Kaltstart eine aus und schreibt sie
+  als `data-splash="v1|v2|v3"` auf `<html>`. **V1 „Belichtung"** Kader steht
+  (= Icon) → Blitz 60 ms → Tintenfüllung 240 ms mit Raste bei 82 % →
+  Silhouette invertiert hart bei 300 → Wortmarke bei 440. **V2 „Zoetrop"**
+  12 Rasterfäden hart à 40 ms → ab 440 Zoetrop 8 B/s über Marey-Ghosts
+  (Halte-Loop) → Wortmarke 520. **V3 „Walze"** drei Ziffernwalzen à 300 ms,
+  Versatz 0/90/180, rasten mit 6 px Überschuss auf 3·1·1 → Messlinie scaleX →
+  Wortmarke 500 hart. Abgang immer: 24-px-Ruck, 180 ms TRANSPORT_AUS.
+  Drei Regeln, die nicht verhandelbar sind:
+  1. **Immer Atelier** (`#141210`), unabhängig vom App-Modus — das Manifest
+     kennt nur EINE `background_color`, modusgleich gäbe es an der Naht zum
+     OS-Splash einen Farbsprung. `manifest.background_color` = Kollodium.
+  2. **Das CSS ist kritisch und inline** (`splash-css.ts`, gerendert direkt
+     vor dem Markup). NICHT nach globals.css verschieben: gemessen war die
+     externe Datei beim ersten Paint noch nicht wirksam, und dann steht das
+     Markup aller drei Varianten ungestylt untereinander im Bild. Aus
+     demselben Grund hat der Splash eigene Zoetrop-Keyframes (`sp-zp1-3`,
+     wertgleich zu `zp1-3` — bei Taktänderung BEIDE nachziehen).
+  3. **Untergrenze 440 ms** (`SplashGate`, gemessen ab Navigationsbeginn):
+     Der Provider ist nach ~einem Frame fertig, weil localStorage faktisch
+     synchron liest — ohne Untergrenze wäre das Startbild 16 ms sichtbar,
+     ein Zucken statt eines Bildes. Danach feuert der Abgang sofort.
+     Notausgang nach 4 s liegt im Pre-Paint-Skript, damit er auch bei
+     gescheiterter Hydration greift. Ohne `data-splash` bleibt alles
+     unsichtbar (Fail-Safe für die Einstellung „aus").
+  iOS baut den OS-Splash nicht aus dem Manifest — `apple-splash/[spec]`
+  liefert dieselbe Marey-Spur, verlinkt über `appleWebApp.startupImage`.
 
 ## Sprachregister (volles Register — UI und ATLAS)
 
@@ -251,3 +291,7 @@ smoke.mjs im selben Commit:
 - Settings: „Geräte" · „ATLAS"
 - Seed migriert `theme:"dark"` → hell (M72-Migration bleibt); /workout läuft
   im erzwungenen Atelier.
+- Seed setzt `splash: "aus"` — die Durchlauf-Checks sollen nicht 600 ms auf
+  die Choreografie warten. Schritt 11 „startbild" prüft sie dafür gezielt:
+  `#splash` wird sichtbar und muss danach `hidden` sein (nicht bloß
+  transparent), dann steht „Heutige Studie".

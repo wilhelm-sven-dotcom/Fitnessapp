@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import { LiftMark } from "@/components/brand/LiftMark";
+import { MareySpur } from "@/components/brand/MareySpur";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -19,11 +19,6 @@ const GOALS: { v: TrainingGoal; label: string }[] = [
   { v: "optik", label: "Optik" },
   { v: "kraft", label: "Kraft" },
 ];
-
-/** Feines Kreide-Raster der Icon-Platte (0,5 px alle 10 px, wie das App-Icon). */
-const PLATTE_RASTER =
-  "repeating-linear-gradient(to right, rgba(233,225,206,.2) 0, rgba(233,225,206,.2) 0.5px, transparent 0.5px, transparent 10px)," +
-  "repeating-linear-gradient(to bottom, rgba(233,225,206,.2) 0, rgba(233,225,206,.2) 0.5px, transparent 0.5px, transparent 10px)";
 
 /**
  * Erster Start — das Frontispiz des Labors (Onboarding.dc): Icon-Platte,
@@ -61,9 +56,10 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          {/* Icon-Platte: Kollodium-dunkel auch im Archiv (Handoff-Regel) —
-              die Nachbildung des App-Icons, deshalb der weiche Icon-Radius. */}
-          {/* Hairline fasst die Platte — im Atelier wäre sie sonst grundgleich. */}
+          {/* Icon-Platte: die Nachbildung des App-Icons (I1 „Marey-Spur") —
+              Kollodium-dunkel auch im Archiv, deshalb die feste Farbe und der
+              weiche Icon-Radius. Die Hairline fasst die Platte, im Atelier
+              wäre sie sonst grundgleich. Raster und Signatur führt I1 nicht. */}
           <span
             aria-hidden
             className="relative block overflow-hidden border border-line"
@@ -75,16 +71,7 @@ export function Welcome() {
               color: "#e9e1ce",
             }}
           >
-            <span className="absolute inset-0" style={{ backgroundImage: PLATTE_RASTER }} />
-            <span className="absolute" style={{ inset: "8px 12px 4px" }}>
-              <LiftMark size={60} />
-            </span>
-            <span
-              className="absolute font-mono"
-              style={{ right: 6, bottom: 4, fontSize: 7, letterSpacing: ".12em", opacity: 0.7 }}
-            >
-              311
-            </span>
+            <MareySpur size={84} />
           </span>
 
           <p className="mt-7 font-mono text-3xs font-semibold uppercase tracking-gesperrt-4 text-muted">

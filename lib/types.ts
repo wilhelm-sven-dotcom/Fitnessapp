@@ -236,6 +236,10 @@ export interface AppSettings {
   theme?: "dark" | "light" | "system";
   /** Zoetrop-Animationen der Phasenfiguren (Default an). */
   zoetrope?: boolean;
+  /** Startbild beim Öffnen: „zufall" (Default) würfelt je Start eine der drei
+   *  Choreografien, v1/v2/v3 fixieren eine, „aus" überspringt es ganz.
+   *  Gelesen vom Pre-Paint-Skript in app/layout.tsx. */
+  splash?: "zufall" | "v1" | "v2" | "v3" | "aus";
   /** Einmal-Migration gelaufen: alter Dunkel-Default wurde auf Hell gehoben. */
   themeMigratedM72?: boolean;
   /** @deprecated Alt-Akzent des früheren Icon-Designers — nur Alt-Daten. */

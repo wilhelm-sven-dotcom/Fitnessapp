@@ -24,9 +24,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
-  // Kein Splash: localStorage ist in Millisekunden gelesen — `loading` deckt
-  // nur diesen einen Frame ab. Statt Blank-Screen steht ein statisches
-  // Seiten-Gerüst (kein Puls: bei <100 ms wäre das Flacker-Theater).
+  // Zweite Reihe hinter dem Startbild: Das Splash-Overlay (components/start)
+  // deckt den Kaltstart ab, dieses Gerüst nur noch den einen Frame, den
+  // `loading` wirklich dauert — localStorage liest in Millisekunden. Deshalb
+  // statisch ohne Puls: bei <100 ms wäre Blinken reines Flacker-Theater.
   if (loading)
     return (
       <div aria-busy="true" className="mx-auto max-w-md px-5 pb-28 pt-5">

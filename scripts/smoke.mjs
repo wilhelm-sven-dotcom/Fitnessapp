@@ -70,6 +70,10 @@ await page.addInitScript(() => {
         theme: "dark",
         onboarded: true,
         benchMigrated: true,
+        // Startbild aus: die Choreografie hält den Kaltstart bewusst ~600 ms
+        // fest. Für die Durchlauf-Checks wäre das nur Wartezeit ohne Aussage —
+        // das Startbild selbst prüft Schritt 11 gezielt.
+        splash: "aus",
       }),
     );
   }
@@ -212,6 +216,25 @@ try {
   const set = (await page.textContent("body")) ?? "";
   if (!/ATLAS/.test(set) || !/Geräte/.test(set)) throw new Error("Settings unvollständig");
   console.log("OK settings: Seite vollständig");
+
+  // ── 11 · Startbild: erscheint beim Kaltstart und räumt sich selbst ab ──
+  step = "startbild";
+  const splashCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await splashCtx.addInitScript(() => {
+    window.localStorage.setItem(
+      "wilhelm-training-settings",
+      JSON.stringify({ theme: "light", themeMigratedM72: true, onboarded: true, splash: "v1" }),
+    );
+  });
+  const splashPage = await splashCtx.newPage();
+  await splashPage.goto(BASE + "/", { waitUntil: "commit" });
+  // Sichtbar, solange die App noch nicht steht …
+  await splashPage.locator("#splash").waitFor({ state: "visible", timeout: 3000 });
+  // … und danach restlos weg (Abgang + display:none), nicht bloß transparent.
+  await splashPage.locator("#splash").waitFor({ state: "hidden", timeout: 4000 });
+  await splashPage.getByText("Heutige Studie", { exact: false }).first().waitFor({ timeout: 3000 });
+  await splashCtx.close();
+  console.log("OK startbild: Splash läuft und räumt sich ab");
 
   console.log("\nALLE SMOKE-CHECKS BESTANDEN ✅");
 } catch (e) {
