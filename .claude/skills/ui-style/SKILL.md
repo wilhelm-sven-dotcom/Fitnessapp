@@ -213,10 +213,13 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
      Markup aller drei Varianten ungestylt untereinander im Bild. Aus
      demselben Grund hat der Splash eigene Zoetrop-Keyframes (`sp-zp1-3`,
      wertgleich zu `zp1-3` — bei Taktänderung BEIDE nachziehen).
-  3. **Untergrenze 440 ms** (`SplashGate`, gemessen ab Navigationsbeginn):
+  3. **Untergrenze 1200 ms** (`SplashGate`, gemessen ab Navigationsbeginn):
      Der Provider ist nach ~einem Frame fertig, weil localStorage faktisch
      synchron liest — ohne Untergrenze wäre das Startbild 16 ms sichtbar,
-     ein Zucken statt eines Bildes. Danach feuert der Abgang sofort.
+     ein Zucken statt eines Bildes. Die Untergrenze muss ÜBER dem Ende der
+     Choreografie liegen (Wortmarke eingerastet: V1 600 · V2 680 · V3 500),
+     sonst reißt der Abgang genau das Zielbild weg; obendrauf ein halber
+     Moment Halt, damit es gelesen wird. Danach feuert der Abgang sofort.
      Notausgang nach 4 s liegt im Pre-Paint-Skript, damit er auch bei
      gescheiterter Hydration greift. Ohne `data-splash` bleibt alles
      unsichtbar (Fail-Safe für die Einstellung „aus").
