@@ -63,6 +63,25 @@ export function CloudSyncSection() {
     if (res.ok) setPassword("");
     else setMsg(res.error ? `Fehler: ${res.error}` : "Anmeldung fehlgeschlagen.");
   };
+  const register = async () => {
+    setMsg("");
+    const res = await cloud.signUp(email, password);
+    if (!res.ok) {
+      setMsg(res.error ? `Fehler: ${res.error}` : "Hat nicht geklappt.");
+      return;
+    }
+    if (res.mailNoetig) {
+      // Supabase hat eine Bestätigungsmail rausgeschickt — also zählt sie
+      // gegen dasselbe Stundenkontingent, deshalb auch hier die Sperre.
+      setSperre(60);
+      setMsg(
+        "Konto angelegt, aber Supabase will es per Mail bestätigt haben. Damit das ganz entfällt: im Supabase-Dashboard unter Authentication → Providers → Email die Option „Confirm email“ ausschalten.",
+      );
+      return;
+    }
+    setPassword("");
+    toast("Konto angelegt — du bist angemeldet.", { kind: "success" });
+  };
   const confirmCode = async () => {
     setMsg("");
     const res = await cloud.verifyCode(email, code);
@@ -141,9 +160,10 @@ export function CloudSyncSection() {
       ) : (
         <div className="space-y-2">
           <p className="text-xs leading-relaxed text-muted">
-            Melde dich an — am besten mit{" "}
-            <span className="font-medium text-fg">Passwort</span>. Das funktioniert auch in
-            der installierten App auf dem iPhone (ein Mail-Link öffnet dort nur Safari).
+            Anmelden oder neu anlegen — beides mit{" "}
+            <span className="font-medium text-fg">E-Mail und Passwort</span> und ohne eine
+            einzige Mail. Das ist auch der einzige Weg, der in der installierten App auf
+            dem iPhone funktioniert (ein Mail-Link öffnet dort nur Safari).
           </p>
           <input
             type="email"
@@ -162,17 +182,26 @@ export function CloudSyncSection() {
             placeholder="Passwort"
             className={`w-full ${inputCls}`}
           />
-          <Pressable
-            onClick={() => void loginPw()}
-            disabled={cloud.busy || !email.trim() || !password}
-            className="flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
-          >
-            {cloud.busy ? "Anmelden…" : "Anmelden"}
-          </Pressable>
+          <div className="flex gap-2">
+            <Pressable
+              onClick={() => void loginPw()}
+              disabled={cloud.busy || !email.trim() || !password}
+              className="flex flex-1 items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none disabled:opacity-40"
+            >
+              {cloud.busy ? "Anmelden…" : "Anmelden"}
+            </Pressable>
+            <Pressable
+              onClick={() => void register()}
+              disabled={cloud.busy || !email.trim() || password.length < 6}
+              className="flex flex-1 items-center justify-center gap-2 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
+            >
+              Konto anlegen
+            </Pressable>
+          </div>
 
           <p className="pt-2 text-xs leading-relaxed text-muted">
-            Noch kein Passwort? Einmalig per Mail anmelden — dann oben ein Passwort
-            setzen. Achtung: Es gehen nur wenige Anmelde-Mails pro Stunde durch.
+            Passwort vergessen? Dann per Mail — aber nur im Notfall: der eingebaute
+            Supabase-Mailer lässt nur wenige Anmelde-Mails pro Stunde durch.
           </p>
           <Pressable
             onClick={() => void sendLink()}

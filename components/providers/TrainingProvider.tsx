@@ -340,6 +340,12 @@ export interface CloudApi {
   signIn: (email: string) => Promise<{ ok: boolean; error?: string }>;
   verifyCode: (email: string, token: string) => Promise<{ ok: boolean; error?: string }>;
   signInWithPassword: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Konto direkt mit Passwort anlegen. `mailNoetig` = Supabase besteht auf
+   *  einer Bestätigungsmail; ohne das Flag ist man sofort angemeldet. */
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ ok: boolean; error?: string; mailNoetig?: boolean }>;
   setPassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
@@ -580,11 +586,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const cloudFehler = (msg: string): string => {
     const m = msg.toLowerCase();
     if (m.includes("rate limit") || m.includes("too many requests"))
-      return "Mail-Limit erreicht — Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Warte etwa eine Stunde, oder melde dich mit Passwort an.";
+      return "Mail-Limit erreicht — Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Leg stattdessen ein Konto mit Passwort an, das kommt ohne Mail aus.";
     if (m.includes("invalid") && (m.includes("token") || m.includes("otp")))
       return "Code stimmt nicht oder ist abgelaufen — er gilt nur wenige Minuten.";
     if (m.includes("invalid login credentials"))
       return "E-Mail oder Passwort stimmt nicht.";
+    if (m.includes("already registered") || m.includes("already been registered"))
+      return "Für diese Adresse gibt es schon ein Konto — melde dich oben mit deinem Passwort an.";
+    if (m.includes("password should be") || m.includes("password is too short"))
+      return "Passwort zu kurz — mindestens 6 Zeichen.";
+    if (m.includes("signup") && (m.includes("disabled") || m.includes("not allowed")))
+      return "Registrierung ist im Supabase-Projekt abgeschaltet: Authentication → Providers → Email → „Allow new users to sign up“ einschalten.";
     return msg;
   };
 
@@ -643,6 +655,35 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           password,
         });
         return error ? { ok: false, error: cloudFehler(error.message) } : { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    // Der Weg AN der Mail vorbei. Der eingebaute Supabase-Mailer lässt nur
+    // eine Handvoll Anmelde-Mails pro Stunde durch — wer sein Passwort noch
+    // nicht gesetzt hat, hing damit fest. Hier entsteht das Konto direkt aus
+    // E-Mail + Passwort; steht „Confirm email“ im Dashboard aus, ist man
+    // sofort angemeldet, ganz ohne Mail.
+    signUp: async (email, password) => {
+      const sb = getSupabase();
+      if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
+      if (!email.trim()) return { ok: false, error: "Bitte eine E-Mail-Adresse eingeben." };
+      if (password.length < 6) return { ok: false, error: "Mindestens 6 Zeichen." };
+      setCloudBusy(true);
+      try {
+        const { data, error } = await sb.auth.signUp({ email: email.trim(), password });
+        if (error) return { ok: false, error: cloudFehler(error.message) };
+        // Supabase verrät bei eingeschalteter Bestätigung NICHT, ob es die
+        // Adresse schon gibt (Schutz gegen Konten-Abfragen) — es kommt ein
+        // Nutzer ohne `identities` zurück. Das ist kein neues Konto.
+        if (data.user && data.user.identities?.length === 0)
+          return {
+            ok: false,
+            error: "Für diese Adresse gibt es schon ein Konto — melde dich oben mit deinem Passwort an.",
+          };
+        return { ok: true, mailNoetig: !data.session };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {

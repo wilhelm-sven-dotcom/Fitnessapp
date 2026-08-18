@@ -103,6 +103,29 @@ Für Cloud-Sync werden `NEXT_PUBLIC_SUPABASE_URL` und
 `supabase/migrations/0001_app_state.sql` ausgeführt (Tabelle `app_state` mit
 Row-Level-Security pro Nutzer). Ohne Konfiguration bleiben die Daten lokal.
 
+### Anmeldung ohne Mail-Limit
+
+Der **eingebaute Supabase-Mailer hat eine harte Stundenrate** (eine Handvoll
+Mails, projektweit). Das ist eine Projekt-Einstellung, keine Code-Frage — im
+Repo lässt sie sich nicht ändern. Die App umgeht sie deshalb: Anmelden **und**
+Kontoanlegen laufen über E-Mail + Passwort und brauchen gar keine Mail. Der
+Magic-Link bleibt nur als Notausgang.
+
+Damit das Anlegen wirklich mailfrei durchläuft, im Supabase-Dashboard unter
+**Authentication → Providers → Email**:
+
+- `Allow new users to sign up` **an** — sonst schlägt „Konto anlegen" fehl.
+- `Confirm email` **aus** — sonst schickt Supabase trotzdem eine
+  Bestätigungsmail und das Konto bleibt bis zum Klick gesperrt. (Für eine
+  private App unkritisch; die Zeilen-Sicherheit hängt an der User-ID, nicht an
+  der bestätigten Adresse.)
+
+Wer den Mail-Weg wirklich braucht, hebt das Limit nur über **eigenes SMTP** auf
+(**Project Settings → Authentication → SMTP Settings**). Danach — und nur
+danach — greift der Regler unter **Authentication → Rate Limits**
+(„Rate limit for sending emails"); solange der eingebaute Mailer läuft, ist er
+wirkungslos.
+
 ## Struktur
 
 - `app/` — Seiten: Heute (`/`), Training (`/workout`), ATLAS (`/coach`),
