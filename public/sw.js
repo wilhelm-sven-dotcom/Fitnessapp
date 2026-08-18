@@ -13,7 +13,11 @@
 // (/icon, /apple-icon, /manifest-icon/*) und das Manifest tragen KEINEN Hash im
 // Namen und liegen cache-first — ohne diesen Bump serviert ein installiertes
 // Gerät das alte Icon-PNG weiter, egal wie oft neu geladen wird.
-const CACHE = "training-v32";
+// v33: Icon-Fassung 3 (Marey-Spur lesbar gestellt). Die Icon-URLs selbst
+// wechseln zwar mit `?v=3`, aber /manifest.webmanifest tut das NICHT — ohne
+// Bump liest ein installiertes Gerät weiter das alte Manifest und darin die
+// alten `?v=2`-Icons.
+const CACHE = "training-v33";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only
