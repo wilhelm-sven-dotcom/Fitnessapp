@@ -12,15 +12,29 @@ import { useTraining } from "@/components/providers/TrainingProvider";
  * Zur Frequenz-Regel des Handoffs („der Splash verlängert den Boot nie
  * künstlich"): Der Provider ist bereits nach ~einem Frame fertig, weil
  * localStorage faktisch synchron liest. Ohne Untergrenze wäre das Startbild
- * also 16 ms sichtbar — kein Bild, nur ein Zucken. Deshalb wartet der Abgang,
- * bis die Choreografie ihr Bild aufgebaut hat, und feuert danach sofort.
- * Gemessen wird ab Navigationsbeginn (`performance.now()`), also derselbe
- * Nullpunkt, den auch die CSS-Keyframes benutzen — nicht ab React-Mount, der
- * ja gerade das ist, worauf gewartet wurde.
+ * also 16 ms sichtbar — kein Bild, nur ein Zucken. Deshalb läuft die
+ * Choreografie zu Ende und hält kurz, bevor der Abgang feuert; danach sofort.
+ *
+ * Nullpunkt ist `window.__sp0` — der Zeitstempel, den das Pre-Paint-Skript
+ * unmittelbar vor dem Splash-Markup setzt. NICHT der Navigationsbeginn: die
+ * CSS-Keyframes starten erst, wenn das Element gerendert wird, und der
+ * Abstand dazwischen wächst mit der Ladezeit des HTML. Ab Navigationsbeginn
+ * gerechnet würde der Abgang auf langsamen Verbindungen wieder mitten in die
+ * Choreografie fallen — genau der Fehler, den die Untergrenze verhindern soll.
  */
 
-/** „Bis das Bild steht": V1 Silhouette 420 · V2 Zoetrop an 440 · V3 Walzen 480. */
-const MIN_MS = 440;
+/**
+ * Mindest-Standzeit des Startbilds, gerechnet ab Navigationsbeginn.
+ *
+ * Die Choreografien sind FERTIG, wenn die Wortmarke eingerastet ist:
+ * V1 440 + 160 = 600 · V2 520 + 160 = 680 · V3 500 (hart). Darunter darf die
+ * Untergrenze nicht liegen — sonst reißt der Abgang genau das Bild weg, auf
+ * das die ganze Choreografie zuläuft (bei 440 ms sah man die Wortmarke nur
+ * noch wegfliegen). Obendrauf ein Moment Halt, damit das fertige Bild auch
+ * gelesen wird: rund eine halbe Sekunde, in der bei V1 die Belichtungsstriche
+ * blinken, bei V2 das Zoetrop läuft, bei V3 der Registrierpunkt schlägt.
+ */
+const MIN_MS = 1200;
 /** Abgangsdauer — deckungsgleich mit der CSS-Regel für data-splash="ab". */
 const AB_MS = 180;
 
@@ -35,7 +49,8 @@ export function SplashGate() {
     if (v !== "v1" && v !== "v2" && v !== "v3") return;
 
     let weg: ReturnType<typeof setTimeout> | undefined;
-    const rest = Math.max(0, MIN_MS - performance.now());
+    const start = (window as Window & { __sp0?: number }).__sp0 ?? 0;
+    const rest = Math.max(0, MIN_MS - (performance.now() - start));
     const ab = setTimeout(() => {
       d.setAttribute("data-splash", "ab");
       weg = setTimeout(() => d.setAttribute("data-splash", "weg"), AB_MS);
