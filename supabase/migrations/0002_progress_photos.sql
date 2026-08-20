@@ -1,11 +1,14 @@
 -- Private bucket for progress photos. Each user's files live under a folder
 -- named with their user id ("<uid>/<photoId>"), enforced by RLS.
+--
+-- Re-runnable, siehe Kopf von `0001_app_state.sql`. Spiegel in `supabase/SETUP.md`.
 
 insert into storage.buckets (id, name, public)
 values ('progress-photos', 'progress-photos', false)
 on conflict (id) do nothing;
 
 -- One policy for every operation: the first path segment must be the caller's uid.
+drop policy if exists "progress_photos_own" on storage.objects;
 create policy "progress_photos_own"
   on storage.objects for all
   using (
