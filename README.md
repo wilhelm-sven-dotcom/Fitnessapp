@@ -99,9 +99,10 @@ Schlüssel läuft die App vollständig über die deterministischen Fallbacks
 (Basis-Planer, Live-Zeilen, Debrief).
 
 Für Cloud-Sync werden `NEXT_PUBLIC_SUPABASE_URL` und
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` gesetzt und die Migration
-`supabase/migrations/0001_app_state.sql` ausgeführt (Tabelle `app_state` mit
-Row-Level-Security pro Nutzer). Ohne Konfiguration bleiben die Daten lokal.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` gesetzt und das SQL aus
+[`supabase/SETUP.md`](supabase/SETUP.md) eingespielt (Tabelle `app_state` mit
+Row-Level-Security pro Nutzer, privater Bucket für die Fortschrittsfotos).
+Ohne Konfiguration bleiben die Daten lokal.
 
 ### Anmeldung ohne Mail-Limit
 
@@ -111,20 +112,9 @@ Repo lässt sie sich nicht ändern. Die App umgeht sie deshalb: Anmelden **und**
 Kontoanlegen laufen über E-Mail + Passwort und brauchen gar keine Mail. Der
 Magic-Link bleibt nur als Notausgang.
 
-Damit das Anlegen wirklich mailfrei durchläuft, im Supabase-Dashboard unter
-**Authentication → Providers → Email**:
-
-- `Allow new users to sign up` **an** — sonst schlägt „Konto anlegen" fehl.
-- `Confirm email` **aus** — sonst schickt Supabase trotzdem eine
-  Bestätigungsmail und das Konto bleibt bis zum Klick gesperrt. (Für eine
-  private App unkritisch; die Zeilen-Sicherheit hängt an der User-ID, nicht an
-  der bestätigten Adresse.)
-
-Wer den Mail-Weg wirklich braucht, hebt das Limit nur über **eigenes SMTP** auf
-(**Project Settings → Authentication → SMTP Settings**). Danach — und nur
-danach — greift der Regler unter **Authentication → Rate Limits**
-(„Rate limit for sending emails"); solange der eingebaute Mailer läuft, ist er
-wirkungslos.
+Damit das Anlegen wirklich mailfrei durchläuft, müssen im Supabase-Projekt zwei
+Auth-Schalter stehen. Die Befehle dafür — und das SQL für Tabelle und
+Foto-Bucket — stehen zum Kopieren in **[`supabase/SETUP.md`](supabase/SETUP.md)**.
 
 ## Struktur
 
