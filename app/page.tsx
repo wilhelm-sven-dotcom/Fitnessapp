@@ -18,6 +18,7 @@ import { tap } from "@/lib/haptics";
 import { loadActiveState } from "@/lib/active-session";
 import { generateFallbackSession } from "@/lib/session-fallback";
 import {
+  passeZeitAn,
   resolveDailySession,
   todayKey,
   type DailySession,
@@ -27,7 +28,7 @@ import { estimateSessionMin } from "@/lib/session-time";
 import { phaseState } from "@/lib/periodization";
 import { fmtPlatteDatum, plattenNummer } from "@/lib/platte";
 import { SPRING } from "@/lib/motion";
-import { requestAtlasSession } from "@/lib/today-session";
+import { requestAtlasSession, type AtlasFehler } from "@/lib/today-session";
 import { cn } from "@/lib/utils";
 
 export default function HomePage() {
@@ -74,6 +75,8 @@ export default function HomePage() {
 
   const [editing, setEditing] = useState(false);
   const [composing, setComposing] = useState(false);
+  /** Warum die letzte KI-Anfrage nichts lieferte — die Karte sagt es. */
+  const [atlasFehler, setAtlasFehler] = useState<AtlasFehler | null>(null);
 
   // Läuft gerade eine Einheit? Der Live-State lebt gerätelokal (KEYS.active) —
   // hier nur lesen, der Runner verwaltet ihn.
@@ -95,6 +98,8 @@ export default function HomePage() {
   sessionRef.current = todaySession;
   /** Verzögerte KI-Anfrage (Zeitregler) — wird bei jedem compose neu gesetzt. */
   const atlasTimer = useRef(0);
+  /** Die EINE laufende KI-Anfrage; jede neue bricht sie ab. */
+  const atlasAbort = useRef<AbortController | null>(null);
   const runningRef = useRef(false);
   runningRef.current = !!running;
 
@@ -145,31 +150,60 @@ export default function HomePage() {
       : "";
     const frageAtlas = () => {
       if (genRef.current !== gen) return;
-      void requestAtlasSession({
-        allLib,
-        has,
-        log,
-        body,
-        cardio,
-        exerciseNotes,
-        budgetMin,
-        wish: opts.wish,
-        variant,
-        backSafe: backSafeActive,
-        persona: athletePersona(effectiveProfile(settings, body), settings.userName),
-        readinessLine,
-        disabled: disabledExercises,
-      }).then((s) => {
-        if (genRef.current === gen) setComposing(false);
-        if (!s || genRef.current !== gen) return;
-        const cur = sessionRef.current;
-        // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
-        // editierte oder bereits gestartete Einheit.
-        if (runningRef.current) return;
-        if (cur && cur.date === s.date && cur.source === "fallback" && !cur.edited) {
-          setTodaySession(s);
-        }
-      });
+      // Genau EINE Anfrage unterwegs: die vorige wird abgebrochen. Vorher
+      // löschte compose() nur den noch nicht gefeuerten Timer — ein bereits
+      // laufender fetch hatte gar keinen Handle, also liefen bei jedem
+      // weiteren Klick zusätzliche Opus-Runden parallel. Sie haben sich
+      // gegenseitig ins Timeout gedrängt und nebenbei das Rate-Limit
+      // (10/Minute) aufgebraucht — genau das „erst gut, dann gar nicht“.
+      atlasAbort.current?.abort();
+      const ctrl = new AbortController();
+      atlasAbort.current = ctrl;
+      requestAtlasSession(
+        {
+          allLib,
+          has,
+          log,
+          body,
+          cardio,
+          exerciseNotes,
+          budgetMin,
+          wish: opts.wish,
+          variant,
+          backSafe: backSafeActive,
+          persona: athletePersona(effectiveProfile(settings, body), settings.userName),
+          readinessLine,
+          disabled: disabledExercises,
+        },
+        { signal: ctrl.signal },
+      )
+        .then((r) => {
+          if (genRef.current !== gen) return;
+          setComposing(false);
+          if ("fehler" in r) {
+            // „abgebrochen“ heißt: der Nutzer hat weitergeklickt — kein Fehler.
+            setAtlasFehler(r.fehler === "abgebrochen" ? null : r.fehler);
+            return;
+          }
+          setAtlasFehler(null);
+          const cur = sessionRef.current;
+          // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
+          // editierte oder bereits gestartete Einheit.
+          if (runningRef.current) return;
+          if (
+            cur &&
+            cur.date === r.session.date &&
+            cur.source === "fallback" &&
+            !cur.edited
+          ) {
+            setTodaySession(r.session);
+          }
+        })
+        .catch(() => {
+          // Sicherheitsnetz: requestAtlasSession wirft nicht mehr, aber ein
+          // Ladezustand darf unter keinen Umständen hängen bleiben.
+          if (genRef.current === gen) setComposing(false);
+        });
     };
     window.clearTimeout(atlasTimer.current);
     if (opts.atlasDelayMs) atlasTimer.current = window.setTimeout(frageAtlas, opts.atlasDelayMs);
@@ -318,17 +352,31 @@ export default function HomePage() {
           budgetMin={settings.timeBudgetMin}
           onBudget={(min) => {
             setBudget(min);
-            if (sessionLocked || todaySession.edited) return;
+            // Läuft die Einheit schon oder ist sie abgeschlossen, ändert die
+            // Zeit nichts mehr — das ist selbsterklärend.
+            if (sessionLocked) return;
+            if (todaySession.edited) {
+              // Bearbeitete Einheit: Umfang anpassen statt neu komponieren.
+              // Vorher passierte hier gar nichts — die Zahl wurde gespeichert,
+              // der Plan blieb stehen, und die App sagte es nicht.
+              setTodaySession(
+                passeZeitAn(todaySession, allLib, has, min, {
+                  protectCore: backSafeActive,
+                }),
+              );
+              return;
+            }
             // Entprellt: wer sich durch die Stufen tippt, löst sonst je Klick
             // eine volle Opus-Runde aus — die Antworten überholen sich und es
             // wirkt, als hinge die App. Der Fallback steht trotzdem sofort,
             // weil compose() ihn synchron setzt.
-            compose({ wish: todaySession.wish, budget: min, atlasDelayMs: 500 });
+            compose({ wish: todaySession.wish, budget: min, atlasDelayMs: 1200 });
           }}
           onStart={start}
           onEdit={() => setEditing(true)}
           onRegenerate={(wish) => compose({ wish })}
           regenerating={composing}
+          atlasFehler={atlasFehler}
           locked={!!running}
           spareSlot={spareEl}
           direktive={trainer.directive.text}

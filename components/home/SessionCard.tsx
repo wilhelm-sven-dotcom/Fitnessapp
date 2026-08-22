@@ -21,9 +21,20 @@ import { startWeight } from "@/lib/start-weight";
 import { muscleOf, MUSCLE_LABEL } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 import type { DailySession } from "@/lib/session-model";
+import type { AtlasFehler } from "@/lib/today-session";
 import type { Exercise } from "@/lib/types";
 
 const BUDGETS = [20, 25, 30, 45, 60, 75, 90];
+
+/** Warum nur der Basisplan steht — vorher hieß JEDER Ausgang „nicht
+ *  erreichbar“, auch das Minuten-Limit, gegen das Weiterklicken nicht hilft. */
+const FEHLER_TEXT: Record<AtlasFehler, string> = {
+  limit: "Plan: Basisplan — ATLAS ist ausgelastet, in einer Minute nochmal",
+  zeit: "Plan: Basisplan — ATLAS brauchte zu lange",
+  netz: "Plan: Basisplan — ATLAS war nicht erreichbar",
+  aus: "Plan: Basisplan — ATLAS ist nicht eingerichtet",
+  abgebrochen: "Plan: Basisplan — ATLAS war nicht erreichbar",
+};
 
 const fmtKg = (n: number) =>
   n.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -48,6 +59,7 @@ export function SessionCard({
   onEdit,
   onRegenerate,
   regenerating,
+  atlasFehler,
   locked,
   spareSlot,
   direktive,
@@ -61,6 +73,8 @@ export function SessionCard({
   /** Neu ansetzen, optional mit Wunsch-Text. */
   onRegenerate: (wish?: string) => void;
   regenerating?: boolean;
+  /** Grund, warum ATLAS nichts geliefert hat — null = kein Fehler. */
+  atlasFehler?: AtlasFehler | null;
   /** Einheit läuft bereits — Umbau gesperrt, Start wird „Fortsetzen". */
   locked?: boolean;
   /** Slot für den „Rücken schonen"-Toggle der Startseite. */
@@ -265,7 +279,7 @@ export function SessionCard({
                 ? "Plan: von dir gebaut"
                 : settings.aiPlanning === false
                   ? "Plan: Basisplan (KI abgeschaltet)"
-                  : "Plan: Basisplan — ATLAS war nicht erreichbar"}
+                  : FEHLER_TEXT[atlasFehler ?? "netz"]}
           {session.edited ? " · angepasst" : ""}
         </p>
         <ol>
@@ -385,14 +399,16 @@ export function SessionCard({
             </Pressable>
             <Pressable
               onClick={() => onRegenerate()}
-              disabled={regenerating}
-              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie disabled:opacity-50"
+              // Nicht mehr gesperrt: eine neue Anfrage bricht die laufende
+              // ab (app/page.tsx, atlasAbort), es kann sich also nichts
+              // stauen. Der Text sagt weiterhin, dass ATLAS arbeitet.
+              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
             >
               <RefreshCw size={13} className={regenerating ? "opacity-50" : undefined} />
               {regenerating ? "ATLAS ordnet an …" : "Neu ansetzen"}
             </Pressable>
           </div>
-          <WishBar onSubmit={(wish) => onRegenerate(wish)} disabled={regenerating} />
+          <WishBar onSubmit={(wish) => onRegenerate(wish)} />
         </div>
       )}
     </div>

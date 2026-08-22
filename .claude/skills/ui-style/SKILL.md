@@ -361,6 +361,30 @@ Wiederholungen**, nirgends sonst. Prompt und Datenformat müssen dabei
 zusammenpassen: die Live-Regeln in `lib/atlas/live-tool.ts` beschreiben genau
 dieses Format — wer das eine ändert, ändert das andere mit.
 
+## KI-Aufrufe aus der Oberfläche
+
+Zwei Regeln, teuer gelernt (der Zeitregler feuerte pro Klick eine volle
+Opus-Runde, alle parallel — „erst gut, dann gar nicht"):
+
+- **Ein Auslöser, ein `AbortController`.** Jeder wiederholbare Auslöser hält
+  eine Ref auf die laufende Anfrage und bricht sie ab, bevor er die nächste
+  startet (`app/page.tsx`, `atlasAbort`). Ein `clearTimeout` auf den
+  Entpreller reicht NICHT — es erwischt nur noch nicht gefeuerte Anfragen,
+  ein laufender `fetch` hat ohne Controller gar keinen Handle. Ohne das
+  stauen sich Anfragen, drängen sich gegenseitig ins Timeout und verbrauchen
+  das Rate-Limit (`/api/atlas/session`: 10/Minute).
+- **Fehlergründe gehören in die Oberfläche, nicht in `null`.** Client-Helfer
+  liefern ein Ergebnis mit Grund (`AtlasSessionErgebnis` in
+  `lib/today-session.ts`: `limit | zeit | netz | aus | abgebrochen`), nie ein
+  nacktes `null` für alles. Sonst liest der Nutzer „nicht erreichbar",
+  während er in Wahrheit im Minutenlimit hängt — und klickt weiter, was es
+  verschlimmert. `abgebrochen` zeigt NICHTS: so endet jede vom Nutzer
+  verdrängte Anfrage, das ist kein Fehler.
+- Folgerichtig: **während einer laufenden Anfrage nichts sperren.** Wenn eine
+  neue die alte verdrängt, darf „Neu ansetzen"/Wunschfeld bedienbar bleiben —
+  eine Textzeile sagt, dass gearbeitet wird. Timeouts großzügig setzen
+  (60 s), sie sollen echte Antworten nicht abschneiden.
+
 ## Smoke-Invarianten (`scripts/smoke.mjs`, Port 3199, prod build)
 
 Diese Strings/Anker klickt der Smoke — Änderung NUR mit Ko-Evolution von
@@ -391,3 +415,8 @@ prüft am laufenden Bild, was Zeichenketten nicht hergeben — 40 Wiederholungen
 bleiben 40, die Satzliste lässt sich am Dock vorbeiscrollen, und der
 Abschluss-Knopf der Bühne erscheint. Bei Änderungen am Fokus-Modus mitlaufen
 lassen.
+
+`scripts/pruefe-zeitbudget.mjs` (`npm run pruefe:zeit`) hält die Regeln oben
+fest: fünf Zeit-Klicks → genau EINE Anfrage (ohne Abbruch waren es fünf),
+429 → „ausgelastet", hängende Route → Bedienung bleibt frei, bearbeitete
+Einheit → Umfang passt sich ohne KI-Aufruf an.
