@@ -2,7 +2,7 @@
 
 import { Pencil, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Phasenband } from "@/components/ui/Phasenband";
@@ -77,6 +77,19 @@ export function SessionCard({
   const router = useRouter();
   const { lastPerf, log, settings, body } = useTraining();
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
+
+  // Freie Minutenzahl: lokal getippt, erst beim Verlassen des Feldes
+  // übernommen — sonst löst jede Ziffer eine Neukomposition aus.
+  const [freieZeit, setFreieZeit] = useState(String(budgetMin));
+  useEffect(() => setFreieZeit(String(budgetMin)), [budgetMin]);
+  const uebernehmeFreieZeit = () => {
+    const n = Math.round(Number(freieZeit));
+    if (!Number.isFinite(n) || n < 10 || n > 180) {
+      setFreieZeit(String(budgetMin));
+      return;
+    }
+    if (n !== budgetMin) onBudget(n);
+  };
 
   // Signatur: die heutige Einheit als Phasenband (ein Feld je Arbeitssatz).
   const gruppen = useMemo(
@@ -278,7 +291,9 @@ export function SessionCard({
         </ol>
       </div>
 
-      {/* Zeitbudget — steuert Komposition und Auto-Anpassung. */}
+      {/* Zeitbudget — steuert Komposition und Auto-Anpassung. Neben den
+          Stufen ein freies Feld: 43 oder 53 Minuten sind echte Zeitfenster,
+          und ATLAS bekommt die Zahl ohnehin als Zahl. */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="mr-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
           Zeit
@@ -299,7 +314,44 @@ export function SessionCard({
             {b}
           </Pressable>
         ))}
+        <input
+          type="number"
+          inputMode="numeric"
+          min={10}
+          max={180}
+          value={freieZeit}
+          onChange={(e) => setFreieZeit(e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
+          onBlur={uebernehmeFreieZeit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          aria-label="Zeitbudget frei eingeben, Minuten"
+          placeholder="frei"
+          className={cn(
+            "w-16 rounded-pill border bg-transparent px-2 py-2 text-center font-mono text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+            BUDGETS.includes(budgetMin)
+              ? "border-line text-muted"
+              : "border-strong text-fg",
+          )}
+        />
       </div>
+
+      {/* Herkunft der Einheit — ohne das wirkt der Wechsel wie ein Trick:
+          erst steht ein Vorschlag da, Sekunden später sind es andere Übungen.
+          Der Austausch bleibt (der Basisplan überbrückt nur die Wartezeit),
+          aber er ist jetzt angekündigt statt heimlich. */}
+      {!locked && (
+        <p className="font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
+          {regenerating
+            ? "Basisplan steht — ATLAS stellt gerade um"
+            : session.source === "atlas"
+              ? "Von ATLAS zusammengestellt"
+              : session.source === "manuell"
+                ? "Von dir angepasst"
+                : "Basisplan — ATLAS war nicht erreichbar"}
+        </p>
+      )}
 
       {spareSlot && <div>{spareSlot}</div>}
 

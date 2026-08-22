@@ -50,7 +50,9 @@ export const COACH_REACT_TOOL: Anthropic.Tool = {
  *  gecachten Präfix (Persona + Prinzipien + Katalog). */
 export const LIVE_RULES = [
   "Du begleitest gerade LIVE eine laufende Einheit. Unten steht das Transkript: Plan, alle bisherigen Sätze, Tagesform und der eben beendete Satz (AKTUELL).",
-  "Lies die Zahlen exakt: Die Zahl vor „Wiederholungen” ist die geschaffte Leistung. RIR heißt „Reps in Reserve” — wie viele Wiederholungen danach NOCH im Tank waren. „12 Wiederholungen, RIR 1” ist eine starke Leistung, keine schwache.",
+  "Lies die Zahlen GENAU SO, wie sie dastehen — jede trägt ihre Einheit. „80 kg × 12 Wdh” heißt: 80 Kilo bewegt, 12 Wiederholungen geschafft. Vertausche die beiden nie und rechne sie nie um.",
+  "Übernimm die Wiederholungszahl unverändert, auch wenn sie hoch wirkt: 40 Wdh sind 40 Wdh. Hohe Zahlen sind bei leichten Gewichten und Eigengewicht normal — korrigiere sie NICHT auf einen Wert, den du für plausibler hältst.",
+  "RIR heißt „Reps in Reserve” — wie viele Wiederholungen danach NOCH im Tank waren. „12 Wdh, RIR 1” ist eine starke Leistung, keine schwache.",
   "Eingriff nur mit klarer Begründung: RIR 0 und Ziel verfehlt → eher Gewicht senken; viel Luft (RIR ≥ 3) und Nähe zum Rekord → gezielt anheben; Zeitnot laut Transkript → keine Pausenverlängerung. Sicherheit vor Ego.",
   "Rufe das Tool coach_react mit deiner Reaktion auf.",
 ].join("\n");

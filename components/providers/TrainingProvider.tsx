@@ -41,7 +41,7 @@ import {
 } from "@/lib/readiness";
 import { estimateSessionMin, fitToBudget } from "@/lib/session-time";
 import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
-import { weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
+import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
 import { prTimeline } from "@/lib/records";
@@ -74,6 +74,7 @@ import type {
   Exercise,
   GymProfile,
   LastPerf,
+  RelatedPerf,
   LoggedSession,
   Muscle,
   Pattern,
@@ -269,6 +270,8 @@ interface TrainingContextValue {
   backSafeActive: boolean;
   seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
+  /** Nur für die Anzeige — siehe RelatedPerf; speist NIE die Empfehlung. */
+  lastPerfRelated: (id: string) => RelatedPerf | null;
   toggleEquip: (k: EquipKey) => void;
   addCustom: (data: CustomExerciseInput) => void;
   updateCustom: (id: string, data: CustomExerciseInput) => void;
@@ -1074,13 +1077,45 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // sich eine Dep wirklich ändert — Stale-Closures sind damit ausgeschlossen,
   // solange die Dep-Liste vollständig ist (exhaustive-deps wacht darüber).
   const value = useMemo<TrainingContextValue>(() => {
+    const hatArbeitssatz = (sets?: SetEntry[]) =>
+      !!sets && sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null);
+
     const lastPerf = (id: string): LastPerf | null => {
       for (let i = log.length - 1; i >= 0; i--) {
         const ex = log[i].exercises?.find((e) => e.id === id);
         // Only a filled WORKING set counts as a performance — a warmup-only entry
         // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
-        if (ex && ex.sets && ex.sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null))
+        if (ex && hatArbeitssatz(ex.sets))
           return { sets: ex.sets, date: log[i].date, note: ex.note };
+      }
+      return null;
+    };
+
+    /**
+     * Ersatz-Historie, wenn es die Übung selbst noch nie gab: die jüngste
+     * Einheit mit gleichem Muster UND gleichem Hauptmuskel.
+     *
+     * Warum das nötig ist: die Komposition rotiert absichtlich („am längsten
+     * nicht verwendete Übung je Muster“). Wer gestern Beinpresse gemacht hat
+     * und heute Hackenschmidt bekommt, sah bisher „Erstes Mal“ — obwohl die
+     * Zahlen von gestern sehr wohl etwas aussagen. Das wirkte, als vergäße
+     * die App die Gewichte.
+     *
+     * NUR für die Anzeige. Die Gewichtsempfehlung bleibt bei `lastPerf` und
+     * damit bei derselben Übung — fremde Lasten wären hier gefährlich.
+     */
+    const lastPerfRelated = (id: string): RelatedPerf | null => {
+      const ziel = allLib.find((e) => e.id === id);
+      if (!ziel) return null;
+      const zielMuskel = muscleOf(ziel).primary;
+      for (let i = log.length - 1; i >= 0; i--) {
+        for (const se of log[i].exercises ?? []) {
+          if (se.id === id || !hatArbeitssatz(se.sets)) continue;
+          const kand = allLib.find((e) => e.id === se.id);
+          if (!kand || kand.pattern !== ziel.pattern) continue;
+          if (muscleOf(kand).primary !== zielMuskel) continue;
+          return { sets: se.sets, date: log[i].date, exName: kand.name };
+        }
       }
       return null;
     };
@@ -1516,6 +1551,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       backSafeActive,
       seeDoctor,
       lastPerf,
+      lastPerfRelated,
       toggleEquip,
       addCustom,
       updateCustom,

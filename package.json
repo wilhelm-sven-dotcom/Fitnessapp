@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "pruefe:training": "node scripts/pruefe-training.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

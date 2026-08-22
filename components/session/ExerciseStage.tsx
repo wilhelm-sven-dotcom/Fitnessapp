@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { SetRow } from "@/components/workout/SetRow";
 import { Pressable } from "@/components/ui/pressable";
-import { beatsRecord } from "@/lib/records";
+import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import { fmtKg } from "@/lib/format";
@@ -15,7 +15,7 @@ import { figurFor } from "@/lib/phasen/figuren";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import type { PlannedExercise } from "@/lib/session-model";
-import type { Exercise, LastPerf, Prescription, SetEntry } from "@/lib/types";
+import type { Exercise, LastPerf, Prescription, RelatedPerf, SetEntry } from "@/lib/types";
 
 /**
  * Die Bühne: EINE Übung im Fokus (Fokus.dc). Oben die Bühnen-Karte —
@@ -31,6 +31,8 @@ export function ExerciseStage({
   sets,
   presc,
   lastPerf,
+  relatedPerf,
+  nextExName,
   record,
   isExam,
   aidNote,
@@ -53,6 +55,10 @@ export function ExerciseStage({
   sets: SetEntry[];
   presc: Prescription;
   lastPerf: LastPerf | null;
+  /** Verwandte Übung als Ersatz-Historie — reine Anzeige. */
+  relatedPerf: RelatedPerf | null;
+  /** Name der nächsten Übung — null beim letzten Eintrag (dann Abschluss). */
+  nextExName?: string | null;
   record: ExRecord | null;
   isExam: boolean;
   aidNote?: string;
@@ -103,16 +109,36 @@ export function ExerciseStage({
   const figur = figurFor(ex);
 
   // „Letztes Mal"-Inline-Zeile für den offenen Kader (Fokus.dc):
-  // Top-Arbeitssatz von damals + RIR.
-  const lastInline = (() => {
-    const w = (lastPerf?.sets ?? []).filter((s) => !s.warmup && isFilled(s));
+  // stärkster Arbeitssatz von damals + RIR.
+  //
+  // Zwei Dinge waren hier falsch: der Referenzsatz wurde über das höchste
+  // GEWICHT gewählt — bei Eigengewichtsübungen sind alle Gewichte 0, also
+  // gewann willkürlich der erste Satz statt des besten. Und ohne Gewicht
+  // stand ein nacktes „× 12" in der Zeile. `setMetric` kennt die richtige
+  // Kennzahl je Übungsart schon (e1RM gewichtet, sonst Wiederholungen bzw.
+  // Sekunden) — dieselbe, nach der auch die Rekorde gewertet werden.
+  const bestSatz = (sets_: SetEntry[]) => {
+    const w = sets_.filter((s) => !s.warmup && isFilled(s));
     if (!w.length) return null;
-    const top = w.reduce((a, b) =>
-      (Number(b.weight) || 0) > (Number(a.weight) || 0) ? b : a,
-    );
+    return w.reduce((a, b) => (setMetric(ex, b) > setMetric(ex, a) ? b : a));
+  };
+  const perfLabel = (top: SetEntry) => {
     if (ex.unit === "Sek") return `${top.reps} s`;
     const kg = Number(top.weight) || 0;
-    return `${kg > 0 ? `${fmtKg(kg)} × ` : "× "}${top.reps}${top.rir != null ? ` · RIR ${top.rir}` : ""}`;
+    const rir = top.rir != null ? ` · RIR ${top.rir}` : "";
+    return kg > 0
+      ? `${fmtKg(kg)} × ${top.reps}${rir}`
+      : `${top.reps} Wdh${rir}`;
+  };
+  const lastInline = (() => {
+    const eigen = bestSatz(lastPerf?.sets ?? []);
+    if (eigen) return perfLabel(eigen);
+    // Kein eigener Verlauf: die verwandte Übung nennen statt „Erstes Mal" —
+    // die Komposition rotiert bewusst, die Zahlen von gestern zählen trotzdem.
+    const verwandt = bestSatz(relatedPerf?.sets ?? []);
+    if (verwandt && relatedPerf)
+      return `${relatedPerf.exName} ${perfLabel(verwandt)}`;
+    return null;
   })();
   const zielLabel =
     ex.pattern === "cardio"
@@ -262,6 +288,31 @@ export function ExerciseStage({
             });
           })()}
         </div>
+      )}
+
+      {/* Übung fertig → hier weiter. Der Blick steht nach dem letzten Eintrag
+          genau hier; vorher musste man ans Seitenende oder in die Übersicht,
+          um die nächste Übung aufzurufen. Der Blätter-Knopf unten bleibt fürs
+          Vor- und Zurückspringen, dieser ist der Abschluss der Übung. */}
+      {alleBelichtet && (
+        <Pressable
+          onClick={onNext}
+          className="mt-2.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-card bg-accent-sessions px-4 py-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie active:bg-accent-press"
+        >
+          {nextExName ? (
+            <>
+              <span className="shrink-0">Nächste Übung</span>
+              <span className="min-w-0 truncate normal-case tracking-normal opacity-90">
+                {nextExName}
+              </span>
+              <ChevronRight size={15} strokeWidth={2.5} className="shrink-0" />
+            </>
+          ) : (
+            <>
+              <Check size={15} strokeWidth={2.5} /> Zum Abschluss
+            </>
+          )}
+        </Pressable>
       )}
 
       {/* Fußzeile: Guide links, Schnell-Tausch rechts — bewusst AUSSERHALB der

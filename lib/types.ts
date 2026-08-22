@@ -317,6 +317,22 @@ export interface LastPerf {
   note?: string;
 }
 
+/**
+ * Letzte Leistung einer VERWANDTEN Übung (gleiches Muster, gleicher
+ * Hauptmuskel) — der Ersatz für „Erstes Mal“, wenn die Komposition auf eine
+ * andere, gleichwertige Übung rotiert hat.
+ *
+ * Bewusst ein eigener Typ und NICHT `LastPerf`: dieser Wert ist reine
+ * Anzeige. Er darf die Gewichtsempfehlung (`presc()`) nicht speisen — 120 kg
+ * von der Beinpresse als Vorschlag für die Kniebeuge wäre gefährlich.
+ */
+export interface RelatedPerf {
+  sets: SetEntry[];
+  date: string;
+  /** Name der Übung, aus der die Zahlen stammen — gehört in die Anzeige. */
+  exName: string;
+}
+
 export type PrescReason = "start" | "up" | "rep" | "down" | "hold" | "lighter";
 
 /** Output of `presc()` — the suggestion shown on the workout card. */

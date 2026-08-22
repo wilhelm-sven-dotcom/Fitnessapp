@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     .filter((e) => e && typeof e.id === "string" && typeof e.name === "string")
     .slice(0, 60);
   const budgetMin = Number.isFinite(body.budgetMin)
-    ? Math.max(15, Math.min(90, Math.round(Number(body.budgetMin))))
+    ? Math.max(10, Math.min(180, Math.round(Number(body.budgetMin))))
     : 25;
   const wish = typeof body.wish === "string" ? body.wish.slice(0, 200) : "";
   const variant: SessionVariant =
@@ -81,7 +81,8 @@ export async function POST(req: Request) {
   // Dynamischer Teil NACH dem gecachten Präfix: Aufgabe, Verfügbarkeit, Kontext.
   const dynamic = [
     VARIANT_TASK[variant],
-    `Zeitfenster: etwa ${budgetMin} Minuten (Faustregel: ~3–4 Übungen je 15 Min, danach eine weitere je 5–7 Min; lieber knapper als überladen).`,
+    `Zeitfenster: GENAU ${budgetMin} Minuten — der Athlet hat diese Zahl bewusst gesetzt, sie ist eine Vorgabe und keine Richtung. Plane die Einheit so, dass sie in ${budgetMin} Minuten fertig ist (Faustregel: ~3–4 Übungen je 15 Min, danach eine weitere je 5–7 Min; im Zweifel eine Übung weniger statt Überziehen).`,
+    "Was in die Zeit passt, entscheidet der BEDARF, nicht die Reihenfolge im Katalog: nimm zuerst die Muskeln mit dem größten Wochendefizit und der längsten Pause seit dem letzten Reiz. Kurze Einheiten sind kein verkleinertes Ganzkörperprogramm, sondern eine Auswahl — begründe jede Übung in ihrem `intro` mit dem konkreten Grund (Defizit, Tage seit Reiz, Wunsch, Rückenlage).",
     persona ? persona : "",
     custom.length
       ? `Eigene Übungen des Athleten (zusätzlich wählbar):\n${custom

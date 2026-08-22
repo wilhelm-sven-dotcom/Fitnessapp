@@ -92,6 +92,7 @@ export function SessionRunner() {
     log,
     body,
     lastPerf,
+    lastPerfRelated,
     daysAgo,
     settings,
     todayReadiness,
@@ -116,6 +117,8 @@ export function SessionRunner() {
   // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
   const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
+  /** Gemessene Höhe des Pausen-Docks (0 = kein Dock) — siehe Container unten. */
+  const [dockH, setDockH] = useState(0);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -183,6 +186,21 @@ export function SessionRunner() {
     () => (curExId ? lastPerf(curExId) : null),
     [lastPerf, curExId],
   );
+  // Ersatz-Historie einer verwandten Übung — nur wenn es die Übung selbst
+  // noch nie gab. Reine Anzeige (siehe RelatedPerf), nie Grundlage der
+  // Gewichtsempfehlung.
+  const curRel = useMemo(
+    () => (curExId && !curLp ? lastPerfRelated(curExId) : null),
+    [lastPerfRelated, curExId, curLp],
+  );
+  // Name der nächsten Übung für den Abschluss-Knopf der Bühne — null beim
+  // letzten Eintrag, dann führt der Knopf zum Abschluss.
+  const nextExName = useMemo(() => {
+    if (!active) return null;
+    const next = active.session.items[active.currentIndex + 1];
+    if (!next) return null;
+    return allLib.find((e) => e.id === next.exerciseId)?.name ?? null;
+  }, [active, allLib]);
 
   // Schnell-Tausch: Pool für das aktuelle Item (geteilte Politik mit dem
   // Edit-Sheet — same-pattern zuerst, deaktivierte Übungen raus).
@@ -875,9 +893,16 @@ export function SessionRunner() {
   const restEx = restItem ? byId.get(restItem.exerciseId) : undefined;
 
   return (
-    // Solange das Pausen-Dock unten steht, bekommt der Inhalt Auslauf,
-    // damit Logbuch und Weiter-Knopf nicht darunter verschwinden.
-    <div className={cn("space-y-3", rest && "pb-36")}>
+    // Solange das Pausen-Dock unten steht, bekommt der Inhalt Auslauf, damit
+    // Logbuch und Weiter-Knopf nicht darunter verschwinden. Der Wert wird
+    // GEMESSEN (RestPanel meldet seine Höhe): ein fester Abstand lag daneben,
+    // sobald das Dock durch RIR-Regler oder eine ATLAS-Zeile wuchs — dann
+    // verdeckte es die Satzliste, und man sah nicht mehr, wie viele Sätze
+    // noch offen sind.
+    <div
+      className="space-y-3"
+      style={dockH > 0 ? { paddingBottom: dockH + 12 } : undefined}
+    >
       <div ref={sentinelRef} aria-hidden className="-mb-3 h-px" />
       {/* Der Kopf haftet beim Scrollen: Full-bleed über -mx-5 (AppShell wrappt
           in px-5), z-20 unter Pausen-Dock (30) und Sheets (50). */}
@@ -920,6 +945,8 @@ export function SessionRunner() {
         sets={sets}
         presc={p}
         lastPerf={curLp}
+        relatedPerf={curRel}
+        nextExName={nextExName}
         record={recordMap.get(ex.id) ?? null}
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
@@ -994,6 +1021,7 @@ export function SessionRunner() {
 
       {rest && (
         <RestPanel
+          onHeight={setDockH}
           left={rest.left}
           total={rest.total}
           set={restSet}

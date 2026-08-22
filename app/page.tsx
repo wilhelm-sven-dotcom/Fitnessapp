@@ -93,20 +93,40 @@ export default function HomePage() {
   const genRef = useRef(0);
   const sessionRef = useRef<DailySession | null>(null);
   sessionRef.current = todaySession;
+  /** Verzögerte KI-Anfrage (Zeitregler) — wird bei jedem compose neu gesetzt. */
+  const atlasTimer = useRef(0);
   const runningRef = useRef(false);
   runningRef.current = !!running;
 
   const sessionLocked = !!running || !!todaySession?.completedAt;
 
-  /** Frisch komponieren: Fallback sofort, ATLAS ersetzt still, wenn möglich. */
-  const compose = (opts: { wish?: string; variant?: SessionVariant } = {}) => {
+  /** Frisch komponieren: Fallback sofort, ATLAS ersetzt still, wenn möglich.
+   *
+   *  `budget` MUSS mitgegeben werden, wenn die Zeit gerade umgestellt wurde:
+   *  `compose` läuft dann aus der Closure DIESES Renders und sähe in
+   *  `settings.timeBudgetMin` noch den alten Wert — die Einheit wäre für die
+   *  vorherige Zeit zusammengestellt. Gleiche Falle wie bei `backSafeActive`
+   *  weiter unten. */
+  const compose = (
+    opts: {
+      wish?: string;
+      variant?: SessionVariant;
+      budget?: number;
+      /** Verzögerung NUR für die KI-Anfrage. Der Fallback steht immer sofort —
+       *  wer am Zeitregler tippt, soll die neue Einheit augenblicklich sehen
+       *  und nicht auf eine Opus-Runde warten, die der nächste Klick ohnehin
+       *  verwirft. */
+      atlasDelayMs?: number;
+    } = {},
+  ) => {
     const gen = ++genRef.current;
     const variant = opts.variant ?? "normal";
+    const budgetMin = opts.budget ?? settings.timeBudgetMin;
     const fallback = generateFallbackSession({
       allLib,
       has,
       log,
-      budgetMin: settings.timeBudgetMin,
+      budgetMin,
       backSafe: backSafeActive,
       injuries: effectiveProfile(settings, body).injuries,
       variant,
@@ -123,31 +143,37 @@ export default function HomePage() {
     const readinessLine = todayReadiness
       ? `Tagesform (Check-in): Schlaf ${todayReadiness.sleep}/3, Energie ${todayReadiness.energy}/3, Rücken ${todayReadiness.back}/3.`
       : "";
-    void requestAtlasSession({
-      allLib,
-      has,
-      log,
-      body,
-      cardio,
-      exerciseNotes,
-      budgetMin: settings.timeBudgetMin,
-      wish: opts.wish,
-      variant,
-      backSafe: backSafeActive,
-      persona: athletePersona(effectiveProfile(settings, body), settings.userName),
-      readinessLine,
-      disabled: disabledExercises,
-    }).then((s) => {
-      setComposing(false);
-      if (!s || genRef.current !== gen) return;
-      const cur = sessionRef.current;
-      // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
-      // editierte oder bereits gestartete Einheit.
-      if (runningRef.current) return;
-      if (cur && cur.date === s.date && cur.source === "fallback" && !cur.edited) {
-        setTodaySession(s);
-      }
-    });
+    const frageAtlas = () => {
+      if (genRef.current !== gen) return;
+      void requestAtlasSession({
+        allLib,
+        has,
+        log,
+        body,
+        cardio,
+        exerciseNotes,
+        budgetMin,
+        wish: opts.wish,
+        variant,
+        backSafe: backSafeActive,
+        persona: athletePersona(effectiveProfile(settings, body), settings.userName),
+        readinessLine,
+        disabled: disabledExercises,
+      }).then((s) => {
+        if (genRef.current === gen) setComposing(false);
+        if (!s || genRef.current !== gen) return;
+        const cur = sessionRef.current;
+        // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
+        // editierte oder bereits gestartete Einheit.
+        if (runningRef.current) return;
+        if (cur && cur.date === s.date && cur.source === "fallback" && !cur.edited) {
+          setTodaySession(s);
+        }
+      });
+    };
+    window.clearTimeout(atlasTimer.current);
+    if (opts.atlasDelayMs) atlasTimer.current = window.setTimeout(frageAtlas, opts.atlasDelayMs);
+    else frageAtlas();
   };
 
   // Beim ersten Öffnen des Tages (oder nach Mitternacht) frisch komponieren.
@@ -292,9 +318,12 @@ export default function HomePage() {
           budgetMin={settings.timeBudgetMin}
           onBudget={(min) => {
             setBudget(min);
-            if (!sessionLocked && !todaySession.edited) {
-              setTimeout(() => compose({ wish: todaySession.wish }), 0);
-            }
+            if (sessionLocked || todaySession.edited) return;
+            // Entprellt: wer sich durch die Stufen tippt, löst sonst je Klick
+            // eine volle Opus-Runde aus — die Antworten überholen sich und es
+            // wirkt, als hinge die App. Der Fallback steht trotzdem sofort,
+            // weil compose() ihn synchron setzt.
+            compose({ wish: todaySession.wish, budget: min, atlasDelayMs: 500 });
           }}
           onStart={start}
           onEdit={() => setEditing(true)}

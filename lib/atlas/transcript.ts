@@ -11,12 +11,25 @@ import type { Exercise, SetEntry } from "@/lib/types";
  * den letzten Moment zu sehen. Hart auf ~4000 Zeichen gekappt.
  */
 
-const MAX_CHARS = 4000;
+const MAX_CHARS = 5200;
 
+/**
+ * EIN Satz als Text — mit Einheit an JEDER Zahl.
+ *
+ * Vorher stand hier `80×12` und in der Planzeile `3×8–12`: dasselbe `×`
+ * bedeutete einmal Gewicht × Wiederholungen und einmal Sätze × Wiederholungen.
+ * Das Modell musste raten und lag regelmäßig falsch — Gewicht und
+ * Wiederholungen kamen vertauscht zurück, und bei hohen Wiederholungszahlen
+ * (`20×40` = 20 kg, 40 Wdh) gewann die „plausiblere“ Lesart, also 20 Wdh.
+ * Deshalb: Einheiten ausschreiben, und `×` steht im ganzen Transkript nur
+ * noch zwischen Kilo und Wiederholungen.
+ */
 function setLine(ex: Exercise, s: SetEntry): string {
-  if (ex.unit === "Sek") return `${s.reps}s${s.intensity != null ? ` Int${s.intensity}` : ""}`;
-  const w = s.weight !== "" && s.weight != null ? `${s.weight}×` : "";
-  return `${w}${s.reps}${s.rir != null ? ` RIR${s.rir}` : ""}`;
+  if (ex.unit === "Sek")
+    return `${s.reps} s${s.intensity != null ? ` (Intensität ${s.intensity})` : ""}`;
+  const rir = s.rir != null ? `, RIR ${s.rir}` : "";
+  const hasWeight = s.weight !== "" && s.weight != null && Number(s.weight) > 0;
+  return hasWeight ? `${s.weight} kg × ${s.reps} Wdh${rir}` : `${s.reps} Wdh${rir}`;
 }
 
 export function buildSessionTranscript(opts: {
@@ -73,8 +86,10 @@ export function buildSessionTranscript(opts: {
     const rec = opts.records.get(ex.id);
     const note = opts.exerciseNotes[ex.id];
     const parts = [
-      `${i + 1}. ${ex.name} (${PATTERN_LABEL[ex.pattern]}) — geplant ${it.sets}×${it.repLow}–${it.repHigh}${ex.unit === "Sek" ? " s" : ""}.`,
-      doneStr ? `Sätze: ${doneStr}.` : "Noch kein Satz.",
+      // „Sätze à …“ statt „3×8–12“: das × ist für Kilo × Wiederholungen
+      // reserviert, sonst steht es im selben Text für zweierlei.
+      `${i + 1}. ${ex.name} (${PATTERN_LABEL[ex.pattern]}) — geplant ${it.sets} Sätze à ${it.repLow}–${it.repHigh}${ex.unit === "Sek" ? " s" : " Wdh"}.`,
+      doneStr ? `Geschaffte Sätze: ${doneStr}.` : "Noch kein Satz.",
       open > 0 ? `Offen: ${open}.` : "Fertig.",
       rec ? `Bestwert: ${rec.label}.` : "",
       note ? `Hilfsmittel: ${note} (assistierte/leichtere Ausführung).` : "",

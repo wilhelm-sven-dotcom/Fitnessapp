@@ -317,6 +317,39 @@ inline. **STICKY-FALLE:** Horizontal-Clip NUR auf `body { overflow-x:hidden }`
 — nie auf `html` oder innere Wrapper (tötet `position:sticky`).
 z-Ordnung: Sticky-Kopf 20 < Dock 30 < Sheets 50.
 
+## Fokus-Modus: zwei Regeln aus dem Praxistest
+
+- **Feste Abstände zu `fixed`-Docks sind verboten — Höhe MESSEN.** Das
+  Pausen-Dock (`RestPanel`, `fixed bottom-0 z-30`) wächst mit seinem Inhalt
+  (RIR-Regler, Intensitätsskala, „Los"-Puls): gemessen 249 px, während der
+  Container `pb-36` = 144 px Auslauf hatte. Die untersten ~105 px der
+  Satzliste waren dadurch NICHT erreichbar — man sah nicht mehr, wie viele
+  Sätze noch offen sind. `RestPanel` meldet seine Höhe jetzt per
+  `ResizeObserver` über `onHeight`, `SessionRunner` setzt sie als
+  `paddingBottom`. Gilt für jedes künftige Dock.
+- **Der Abschluss einer Übung gehört in die Bühne.** Ist der letzte
+  Arbeitssatz eingetragen (`alleBelichtet`), steht direkt unter dem
+  Kader-Logbuch ein Siegellack-Knopf „Nächste Übung · ‹Name›" (beim letzten
+  Eintrag „Zum Abschluss"). Dort steht der Blick nach dem Eintragen; vorher
+  musste man ans Seitenende oder in die Übersicht. Der Blätter-Knopf
+  (Vorher/Weiter) unten bleibt fürs Springen — das ist kein Duplikat,
+  sondern eine andere Absicht.
+
+## ATLAS-Kontext: jede Zahl trägt ihre Einheit
+
+Was ins Modell geht (`lib/atlas/transcript.ts`, `lib/trainer.ts`), schreibt
+Einheiten AUS: `80 kg × 12 Wdh`, ohne Gewicht `12 Wdh`, gehalten `45 s`,
+Plan als `3 Sätze à 8–12 Wdh`.
+
+**Warum das eine harte Regel ist:** vorher stand im selben Transkript
+`80×12` (Gewicht × Wiederholungen) und `3×8–12` (Sätze × Wiederholungen) —
+ein Zeichen, zwei Bedeutungen. Das Modell riet, vertauschte Gewicht und
+Wiederholungen, und bei `20×40` gewann die „plausiblere" Lesart: aus 40
+Wiederholungen wurden 20. **`×` steht ausschließlich zwischen Kilo und
+Wiederholungen**, nirgends sonst. Prompt und Datenformat müssen dabei
+zusammenpassen: die Live-Regeln in `lib/atlas/live-tool.ts` beschreiben genau
+dieses Format — wer das eine ändert, ändert das andere mit.
+
 ## Smoke-Invarianten (`scripts/smoke.mjs`, Port 3199, prod build)
 
 Diese Strings/Anker klickt der Smoke — Änderung NUR mit Ko-Evolution von
@@ -341,3 +374,9 @@ smoke.mjs im selben Commit:
   die Choreografie warten. Schritt 11 „startbild" prüft sie dafür gezielt:
   `#splash` wird sichtbar und muss danach `hidden` sein (nicht bloß
   transparent), dann steht „Deine Einheit heute".
+
+Zusätzlich `scripts/pruefe-training.mjs` (gleicher Port, nach `npm run build`):
+prüft am laufenden Bild, was Zeichenketten nicht hergeben — 40 Wiederholungen
+bleiben 40, die Satzliste lässt sich am Dock vorbeiscrollen, und der
+Abschluss-Knopf der Bühne erscheint. Bei Änderungen am Fokus-Modus mitlaufen
+lassen.
