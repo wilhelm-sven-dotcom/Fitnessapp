@@ -25,12 +25,6 @@ import type { Exercise } from "@/lib/types";
 
 const BUDGETS = [20, 25, 30, 45, 60, 75, 90];
 
-const SOURCE_BADGE: Record<DailySession["source"], string> = {
-  atlas: "ATLAS",
-  fallback: "Basisplan (offline)",
-  manuell: "manuell",
-};
-
 const fmtKg = (n: number) =>
   n.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -92,16 +86,6 @@ export function SessionCard({
   };
 
   // Signatur: die heutige Einheit als Phasenband (ein Feld je Arbeitssatz).
-  const gruppen = useMemo(
-    () => bandOfPlanned(session.items, byId),
-    [session.items, byId],
-  );
-  const kaderZahl = useMemo(
-    () => gruppen.reduce((n, g) => n + g.kader.length, 0),
-    [gruppen],
-  );
-
-  // Gewichts-Vorschrift je Übung (presc; ohne Historie: Startgewichts-Engine).
   const zeilen = useMemo(() => {
     const profile = effectiveProfile(settings, body);
     return session.items.map((it) => {
@@ -119,6 +103,24 @@ export function SessionCard({
     });
   }, [session.items, byId, lastPerf, settings, body]);
 
+  // Die Gewichtsvorschläge der Übungsliste färben auch die Basislinien des
+  // Bands (IWF-Scheibenfarbe der geplanten Last) — EINE Berechnung für beide.
+  const kgByItem = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const z of zeilen) if (z && z.weight != null) m.set(z.it.id, z.weight);
+    return m;
+  }, [zeilen]);
+
+  const gruppen = useMemo(
+    () => bandOfPlanned(session.items, byId, kgByItem),
+    [session.items, byId, kgByItem],
+  );
+  const kaderZahl = useMemo(
+    () => gruppen.reduce((n, g) => n + g.kader.length, 0),
+    [gruppen],
+  );
+
+  // Gewichts-Vorschrift je Übung (presc; ohne Historie: Startgewichts-Engine).
   // Marey-Karte: die Hauptübung (erstes Item) mit Hypothese + Rekord.
   const marey = useMemo(() => {
     const zeile = zeilen[0];
@@ -235,9 +237,16 @@ export function SessionCard({
           className="mt-2.5"
         />
         {gruppen.length > 1 && (
-          <div className="mt-2 flex justify-between gap-2 font-mono text-5xs uppercase tracking-gesperrt text-muted">
+          // Umbrechen statt abschneiden — „KLIM…“ liest niemand. Der Tupfer
+          // trägt die Regionsfarbe der Tönung: Namen und Legende in EINER Zeile.
+          <div className="mt-2 flex flex-wrap gap-x-2.5 gap-y-1 font-mono text-5xs uppercase tracking-gesperrt text-muted">
             {gruppen.map((g) => (
-              <span key={g.itemId} className="min-w-0 truncate">
+              <span key={g.itemId} className="inline-flex items-baseline gap-1">
+                <span
+                  aria-hidden
+                  className="inline-block h-1.5 w-1.5 shrink-0 self-center rounded-xs"
+                  style={{ backgroundColor: g.tintVar, opacity: 0.7 }}
+                />
                 {g.label} ×{g.kader.length}
               </span>
             ))}
@@ -248,7 +257,15 @@ export function SessionCard({
       {/* Übungsliste: Hairline-Zeilen auf dem Grund — vollständig, mit Warum. */}
       <div>
         <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-          Plan: {SOURCE_BADGE[session.source]}
+          {regenerating
+            ? "Plan: Basisplan steht — ATLAS stellt gerade um"
+            : session.source === "atlas"
+              ? "Plan: von ATLAS zusammengestellt"
+              : session.source === "manuell"
+                ? "Plan: von dir gebaut"
+                : settings.aiPlanning === false
+                  ? "Plan: Basisplan (KI abgeschaltet)"
+                  : "Plan: Basisplan — ATLAS war nicht erreichbar"}
           {session.edited ? " · angepasst" : ""}
         </p>
         <ol>
@@ -336,22 +353,6 @@ export function SessionCard({
           )}
         />
       </div>
-
-      {/* Herkunft der Einheit — ohne das wirkt der Wechsel wie ein Trick:
-          erst steht ein Vorschlag da, Sekunden später sind es andere Übungen.
-          Der Austausch bleibt (der Basisplan überbrückt nur die Wartezeit),
-          aber er ist jetzt angekündigt statt heimlich. */}
-      {!locked && (
-        <p className="font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
-          {regenerating
-            ? "Basisplan steht — ATLAS stellt gerade um"
-            : session.source === "atlas"
-              ? "Von ATLAS zusammengestellt"
-              : session.source === "manuell"
-                ? "Von dir angepasst"
-                : "Basisplan — ATLAS war nicht erreichbar"}
-        </p>
-      )}
 
       {spareSlot && <div>{spareSlot}</div>}
 
