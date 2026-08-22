@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import { FastForward, Plus } from "lucide-react";
 import { INTENSITY_OPTIONS, RIR_OPTIONS, Scale } from "@/components/workout/Scale";
 import { Pressable } from "@/components/ui/pressable";
@@ -32,6 +33,7 @@ export function RestPanel({
   onIntensity,
   onAdd,
   onSkip,
+  onHeight,
 }: {
   left: number;
   total: number;
@@ -42,8 +44,27 @@ export function RestPanel({
   onIntensity: (v: number) => void;
   onAdd: () => void;
   onSkip: () => void;
+  /** Meldet die tatsächliche Dock-Höhe in px — der Inhalt darüber braucht
+   *  genau so viel Auslauf, sonst verdeckt das Dock die Satzliste. */
+  onHeight?: (px: number) => void;
 }) {
   const reduce = useReducedMotion();
+  // Das Dock ist `fixed` und wächst je nach Inhalt (RIR-Regler, „Los"-Puls,
+  // Intensitätsskala bei gehaltenen Sätzen). Ein fester Auslauf-Wert liegt
+  // deshalb zwangsläufig mal daneben — hier wird gemessen statt geschätzt.
+  const dockRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = dockRef.current;
+    if (!el || !onHeight) return;
+    const melde = () => onHeight(el.getBoundingClientRect().height);
+    melde();
+    const ro = new ResizeObserver(melde);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      onHeight(0);
+    };
+  }, [onHeight]);
   const over = left <= 0;
   const finale = left <= 5;
   const stehend =
@@ -51,7 +72,7 @@ export function RestPanel({
   const gefallen = STRICHE - stehend;
 
   return (
-    <section aria-label="Satzpause" className="fixed inset-x-0 bottom-0 z-30">
+    <section ref={dockRef} aria-label="Satzpause" className="fixed inset-x-0 bottom-0 z-30">
       <div
         className="mx-auto max-w-md px-5"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}

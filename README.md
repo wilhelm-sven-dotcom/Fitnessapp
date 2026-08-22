@@ -3,8 +3,8 @@
 Hochpersonalisierte Trainings-App für Muskelaufbau mit **ATLAS**, dem
 KI-Coach, der jede Einheit frisch zusammenstellt und live durchs Training
 begleitet. Das Aussehen zitiert Muybridges Chronofotografie — daher der Name;
-die Bedienung spricht schlichtes Deutsch. Ganzkörper-Fokus, 20–90 Minuten je
-nach Zeitfenster, mit besonderem Augenmerk auf einen empfindlichen unteren
+die Bedienung spricht schlichtes Deutsch. Ganzkörper-Fokus, Zeitfenster frei
+wählbar (10–180 Minuten, Stufen oder eigene Zahl), mit besonderem Augenmerk auf einen empfindlichen unteren
 Rücken.
 
 ## Wie die App funktioniert
@@ -88,6 +88,7 @@ npm install
 npm run dev      # http://localhost:3000
 npm run build    # Produktions-Build
 npm run smoke    # End-to-End-Smoke gegen den Build (ohne API-Key = Fallback-Pfade)
+npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
 ```
 
 ## Umgebungsvariablen

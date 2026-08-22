@@ -678,12 +678,14 @@ export function liveLine(opts: {
       const now = setMetric(ex, last);
       const then = setMetric(ex, shadow[i]);
       if (now > then) {
+        // Einheit an jede Zahl — „20×40“ liest sich sonst je nach Gewohnheit
+        // als 20 Wiederholungen mit 40 kg statt umgekehrt.
         const lbl = (s: SetEntry) =>
           ex.unit === "Sek"
-            ? `${s.reps}s`
+            ? `${s.reps} s`
             : s.weight !== "" && s.weight != null
-              ? `${s.weight}×${s.reps}`
-              : `${s.reps}`;
+              ? `${s.weight} kg × ${s.reps} Wdh`
+              : `${s.reps} Wdh`;
         return {
           text: pick(
             [
