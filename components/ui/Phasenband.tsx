@@ -115,14 +115,36 @@ function KaderZelle({
         </div>
       )}
       {!belichtet && !aktiv && (
-        <div
-          className="absolute inset-x-0 bottom-0"
-          style={{
-            height: 3,
-            opacity: 0.45,
-            backgroundColor: kader.iwf ? IWF_VAR[kader.iwf] : "var(--fg)",
-          }}
-        />
+        <>
+          {/* Regions-Tönung des GEPLANTEN Kaders (nur bandOfPlanned setzt
+              fillRatio bei „offen“, Höhe = Intensitätsklasse des Musters):
+              die farbige Skyline des alten Etappen-Profils, im Rahmen des
+              Filmstreifens. Feste Deckung — Fläche, kein Verlauf; das
+              Raster darunter und die Kadernummer bleiben lesbar. Statisch:
+              die Regel „Füllung nur im Commit“ betrifft die Tinte, nicht
+              diese Tönung. */}
+          {kader.fillRatio > 0 && (
+            <div
+              className="absolute inset-x-0 bottom-0"
+              style={{
+                height: `${Math.round(kader.fillRatio * 100)}%`,
+                opacity: 0.38,
+                backgroundColor: gruppe.tintVar,
+              }}
+            />
+          )}
+          {/* Basislinie: IWF-Scheibenfarbe der (geplanten) Last; ohne Last
+              die Regionsfarbe — das tote Einheitsgrau von vorher war nur
+              der var(--fg)-Fallback, weil nie eine Farbe ankam. */}
+          <div
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: 3,
+              opacity: 0.7,
+              backgroundColor: kader.iwf ? IWF_VAR[kader.iwf] : gruppe.tintVar,
+            }}
+          />
+        </>
       )}
       {hero && (
         <span

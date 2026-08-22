@@ -136,7 +136,7 @@ Odometer) — nicht neu verwenden.
 | Satz-Commit | BLITZ: 60 ms Kreide-Frame (steps), Füllung 240 ms, Silhouette hart |
 | Sieger | Doppelblitz (2 Kreide-Frames, ~80 ms Abstand) + Stagger + Messing-scaleX |
 | Skeleton | 1 s step-end 35↔14 % |
-| Phasenband | füllt NUR im Commit (`FILM.fuellung`), nie beim Ansehen |
+| Phasenband | TINTE füllt NUR im Commit (`FILM.fuellung`); die statische Regions-Tönung offener Kader ist keine Füllung und animiert nie |
 | Zoetrop | `.zp1/.zp2/.zp3` CSS step-end 0.5 s (8 B/s, Phasen 1-2-3-2) |
 | Charts | statisch — keine Einzeichnung |
 
@@ -160,8 +160,19 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
   DAS Signature-Element: die Einheit als Filmstreifen. Kader-Breite =
   `widthReps` (clamp 3..15; Sek: /5; Cardio 8), Füllung = `fillRatio`
   (e1RM/Best via `bestForExercise`; ohne Rekord 0.62; Anzeige-Floor 0.12),
-  Status offen (Raster + 3px-IWF-Basislinie 45 %) / aktiv (Siegellack-Rahmen +
-  Zoetrop) / belichtet (Tintenfüllung + Card-Silhouette 56 %, nur hero).
+  Status offen / aktiv (Siegellack-Rahmen + Zoetrop) / belichtet
+  (Tintenfüllung + Card-Silhouette 56 %, nur hero).
+  **Offen ist NICHT leer** (Praxistest: N identische Raster-Rahmen lasen
+  sich tot): Raster + **Regions-Tönung** (`gruppe.tintVar`, Höhe =
+  Intensitätsklasse des Musters via `INTENSITAET`, Deckung 0,38, Fläche ohne
+  Verlauf) + 3px-Basislinie (IWF-Farbe der GEPLANTEN Last aus `kgByItem`,
+  sonst Regionsfarbe — nie das graue fg-Fallback; Deckung 0,7). Die
+  Regel „Füllung nur im Commit" meint die TINTE (belichtet) — die Tönung
+  ist statisch und animiert nie. Regionsfarben (`REGION_VAR`):
+  Unterkörper Siegellack · Druck Cyanotypie · Zug Messing · Rumpf Tinte ·
+  Cardio Schleier (Rumpf bewusst nicht Gelb: Protan-Check, Messing =
+  Rekordfarbe). Labels unter dem Hero-Band: umbrechende Zeile, je Übung
+  Farbtupfer (tintVar) + VOLLER Name + ×N — Namen nie truncaten.
   Größen: hero 64 · zeile 28 · mini 24 · live 14 (Vollbalken) · punkt 12;
   1px-Fugen, Gruppen-Trennung. Builder: bandOfPlanned/bandOfActive/bandOfLogged.
 - **Myologie** (`lib/heat.ts`: `stufeFor`, `muskelStufen` + `MyologieFigur`):
