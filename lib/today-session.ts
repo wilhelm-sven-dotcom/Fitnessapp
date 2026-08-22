@@ -60,34 +60,57 @@ export interface AtlasSessionRequest {
   disabled?: string[];
 }
 
-/** Ruft /api/atlas/session. `null` bei fehlendem Key, Offline, Timeout oder
- *  unbrauchbarer Antwort — der Aufrufer bleibt dann beim Fallback. */
+/**
+ * Warum die Anfrage scheiterte — der Aufrufer soll es SAGEN können.
+ * Vorher lieferte diese Funktion für jeden Fall `null`: offline, Rate-Limit,
+ * Timeout und „kein Key“ waren ununterscheidbar, und der Nutzer sah bloß
+ * „ATLAS war nicht erreichbar“, während er in Wahrheit im Stundenlimit hing.
+ *
+ * `abgebrochen` ist KEIN Fehler: so endet jede Anfrage, die von einer neueren
+ * verdrängt wurde (Weiterklicken am Zeitregler) — dazu gehört keine Meldung.
+ */
+export type AtlasFehler = "limit" | "zeit" | "netz" | "aus" | "abgebrochen";
+
+export type AtlasSessionErgebnis =
+  | { session: DailySession }
+  | { fehler: AtlasFehler };
+
+/** Ruft /api/atlas/session. Wirft NIE — jeder Ausgang kommt als Ergebnis
+ *  zurück, damit der Aufrufer seinen Ladezustand sicher beenden kann. */
 export async function requestAtlasSession(
   req: AtlasSessionRequest,
-  opts: { timeoutMs?: number } = {},
-): Promise<DailySession | null> {
-  if (typeof navigator !== "undefined" && !navigator.onLine) return null;
-  const avail = availableExercises(req.allLib, req.has, req.disabled);
-  if (avail.length < 5) return null;
-
-  const contextParts = [
-    buildCoachContext({
-      log: req.log,
-      allLib: req.allLib,
-      body: req.body,
-      cardio: req.cardio,
-      exerciseNotes: req.exerciseNotes,
-    }),
-    recentUseBlock(req.log, req.allLib),
-    req.readinessLine ?? "",
-    req.backSafe
-      ? "WICHTIG: Rückenschonung aktiv — keine belasteten Beugen/Hinges, Core als Stabilisation."
-      : "",
-  ].filter(Boolean);
-
+  opts: { timeoutMs?: number; signal?: AbortSignal } = {},
+): Promise<AtlasSessionErgebnis> {
+  // Der Timeout lag bei 25 s und damit UNTER der echten Laufzeit einer
+  // Komposition (Opus, ungestreamt, 20–60 s) — er hat funktionierende
+  // Anfragen abgeschnitten. Gefahrlos höher: der Basisplan steht längst,
+  // und die Oberfläche ist währenddessen nicht gesperrt.
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 25_000);
+  const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 60_000);
+  const weiterreichen = () => ctrl.abort();
+  opts.signal?.addEventListener("abort", weiterreichen);
+  const vonAussen = () => opts.signal?.aborted === true;
   try {
+    if (typeof navigator !== "undefined" && !navigator.onLine)
+      return { fehler: "netz" };
+    const avail = availableExercises(req.allLib, req.has, req.disabled);
+    if (avail.length < 5) return { fehler: "aus" };
+
+    const contextParts = [
+      buildCoachContext({
+        log: req.log,
+        allLib: req.allLib,
+        body: req.body,
+        cardio: req.cardio,
+        exerciseNotes: req.exerciseNotes,
+      }),
+      recentUseBlock(req.log, req.allLib),
+      req.readinessLine ?? "",
+      req.backSafe
+        ? "WICHTIG: Rückenschonung aktiv — keine belasteten Beugen/Hinges, Core als Stabilisation."
+        : "",
+    ].filter(Boolean);
+
     const res = await fetch("/api/atlas/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -112,7 +135,8 @@ export async function requestAtlasSession(
         persona: req.persona,
       }),
     });
-    if (!res.ok) return null;
+    if (res.status === 429) return { fehler: "limit" };
+    if (!res.ok) return { fehler: "netz" };
     const data = (await res.json()) as {
       ok?: boolean;
       configured?: boolean;
@@ -123,26 +147,32 @@ export async function requestAtlasSession(
         items: DailySession["items"];
       };
     };
-    if (data.configured === false || !data.ok || !data.session?.items?.length)
-      return null;
+    if (data.configured === false) return { fehler: "aus" };
+    if (!data.ok || !data.session?.items?.length) return { fehler: "netz" };
     const now = new Date();
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     return {
-      id: `today-${date}-${Date.now() % 100000}`,
-      date,
-      name: data.session.name,
-      focus: data.session.focus,
-      briefing: data.session.briefing,
-      items: data.session.items,
-      source: "atlas",
-      wish: req.wish || undefined,
-      variant: req.variant ?? "normal",
-      createdAt: now.toISOString(),
-      schemaVersion: 1,
+      session: {
+        id: `today-${date}-${Date.now() % 100000}`,
+        date,
+        name: data.session.name,
+        focus: data.session.focus,
+        briefing: data.session.briefing,
+        items: data.session.items,
+        source: "atlas",
+        wish: req.wish || undefined,
+        variant: req.variant ?? "normal",
+        createdAt: now.toISOString(),
+        schemaVersion: 1,
+      },
     };
   } catch {
-    return null;
+    // Der ganze Rumpf liegt im try — vorher standen availableExercises,
+    // buildCoachContext und recentUseBlock DAVOR und konnten die Promise
+    // rejecten; dann blieb der Ladezustand des Aufrufers für immer stehen.
+    return { fehler: vonAussen() ? "abgebrochen" : "zeit" };
   } finally {
     clearTimeout(t);
+    opts.signal?.removeEventListener("abort", weiterreichen);
   }
 }

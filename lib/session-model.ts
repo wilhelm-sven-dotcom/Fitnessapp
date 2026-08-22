@@ -1,5 +1,6 @@
 import type { Exercise, ResolvedSlot, Template } from "@/lib/types";
 import { poolFor } from "@/lib/progression";
+import { fitToBudget } from "@/lib/session-time";
 
 /**
  * DAS eine Trainings-Modell der App: eine täglich frisch komponierte Einheit.
@@ -163,6 +164,50 @@ export function resolveDailySession(
       };
     })
     .filter((x): x is ResolvedSlot => x !== null);
+}
+
+/**
+ * Eine BESTEHENDE Einheit auf ein neues Zeitfenster bringen — ohne sie neu
+ * zusammenzustellen.
+ *
+ * Wozu: Wer die Einheit einmal bearbeitet hat (Übung getauscht, Sätze
+ * geändert), bei dem war die Zeitumstellung vorher wirkungslos — sie
+ * speicherte nur die Zahl, sichtbar passierte nichts, und die App sagte es
+ * auch nicht. Neu zu komponieren wäre die andere Möglichkeit gewesen, hätte
+ * aber genau die Bearbeitungen weggeworfen, um die es dem Nutzer ging.
+ *
+ * Der Rückweg ist verlustfrei, weil `resolveDailySession` die Item-Id im
+ * `slotKey` trägt („today:<itemId>“) und `fitToBudget` genau diese Form
+ * spricht. Slots OHNE dieses Präfix werden verworfen: die Extend-Phase von
+ * `fitToBudget` darf zwar für frische Einheiten neue Übungen erfinden, aber
+ * niemals in eine kuratierte Liste hineinschreiben. Übrig bleiben also die
+ * Übungen des Nutzers in seiner Reihenfolge, nur mit angepasster Satzzahl
+ * (und im Extremfall ohne die hinten abgeschnittenen).
+ */
+export function passeZeitAn(
+  s: DailySession,
+  allLib: Exercise[],
+  has: (k: string) => boolean,
+  budgetMin: number,
+  opts: { protectCore?: boolean } = {},
+): DailySession {
+  const gepasst = fitToBudget(resolveDailySession(s, allLib, has), budgetMin, {
+    protectCore: opts.protectCore,
+  });
+  const setsProItem = new Map<string, number>();
+  for (const slot of gepasst.list) {
+    if (!slot.slotKey.startsWith("today:")) continue;
+    setsProItem.set(slot.slotKey.slice("today:".length), slot.ex.sets);
+  }
+  const items = s.items
+    .filter((it) => setsProItem.has(it.id))
+    .map((it) => {
+      const n = setsProItem.get(it.id) ?? it.sets;
+      return n === it.sets ? it : { ...it, sets: n };
+    });
+  // Nie alles wegkürzen: eine leere Einheit wäre schlechter als eine zu lange.
+  if (!items.length) return s;
+  return { ...s, items };
 }
 
 /** Synthetisches Template (Name/Fokus/Muster) für Warmup & Save-Pfad. */

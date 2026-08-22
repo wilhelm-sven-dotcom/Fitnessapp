@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "smoke": "node scripts/smoke.mjs",
-    "pruefe:training": "node scripts/pruefe-training.mjs"
+    "pruefe:training": "node scripts/pruefe-training.mjs",
+    "pruefe:zeit": "node scripts/pruefe-zeitbudget.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

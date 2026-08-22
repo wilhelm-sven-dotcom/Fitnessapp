@@ -89,6 +89,7 @@ npm run dev      # http://localhost:3000
 npm run build    # Produktions-Build
 npm run smoke    # End-to-End-Smoke gegen den Build (ohne API-Key = Fallback-Pfade)
 npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
+npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingszeit
 ```
 
 ## Umgebungsvariablen
