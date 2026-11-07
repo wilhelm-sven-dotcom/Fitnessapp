@@ -116,8 +116,10 @@ try {
   // ── 2 · Ortsfrage: zwei vorbelegte Orte → erst wählen, dann komponieren ──
   step = "ort";
   await page.getByText("Wo trainierst du heute?", { exact: false }).first().waitFor({ timeout: 5000 });
-  const vorWahl = (await page.textContent("body")) ?? "";
-  if (/Training starten/.test(vorWahl)) throw new Error("Einheit steht schon vor der Ortswahl");
+  // innerText = sichtbarer Text; textContent enthielte auch den
+  // Richtungsvertrag im <script> des Layouts (dort steht „Training starten“).
+  const vorWahl = await page.locator("body").innerText();
+  if (/Training starten/i.test(vorWahl)) throw new Error("Einheit steht schon vor der Ortswahl");
   await page.getByRole("button", { name: /^Studio/ }).first().waitFor({ timeout: 3000 });
   await page.getByRole("button", { name: /^Zuhause/ }).first().click();
   console.log("OK ort: Frage steht, Zuhause gewählt");
@@ -201,9 +203,11 @@ try {
   await page.goto(BASE + "/fortschritt", { waitUntil: "networkidle" });
   await page.getByText("Verlauf", { exact: true }).first().click();
   await page.waitForTimeout(600);
-  const hist = (await page.textContent("body")) ?? "";
-  if (!/Ganzkörper A/.test(hist)) throw new Error("Alt-Format-Einheit (A/B/C) fehlt im Verlauf");
-  if (!/Zuhause/.test(hist)) throw new Error("Ort der gespeicherten Einheit fehlt im Verlauf");
+  // Sichtbarer Text (innerText, Versalien aus CSS → ohne Groß/klein) — der
+  // Richtungsvertrag im Layout-<script> nennt „Zuhause“ ebenfalls.
+  const hist = await page.locator("body").innerText();
+  if (!/Ganzkörper A/i.test(hist)) throw new Error("Alt-Format-Einheit (A/B/C) fehlt im Verlauf");
+  if (!/Zuhause/i.test(hist)) throw new Error("Ort der gespeicherten Einheit fehlt im Verlauf");
   console.log("OK verlauf: neue + alte Einheiten in der Timeline, Ort „Zuhause“");
 
   // ── 10 · Katalog: Filter + eigene Übung ──

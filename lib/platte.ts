@@ -13,17 +13,6 @@ export function plattenNummer(log: LoggedSession[]): number {
   return log.length + 1;
 }
 
-/** Nummer einer gespeicherten Platte: chronologischer Index + 1.
- *  `log` in Speicher-Reihenfolge (neueste zuerst ODER älteste zuerst —
- *  wir sortieren defensiv nach Datum). */
-export function plattenNummerOf(log: LoggedSession[], session: LoggedSession): number {
-  const sorted = [...log].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-  );
-  const idx = sorted.indexOf(session);
-  return (idx === -1 ? sorted.length : idx) + 1;
-}
-
 /** Plattennummern aller gespeicherten Platten auf einmal (chronologisch,
  *  abgeleitet) — für Listen, die jede Zeile beschildern (Verlauf). */
 export function plattenNummern(log: LoggedSession[]): Map<LoggedSession, number> {

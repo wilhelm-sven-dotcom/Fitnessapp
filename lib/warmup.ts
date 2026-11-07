@@ -44,7 +44,7 @@ const D = {
     id: "bike_easy",
     periodMs: 1400,
     name: "Locker einrollen (Bike)",
-    cue: "Locker auf dem Peloton, niedriger Widerstand — Kreislauf und Beine wach machen.",
+    cue: "Locker auf dem Bike, niedriger Widerstand — Kreislauf und Beine wach machen.",
     durationSec: 180,
     kind: "activation",
     phase: "raise",
@@ -526,8 +526,4 @@ export function warmupFor(
     .map((d, i) => ({ d, i }))
     .sort((a, x) => rank[a.d.phase] - rank[x.d.phase] || a.i - x.i)
     .map((x) => x.d);
-}
-
-export function warmupTotalMin(drills: WarmupDrill[]): number {
-  return Math.max(1, Math.round(drills.reduce((s, d) => s + d.durationSec, 0) / 60));
 }

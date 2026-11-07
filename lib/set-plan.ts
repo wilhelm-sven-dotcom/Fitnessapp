@@ -1,17 +1,10 @@
 /**
- * "Set collector" — turns working sets into a visible, gently-progressive goal.
- *
- * Evidence-anchored to the weekly volume landmarks (`VOLUME_LANDMARKS`): the
- * per-exercise nudge never pushes a muscle past its Maximum Adaptive Volume
- * (no junk volume), and the weekly goal grows with the athlete's own recent
- * output rather than a fixed number, so "collect more and more" stays realistic.
- * Pure + tsx-testable.
+ * Wochen-Sätze: Arbeitssätze dieser Woche und ein Wochenziel, das mit der
+ * eigenen jüngsten Leistung wächst statt einer festen Zahl. Pure.
  */
 
 import { isFilled, workSets } from "@/lib/stats";
-import { VOLUME_LANDMARKS } from "@/lib/training-science";
-import { muscleOf, type MuscleVolume } from "@/lib/volume";
-import type { Exercise, LoggedSession } from "@/lib/types";
+import type { LoggedSession } from "@/lib/types";
 
 /** Monday 00:00 of the week containing `ref`. */
 function weekStartMon(ref: Date): Date {
@@ -33,17 +26,6 @@ export function weeklySetCount(log: LoggedSession[], ref: Date): number {
   for (const s of log) {
     const t = new Date(s.date).getTime();
     if (Number.isNaN(t) || t < start || t >= end) continue;
-    for (const ex of s.exercises ?? []) {
-      for (const st of workSets(ex.sets)) if (isFilled(st)) n++;
-    }
-  }
-  return n;
-}
-
-/** All-time working, filled sets — the lifetime "collected" count. */
-export function totalSetCount(log: LoggedSession[]): number {
-  let n = 0;
-  for (const s of log) {
     for (const ex of s.exercises ?? []) {
       for (const st of workSets(ex.sets)) if (isFilled(st)) n++;
     }
@@ -85,54 +67,4 @@ export function weeklySetStats(log: LoggedSession[], ref: Date = new Date()): We
   const raw = base > 0 ? Math.round(base * 1.08) : MIN_WEEKLY_TARGET;
   const target = Math.max(MIN_WEEKLY_TARGET, Math.min(MAX_WEEKLY_TARGET, raw));
   return { collected, target, pct: target > 0 ? Math.min(1, collected / target) : 0 };
-}
-
-export interface SetRecCtx {
-  muscleVolumes: MuscleVolume[];
-  deload?: boolean;
-  lowReadiness?: boolean;
-}
-
-/**
- * Advisory set target for one exercise today. Nudges +1 over the base when the
- * exercise's primary muscle still has room below its Maximum Adaptive Volume
- * this week — never during a deload or a poor-readiness day, and never pushing
- * the muscle past MAV. Returns the base otherwise.
- */
-export function recommendedSets(ex: Exercise, ctx: SetRecCtx): number {
-  const base = ex.sets;
-  if (ctx.deload || ctx.lowReadiness) return base;
-  const primary = muscleOf(ex).primary; // built-in exercises don't carry `muscle`
-  const mv = ctx.muscleVolumes.find((v) => v.muscle === primary);
-  if (!mv) return base;
-  return mv.sets + 1 <= VOLUME_LANDMARKS.mav ? base + 1 : base;
-}
-
-const TIERS: { min: number; title: string }[] = [
-  { min: 0, title: "Sammler-Start" },
-  { min: 100, title: "Satz-Sammler" },
-  { min: 250, title: "Satz-Jäger" },
-  { min: 500, title: "Satz-Profi" },
-  { min: 1000, title: "Satz-Meister" },
-  { min: 2500, title: "Satz-Legende" },
-];
-
-export interface SetTier {
-  title: string;
-  total: number;
-  next: number | null; // next threshold, or null when maxed out
-  pct: number; // progress toward the next tier
-}
-
-export function setCollectorTier(totalSets: number): SetTier {
-  let i = 0;
-  for (let k = 0; k < TIERS.length; k++) if (totalSets >= TIERS[k].min) i = k;
-  const cur = TIERS[i];
-  const nxt = TIERS[i + 1];
-  return {
-    title: cur.title,
-    total: totalSets,
-    next: nxt ? nxt.min : null,
-    pct: nxt ? Math.min(1, (totalSets - cur.min) / (nxt.min - cur.min || 1)) : 1,
-  };
 }

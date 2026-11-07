@@ -233,8 +233,6 @@ export interface AppSettings {
   /** Lautstärke der Signaltöne (Countdown/Ende) als Multiplikator 0.5–3;
    *  1 = Standard. Lauter stellen, wenn nebenbei Musik läuft. Default 1. */
   cueVolume?: number;
-  /** Pair the last two accessory slots as a superset — saves rest time. */
-  superset?: boolean;
   /** Darstellung: „Archiv" (light, Default) · „Atelier" (dark) · Auto. */
   theme?: "dark" | "light" | "system";
   /** Zoetrop-Animationen der Phasenfiguren (Default an). */
@@ -265,8 +263,6 @@ export interface AppSettings {
   weightStep?: number;
   /** Warm up with an easy bike spin before every session. */
   bikeWarmup?: boolean;
-  /** Append a short Peloton finisher to the A/B/C templates. */
-  cardioFinisher?: boolean;
   /** Show short motivational coach lines between sets during a workout (default on). */
   coachMotivation?: boolean;
   /** Keep the screen awake while a session is running (Screen Wake Lock, default on). */

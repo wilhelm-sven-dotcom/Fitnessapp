@@ -24,9 +24,3 @@ export function scaleFor(b: ReadinessBand): ReadinessScale {
 }
 
 export const NEUTRAL_SCALE: ReadinessScale = { setDelta: 0, loadMult: 1, cap: false };
-
-export const bandLabel: Record<ReadinessBand, string> = {
-  low: "geschont",
-  mid: "normal",
-  high: "stark",
-};

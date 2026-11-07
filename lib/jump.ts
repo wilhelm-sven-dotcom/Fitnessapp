@@ -112,11 +112,6 @@ export function analyzeJump(raw: JumpSample[]): JumpAnalysis {
   return { result: { heightCm, flightMs: Math.round(bestDur) }, stats };
 }
 
-/** Kompatibler Kurzweg: nur das Ergebnis. */
-export function detectJump(samples: JumpSample[]): JumpResult | null {
-  return analyzeJump(samples).result;
-}
-
 /** Mittel der letzten 7 Tage (mindestens 2 Messungen, sonst null). */
 export function jumpBaseline(jumps: JumpEntry[], ref: Date = new Date()): number | null {
   const cutoff = ref.getTime() - 7 * 86400000;

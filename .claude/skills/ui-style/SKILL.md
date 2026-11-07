@@ -503,6 +503,9 @@ smoke.mjs im selben Commit:
   „Übung wählen" · „… tauschen" (Regex-Ende) · „Bearbeiten"
 - Check-in: „Tagesform" · „Überspringen"
 - Aufwärmen: aria-label „Aufwärmen beenden"
+- Text-Prüfungen lesen den SICHTBAREN Text (`innerText`): `textContent`
+  enthält auch den Richtungsvertrag im `<script>` von app/layout.tsx, der
+  „Training starten“ und „Zuhause“ nennt — die Prüfung wäre sonst leer.
 - Bearbeiten-Sheet und Übungswahl: `data-testid="edit-row-name"` /
   `"picker-row-name"` (vorher hingen die Skripte an Tailwind-Klassen — jede
   Stiländerung hätte sie zerrissen)

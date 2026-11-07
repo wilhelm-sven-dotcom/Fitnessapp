@@ -1,6 +1,5 @@
 import type {
   Exercise,
-  Template,
   EquipItem,
   EquipKey,
   Pattern,
@@ -262,71 +261,21 @@ export const LIB: Exercise[] = [
     steps: ["Fußballen auf eine Kante/Stufe stellen.", "Ferse tief unter die Kante sinken lassen.", "Kraftvoll ganz nach oben. Seite wechseln."], back: "Festhalten erlaubt — volle Bewegungsweite zählt.", easier: "Beidbeinig auf der Kante." },
   { id: "calf_seated", name: "Wadenheben sitzend (Maschine)", pattern: "calf", tag: "Waden", req: ["machine"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "calves", cue: "Polster auf den Knien — trifft den tiefen Wadenmuskel.",
     steps: ["Fußballen auf die Kante, Polster auf die Oberschenkel.", "Fersen tief absenken.", "Hoch auf die Zehenspitzen, oben halten."], back: "Aufrecht sitzen, ruhiges Tempo.", easier: "Weniger Gewicht." },
-
-  /* ── CARDIO (Peloton / Bike) — geplant; die Ist-Aufzeichnung kommt aus Strava. ── */
-  { id: "bike_zone2", name: "Peloton · Zone 2", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 20, repHigh: 30, unit: "Min", cue: "Locker im Grundlagenbereich — du kannst dabei noch reden (Zone 2).",
-    steps: ["Niedriger bis mittlerer Widerstand.", "Gleichmäßig treten, ~85–95 rpm.", "20–30 Min ruhig durchfahren."], back: "Aufrecht sitzen, Schultern locker.", easier: "Kürzer fahren, weniger Widerstand." },
-  { id: "bike_intervals", name: "Peloton · Intervalle", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 18, repHigh: 22, unit: "Min", cue: "Nach dem Einrollen 5×(1 Min hart / 1 Min locker), dann ausrollen.",
-    steps: ["3 Min locker einrollen.", "5 Runden: 1 Min hart (hoch atmen), 1 Min locker.", "3 Min ausrollen."], back: "Im Sitzen fahren, Rumpf ruhig.", easier: "4 Runden statt 5, kürzere harte Phasen." },
-  { id: "bike_finisher", name: "Peloton · Sprint-Finisher", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 6, repHigh: 10, unit: "Min", cue: "Kurzer, knackiger Abschluss: 5×(20 s All-out / 40 s locker).",
-    steps: ["1–2 Min locker antreten.", "5 Runden: 20 s Vollgas, 40 s locker.", "1 Min ausrollen."], back: "Sauber sitzen, nicht verkrampfen.", easier: "3 Runden, kürzere Sprints." },
-  { id: "bike_recovery", name: "Peloton · Recovery Spin", pattern: "cardio", tag: "Cardio", req: ["bike"], weighted: false, sets: 1, repLow: 10, repHigh: 15, unit: "Min", cue: "Ganz locker drehen — fördert die Erholung, kein Ehrgeiz.",
-    steps: ["Sehr niedriger Widerstand.", "Locker kurbeln, ruhig atmen.", "10–15 Min."], back: "Entspannt aufrecht.", easier: "Kürzer." },
 ];
-
-export const TEMPLATE: Template[] = [
-  { key: "A", name: "Ganzkörper A", focus: "Beine & Druck", slots: ["squat", "hpush", "hinge", "vpush", "core"] },
-  { key: "B", name: "Ganzkörper B", focus: "Beine & Zug", slots: ["lunge", "vpull", "hpull", "arm", "core"] },
-  { key: "C", name: "Ganzkörper C", focus: "Mix & Stabilität", slots: ["squat", "hpush", "hpull", "lateral", "core"] },
-];
-
-/** Optionaler Peloton/Cardio-Tag — startbar, aber NICHT in der A/B/C-Auto-Rotation. */
-export const CARDIO_DAY: Template = {
-  key: "peloton",
-  name: "Peloton",
-  focus: "Cardio",
-  slots: ["cardio", "cardio"],
-};
-
-/** „Die Prüfung" — ATLAS-Testtag: nur die Kernmuster, Rampe zum schweren Satz. */
-export const EXAM_DAY: Template = {
-  key: "exam",
-  name: "Die Prüfung",
-  focus: "Maximalkraft",
-  slots: ["squat", "hinge", "hpush", "vpull"],
-};
-
-/** „Rücken-Reset" — gewichtsfreie Stabi-Einheit für Tage, an denen der Rücken
- *  zwickt. Slots dienen nur Warmup/Anzeige; die Übungsauswahl ist kuratiert
- *  (resolveResetSession) statt Muster-rotiert. */
-export const RESET_DAY: Template = {
-  key: "reset",
-  name: "Rücken-Reset",
-  focus: "Stabilität ohne Last",
-  slots: ["core", "hpush", "core", "squat", "core", "core"],
-};
 
 export const EQUIP_LIST: EquipItem[] = [
   { key: "db", label: "Kurzhanteln" }, { key: "kb", label: "Kettlebell" }, { key: "bar", label: "Langhantel" },
   { key: "pullup", label: "Klimmzugstange" }, { key: "rings", label: "Turnringe" }, { key: "bands", label: "Bänder" },
   { key: "box", label: "Erhöhung / Box" }, { key: "bench", label: "Hantelbank" },
   { key: "cable", label: "Kabelzug" }, { key: "machine", label: "Kraftgeräte" },
-  { key: "bike", label: "Peloton / Bike" },
+  { key: "bike", label: "Bike / Ergometer" },
 ];
 
 export const DEFAULT_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "rings", "bands", "box", "bench", "bike"];
 
-/** Voll ausgestattetes Studio — Vorlage für ein zweites Gym-Profil. */
+/** Voll ausgestattetes Studio — Vorlage für den Ort „Studio“ (lib/orte.ts). */
 export const STUDIO_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "bands", "box", "bench", "cable", "machine", "bike"];
 
 export const PATTERN_LABEL: Record<Pattern, string> = {
   squat: "Kniebeuge", lunge: "Ausfallschritt/Bein", hinge: "Hüfte/Gesäß", hpush: "Druck horizontal", vpush: "Druck über Kopf", hpull: "Zug horizontal", vpull: "Zug vertikal", arm: "Arme", lateral: "Schultern", core: "Core / Rücken-Stabi", calf: "Waden", cardio: "Cardio / Bike",
 };
-
-export const PROFILE: [string, string][] = [
-  ["Ziel", "Muskelaufbau"],
-  ["Frequenz", "3× pro Woche"],
-  ["Dauer", "20–30 Min / Einheit"],
-  ["Körper", "1,93 m · 90 kg"],
-  ["Achtung", "Unterer Rücken schonen"],
-];

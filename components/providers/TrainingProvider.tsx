@@ -10,7 +10,7 @@ import {
 } from "react";
 import { DEFAULT_EQUIP, EQUIP_LIST, LIB } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
-import { fatigueState, type FatigueState } from "@/lib/fatigue";
+import { fatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
 import {
   generateMissionTargets,
@@ -47,13 +47,12 @@ import {
   sanitizeBody,
   sanitizeCardio,
   sanitizeCustom,
-  sanitizeDays,
   sanitizeGyms,
   sanitizeSessions,
   sanitizeStringMap,
   sanitizeVideoMap,
 } from "@/lib/sanitize";
-import { weeklySetStats, type WeeklySetStats } from "@/lib/set-plan";
+import { weeklySetStats } from "@/lib/set-plan";
 import { sessionVolume } from "@/lib/stats";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { youtubeEmbedUrl } from "@/lib/youtube";
@@ -81,7 +80,6 @@ import type {
   SetEntry,
   Template,
   Unit,
-  WorkoutDay,
 } from "@/lib/types";
 
 /** Editor-Eingabe für eine eigene Übung — wird im Provider gehärtet. */
@@ -127,7 +125,6 @@ export interface ExportEnvelope {
   custom: Exercise[];
   body: BodyMetric[];
   cardio: CardioSession[];
-  days: WorkoutDay[];
   gyms: GymProfile[];
   exerciseVideos: Record<string, string>;
   exerciseNotes: Record<string, string>;
@@ -140,7 +137,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   timeBudgetMin: 25,
   autoregOn: true,
   voiceCues: false,
-  superset: false,
   theme: "light",
 };
 
@@ -232,8 +228,6 @@ function buildCustom(id: string, data: CustomExerciseInput): Exercise {
 interface TrainingContextValue {
   log: LoggedSession[];
   equip: EquipKey[];
-  choices: Record<string, string>;
-  custom: Exercise[];
   exerciseVideos: Record<string, string>;
   exerciseNotes: Record<string, string>;
   /** Eigene YouTube-Links je Aufwärm-Drill (Aufwärm-Player). */
@@ -243,30 +237,22 @@ interface TrainingContextValue {
   saving: boolean;
   allLib: Exercise[];
   has: (k: string) => boolean;
-  recTpl: Template;
-  recList: ResolvedSlot[];
-  estimatedMin: number;
   settings: AppSettings;
   todayReadiness: Readiness | null;
-  readinessScale: ReadinessScale;
   muscleVolumes: MuscleVolume[];
   coach: CoachCard[];
   cardioAdvice: CardioAdvice;
-  fatigue: FatigueState;
   phase: PhaseState;
-  weekSetStats: WeeklySetStats;
   trainer: TrainerState;
   mission: StoredMission | null;
   weekCount: number;
   daysAgo: number | null;
-  lastLabel: string;
   lastBackRed: boolean;
   /** „Rücken heute schonen" — manueller Tages-Schalter (Session-scoped). */
   backSpareToday: boolean;
   setBackSpareToday: (on: boolean) => void;
   /** Rücken-Schonung heute aktiv — Ampel-rot ODER manueller Tages-Schalter. */
   backSafeActive: boolean;
-  seeDoctor: boolean;
   lastPerf: (id: string) => LastPerf | null;
   /** Nur für die Anzeige — siehe RelatedPerf; speist NIE die Empfehlung. */
   lastPerfRelated: (id: string) => RelatedPerf | null;
@@ -281,10 +267,6 @@ interface TrainingContextValue {
   setExerciseVideo: (exId: string, url: string | null) => void;
   setWarmupVideo: (drillId: string, url: string | null) => void;
   setExerciseNote: (exId: string, note: string | null) => void;
-  days: WorkoutDay[];
-  addDay: (day: WorkoutDay) => void;
-  updateDay: (day: WorkoutDay) => void;
-  removeDay: (id: string) => void;
   /** Trainingsorte (Zuhause, Studio, …). */
   gyms: GymProfile[];
   /** Der Ort, an dem heute trainiert wird — seine Geräte sind `equip`. */
@@ -311,11 +293,9 @@ interface TrainingContextValue {
   setSplash: (v: NonNullable<AppSettings["splash"]>) => void;
   setWeightStep: (step: number) => void;
   setBikeWarmup: (on: boolean) => void;
-  setCoachMotivation: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
   setDuckSpotify: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
-  setCoachLive: (on: boolean) => void;
   /** EIN Schalter für ATLAS im Training: Zuspruch zwischen den Sätzen UND
    *  Live-Reaktion — schreibt beide Felder in einem Settings-Write. */
   setAtlasImTraining: (on: boolean) => void;
@@ -401,7 +381,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // käme eine gelöschte (oder doppelte) Fahrt beim nächsten Sync zurück.
   const [hiddenCardio, setHiddenCardio] = useState<string[]>([]);
   const [disabledExercises, setDisabledExercises] = useState<string[]>([]);
-  const [days, setDays] = useState<WorkoutDay[]>([]);
   const [gyms, setGyms] = useState<GymProfile[]>([]);
   const [exerciseVideos, setExerciseVideos] = useState<Record<string, string>>({});
   const [warmupVideos, setWarmupVideos] = useState<Record<string, string>>({});
@@ -423,7 +402,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, hc, da, gy, ev, mi, en, td, dx, wv] = await Promise.all([
+    const [l, e, c, cu, b, s, ca, hc, gy, ev, mi, en, td, dx, wv] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
       storage.getJSON<Record<string, string>>(KEYS.choices, {}),
@@ -432,7 +411,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
       storage.getJSON<CardioSession[]>(KEYS.cardio, []),
       storage.getJSON<string[]>(KEYS.hiddenCardio, []),
-      storage.getJSON<WorkoutDay[]>(KEYS.days, []),
       storage.getJSON<GymProfile[]>(KEYS.gyms, []),
       storage.getJSON<Record<string, string>>(KEYS.exerciseVideos, {}),
       storage.getJSON<StoredMission | null>(KEYS.mission, null),
@@ -506,7 +484,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setDisabledExercises(
       Array.isArray(dx) ? dx.filter((x): x is string => typeof x === "string") : [],
     );
-    setDays(sanitizeDays(da));
     setGyms(gymsLoaded);
     setExerciseVideos(sanitizeVideoMap(ev));
     setWarmupVideos(sanitizeVideoMap(wv));
@@ -819,14 +796,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const daysAgo = lastDate
     ? Math.floor((Date.now() - lastDate.getTime()) / 86400000)
     : null;
-  const lastLabel =
-    daysAgo == null
-      ? "noch kein Training"
-      : daysAgo === 0
-        ? "heute trainiert"
-        : daysAgo === 1
-          ? "gestern trainiert"
-          : `vor ${daysAgo} Tagen trainiert`;
 
   const weekCount = useMemo(() => {
     const now = new Date();
@@ -970,10 +939,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const saveGyms = useCallback(async (next: GymProfile[]) => {
     setGyms(next);
     await storage.setJSON(KEYS.gyms, next);
-  }, []);
-  const saveDays = useCallback(async (next: WorkoutDay[]) => {
-    setDays(next);
-    await storage.setJSON(KEYS.days, next);
   }, []);
   const saveCardio = useCallback(async (next: CardioSession[]) => {
     setCardio(next);
@@ -1205,8 +1170,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, weightStep: step });
     const setBikeWarmup = (on: boolean) =>
       void saveSettings({ ...settings, bikeWarmup: on });
-    const setCoachMotivation = (on: boolean) =>
-      void saveSettings({ ...settings, coachMotivation: on });
     const setBudget = (min: number) =>
       void saveSettings({ ...settings, timeBudgetMin: min });
     const setKeepAwake = (on: boolean) =>
@@ -1215,8 +1178,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, duckSpotify: on });
     const setAiPlanning = (on: boolean) =>
       void saveSettings({ ...settings, aiPlanning: on });
-    const setCoachLive = (on: boolean) =>
-      void saveSettings({ ...settings, coachLive: on });
     const setAtlasImTraining = (on: boolean) =>
       void saveSettings({ ...settings, coachLive: on, coachMotivation: on });
     const setVoiceCues = (on: boolean) =>
@@ -1306,10 +1267,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const addDay = (day: WorkoutDay) => void saveDays([...days, day]);
-    const updateDay = (day: WorkoutDay) =>
-      void saveDays(days.map((d) => (d.id === day.id ? day : d)));
-    const removeDay = (id: string) => void saveDays(days.filter((d) => d.id !== id));
 
     /** Den Live-State des Runners als LoggedSession speichern. Items × Item-
      *  Protokoll werden zu Übungs-Snapshots; die Heute-Einheit bekommt ihren
@@ -1470,7 +1427,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       custom,
       body,
       cardio,
-      days,
       gyms,
       exerciseVideos,
       exerciseNotes,
@@ -1490,7 +1446,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const nextCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : custom;
       const nextBody = d.body !== undefined ? sanitizeBody(d.body) : body;
       const nextCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : cardio;
-      const nextDays = d.days !== undefined ? sanitizeDays(d.days) : days;
       const nextGymsRaw = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
       const nextExerciseVideos =
         d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
@@ -1515,7 +1470,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setCustom(nextCustom);
       setBody(nextBody);
       setCardio(nextCardio);
-      setDays(nextDays);
       setGyms(nextGyms);
       setExerciseVideos(nextExerciseVideos);
       setWarmupVideos(nextWarmupVideos);
@@ -1528,7 +1482,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         storage.setJSON(KEYS.custom, nextCustom),
         storage.setJSON(KEYS.body, nextBody),
         storage.setJSON(KEYS.cardio, nextCardio),
-        storage.setJSON(KEYS.days, nextDays),
         storage.setJSON(KEYS.gyms, nextGyms),
         storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
         storage.setJSON(KEYS.warmupVideos, nextWarmupVideos),
@@ -1541,8 +1494,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return {
       log,
       equip,
-      choices,
-      custom,
       exerciseVideos,
       warmupVideos,
       exerciseNotes,
@@ -1551,28 +1502,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       saving,
       allLib,
       has,
-      recTpl,
-      recList,
-      estimatedMin,
       settings,
       todayReadiness,
-      readinessScale,
       muscleVolumes,
       coach,
       cardioAdvice: cardioTip,
-      fatigue,
       phase,
-      weekSetStats,
       trainer,
       mission,
       weekCount,
       daysAgo,
-      lastLabel,
       lastBackRed,
       backSpareToday,
       setBackSpareToday,
       backSafeActive,
-      seeDoctor,
       lastPerf,
       lastPerfRelated,
       toggleEquip,
@@ -1584,10 +1527,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setExerciseVideo,
       setWarmupVideo,
       setExerciseNote,
-      days,
-      addDay,
-      updateDay,
-      removeDay,
       gyms,
       activeGym,
       waehleOrt,
@@ -1607,11 +1546,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setSplash,
       setWeightStep,
       setBikeWarmup,
-      setCoachMotivation,
       setKeepAwake,
       setDuckSpotify,
       setAiPlanning,
-      setCoachLive,
       setAtlasImTraining,
       todaySession,
       setTodaySession,
@@ -1648,29 +1585,20 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     saving,
     allLib,
     has,
-    recTpl,
-    recList,
-    estimatedMin,
     settings,
     todayReadiness,
-    readinessScale,
     muscleVolumes,
     coach,
     cardioTip,
-    fatigue,
     phase,
-    weekSetStats,
     trainer,
     mission,
     weekCount,
     daysAgo,
-    lastLabel,
     lastBackRed,
     backSpareToday,
     backSafeActive,
-    seeDoctor,
     deloadActive,
-    days,
     gyms,
     activeGym,
     equipFlat,
@@ -1683,7 +1611,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     saveCustom,
     saveSettings,
     saveGyms,
-    saveDays,
     saveCardio,
     saveExerciseVideos,
     saveWarmupVideos,

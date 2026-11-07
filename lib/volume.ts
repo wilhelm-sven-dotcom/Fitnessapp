@@ -27,28 +27,6 @@ export function weeklyVolume(log: LoggedSession[], ref: Date = new Date()): numb
   return volumeInWeek(log, weekStartMon(ref));
 }
 
-/** Median weekly volume over the previous `weeks` full weeks — the Volume-ring target. */
-export function rollingWeeklyBaseline(
-  log: LoggedSession[],
-  weeks = 4,
-  ref: Date = new Date(),
-): number {
-  const thisStart = weekStartMon(ref);
-  const vols: number[] = [];
-  for (let i = 1; i <= weeks; i++) {
-    const start = new Date(thisStart);
-    start.setDate(thisStart.getDate() - i * 7);
-    const v = volumeInWeek(log, start);
-    if (v > 0) vols.push(v);
-  }
-  if (!vols.length) return 0;
-  vols.sort((a, b) => a - b);
-  const mid = Math.floor(vols.length / 2);
-  return vols.length % 2
-    ? vols[mid]
-    : Math.round((vols[mid - 1] + vols[mid]) / 2);
-}
-
 const PATTERN_MUSCLE: Record<Pattern, { primary: Muscle; secondary?: Muscle }> = {
   squat: { primary: "quads", secondary: "glutes" },
   lunge: { primary: "quads", secondary: "glutes" },
@@ -190,37 +168,5 @@ export function coverageCount(vols: MuscleVolume[]): { hit: number; total: numbe
 /** Muscles below the weekly growth target ("under"), most-deficient first. */
 export function underservedMuscles(vols: MuscleVolume[]): MuscleVolume[] {
   return vols.filter((v) => v.status === "under").sort((a, b) => a.sets - b.sets);
-}
-
-/**
- * Muscle breakdown for a single set of planned/chosen exercises (each with a set
- * count) — the basis of a session's "DNA" radar. Primary 1.0, secondary 0.5.
- */
-export function exerciseMuscleVolume(
-  items: {
-    ex: {
-      id: string;
-      pattern: Pattern;
-      tag?: string;
-      muscle?: Muscle;
-      muscleSecondary?: Muscle;
-    };
-    sets: number;
-  }[],
-): MuscleVolume[] {
-  const acc: Partial<Record<Muscle, number>> = {};
-  for (const { ex, sets } of items) {
-    if (!sets || ex.pattern === "cardio") continue;
-    const m = muscleOf(ex);
-    acc[m.primary] = (acc[m.primary] ?? 0) + sets;
-    if (m.secondary) acc[m.secondary] = (acc[m.secondary] ?? 0) + sets * 0.5;
-  }
-  return MUSCLE_ORDER.map((muscle) => {
-    const sets = Math.round((acc[muscle] ?? 0) * 10) / 10;
-    const t = volumeTargetFor(muscle);
-    const status: VolumeStatus =
-      sets < t.min ? "under" : sets > t.max ? "over" : "in";
-    return { muscle, sets, status };
-  });
 }
 

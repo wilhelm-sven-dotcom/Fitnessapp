@@ -1,4 +1,4 @@
-import type { Exercise, ResolvedSlot, Template } from "@/lib/types";
+import type { Exercise, ResolvedSlot } from "@/lib/types";
 import { poolFor } from "@/lib/progression";
 import { fitToBudget } from "@/lib/session-time";
 
@@ -219,17 +219,4 @@ export function passeZeitAn(
   // Nie alles wegkürzen: eine leere Einheit wäre schlechter als eine zu lange.
   if (!items.length) return s;
   return { ...s, items };
-}
-
-/** Synthetisches Template (Name/Fokus/Muster) für Warmup & Save-Pfad. */
-export function dailyToTemplate(s: DailySession, allLib: Exercise[]): Template {
-  const byId = new Map(allLib.map((e) => [e.id, e]));
-  return {
-    key: "today",
-    name: s.name,
-    focus: s.focus,
-    slots: s.items
-      .map((it) => byId.get(it.exerciseId)?.pattern)
-      .filter((p): p is Exercise["pattern"] => !!p),
-  };
 }

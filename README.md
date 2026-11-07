@@ -38,7 +38,7 @@ seinen eigenen Moment samt teilbarem Poster.
 persistiertem Verlauf — Antworten rendern strukturiert
 (Beobachtung/Einschätzung/Plan).
 
-**Katalog (`/uebungen`)** — 114 Übungen mit deutschem Voll-Content (Ausführung, Rücken-Hinweis, leichtere Variante,
+**Katalog (`/uebungen`)** — 115 Übungen mit deutschem Voll-Content (Ausführung, Rücken-Hinweis, leichtere Variante,
 Phasenfigur-Piktogramm), filterbar nach Muster, Muskel und vorhandenen
 Geräten. Eigene Übungen sind erstklassig: voller Editor (Muskeln, Equipment,
 Schema, Cues) — sie fließen automatisch in Pools, Wochenvolumen und ATLAS'
