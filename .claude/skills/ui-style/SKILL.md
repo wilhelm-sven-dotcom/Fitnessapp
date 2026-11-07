@@ -210,6 +210,25 @@ Sheets 50.
   viel Auslauf.
 - Phasenband-Nummern nur, wenn der schmalste Kader ≥ 20 px breit ist (gemessen).
 
+## Fortschritt und Übungsdetail
+
+- **Übersicht:** Kopfzeile aus drei Kacheln (Bewegt gesamt · Level → LevelSheet ·
+  Woche im Block → Blatt „Phase“), Volumen mit Segment „4 Wochen · 6 Monate ·
+  1 Jahr“, Rekorde, Verläufe als Liste mit Mini-Kurve (`MiniKurve`) in der
+  Regionsfarbe. Antippen öffnet das Übungsdetail im Reiter „Verlauf“. Große
+  Kurven stehen nur im Übungsdetail.
+- **Eine Quelle für Verläufe:** `lib/exercise-series.ts` (Art der Kennzahl über
+  die ganze Historie wie bei den Rekorden). Gewichtswerte heißen immer
+  „geschätztes 1RM“, mit dem gehobenen Satz daneben („1RM aus 25 kg × 8“).
+- **Übungsdetail** (`GuideSheet`): oben Figur (Zoetrop) und Muskelkarte, Segment
+  „Anleitung · Verlauf“; „Verlauf“ (`GuideVerlauf`) rechnet erst, wenn der
+  Reiter offen ist: Bestwert, letzte drei Sätze, Kurve.
+- **Muskeln:** Körperkarte, Sätze je Muskel mit Zielband und „Sätze/Ziel“,
+  Muskel-Balance. Status-Farben immer mit Legende und Zahl.
+- **Verlauf:** Titel zweizeilig (`line-clamp-2`), kein Papierkorb in der Karte;
+  Löschen als `danger`-Knopf in der aufgeklappten Einheit, mit Rückfrage.
+- Veränderungen über `fmtDelta` („−1,5 kg“, echtes Minus, Komma).
+
 ## Fokus-Modus (Training)
 
 - **Aufbau von oben:** Kopf (Schließen links, „Übung 2 von 6“, Restzeit; darunter

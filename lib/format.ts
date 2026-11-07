@@ -49,6 +49,17 @@ export function fmtSatz(
   return r ? `${r} Wdh` : "";
 }
 
+/** Veränderung mit Vorzeichen und Komma: „+0,5 kg“, „−1,5 kg“ (echtes
+ *  Minuszeichen), „0,0 cm“. Eine Nachkommastelle. */
+export function fmtDelta(d: number, unit: string): string {
+  const r = Math.round(d * 10) / 10;
+  const betrag = Math.abs(r).toLocaleString("de-DE", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  return `${r > 0 ? "+" : r < 0 ? "−" : ""}${betrag} ${unit}`;
+}
+
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
 /** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,

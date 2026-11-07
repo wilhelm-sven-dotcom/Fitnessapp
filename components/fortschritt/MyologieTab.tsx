@@ -2,51 +2,45 @@
 
 import { useMemo } from "react";
 import { MyologieFigur } from "@/components/phasen/MyologieFigur";
+import { MuscleBalanceCard } from "@/components/progress/MuscleBalanceCard";
+import { MuscleVolumeBars } from "@/components/progress/MuscleVolumeBars";
 import { Card } from "@/components/ui/Card";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { muskelStufen, type MyologieStufe } from "@/lib/heat";
-import { MUSCLE_LABEL, MUSCLE_ORDER, volumeTargetFor } from "@/lib/volume";
-import { cn } from "@/lib/utils";
+import { weeklyMuscleVolume } from "@/lib/volume";
 
 const STUFEN: MyologieStufe[] = [1, 2, 3, 4];
 const ROEMISCH = ["I", "II", "III", "IV"];
 
 /**
- * Tafel: Myologie — die Wochenarbeit je Muskelgruppe als diskrete Blaustufen
- * (Quartile aufs Wochenziel) auf zwei Frontalfiguren (vorn/hinten), plus das
- * Muskelgruppen im Detail mit 4er-Stufenblöcken. Ersetzt die alte Grün-Heatmap.
+ * Muskeln: die Wochenarbeit je Muskelgruppe als diskrete Stufen (Quartile
+ * aufs Wochenziel) auf zwei Figuren (vorn/hinten), darunter die Sätze je
+ * Muskel mit Zielband und die Muskel-Balance (Radar, Verhältnisse).
  */
 export function MyologieTab() {
-  const { muscleVolumes } = useTraining();
+  const { muscleVolumes, log, allLib } = useTraining();
   const stufen = useMemo(() => muskelStufen(muscleVolumes), [muscleVolumes]);
-  const zielVon = useMemo(
-    () => new Map(muscleVolumes.map((v) => [v.muscle, volumeTargetFor(v.muscle).max])),
-    [muscleVolumes],
-  );
-  const setsVon = useMemo(
-    () => new Map(muscleVolumes.map((v) => [v.muscle, v.sets])),
-    [muscleVolumes],
+  // Vorwochen-Volumen für die gestrichelte Kontur im Radar.
+  const prevMuscleVolumes = useMemo(
+    () => weeklyMuscleVolume(log, allLib, new Date(Date.now() - 7 * 86400000)),
+    [log, allLib],
   );
 
   return (
-    <div>
-      <Card className="mb-4">
-        <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-label text-muted">
+    <div className="space-y-4">
+      <Card>
+        <div className="flex justify-between text-3xs font-semibold uppercase tracking-label text-muted">
           <span>Muskelgruppen</span>
           <span>Diese Woche</span>
         </div>
         <div className="mt-3 flex items-start justify-center gap-6">
           <div className="w-32">
             <MyologieFigur seite="vorn" stufen={stufen} />
-            <p className="mt-1.5 text-center font-mono text-4xs font-semibold uppercase tracking-label text-muted">
-              Vorn
-            </p>
+            <p className="mt-1.5 text-center text-sm text-muted">Vorn</p>
           </div>
           <div className="w-32">
             <MyologieFigur seite="hinten" stufen={stufen} />
-            <p className="mt-1.5 text-center font-mono text-4xs font-semibold uppercase tracking-label text-muted">
-              Hinten
-            </p>
+            <p className="mt-1.5 text-center text-sm text-muted">Hinten</p>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-2 border-t border-line-card pt-2.5">
@@ -58,57 +52,17 @@ export function MyologieTab() {
                   className="h-2.5 w-2.5 rounded-xs"
                   style={{ backgroundColor: `var(--stufe-${n})` }}
                 />
-                <span className="font-mono text-4xs font-medium uppercase tracking-label text-muted">
-                  {ROEMISCH[i]}
-                </span>
+                <span className="text-sm text-muted">{ROEMISCH[i]}</span>
               </span>
             ))}
           </span>
-          <span className="font-mono text-4xs font-medium uppercase tracking-label text-muted">
-            Schema, keine Anatomie
-          </span>
+          <span className="text-sm text-muted">Stufe = Anteil am Wochenziel</span>
         </div>
       </Card>
 
-      {/* Muskelgruppen im Detail: jede Muskelgruppe mit 4er-Stufenblock + Satz-Stand. */}
-      <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-        Muskelgruppen im Detail
-      </p>
-      <div>
-        {MUSCLE_ORDER.map((m, i) => {
-          const stufe = stufen.get(m) ?? 0;
-          const sets = setsVon.get(m) ?? 0;
-          const ziel = zielVon.get(m) ?? volumeTargetFor(m).max;
-          return (
-            <div
-              key={m}
-              className={cn(
-                "flex items-center justify-between gap-3 border-t border-line py-2.5",
-                i === MUSCLE_ORDER.length - 1 && "border-b",
-              )}
-            >
-              <span className="min-w-0 flex-1 truncate text-sm text-fg">
-                {MUSCLE_LABEL[m]}
-              </span>
-              <span className="flex shrink-0 items-center gap-1" aria-hidden>
-                {STUFEN.map((n) => (
-                  <span
-                    key={n}
-                    className={cn("h-2.5 w-5 rounded-xs", stufe < n && "border border-line-card")}
-                    style={stufe >= n ? { backgroundColor: `var(--stufe-${n})` } : undefined}
-                  />
-                ))}
-              </span>
-              <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
-                {sets}/{ziel}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <p className="mt-2 font-mono text-4xs font-medium uppercase tracking-label text-muted">
-        Stufen = Quartile aufs Wochenziel der Gruppe
-      </p>
+      {muscleVolumes.some((m) => m.sets > 0) && <MuscleVolumeBars data={muscleVolumes} />}
+
+      <MuscleBalanceCard muscleVolumes={muscleVolumes} prevMuscleVolumes={prevMuscleVolumes} />
     </div>
   );
 }

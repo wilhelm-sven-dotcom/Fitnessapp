@@ -35,11 +35,11 @@ export function MuscleBalanceCard({
   const sel = selected ? axes.find((a) => a.muscle === selected) : undefined;
 
   return (
-    <Card className="mb-3">
-      <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+    <Card>
+      <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
         Muskel-Balance
       </p>
-      <p className="mb-2 text-xs text-muted">
+      <p className="mb-2 text-sm text-muted">
         Außenrand = oberes Wochenziel je Muskel · gestrichelt = unteres Ziel.
         Achse antippen für Details.
       </p>
@@ -47,7 +47,7 @@ export function MuscleBalanceCard({
       <div className="mb-1 flex min-h-10 items-baseline gap-2">
         {sel ? (
           <>
-            <span className="font-mono text-3xl font-bold tabular-nums leading-none text-fg">
+            <span className="font-display text-3xl font-extrabold tabular-nums leading-none text-fg">
               {fmt(sel.sets)}
             </span>
             <span className="text-sm text-muted">
@@ -56,7 +56,7 @@ export function MuscleBalanceCard({
           </>
         ) : (
           <>
-            <span className="font-mono text-3xl font-bold tabular-nums leading-none text-fg">
+            <span className="font-display text-3xl font-extrabold tabular-nums leading-none text-fg">
               {fmt(total)}
             </span>
             <span className="text-sm text-muted">Sätze diese Woche</span>
@@ -65,7 +65,7 @@ export function MuscleBalanceCard({
       </div>
       <BalanceRadar axes={axes} ghost={ghost} selected={selected} onSelect={setSelected} />
       {ghost && (
-        <p className="mt-1 text-center font-mono text-xs text-faint">
+        <p className="mt-1 text-center text-sm text-muted">
           gestrichelte Kontur = Vorwoche
         </p>
       )}
@@ -74,13 +74,13 @@ export function MuscleBalanceCard({
           <div key={r.key} className="flex items-center justify-between gap-3 text-sm">
             <span className="text-muted">{r.label}</span>
             <div className="flex items-center gap-2">
-              <span className="font-mono tabular-nums text-muted">
+              <span className="tabular-nums text-muted">
                 {fmt(r.a)} : {fmt(r.b)}
               </span>
               <span
                 className={cn(
-                  "rounded-xs px-1.5 py-0.5 text-xs font-medium text-on-color",
-                  r.status === "balanced" ? "bg-info" : "bg-status-over",
+                  "rounded-pill border px-2 py-0.5 text-3xs font-semibold",
+                  r.status === "balanced" ? "border-erfolg text-erfolg" : "border-warnung text-warnung",
                 )}
               >
                 {r.status === "balanced" ? "im Lot" : "Ungleichgewicht"}

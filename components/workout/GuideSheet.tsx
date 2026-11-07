@@ -1,34 +1,59 @@
 "use client";
 
 import { Pencil, Trash2, Wrench, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { MyologieFigur } from "@/components/phasen/MyologieFigur";
+import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { fmtKatalogNr, katalogNummern } from "@/lib/platte";
+import { PATTERN_LABEL } from "@/lib/exercises";
+import type { MyologieStufe } from "@/lib/heat";
+import { REGION_VAR, regionOf } from "@/lib/phasen/band";
+import { figurFor } from "@/lib/phasen/figuren";
 import { MUSCLE_LABEL, muscleOf } from "@/lib/volume";
+import { GuideVerlauf } from "@/components/workout/GuideVerlauf";
 import { VideoLinkEditor } from "@/components/workout/VideoLinkEditor";
 import { Pressable } from "@/components/ui/pressable";
+import { Segment } from "@/components/ui/Segment";
 import { Sheet } from "@/components/ui/sheet";
 import { useOffline } from "@/lib/use-offline";
 import { youtubeEmbedUrl } from "@/lib/youtube";
-import type { Exercise } from "@/lib/types";
+import type { Exercise, Muscle } from "@/lib/types";
+
+type Reiter = "anleitung" | "verlauf";
 
 /**
- * Der Übungs-Guide: DEIN Video zeigt die Ausführung (die ungenauen
- * Strichfiguren sind bewusst raus). Ohne Video tragen die Schritt-Texte,
- * plus eine klare Einladung, ein YouTube-Video zu verknüpfen.
+ * Das Übungsdetail: oben Figur (Zoetrop) und Muskelkarte, darunter zwei
+ * Reiter. „Anleitung“: DEIN Video zeigt die Ausführung, ohne Video tragen
+ * die Schritt-Texte plus die Einladung, ein YouTube-Video zu verknüpfen.
+ * „Verlauf“: Bestwert, letzte Sätze, Kurve (GuideVerlauf).
  */
 export function GuideSheet({
   open,
   onClose,
   ex,
+  startTab = "anleitung",
 }: {
   open: boolean;
   onClose: () => void;
   ex: Exercise | null;
+  /** Aus dem Fortschritt kommend: direkt den Verlauf zeigen. */
+  startTab?: Reiter;
 }) {
-  const { allLib, exerciseVideos, setExerciseVideo, exerciseNotes, setExerciseNote } =
+  const { exerciseVideos, setExerciseVideo, exerciseNotes, setExerciseNote, settings } =
     useTraining();
-  const katalogNr = ex ? katalogNummern(allLib).get(ex.id) : undefined;
+  const [tab, setTab] = useState<Reiter>(startTab);
+  useEffect(() => {
+    if (open) setTab(startTab);
+  }, [open, startTab, ex?.id]);
+  // Muskelkarte: Hauptmuskel volle Stufe, Nebenmuskel halbe.
+  const stufen = useMemo(() => {
+    const m = new Map<Muscle, MyologieStufe>();
+    if (!ex) return m;
+    const { primary, secondary } = muscleOf(ex);
+    m.set(primary, 4);
+    if (secondary && secondary !== primary) m.set(secondary, 2);
+    return m;
+  }, [ex]);
 
   // Clip resolution, highest priority first: a user-pasted YouTube link (shown
   // as an embed), then the exercise's own `videoUrl` (YouTube → embed, else an
@@ -91,9 +116,45 @@ export function GuideSheet({
     <Sheet open={open} onClose={onClose} title={ex?.name}>
       {ex && (
         <>
-          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-            Guide · {fmtKatalogNr(katalogNr)} · {MUSCLE_LABEL[muscleOf(ex).primary]}
-          </p>
+          <div className="mb-3 flex items-center gap-3">
+            <div className="w-20 shrink-0" aria-hidden>
+              <PhasenFigur
+                figur={figurFor(ex)}
+                mode="zoetrop"
+                color={REGION_VAR[regionOf(ex)]}
+                zoetropOn={settings.zoetrope !== false}
+              />
+            </div>
+            <div className="flex shrink-0 gap-1" aria-hidden>
+              <div className="w-10">
+                <MyologieFigur seite="vorn" stufen={stufen} />
+              </div>
+              <div className="w-10">
+                <MyologieFigur seite="hinten" stufen={stufen} />
+              </div>
+            </div>
+            <p className="min-w-0 text-sm leading-snug text-muted">
+              <span className="font-semibold text-fg">{MUSCLE_LABEL[muscleOf(ex).primary]}</span>
+              {muscleOf(ex).secondary && muscleOf(ex).secondary !== muscleOf(ex).primary
+                ? ` · ${MUSCLE_LABEL[muscleOf(ex).secondary!]}`
+                : ""}
+              <br />
+              {PATTERN_LABEL[ex.pattern]}
+            </p>
+          </div>
+          <Segment
+            label="Ansicht"
+            options={[
+              { value: "anleitung", label: "Anleitung" },
+              { value: "verlauf", label: "Verlauf" },
+            ]}
+            value={tab}
+            onChange={(v) => setTab(v as Reiter)}
+            className="mb-4"
+          />
+          {tab === "verlauf" && <GuideVerlauf ex={ex} />}
+          {tab === "anleitung" && (
+          <>
           {/* Media-Slot: das Video IST die Ausführungs-Anleitung. */}
           {hasVideo &&
             (embedUrl ? (
@@ -141,7 +202,7 @@ export function GuideSheet({
 
           {ex.cue && (
             <div className="mb-3">
-              <p className="font-mono text-3xs font-medium uppercase tracking-label text-muted">
+              <p className="text-3xs font-semibold uppercase tracking-label text-muted">
                 Technik
               </p>
               <p className="mt-1 text-base leading-relaxed text-fg">{ex.cue}</p>
@@ -150,14 +211,14 @@ export function GuideSheet({
 
           {(ex.steps?.length ?? 0) > 0 ? (
             <div className="mb-3">
-              <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-label text-muted">
+              <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
                 Ausführung
               </p>
               <ol className="space-y-1.5">
                 {(ex.steps ?? []).map((s, i) => (
                   <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-fg">
-                    <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-info">
-                      {String(i + 1).padStart(2, "0")}
+                    <span className="w-4 shrink-0 text-sm font-bold tabular-nums text-fg">
+                      {i + 1}
                     </span>
                     <span>{s}</span>
                   </li>
@@ -259,8 +320,8 @@ export function GuideSheet({
           </div>
 
           {ex.back && (
-            <div className="mb-2 rounded-card border-l-2 border-status-over bg-surface-2 px-3 py-2">
-              <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-status-over">
+            <div className="mb-2 rounded-inner border border-line px-3 py-2.5">
+              <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-warnung">
                 Rücken
               </p>
               <p className="text-sm text-fg">{ex.back}</p>
@@ -268,9 +329,11 @@ export function GuideSheet({
           )}
 
           {ex.easier && (
-            <p className="text-xs text-muted">
-              <span className="font-medium text-fg">Wenn&apos;s zwickt:</span> {ex.easier}
+            <p className="text-sm text-muted">
+              <span className="font-semibold text-fg">Wenn&apos;s zwickt:</span> {ex.easier}
             </p>
+          )}
+          </>
           )}
         </>
       )}

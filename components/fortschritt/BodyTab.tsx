@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Readout } from "@/components/ui/Readout";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
-import { fmtDateShort } from "@/lib/format";
+import { fmtDateShort, fmtDelta } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
 import { prTimeline } from "@/lib/records";
 import { toast } from "@/lib/toast";
@@ -26,8 +26,7 @@ const fmtKg = (w: number) => String(w).replace(".", ",");
 /** "−4,2 kg" mit deutschem Komma; null ohne beide Gewichte. */
 function kgDelta(a?: number, b?: number): string | null {
   if (a == null || b == null) return null;
-  const d = Math.round((b - a) * 10) / 10;
-  return `${d > 0 ? "+" : ""}${fmtKg(d)} kg`;
+  return fmtDelta(b - a, "kg");
 }
 
 function BodyCard({
@@ -55,10 +54,7 @@ function BodyCard({
           <p className="mt-0.5 text-xs text-muted">{label}</p>
         </div>
         {points.length > 1 && (
-          <span className="text-xs tabular-nums text-muted">
-            {delta > 0 ? "+" : ""}
-            {delta.toFixed(1)} {unit}
-          </span>
+          <span className="text-sm tabular-nums text-muted">{fmtDelta(delta, unit)}</span>
         )}
       </div>
       <div className="mt-2">

@@ -34,7 +34,7 @@ import {
   sportLabel,
   type Sport,
 } from "@/lib/cardio-sport";
-import { fmtDate, fmtGewicht, isoWeek } from "@/lib/format";
+import { fmtDate, fmtSatz, isoWeek } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
 import { plattenNummern } from "@/lib/platte";
 import { weekStartMon } from "@/lib/volume";
@@ -99,7 +99,8 @@ export function HistoryTab() {
     return m;
   }, [log]);
   const router = useRouter();
-  const [expanded, setExpanded] = useState<number | null>(null);
+  /** Aufgeklappte Einheit: `s-‹Index›` (Kraft) bzw. `c-‹Id›` (Cardio). */
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -150,10 +151,10 @@ export function HistoryTab() {
   const mon = weekStartMon();
   const strengthWeek = log.filter((s) => new Date(s.date) >= mon).length;
   const stats = [
-    { v: String(strengthWeek), l: "Kraft/Wo" },
-    { v: String(wk.count), l: "Cardio/Wo" },
+    { v: String(strengthWeek), l: "Kraft" },
+    { v: String(wk.count), l: "Cardio" },
     { v: String(wk.minutes), l: "Cardio-Min" },
-    { v: kmLabel(wk.distance) ?? "—", l: "Distanz" },
+    { v: kmLabel(wk.distance) ?? "–", l: "Distanz" },
   ];
 
   const num = (s: string) => {
@@ -184,7 +185,7 @@ export function HistoryTab() {
 
   const inputCls =
     "w-full rounded-pill bg-surface-2 px-3 py-2.5 text-sm tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
-  const eyebrowCls = "mb-1.5 block font-mono text-3xs font-semibold uppercase tracking-label text-muted";
+  const eyebrowCls = "mb-1.5 block text-3xs font-semibold uppercase tracking-label text-muted";
 
   if (items.length === 0) {
     return (
@@ -193,38 +194,57 @@ export function HistoryTab() {
         title="Noch nichts aufgezeichnet"
         description="Starte deine erste Einheit — danach findest du hier Kraft und Ausdauer in einer Timeline."
         action={
-          <Pressable
-            onClick={() => router.push("/")}
-            className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong focus:outline-none"
-          >
-            <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
-          </Pressable>
+          <Button onClick={() => router.push("/")}>
+            <Play size={16} strokeWidth={2.5} aria-hidden /> Erste Einheit starten
+          </Button>
         }
       />
     );
   }
 
+  /** Löschen steht in der aufgeklappten Einheit, mit Rückfrage. */
+  const loeschZeile = (key: string, onDelete: () => void) =>
+    confirmDel === key ? (
+      <div className="mt-3 flex items-center gap-2">
+        <Button
+          variant="danger"
+          onClick={() => {
+            onDelete();
+            setConfirmDel(null);
+            setExpanded(null);
+          }}
+        >
+          Ja, löschen
+        </Button>
+        <Button variant="ghost" onClick={() => setConfirmDel(null)}>
+          Abbrechen
+        </Button>
+      </div>
+    ) : (
+      <Button variant="danger" onClick={() => setConfirmDel(key)} className="mt-3">
+        <Trash2 size={16} aria-hidden /> Einheit löschen
+      </Button>
+    );
+
   return (
     <div>
+      <p className="mb-2 px-1 text-3xs font-semibold uppercase tracking-label text-muted">
+        Diese Woche
+      </p>
       <div className="mb-4 grid grid-cols-4 gap-2">
         {stats.map((s) => (
-          <div
-            key={s.l}
-            className="rounded-card border border-line bg-surface-1 p-3 text-center"
-          >
-            <p className="font-mono text-lg font-bold tabular-nums text-fg">{s.v}</p>
-            <p className="mt-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-faint">
-              {s.l}
-            </p>
+          <div key={s.l} className="rounded-inner bg-surface-1 px-2 py-2.5 text-center">
+            <p className="font-display text-xl font-extrabold tabular-nums text-fg">{s.v}</p>
+            <p className="mt-0.5 text-sm text-muted">{s.l}</p>
           </div>
         ))}
       </div>
 
       <Pressable
         onClick={() => setAddOpen(true)}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        className="mb-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-pill border border-line text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
-        <Plus size={16} /> Cardio-Einheit nachtragen
+        <Plus size={16} aria-hidden /> Cardio-Einheit nachtragen
       </Pressable>
 
       <div className="space-y-2">
@@ -235,204 +255,138 @@ export function HistoryTab() {
           const neueWoche =
             idx === 0 || weekStartMon(new Date(dateOf(items[idx - 1]))).getTime() !== wk;
           const folio = neueWoche ? (
-            <p className="pt-2 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="px-1 pt-2 text-3xs font-semibold uppercase tracking-label text-muted">
               KW {isoWeek(new Date(dateOf(it)))}
             </p>
           ) : null;
           if (it.kind === "cardio") {
             const c = it.c;
             const Icon = SPORT_ICON[c.sport ?? "other"];
+            const key = `c-${c.id}`;
+            const isOpen = expanded === key;
             return (
-              <Fragment key={`c-${c.id}`}>
-              {folio}
-              <div
-                className="flex items-center gap-3 rounded-card border border-line-card bg-surface-1 p-3"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-surface-2 text-accent-ink">
-                  <Icon size={17} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-fg">
-                    {c.title || sportLabel(c.sport)}
-                    {dupeIds.has(c.id) && (
-                      <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-status-over">
-                        möglich doppelt
+              <Fragment key={key}>
+                {folio}
+                <div className="overflow-hidden rounded-card bg-surface-1">
+                  <Pressable
+                    onClick={() => setExpanded(isOpen ? null : key)}
+                    aria-expanded={isOpen}
+                    className="flex w-full items-center gap-3 p-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-surface-2 text-fg">
+                      <Icon size={18} aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="line-clamp-2 text-base font-semibold leading-snug text-fg">
+                        {c.title || sportLabel(c.sport)}
                       </span>
-                    )}
-                  </p>
-                  <p className="font-mono text-xs tabular-nums text-muted">
-                    {metricsLine(c)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="font-mono text-xs tabular-nums text-faint">
-                    {fmtDate(c.date)}
-                  </span>
-                  {confirmDel === `c-${c.id}` ? (
-                    <Pressable
-                      onClick={() => {
-                        void removeCardio(c.id);
-                        setConfirmDel(null);
-                      }}
-                      className="-m-2 flex min-h-11 items-center p-2 font-mono text-xs text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
-                    >
-                      Löschen?
-                    </Pressable>
-                  ) : (
-                    <Pressable
-                      onClick={() => setConfirmDel(`c-${c.id}`)}
-                      aria-label="Einheit löschen"
-                      className="-m-2 flex h-11 w-11 items-center justify-center text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
-                    >
-                      <Trash2 size={14} />
-                    </Pressable>
+                      <span className="block text-sm tabular-nums text-muted">{metricsLine(c)}</span>
+                      {dupeIds.has(c.id) && (
+                        <span className="mt-1 inline-block rounded-pill border border-warnung px-2 py-0.5 text-3xs font-semibold text-warnung">
+                          möglich doppelt
+                        </span>
+                      )}
+                    </span>
+                    <span className="shrink-0 text-sm tabular-nums text-muted">{fmtDate(c.date)}</span>
+                  </Pressable>
+                  {isOpen && (
+                    <div className="px-3 pb-3">{loeschZeile(key, () => void removeCardio(c.id))}</div>
                   )}
                 </div>
-              </div>
               </Fragment>
             );
           }
 
           const { s, realIdx } = it;
-          const isOpen = expanded === realIdx;
-          const isDel = confirmDel === `s-${realIdx}`;
+          const key = `s-${realIdx}`;
+          const isOpen = expanded === key;
           const v = sessionVolume(s);
           const gruppen = bandOfLogged(s, byId, log);
           const kaderZahl = gruppen.reduce((n, g) => n + g.kader.length, 0);
           const rekorde = rekordeJePlatte.get(s.date) ?? 0;
           return (
             <Fragment key={`s-${s.date}-${realIdx}`}>
-            {folio}
-            <div
-              className="overflow-hidden rounded-card border border-line-card bg-surface-1"
-            >
-              <div className="flex items-center justify-between gap-2 px-4 py-3">
+              {folio}
+              <div className="overflow-hidden rounded-card bg-surface-1">
                 <Pressable
-                  onClick={() => setExpanded(isOpen ? null : realIdx)}
-                  className="flex min-w-0 flex-1 items-center justify-between rounded-card text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+                  onClick={() => setExpanded(isOpen ? null : key)}
+                  aria-expanded={isOpen}
+                  className="block w-full px-4 pb-3 pt-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate font-mono text-4xs font-medium uppercase tracking-label text-muted">
-                        Einheit <span className="tabular-nums">{plattenNr.get(s) ?? "–"}</span> · {fmtDate(s.date)}
-                      </p>
-                      {s.backTraffic && (
-                        <span
-                          className={cn(
-                            "h-2 w-2 shrink-0 rounded-pill",
-                            trafficDot[s.backTraffic],
-                          )}
-                          aria-label={`Rücken ${s.backTraffic}`}
-                        />
-                      )}
-                    </div>
-                    <span className="mt-0.5 block truncate text-base font-semibold text-fg">
-                      {s.dayName}
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2 text-sm tabular-nums text-muted">
+                        Einheit {plattenNr.get(s) ?? "–"} · {fmtDate(s.date)}
+                        {s.backTraffic && (
+                          <span
+                            className={cn("h-2 w-2 shrink-0 rounded-pill", trafficDot[s.backTraffic])}
+                            aria-label={`Rücken ${s.backTraffic}`}
+                          />
+                        )}
+                      </span>
+                      {/* Zweizeilig statt abgeschnitten. */}
+                      <span className="mt-0.5 line-clamp-2 text-base font-semibold leading-snug text-fg">
+                        {s.dayName}
+                      </span>
                     </span>
-                  </div>
-                  <div className="ml-2 shrink-0 text-right">
                     {v > 0 && (
-                      <p className="font-mono text-sm font-bold tabular-nums text-fg">
-                        {v.toLocaleString("de-DE")} kg
-                      </p>
+                      <span className="shrink-0 text-right">
+                        <span className="block text-base font-bold tabular-nums text-fg">
+                          {v.toLocaleString("de-DE")} kg
+                        </span>
+                        <span className="block text-sm text-muted">Volumen</span>
+                      </span>
                     )}
-                    <p className="font-mono text-4xs font-medium uppercase tracking-label text-faint">
-                      Volumen
-                    </p>
-                  </div>
-                </Pressable>
-                <Pressable
-                  onClick={() => setConfirmDel(isDel ? null : `s-${realIdx}`)}
-                  aria-label="Einheit löschen"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card text-muted focus:outline-none"
-                >
-                  <Trash2 size={16} />
-                </Pressable>
-              </div>
-
-              {/* Fingerabdruck der Platte: das Phasenband dessen, was war. */}
-              <div className="px-4 pb-2">
-                <Phasenband gruppen={gruppen} groesse="mini" />
-              </div>
-              <div className="flex items-baseline justify-between gap-2 px-4 pb-3 font-mono text-4xs font-medium uppercase tracking-label text-muted">
-                <span>
-                  <span className="tabular-nums">{kaderZahl}</span> Sätze · alle erledigt
-                  {/* Ort in der Fußzeile: oben ist neben Volumen und Löschen kein
-                      Platz, dort wurde er abgeschnitten. */}
-                  {zeigeOrt && s.ort ? ` · ${s.ort}` : ""}
-                </span>
-                {rekorde > 0 && (
-                  <span className="text-rekord">
-                    <span className="tabular-nums">{rekorde}</span>{" "}
-                    {rekorde === 1 ? "Rekord" : "Rekorde"}
                   </span>
+                  {/* Fingerabdruck der Einheit: das Phasenband dessen, was war. */}
+                  <span className="mt-2.5 block">
+                    <Phasenband gruppen={gruppen} groesse="mini" />
+                  </span>
+                  <span className="mt-2 flex items-baseline justify-between gap-2 text-sm text-muted">
+                    <span className="tabular-nums">
+                      {kaderZahl} {kaderZahl === 1 ? "Satz" : "Sätze"}
+                      {s.durationMin ? ` · ${s.durationMin} Min` : ""}
+                      {zeigeOrt && s.ort ? ` · ${s.ort}` : ""}
+                    </span>
+                    {rekorde > 0 && (
+                      <span className="font-semibold tabular-nums text-rekord">
+                        {rekorde} {rekorde === 1 ? "Rekord" : "Rekorde"}
+                      </span>
+                    )}
+                  </span>
+                </Pressable>
+
+                {isOpen && (
+                  <div className="space-y-2 border-t border-line-card px-4 pb-4 pt-3">
+                    {(s.exercises ?? []).map((ex) => (
+                      <div key={ex.id}>
+                        <p className="text-sm font-semibold text-fg">
+                          {ex.name}
+                          {ex.note && <span className="font-normal text-muted"> · {ex.note}</span>}
+                        </p>
+                        <p className="text-sm tabular-nums text-muted">
+                          {(ex.sets ?? [])
+                            .filter((st) => !st.warmup)
+                            .map((st) => fmtSatz(st.weight, st.reps, ex.unit === "Sek"))
+                            .join(" · ") || "–"}
+                        </p>
+                      </div>
+                    ))}
+                    {s.debrief && s.debrief.length > 0 && (
+                      <div className="rounded-inner bg-surface-0 px-3 py-2">
+                        <p className="mb-1 flex items-center gap-1.5 text-3xs font-semibold uppercase tracking-label text-muted">
+                          <AtlasMark size={12} className="text-fg" /> ATLAS
+                        </p>
+                        <p className="text-sm leading-relaxed text-muted">{s.debrief.join(" ")}</p>
+                      </div>
+                    )}
+                    {s.note && (
+                      <p className="rounded-inner bg-surface-0 px-3 py-2 text-sm text-muted">„{s.note}“</p>
+                    )}
+                    {loeschZeile(key, () => void deleteSession(realIdx))}
+                  </div>
                 )}
               </div>
-
-              {isDel && (
-                <div className="flex items-center gap-2 px-4 pb-3">
-                  <Pressable
-                    onClick={() => {
-                      void deleteSession(realIdx);
-                      setConfirmDel(null);
-                      if (isOpen) setExpanded(null);
-                    }}
-                    className="rounded-card bg-surface-2 px-3 py-2 text-sm font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
-                  >
-                    Einheit löschen
-                  </Pressable>
-                  <Pressable
-                    onClick={() => setConfirmDel(null)}
-                    className="rounded-card px-3 py-2 text-sm text-muted focus:outline-none"
-                  >
-                    Abbrechen
-                  </Pressable>
-                </div>
-              )}
-
-              {isOpen && (
-                <div className="space-y-1 px-4 pb-4 pt-1">
-                  {(s.exercises ?? []).map((ex) => (
-                    <div
-                      key={ex.id}
-                      className="flex items-baseline justify-between gap-3"
-                    >
-                      <span className="text-sm text-muted">
-                        {ex.name}
-                        {ex.note && <span className="text-faint"> · {ex.note}</span>}
-                      </span>
-                      <span className="text-right font-mono text-xs tabular-nums text-muted">
-                        {(ex.sets ?? [])
-                          .filter((st) => !st.warmup)
-                          .map((st) =>
-                            ex.unit === "Sek"
-                              ? `${st.reps}s`
-                              : st.weight
-                                ? `${fmtGewicht(st.weight)}×${st.reps}`
-                                : `${st.reps}`,
-                          )
-                          .join("  ") || "—"}
-                      </span>
-                    </div>
-                  ))}
-                  {s.debrief && s.debrief.length > 0 && (
-                    <div className="mt-2 rounded-card bg-surface-0 px-3 py-2">
-                      <p className="mb-1 flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-                        <AtlasMark size={12} className="text-fg" /> ATLAS
-                      </p>
-                      <p className="text-sm leading-relaxed text-muted">
-                        {s.debrief.join(" ")}
-                      </p>
-                    </div>
-                  )}
-                  {s.note && (
-                    <p className="mt-2 rounded-card bg-surface-0 px-3 py-2 text-sm text-muted">
-                      „{s.note}“
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
             </Fragment>
           );
         })}

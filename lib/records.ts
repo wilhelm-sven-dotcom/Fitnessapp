@@ -37,7 +37,7 @@ export interface ExRecord {
  * "Neuer Rekord" included). Once any session was weighted, the exercise
  * counts as "weight" for good; weightless sessions of it score 0 and drop out.
  */
-function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
+export function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
   const kinds: Record<string, RecordKind> = {};
   for (const s of log) {
     for (const ex of s.exercises || []) {
@@ -58,7 +58,7 @@ function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
 }
 
 /** Best metric (and its label) of one session's working, filled sets. */
-function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label: string } {
+export function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label: string } {
   let best = 0;
   let label = "";
   for (const st of sets) {
