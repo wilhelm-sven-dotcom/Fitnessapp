@@ -161,10 +161,8 @@ export function WarmupPlayer({
   if (done) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 app-bg px-8 text-center">
-        <p className="font-display font-bold text-4xl text-fg">Aufgewärmt.</p>
-        <p className="max-w-xs font-mono text-2xs uppercase tracking-label text-muted">
-          Jetzt kann es losgehen.
-        </p>
+        <p className="font-display text-4xl font-extrabold text-fg">Aufgewärmt.</p>
+        <p className="max-w-xs text-base text-muted">Jetzt kann es losgehen.</p>
         <Button size="lg" onClick={onFinished ?? onClose} className="mt-2 px-6">
           Zur ersten Übung
         </Button>
@@ -215,26 +213,26 @@ export function WarmupPlayer({
         <Pressable
           onClick={onClose}
           aria-label="Aufwärmen beenden"
-          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 text-sm text-muted focus:outline-none"
+          className="-ml-2 flex min-h-11 items-center gap-1.5 rounded-pill px-2 text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
-          <X size={18} /> Beenden
+          <X size={20} aria-hidden /> Beenden
         </Pressable>
         <div className="flex items-center gap-3">
           <Pressable
             onClick={cycleCueVolume}
             aria-label={`Signalton-Lautstärke: ${VOL_LABEL[cueVol] ?? "Normal"} — tippen zum Ändern`}
-            className="flex items-center gap-1 rounded-pill px-2 py-1 text-muted focus:outline-none"
+            className="flex min-h-11 items-center gap-1.5 rounded-pill px-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
-            <Volume2 size={16} />
-            <span className="font-mono text-xs tabular-nums">{VOL_LABEL[cueVol] ?? "Normal"}</span>
+            <Volume2 size={18} aria-hidden />
+            <span className="text-sm">{VOL_LABEL[cueVol] ?? "Normal"}</span>
           </Pressable>
-          <span className="font-mono text-xs tabular-nums text-muted">
-            {index + 1}/{total}
+          <span className="text-sm tabular-nums text-muted">
+            {index + 1} von {total}
           </span>
         </div>
       </div>
 
-      <p className="mt-2 px-5 text-center font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+      <p className="mt-2 px-5 text-center text-3xs font-semibold uppercase tracking-label text-muted">
         Aufwärmen
       </p>
 
@@ -244,13 +242,10 @@ export function WarmupPlayer({
           <span
             key={d.id}
             className={cn(
-              "rounded-xs",
-              total > 8 ? "h-1.5 w-1.5" : "h-2 w-2",
-              i === index
-                ? "bg-accent"
-                : i < index
-                  ? "bg-fg"
-                  : "border border-line bg-transparent",
+              "rounded-pill",
+              total > 8 ? "h-1.5" : "h-2",
+              i === index ? (total > 8 ? "w-4" : "w-5") : total > 8 ? "w-1.5" : "w-2",
+              i <= index ? "bg-fg" : "bg-line",
             )}
           />
         ))}
@@ -269,7 +264,7 @@ export function WarmupPlayer({
         >
           {embed ? (
             <div
-              className="mb-3 overflow-hidden rounded-card border border-line-card bg-surface-0"
+              className="mb-3 overflow-hidden rounded-card bg-surface-1"
               style={{ height: "min(32vh, 300px)", aspectRatio: "9 / 16" }}
             >
               <iframe
@@ -282,8 +277,8 @@ export function WarmupPlayer({
               />
             </div>
           ) : fig ? (
-            <div className="mb-3 w-72 rounded-card border border-line-card bg-surface-1 p-2">
-              <p className="px-1 pt-0.5 text-left font-mono text-3xs font-medium uppercase tracking-label text-muted">
+            <div className="mb-3 w-72 rounded-card bg-surface-1 p-3">
+              <p className="px-1 text-left text-3xs font-semibold uppercase tracking-label text-muted">
                 Übung {index + (switching ? 2 : 1)}
               </p>
               <FigurePanel
@@ -291,7 +286,7 @@ export function WarmupPlayer({
                 fig={fig}
                 viewKey="side"
                 periodMs={showing.periodMs}
-                color="var(--accent)"
+                color="var(--fg)"
               />
             </div>
           ) : null}
@@ -303,24 +298,26 @@ export function WarmupPlayer({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE_OUT }}
         >
-          <span className="mb-4 rounded-pill border border-line px-2.5 py-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          <span className="mb-3 rounded-pill border border-line px-3 py-1 text-3xs font-semibold uppercase tracking-label text-muted">
             {switching ? "Wechsel" : badge.label}
           </span>
-          <h2 className="font-display font-bold text-2xl text-fg">
+          <h2 className="font-display text-2xl font-extrabold text-fg">
             {switching ? `Gleich: ${showing.name}` : showing.name}
           </h2>
-          <p className="mt-3 max-w-sm font-mono text-3xs font-medium uppercase leading-relaxed tracking-label text-muted">
+          <p className="mt-2 max-w-sm text-base leading-relaxed text-muted">
             {switching ? "Position wechseln — gleich weiter" : showing.cue}
           </p>
         </motion.div>
-        <p className="mt-8 font-mono text-readout-lg font-bold tabular-nums text-fg">{left}</p>
+        <p className="mt-6 font-display text-readout-lg font-extrabold leading-none tabular-nums text-fg">
+          {left}
+        </p>
       </div>
 
       {/* controls */}
       <div className="flex items-center gap-2 px-5">
         <Pressable
           onClick={skip}
-          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-line py-3.5 font-mono text-xs font-semibold uppercase tracking-label text-muted focus:outline-none"
+          className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-pill border border-line text-lg font-bold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           Überspringen
         </Pressable>
@@ -329,9 +326,10 @@ export function WarmupPlayer({
             primeAudio();
             setPaused((p) => !p);
           }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-strong py-3.5 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none"
+          className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-pill bg-accent text-lg font-bold text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
-          {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Weiter" : "Pause"}
+          {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}{" "}
+          {paused ? "Weiter" : "Pause"}
         </Pressable>
       </div>
     </div>

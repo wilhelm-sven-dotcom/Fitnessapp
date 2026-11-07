@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Button } from "@/components/ui/Button";
-import { Readout } from "@/components/ui/Readout";
 import { useTraining, type SessionSummary } from "@/components/providers/TrainingProvider";
 import { success } from "@/lib/haptics";
 import { EASE_OUT } from "@/lib/motion";
 import type { PhasenFigurDef } from "@/lib/phasen/figuren";
+import type { RecordKind } from "@/lib/records";
 import { renderShareCard } from "@/lib/share-card";
 import { speak } from "@/lib/voice";
 
@@ -17,8 +17,12 @@ import { speak } from "@/lib/voice";
 export interface SiegerTafel {
   figur: PhasenFigurDef;
   exName: string;
+  /** Rekord-Kennzahl: geschätztes 1RM (kg), Wiederholungen oder Sekunden. */
   wert: number;
   einheit: string;
+  kind: RecordKind;
+  /** Der gehobene Satz („25 kg × 12“) — steht groß, die Kennzahl darunter. */
+  satz?: string;
   delta?: number;
   prevPlattenNr?: number;
 }
@@ -160,7 +164,7 @@ export function SessionComplete({
         transition={reduce ? undefined : { duration: 0.01, delay: 0.26 }}
         // my-auto statt justify-center am Parent: bei überlaufendem Inhalt
         // bliebe der Anfang sonst unscrollbar abgeschnitten (Flexbox-Falle).
-        className="my-auto flex w-full max-w-xs flex-col items-center py-8"
+        className="my-auto flex w-full max-w-sm flex-col items-center py-8"
       >
         <motion.p
           initial={reduce ? false : { opacity: 0, y: 6 }}
@@ -213,27 +217,42 @@ export function SessionComplete({
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(5)}
-              className="mt-2 font-mono text-readout-lg font-bold leading-none tabular-nums text-rekord"
+              className={
+                sieger.kind === "weight" && sieger.satz
+                  ? "mt-2 font-display text-4xl font-extrabold leading-none tabular-nums text-rekord"
+                  : "mt-2 font-display text-readout font-extrabold leading-none tabular-nums text-rekord"
+              }
             >
-              {fmtDe(sieger.wert)}
-              <span className="ml-1.5 align-middle text-sm font-medium tracking-label">
-                {sieger.einheit.toUpperCase()}
-              </span>
+              {sieger.kind === "weight" && sieger.satz
+                ? sieger.satz
+                : `${fmtDe(sieger.wert)} ${sieger.einheit}`}
             </motion.p>
-            <motion.p
+            <motion.div
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(6)}
-              className="mt-3 font-mono text-3xs font-medium uppercase tracking-label text-muted"
+              className="mt-3 space-y-1 text-sm text-muted"
             >
-              {sieger.delta != null && sieger.delta > 0
-                ? `+${fmtDe(sieger.delta)} ${sieger.einheit} über ${
-                    sieger.prevPlattenNr != null
-                      ? `Einheit ${sieger.prevPlattenNr}`
-                      : "dem bisherigen Bestwert"
-                  }`
-                : "Dein erster Wert hier"}
-            </motion.p>
+              {/* Bei Gewichtsrekorden zählt die Schätzung (Epley) — sie steht
+                  beschriftet unter dem echten Satz, nie als nackte Zahl. */}
+              {sieger.kind === "weight" && sieger.satz && (
+                <p>
+                  Geschätztes 1RM{" "}
+                  <span className="font-semibold tabular-nums text-fg">
+                    {fmtDe(sieger.wert)} kg
+                  </span>
+                </p>
+              )}
+              <p className="tabular-nums">
+                {sieger.delta != null && sieger.delta > 0
+                  ? `+${fmtDe(sieger.delta)} ${sieger.einheit} über ${
+                      sieger.prevPlattenNr != null
+                        ? `Einheit ${sieger.prevPlattenNr}`
+                        : "dem bisherigen Bestwert"
+                    }`
+                  : "Dein erster Wert hier"}
+              </p>
+            </motion.div>
           </>
         ) : (
           <>
@@ -257,30 +276,6 @@ export function SessionComplete({
             </motion.h1>
           </>
         )}
-
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={stagger(7)}
-          className="mt-8 flex items-start justify-center gap-8"
-        >
-          <Readout eyebrow="Sätze" value={summary.sets} size="md" />
-          <Readout
-            eyebrow="Bewegt"
-            value={summary.tonnage / 1000}
-            decimals={1}
-            unit="t"
-            size="md"
-          />
-          {summary.prs > 0 && (
-            <Readout
-              eyebrow={summary.prs === 1 ? "Rekord" : "Rekorde"}
-              value={summary.prs}
-              size="md"
-              tone="var(--rekord)"
-            />
-          )}
-        </motion.div>
 
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 10 }}
@@ -350,23 +345,14 @@ export function SessionComplete({
           transition={reduce ? undefined : { duration: 0.24, delay: 1.1 }}
           className="mb-4 mt-10 flex w-full items-stretch gap-2.5"
         >
-          <Button
-            variant="secondary"
-            size="lg"
-            onClick={onDone}
-            className={shareFile ? "w-28 flex-none" : "flex-1"}
-          >
-            Weiter
-          </Button>
           {shareFile && (
-            <Button
-              size="lg"
-              onClick={share}
-              className="flex-1 whitespace-nowrap tracking-label"
-            >
+            <Button variant="secondary" size="lg" onClick={share} className="w-32 flex-none">
               Teilen
             </Button>
           )}
+          <Button size="lg" onClick={onDone} className="flex-1">
+            Weiter
+          </Button>
         </motion.div>
       </motion.div>
     </div>

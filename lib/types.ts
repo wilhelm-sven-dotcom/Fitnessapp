@@ -153,6 +153,9 @@ export interface LoggedSession {
   note?: string;
   /** Estimated session length at start (minutes). */
   estimatedMin?: number;
+  /** Tatsächliche Dauer in Minuten (Speichern − Start, 1–360). Ältere
+   *  Einheiten haben keine — Anzeigen lassen den Wert dann einfach weg. */
+  durationMin?: number;
   /** Marked as a deload session (reduced load/volume). */
   isDeload?: boolean;
   /** Session was the guided max-strength test day („Die Prüfung"). */

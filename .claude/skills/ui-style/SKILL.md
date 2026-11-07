@@ -195,12 +195,39 @@ Sheets 50.
 
 ## Fokus-Modus (Training)
 
-- **Feste Abstände zu `fixed`-Docks sind verboten — Höhe MESSEN** (`onHeight`
-  → `paddingBottom` an `session-root`). Gilt für jedes Dock.
+- **Aufbau von oben:** Kopf (Schließen links, „Übung 2 von 6“, Restzeit; darunter
+  das Phasenband in Regionsfarben, Tipp = Übersicht) → Übungskopf als Fläche
+  `REGION_FLAECHE` mit Schrift `REGION_AUF` (Figur 56 px, Name `font-display`
+  2xl, bei Wörtern > 12 Zeichen xl, Unterzeile „Muskel · Satz 1 von 3“; wischen
+  blättert) → Pillen „Anleitung“ / „Tauschen“ → Satzliste → ATLAS → Blättern.
+- **Satzliste:** Zeilen `rounded-inner bg-surface-1`, erledigt = gefüllter Kreis
+  (`REGION_FLAECHE` + Haken `REGION_AUF`), kommend = leerer Kreis `border-line`.
+  Die offene **Satzkarte** (`.set-active`, Ring 2 px in `REGION_VAR`) hat die
+  Satz-Marke als Pille, rechts „Ziel 10–15 Wdh“ (Plan-Bereich), zwei Kacheln
+  `bg-surface-2` für Gewicht und Wiederholungen (Ziffern `font-display` 4xl,
+  − / + darunter), „Letztes Mal … · Rekord …“ und „Vorschlag … · Grund“.
+  „Ziel“ = Plan, „Vorschlag“ = vorbelegte Werte; nie dasselbe Wort für beides.
+- **Ein Dock, ein Wirt** (`SessionRunner`): unten fest, Inhalt ENTWEDER die
+  Pause (`RestPanel`) ODER „Satz eintragen · 22,5 kg × 12“ (kommt per
+  `createPortal` aus der Satzkarte, `components/session/DockSlot.tsx`). Keine
+  Eingabefelder im Dock. Solange ein Feld den Fokus hat, ist das Dock
+  unsichtbar (iOS-Tastatur). Wird es eng, kürzt sich das Wort, nie die Werte.
+- **Feste Abstände zu `fixed`-Docks sind verboten — Höhe MESSEN**
+  (ResizeObserver am Wirt → `paddingBottom` an `session-root`). Gilt für jedes Dock.
+- **Pause:** Restzeit `font-display` readout, „von 1:30“, Balken in der
+  Regionsfarbe, „Als Nächstes“ (gleiche Übung: „Satz 2 · 22,5 kg × 12“, sonst
+  nächste offene Übung, Cardio in Minuten, zuletzt „Abschluss“), −15 s / +15 s /
+  „Pause beenden“, dann die EINE Frage „Wie schwer war Satz N?“ mit Erklärzeile.
+  `aria-live` sagt Start und Ende an, nicht jede Sekunde.
 - Der Abschluss einer Übung gehört in die Bühne („Nächste Übung · ‹Name›“
-  bzw. „Zum Abschluss“ direkt unter dem Logbuch).
-- „Wie schwer war's?“ fragt EINMAL, im Pausenfeld; der Knopf dort heißt
-  „Pause beenden“, „Weiter“ bleibt dem Blättern.
+  bzw. „Zum Abschluss“ direkt unter der Satzliste); „Nächste Übung“ nennt die
+  nächste OFFENE Übung (`nextOpenItemIndex`), genau dorthin springt „Weiter“.
+- Abschluss vor dem Speichern: Dauer · Sätze · Bewegt und je Übung eine Zeile;
+  danach zeigt der Sieger-Moment Rekord, Level und ATLAS (keine Zahlen doppelt).
+  Gewichtsrekorde zeigen den gehobenen Satz groß und „Geschätztes 1RM“
+  beschriftet darunter, nie eine nackte e1RM-Zahl.
+- Check-in „Tagesform“: vorbelegt wie zuletzt (≤ 7 Tage), sonst mittlere Stufe;
+  Knopf sofort aktiv; Rückenschonung nur über eine heute angetippte Wertung.
 - Jede Hauptaktion des Ablaufs ist ein `Button`.
 
 ## ATLAS-Kontext und KI-Aufrufe

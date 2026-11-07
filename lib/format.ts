@@ -34,6 +34,21 @@ export function fmtGewicht(kg: number | string): string {
   return n.toLocaleString("de-DE", { maximumFractionDigits: 2, useGrouping: false });
 }
 
+/** Ein Satz in einer Schreibweise für Zeile, Karte, Dock und Abschluss:
+ *  „22,5 kg × 12“ (mit Gewicht), „12 Wdh“ (ohne), „45 s“ (gehalten). */
+export function fmtSatz(
+  weight: string | number | undefined | null,
+  reps: string | number | undefined | null,
+  timed: boolean,
+): string {
+  const r = reps == null ? "" : String(reps);
+  if (timed) return r ? `${r} s` : "";
+  const kg = Number(String(weight ?? "").replace(",", "."));
+  if (weight !== "" && weight != null && Number.isFinite(kg) && kg > 0)
+    return `${fmtGewicht(kg)} kg × ${r}`.trim();
+  return r ? `${r} Wdh` : "";
+}
+
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
 /** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,

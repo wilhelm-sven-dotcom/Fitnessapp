@@ -61,19 +61,24 @@ function KaderZelle({
   const aktiv = kader.status === "aktiv";
   const belichtet = kader.status === "belichtet";
 
-  // Kompakt (Fokus-Kopf): konstante Vollbalken — nur der Status spricht.
+  // Kompakt (Trainingskopf): konstante Segmente in der Regionsfarbe —
+  // erledigt gefüllt, der offene Satz als kräftiger Rand, der Rest als Linie.
   if (kompakt) {
     return (
       <div
         className={cn(
-          "rounded-xs border",
-          belichtet
-            ? "border-transparent bg-fg"
-            : aktiv
-              ? "border-transparent bg-accent"
-              : "border-line-card bg-transparent",
+          "rounded-xs",
+          belichtet ? "" : aktiv ? "border-2" : "border border-line",
         )}
-        style={{ flex: `${kader.widthReps} 1 0%`, height: h }}
+        style={{
+          flex: `${kader.widthReps} 1 0%`,
+          height: h,
+          ...(belichtet
+            ? { backgroundColor: gruppe.tintVar }
+            : aktiv
+              ? { borderColor: gruppe.tintVar }
+              : undefined),
+        }}
       />
     );
   }
@@ -96,8 +101,11 @@ function KaderZelle({
       {belichtet && (
         <>
           <div
-            className="absolute inset-x-0 bottom-0 bg-fg"
-            style={{ height: `${Math.round(kader.fillRatio * 100)}%` }}
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: `${Math.round(kader.fillRatio * 100)}%`,
+              backgroundColor: gruppe.tintVar,
+            }}
           />
           {hero && (
             <div className="absolute inset-x-0" style={{ bottom: 2, height: "56%" }}>

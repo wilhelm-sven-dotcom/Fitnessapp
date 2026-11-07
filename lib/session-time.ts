@@ -198,3 +198,13 @@ export function fitToBudget(
 
   return { list: slots, estMin: est, adjusted };
 }
+
+/** Tatsächliche Dauer einer Einheit in ganzen Minuten (Start → Ende), auf
+ *  1–360 begrenzt; null bei unplausiblen Zeitstempeln (Uhr verstellt,
+ *  kaputter Start). Die Fortsetzung nach Reload zählt bewusst mit — die
+ *  Einheit lief so lange. */
+export function sessionMinutes(startISO: string, endISO: string): number | null {
+  const ms = new Date(endISO).getTime() - new Date(startISO).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  return Math.min(360, Math.max(1, Math.round(ms / 60_000)));
+}

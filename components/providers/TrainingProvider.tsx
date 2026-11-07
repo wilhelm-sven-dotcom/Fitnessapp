@@ -36,7 +36,7 @@ import {
   scaleFor,
   type ReadinessScale,
 } from "@/lib/readiness";
-import { estimateSessionMin } from "@/lib/session-time";
+import { estimateSessionMin, sessionMinutes } from "@/lib/session-time";
 import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
@@ -114,6 +114,8 @@ export interface SessionSummary {
   weekTarget: number;
   /** ATLAS-Debrief (3 Zeilen) — auch an der LoggedSession persistiert. */
   debrief: string[];
+  /** Dauer in Minuten (fehlt, wenn der Start unplausibel war). */
+  durationMin?: number;
 }
 
 export interface ExportEnvelope {
@@ -1317,6 +1319,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
       };
       if (state.backTraffic) newSession.backTraffic = state.backTraffic;
+      const durationMin = sessionMinutes(state.startedAt, newSession.date);
+      if (durationMin != null) newSession.durationMin = durationMin;
       const noteText = (state.note ?? "").trim();
       if (noteText) newSession.note = noteText;
       if (state.readiness) newSession.readiness = state.readiness;
@@ -1354,6 +1358,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       });
       newSession.debrief = debrief;
       const summary: SessionSummary = { ...core, debrief };
+      if (durationMin != null) summary.durationMin = durationMin;
       setSaving(true);
       await storage.setJSON(KEYS.log, newLog);
       setLog(newLog);

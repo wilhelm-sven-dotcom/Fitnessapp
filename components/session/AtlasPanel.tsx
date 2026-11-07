@@ -101,13 +101,13 @@ export function AtlasPanel({
   return (
     <section
       className={cn(
-        "rounded-card border bg-surface-1 px-3.5 py-3",
-        override || line?.tone === "push" ? "border-accent-ink" : "border-line-card",
+        "rounded-card border-2 bg-surface-1 px-4 py-3",
+        override || line?.tone === "push" ? "border-fg" : "border-transparent",
       )}
     >
       <p className="flex items-center gap-2">
         <AtlasMark size={13} live={!!override} className="shrink-0 text-muted" />
-        <span className="font-mono text-3xs font-medium uppercase tracking-label text-muted">
+        <span className="text-3xs font-semibold uppercase tracking-label text-muted">
           ATLAS
         </span>
       </p>
@@ -123,7 +123,7 @@ export function AtlasPanel({
       {override?.actionLabel && override.onApply && (
         <Pressable
           onClick={override.onApply}
-          className="mt-2 inline-flex min-h-11 items-center rounded-pill border border-strong px-4 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="mt-2 inline-flex min-h-11 items-center rounded-pill bg-strong px-4 text-sm font-bold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           {override.actionLabel}
         </Pressable>
