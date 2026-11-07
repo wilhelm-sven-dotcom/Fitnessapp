@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import type { Kader, KaderGruppe } from "@/lib/phasen/band";
 import { cn } from "@/lib/utils";
@@ -42,18 +43,24 @@ const IWF_VAR: Record<string, string> = {
   gruen: "var(--iwf-gruen)",
 };
 
+/** Ab dieser Kaderbreite (px) passt die Nummer „01“ ohne Anschnitt. */
+const NUMMER_AB_PX = 20;
+
 function KaderZelle({
   kader,
   gruppe,
   nummer,
   groesse,
   zoetropOn,
+  mitNummer,
 }: {
   kader: Kader;
   gruppe: KaderGruppe;
   nummer: number;
   groesse: PhasenbandGroesse;
   zoetropOn?: boolean;
+  /** Nummern nur, wenn der schmalste Kader breit genug ist. */
+  mitNummer?: boolean;
 }) {
   const h = HOEHE[groesse];
   const hero = groesse === "hero";
@@ -157,7 +164,7 @@ function KaderZelle({
           />
         </>
       )}
-      {hero && (
+      {hero && mitNummer && (
         <span
           className={cn(
             "absolute font-mono text-5xs tabular-nums",
@@ -185,9 +192,31 @@ export function Phasenband({
   className?: string;
 }) {
   const kompakt = groesse === "live" || groesse === "punkt";
+  const hero = groesse === "hero";
+  // Kadernummern nur ab Mindestbreite: Breite messen, schmalsten Kader
+  // ausrechnen (flex-grow ∝ widthReps, abzüglich Fugen) — sonst stehen
+  // angeschnittene „0“ in jedem Bild.
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [breite, setBreite] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !hero) return;
+    const melde = () => setBreite(el.getBoundingClientRect().width);
+    melde();
+    const ro = new ResizeObserver(melde);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [hero]);
+  const alle = gruppen.flatMap((g) => g.kader);
+  const summe = alle.reduce((a, k) => a + k.widthReps, 0);
+  const schmalster = alle.reduce((a, k) => Math.min(a, k.widthReps), Infinity);
+  const fugen = Math.max(0, alle.length - 1) * 4 + Math.max(0, gruppen.length - 1) * 5;
+  const mitNummer =
+    hero && breite > 0 && summe > 0 && ((breite - fugen) * schmalster) / summe >= NUMMER_AB_PX;
   let nummer = 0;
   return (
     <div
+      ref={ref}
       className={cn("flex items-stretch", kompakt ? "gap-0.5" : "gap-1", className)}
       aria-hidden="true"
     >
@@ -209,6 +238,7 @@ export function Phasenband({
                 nummer={nummer}
                 groesse={groesse}
                 zoetropOn={zoetropOn}
+                mitNummer={mitNummer}
               />
             );
           })}

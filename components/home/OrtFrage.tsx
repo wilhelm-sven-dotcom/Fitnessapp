@@ -44,30 +44,28 @@ export function OrtFrage({
             <Pressable
               key={g.id}
               onClick={() => onWaehle(g.id)}
-              className="flex min-h-11 flex-col items-start rounded-card border border-line-card bg-surface-1 p-4 text-left"
+              className="flex min-h-11 flex-col items-start rounded-card bg-surface-1 p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <span aria-hidden className="block w-14 text-fg">
                 <PhasenFigur figur={PATTERN_FIGUR[ortMuster(g)]} color="var(--fg)" />
               </span>
-              <span className="mt-2 font-display font-bold text-xl leading-tight text-fg">
+              <span className="mt-2 font-display text-xl font-extrabold leading-tight text-fg">
                 {g.name}
               </span>
-              <span className="mt-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-                <span className="tabular-nums">{zahl}</span> Übungen
-                {g.id === zuletztId && <span className="text-info"> · zuletzt</span>}
+              <span className="mt-1 text-sm tabular-nums text-muted">
+                {zahl} Übungen
+                {g.id === zuletztId && <span className="font-semibold text-fg"> · zuletzt</span>}
               </span>
-              <span className="mt-0.5 font-mono text-4xs uppercase tracking-label text-muted">
-                {geraete}
-              </span>
+              <span className="mt-0.5 text-sm leading-snug text-muted">{geraete}</span>
             </Pressable>
           );
         })}
       </div>
       <PressableLink
         href="/settings"
-        className="mt-3 inline-block rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted"
+        className="mt-2 inline-flex min-h-11 items-center rounded-pill text-sm font-semibold text-fg underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
-        Orte & Geräte bearbeiten →
+        Orte & Geräte bearbeiten
       </PressableLink>
     </div>
   );

@@ -14,13 +14,23 @@ const tabs: readonly { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/coach", label: "ATLAS", Icon: Sparkles },
 ];
 
-export function BottomNav() {
+export function BottomNav({
+  navRef,
+  slotRef,
+}: {
+  /** Misst Leiste + Platz (AppShell → Auslauf des Inhalts). */
+  navRef?: (el: HTMLElement | null) => void;
+  /** Platz über den Reitern für die Hauptaktion einer Seite (Portal). */
+  slotRef?: (el: HTMLDivElement | null) => void;
+}) {
   const pathname = usePathname();
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-1"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
+    <nav ref={navRef} className="fixed inset-x-0 bottom-0 z-30">
+      <div ref={slotRef} className="border-t border-line bg-surface-0 px-5 py-3 empty:hidden" />
+      <div
+        className="border-t border-line bg-surface-1"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
       <div className="mx-auto flex max-w-md">
         {tabs.map(({ href, label, Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -39,6 +49,7 @@ export function BottomNav() {
             </PressableLink>
           );
         })}
+      </div>
       </div>
     </nav>
   );

@@ -8,6 +8,9 @@ import { StreakCalendar } from "@/components/progress/StreakCalendar";
 import { OrtFrage } from "@/components/home/OrtFrage";
 import { SessionCard } from "@/components/home/SessionCard";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
+import { StartDock } from "@/components/home/StartDock";
+import { WochenLeiste } from "@/components/home/WochenLeiste";
+import { useNavSlot } from "@/components/layout/NavSlot";
 import { CoachCard } from "@/components/coach/CoachCard";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
@@ -69,6 +72,7 @@ export default function HomePage() {
     () => (k: string) => (equip as string[]).includes(k),
     [equip],
   );
+  const navSlot = useNavSlot();
   const chips = homeChips({ daysAgo, weekCount });
   const now = new Date();
   // Kopf: laufende Einheiten-Nummer (abgeleitet, nie persistiert), Datum,
@@ -292,6 +296,27 @@ export default function HomePage() {
     router.push("/workout");
   };
 
+  const waehleZeit = (min: number) => {
+    setBudget(min);
+    // Läuft die Einheit schon oder ist sie abgeschlossen, ändert die Zeit
+    // nichts mehr — das ist selbsterklärend.
+    if (sessionLocked || !todaySession) return;
+    if (todaySession.edited) {
+      // Bearbeitete Einheit: Umfang anpassen statt neu komponieren.
+      setTodaySession(
+        passeZeitAn(todaySession, allLib, has, min, {
+          protectCore: backSafeActive,
+        }),
+      );
+      return;
+    }
+    // Entprellt: wer sich durch die Stufen tippt, löst sonst je Klick eine
+    // volle Opus-Runde aus — die Antworten überholen sich und es wirkt, als
+    // hinge die App. Der Fallback steht trotzdem sofort, weil compose() ihn
+    // synchron setzt.
+    compose({ wish: todaySession.wish, budget: min, atlasDelayMs: 1200 });
+  };
+
   // „Rücken heute schonen”: Umschalten komponiert neu (solange nicht gestartet).
   // Der neue Status geht EXPLIZIT mit: vorher lief compose() per setTimeout
   // aus derselben Render-Closure und plante mit dem ALTEN backSafeActive —
@@ -310,21 +335,19 @@ export default function HomePage() {
   const spareEl = (
     <>
       {lastBackRed ? (
-        <p className="flex basis-full items-center gap-1.5 font-mono text-xs text-accent-ink">
-          <ShieldAlert size={14} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
+        <p className="flex basis-full items-center gap-1.5 text-sm text-warnung">
+          <ShieldAlert size={16} aria-hidden /> Rückenschonung aktiv, letzte Einheit „rot“
         </p>
       ) : (
         <Pressable
           onClick={toggleSpare}
           aria-pressed={backSpareToday}
           className={cn(
-            "flex items-center gap-1.5 rounded-pill border px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label",
-            backSpareToday
-              ? "border-transparent bg-accent text-on-accent"
-              : "border-line text-muted",
+            "flex min-h-11 items-center gap-2 rounded-pill px-4 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+            backSpareToday ? "bg-strong text-on-strong" : "bg-surface-1 text-fg",
           )}
         >
-          <ShieldCheck size={14} aria-hidden /> Rücken schonen
+          <ShieldCheck size={16} aria-hidden /> Rücken schonen
         </Pressable>
       )}
       {backSafeActive && !sessionLocked && (
@@ -333,9 +356,9 @@ export default function HomePage() {
             tap();
             compose({ variant: "reset" });
           }}
-          className="flex basis-full items-center gap-1 rounded-pill py-1 text-xs font-medium text-accent-ink"
+          className="flex min-h-11 basis-full items-center gap-1 rounded-pill text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
-          <ChevronRight size={14} aria-hidden /> Oder: Rücken-Reset — ganz ohne Gewichte
+          <ChevronRight size={16} aria-hidden /> Oder: Rücken-Reset ganz ohne Gewichte
         </Pressable>
       )}
     </>
@@ -350,24 +373,24 @@ export default function HomePage() {
           angenommene Entlastungswoche stand dort immer „W1“; die echte Phase
           zeigt Fortschritt. */}
       <header className="mb-4">
-        <div className="flex items-baseline justify-between gap-2 font-mono text-3xs font-semibold uppercase text-muted">
+        <div className="flex items-baseline justify-between gap-2 text-3xs font-semibold uppercase tracking-label text-muted">
           <span>Deine Einheit heute</span>
           <span className="whitespace-nowrap tabular-nums">{plattenDatum}</span>
         </div>
-        <h1 className="mt-3 font-display font-bold text-3xl leading-tight text-fg">
+        <h1 className="mt-2 hyphens-auto break-words font-display text-titel font-extrabold text-fg">
           {frageOffen
             ? "Wo trainierst du heute?"
             : (todaySession?.name ?? "Einheit wird zusammengestellt …")}
         </h1>
         {!frageOffen && todaySession && todaySession.items.length > 0 && (
-          <p data-testid="heute-bestand" className="mt-2 font-mono text-2xs uppercase tracking-label text-muted">
-            Einheit <span className="tabular-nums">{plattenNr}</span> ·{" "}
-            <span className="tabular-nums">{todaySession.items.length}</span> Übungen ·{" "}
-            <span className="tabular-nums">{saetzeGesamt}</span> Sätze ·{" "}
-            <span className="tabular-nums">{estimatedMin}</span> Min
+          <p data-testid="heute-bestand" className="mt-2 text-sm tabular-nums text-muted">
+            Einheit {plattenNr} · {todaySession.items.length} Übungen · {saetzeGesamt} Sätze ·{" "}
+            {estimatedMin} Min
           </p>
         )}
       </header>
+
+      <WochenLeiste log={log} />
 
       {mehrereOrte && !frageOffen && (
         <Segment
@@ -384,7 +407,7 @@ export default function HomePage() {
       )}
 
       {veraltet && !sessionLocked && todaySession?.edited && todaySession.ort && activeGym && (
-        <div className="mb-4 rounded-card border border-line-card bg-surface-1 px-4 py-3">
+        <div className="mb-4 rounded-card bg-surface-1 px-4 py-3">
           <p className="text-sm leading-snug text-fg">
             {todaySession.ort.id !== activeGym.id
               ? `Diese Einheit ist für ${todaySession.ort.name} geplant.`
@@ -397,7 +420,7 @@ export default function HomePage() {
               tap();
               compose({ wish: todaySession.wish, variant: todaySession.variant });
             }}
-            className="mt-2 rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-label text-accent-ink"
+            className="mt-2 flex min-h-11 items-center rounded-pill text-sm font-semibold text-fg underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             Für {activeGym.name} neu zusammenstellen
           </Pressable>
@@ -430,12 +453,12 @@ export default function HomePage() {
       {running && (frageOffen || !todaySession || !!todaySession.completedAt) && (
         <Pressable
           onClick={() => router.push("/workout")}
-          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left"
+          className="mb-4 flex min-h-12 w-full items-center justify-between gap-3 rounded-card bg-surface-1 px-4 py-3 text-left"
         >
-          <span className="min-w-0 truncate text-sm text-accent-ink">
+          <span className="min-w-0 truncate text-sm text-fg">
             Einheit läuft · {running.name}
           </span>
-          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-accent-ink">
+          <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-fg">
             Fortsetzen <ChevronRight size={16} />
           </span>
         </Pressable>
@@ -444,10 +467,10 @@ export default function HomePage() {
       {/* Die heutige Einheit — das eine Herzstück der Seite. */}
       {frageOffen ? null : todaySession?.completedAt ? (
         <Card className="mb-4 p-5">
-          <p className="flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-            <CheckCircle2 size={14} className="text-info" /> Heute erledigt
+          <p className="flex items-center gap-2 text-3xs font-semibold uppercase tracking-label text-muted">
+            <CheckCircle2 size={16} className="text-erfolg" aria-hidden /> Heute erledigt
           </p>
-          <h2 className="mt-1 font-display font-bold text-2xl text-fg">
+          <h2 className="mt-1 font-display text-2xl font-extrabold text-fg">
             {todaySession.name}
           </h2>
           <p className="mt-1 text-sm text-muted">
@@ -456,39 +479,15 @@ export default function HomePage() {
           </p>
           <Pressable
             onClick={() => compose()}
-            className="mt-4 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="mt-4 flex min-h-11 items-center gap-2 rounded-pill border border-line px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
-            <RefreshCw size={13} /> Noch eine Einheit
+            <RefreshCw size={16} aria-hidden /> Noch eine Einheit
           </Pressable>
         </Card>
       ) : todaySession && todaySession.items.length > 0 ? (
         <SessionCard
           session={todaySession}
           allLib={allLib}
-          budgetMin={settings.timeBudgetMin}
-          onBudget={(min) => {
-            setBudget(min);
-            // Läuft die Einheit schon oder ist sie abgeschlossen, ändert die
-            // Zeit nichts mehr — das ist selbsterklärend.
-            if (sessionLocked) return;
-            if (todaySession.edited) {
-              // Bearbeitete Einheit: Umfang anpassen statt neu komponieren.
-              // Vorher passierte hier gar nichts — die Zahl wurde gespeichert,
-              // der Plan blieb stehen, und die App sagte es nicht.
-              setTodaySession(
-                passeZeitAn(todaySession, allLib, has, min, {
-                  protectCore: backSafeActive,
-                }),
-              );
-              return;
-            }
-            // Entprellt: wer sich durch die Stufen tippt, löst sonst je Klick
-            // eine volle Opus-Runde aus — die Antworten überholen sich und es
-            // wirkt, als hinge die App. Der Fallback steht trotzdem sofort,
-            // weil compose() ihn synchron setzt.
-            compose({ wish: todaySession.wish, budget: min, atlasDelayMs: 1200 });
-          }}
-          onStart={start}
           onEdit={() => setEditing(true)}
           onRegenerate={(wish) => compose({ wish })}
           regenerating={composing}
@@ -498,7 +497,7 @@ export default function HomePage() {
         />
       ) : (
         <Card className="mb-4 p-5">
-          <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="text-3xs font-semibold uppercase tracking-label text-muted">
             Trainingsplan
           </p>
           <p className="mt-2 text-sm text-muted">ATLAS stellt die Einheit zusammen …</p>
@@ -540,6 +539,21 @@ export default function HomePage() {
       )}
 
       <StreakCalendar log={log} />
+
+      {/* Zeit + Start über der Tab-Leiste — nie während der Ortsfrage (erst
+          wählen, dann komponieren) und nicht für eine erledigte Einheit. */}
+      {!frageOffen &&
+        todaySession &&
+        todaySession.items.length > 0 &&
+        !todaySession.completedAt && (
+          <StartDock
+            slot={navSlot}
+            budgetMin={settings.timeBudgetMin}
+            onBudget={waehleZeit}
+            onStart={start}
+            locked={!!running}
+          />
+        )}
 
       {todaySession && (
         <SessionEditSheet

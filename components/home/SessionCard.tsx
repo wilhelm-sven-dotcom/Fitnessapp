@@ -1,8 +1,8 @@
 "use client";
 
 import { Pencil, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { useMemo } from "react";
+import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
 import { Phasenband } from "@/components/ui/Phasenband";
@@ -11,18 +11,14 @@ import { WishBar } from "@/components/home/WishBar";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { effectiveProfile } from "@/lib/athlete";
 import { fmtGewicht } from "@/lib/format";
-import { tap } from "@/lib/haptics";
-import { bandOfPlanned } from "@/lib/phasen/band";
+import { bandOfPlanned, REGION_VAR, regionOf } from "@/lib/phasen/band";
+import { figurFor } from "@/lib/phasen/figuren";
 import { presc } from "@/lib/progression";
 import { startWeight } from "@/lib/start-weight";
 import { muscleOf, MUSCLE_LABEL } from "@/lib/volume";
-import { cn } from "@/lib/utils";
 import type { DailySession } from "@/lib/session-model";
 import type { AtlasFehler } from "@/lib/today-session";
 import type { Exercise } from "@/lib/types";
-
-/** Fünf Stufen statt sieben — alles dazwischen geht über das freie Feld. */
-const BUDGETS = [20, 30, 45, 60, 90];
 
 /** Warum nur der Basisplan steht — vorher hieß JEDER Ausgang „nicht
  *  erreichbar“, auch das Minuten-Limit, gegen das Weiterklicken nicht hilft. */
@@ -34,26 +30,20 @@ const FEHLER_TEXT: Record<AtlasFehler, string> = {
   abgebrochen: "Plan: Basisplan — ATLAS war nicht erreichbar",
 };
 
-/** Ziel-Schema einer Zeile: „4 × 6–10". */
+/** Ziel-Schema einer Zeile: „4 × 6–10 Wdh“ bzw. „3 × 30–45 s“. */
 function zielVon(sets: number, lo: number, hi: number, sek: boolean): string {
-  return `${sets} × ${lo}${hi > lo ? `–${hi}` : ""}${sek ? " s" : ""}`;
+  return `${sets} × ${lo}${hi > lo ? `–${hi}` : ""} ${sek ? "s" : "Wdh"}`;
 }
 
 /**
- * Die heutige Einheit, einfach: EINE Karte (Filmstreifen + ATLAS-Begründung +
- * Plan-Quelle), Zeit und „Training starten“ — alles auf dem ersten Bildschirm —,
- * darunter die Übungsliste (ihre Farbtupfer sind zugleich die Legende des
- * Bands) und das Umbauen.
- * Früher standen hier drei Karten, die Hauptübung doppelt und Einheit-Nr.
- * und Satzzahl zweimal; was im Training ohnehin wieder kommt (Rekord,
- * Gewichts-Hypothese), steht dort, wo es gebraucht wird.
+ * Die heutige Einheit: EINE Karte (Phasenband + ATLAS-Begründung +
+ * Plan-Quelle), darunter die Übungen als Zeilen (Regionsmarke, Figur, Name,
+ * Schema · Muskel in der Regionsfarbe, Gewicht) und das Umbauen. Zeit und
+ * „Training starten“ stehen im Dock über der Tab-Leiste (StartDock).
  */
 export function SessionCard({
   session,
   allLib,
-  budgetMin,
-  onBudget,
-  onStart,
   onEdit,
   onRegenerate,
   regenerating,
@@ -63,38 +53,19 @@ export function SessionCard({
 }: {
   session: DailySession;
   allLib: Exercise[];
-  budgetMin: number;
-  onBudget: (min: number) => void;
-  onStart: () => void;
   onEdit: () => void;
   /** Neu ansetzen, optional mit Wunsch-Text. */
   onRegenerate: (wish?: string) => void;
   regenerating?: boolean;
   /** Grund, warum ATLAS nichts geliefert hat — null = kein Fehler. */
   atlasFehler?: AtlasFehler | null;
-  /** Einheit läuft bereits — Umbau gesperrt, Start wird „Fortsetzen". */
+  /** Einheit läuft bereits — Umbau gesperrt. */
   locked?: boolean;
   /** Slot für den „Rücken schonen"-Schalter der Startseite. */
   spareSlot?: React.ReactNode;
 }) {
   const { lastPerf, settings, body } = useTraining();
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
-
-  // Freie Minutenzahl: lokal getippt, erst beim Verlassen des Feldes
-  // übernommen — sonst löst jede Ziffer eine Neukomposition aus. Steht die
-  // Zeit auf einer Stufe, bleibt das Feld leer (sonst stünde die Zahl doppelt).
-  const freiVon = (min: number) => (BUDGETS.includes(min) ? "" : String(min));
-  const [freieZeit, setFreieZeit] = useState(freiVon(budgetMin));
-  useEffect(() => setFreieZeit(freiVon(budgetMin)), [budgetMin]);
-  const uebernehmeFreieZeit = () => {
-    if (!freieZeit.trim()) return;
-    const n = Math.round(Number(freieZeit));
-    if (!Number.isFinite(n) || n < 10 || n > 180) {
-      setFreieZeit(freiVon(budgetMin));
-      return;
-    }
-    if (n !== budgetMin) onBudget(n);
-  };
 
   // Gewichts-Vorschlag je Übung (presc; ohne Historie: Startgewichts-Engine)
   // und der Sprung gegenüber dem letzten Mal.
@@ -135,10 +106,6 @@ export function SessionCard({
     () => bandOfPlanned(session.items, byId, kgByItem),
     [session.items, byId, kgByItem],
   );
-  const tintByItem = useMemo(
-    () => new Map(gruppen.map((g) => [g.itemId, g.tintVar])),
-    [gruppen],
-  );
 
   const quelle = regenerating
     ? "Plan: Basisplan steht — ATLAS stellt gerade um"
@@ -149,153 +116,84 @@ export function SessionCard({
         : FEHLER_TEXT[atlasFehler ?? "netz"];
 
   return (
-    <div className="mb-4 space-y-4">
-      {/* Die Einheit auf einen Blick: Filmstreifen + Warum. */}
-      <Card className="p-4">
+    <div className="mb-4 space-y-3">
+      {/* Die Einheit auf einen Blick: Phasenband + Warum + Plan-Quelle. */}
+      <Card>
         <Phasenband gruppen={gruppen} groesse="hero" zoetropOn={settings.zoetrope !== false} />
         {session.briefing && (
-          <p className="mt-3 text-base leading-relaxed text-fg">
-            {session.briefing}
-          </p>
+          <p className="mt-3 text-base leading-relaxed text-fg">{session.briefing}</p>
         )}
-        <Kicker className="mt-3 border-t border-line-card pt-2.5 font-medium tracking-label">
+        <Kicker className="mt-3 border-t border-line-card pt-2.5">
           {quelle}
           {session.edited ? " · angepasst" : ""}
         </Kicker>
       </Card>
 
-      {/* Zeitbudget — steuert Komposition und Auto-Anpassung. Neben den
-          Stufen ein freies Feld: 43 oder 53 Minuten sind echte Zeitfenster,
-          und ATLAS bekommt die Zahl ohnehin als Zahl. */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-          Zeit
-        </span>
-        {BUDGETS.map((b) => (
-          <Pressable
-            key={b}
-            onClick={() => onBudget(b)}
-            aria-label={`Zeitbudget ${b} Minuten`}
-            aria-pressed={budgetMin === b}
-            className={cn(
-              "rounded-pill px-3 py-2 font-mono text-xs font-medium tabular-nums",
-              budgetMin === b
-                ? "bg-strong text-on-strong"
-                : "border border-line bg-transparent text-muted",
-            )}
-          >
-            {b}
-          </Pressable>
-        ))}
-        <input
-          type="number"
-          inputMode="numeric"
-          min={10}
-          max={180}
-          value={freieZeit}
-          onChange={(e) => setFreieZeit(e.target.value)}
-          onFocus={(e) => e.currentTarget.select()}
-          onBlur={uebernehmeFreieZeit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-          }}
-          aria-label="Zeitbudget frei eingeben, Minuten"
-          placeholder="frei"
-          className={cn(
-            "w-16 rounded-pill border bg-transparent px-2 py-2 text-center font-mono text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
-            BUDGETS.includes(budgetMin) ? "border-line text-muted" : "border-strong text-fg",
-          )}
-        />
-      </div>
-
-      {/* Der große CTA + Hinweis, was zuerst kommt. */}
-      <div>
-        <Button
-          data-testid="start"
-          onClick={() => {
-            tap();
-            onStart();
-          }}
-          size="lg"
-          full
-          className=""
-        >
-          {locked ? "Training fortsetzen" : "Training starten"}
-        </Button>
-        <p className="mt-2 text-center font-mono text-4xs font-medium uppercase tracking-label text-muted">
-          {locked ? "Die Einheit läuft" : "Zuerst: Aufwärmen"}
-        </p>
-      </div>
-
-      {/* Übungsliste: Hairline-Zeilen, Farbtupfer = Region im Band. */}
-      <ol>
+      {/* Übungen: Regionsmarke + Figur, Schema · Muskel in der Regionsfarbe
+          (die Marke ist zugleich die Legende des Bands), Gewicht rechts. */}
+      <ol className="overflow-hidden rounded-card bg-surface-1">
         {zeilen.map((z, i) => {
           if (!z) return null;
           const m = muscleOf(z.ex);
+          const farbe = REGION_VAR[regionOf(z.ex)];
           return (
             <li
               key={z.it.id}
               data-exercise-id={z.ex.id}
-              className={cn(
-                "border-t border-line py-2.5",
-                i === zeilen.length - 1 && "border-b",
-              )}
+              className={i > 0 ? "border-t border-line-card" : undefined}
             >
-              <div className="flex items-baseline justify-between gap-3">
-                <div className="flex min-w-0 items-baseline gap-2">
-                  <span
-                    aria-hidden
-                    className="inline-block h-2 w-2 shrink-0 rounded-xs"
-                    style={{ backgroundColor: tintByItem.get(z.it.id), opacity: 0.8 }}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-base font-semibold leading-snug text-fg">{z.ex.name}</p>
-                    <p className="mt-0.5 font-mono text-3xs font-medium uppercase tracking-label text-muted">
-                      <span className="tabular-nums">{z.ziel}</span> · {MUSCLE_LABEL[m.primary]}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 px-4 py-3">
+                <span
+                  aria-hidden
+                  className="h-10 w-1 shrink-0 rounded-pill"
+                  style={{ backgroundColor: farbe }}
+                />
+                <span aria-hidden className="w-8 shrink-0">
+                  <PhasenFigur figur={figurFor(z.ex)} color={farbe} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-semibold leading-snug text-fg">{z.ex.name}</p>
+                  <p className="mt-0.5 text-sm tabular-nums" style={{ color: farbe }}>
+                    {z.ziel} · {MUSCLE_LABEL[m.primary]}
+                  </p>
                 </div>
                 {z.weight != null && (
-                  <p className="shrink-0 text-right font-mono tabular-nums">
+                  <p className="shrink-0 text-right tabular-nums">
                     {z.plus != null && (
-                      <span className="mr-1.5 text-2xs font-semibold text-info">
+                      <span className="mr-1.5 text-sm font-semibold text-info">
                         +{fmtGewicht(z.plus)}
                       </span>
                     )}
-                    <span className="text-lg font-semibold text-fg">{fmtGewicht(z.weight)}</span>
-                    <span className="ml-1 text-3xs font-medium uppercase tracking-label text-muted">
-                      kg
-                    </span>
+                    <span className="text-lg font-bold text-fg">{fmtGewicht(z.weight)}</span>
+                    <span className="ml-0.5 text-sm text-muted">kg</span>
                   </p>
                 )}
               </div>
-              {z.it.why && (
-                <p className="mt-1 pl-4 text-sm leading-snug text-muted">
-                  {z.it.why}
-                </p>
-              )}
             </li>
           );
         })}
       </ol>
+      <p className="px-1 text-sm text-muted">
+        {locked ? "Die Einheit läuft." : "Zuerst kommt das Aufwärmen."}
+      </p>
 
       {/* Umbauen — eine Zeile, darunter der Wunsch an ATLAS. */}
       {!locked && (
-        <div className="space-y-2 border-t border-line pt-3">
+        <div className="space-y-2.5 pt-1">
           <div className="flex flex-wrap items-center gap-2">
             <Pressable
               onClick={onEdit}
-              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg"
+              className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
-              <Pencil size={14} aria-hidden /> Bearbeiten
+              <Pencil size={16} aria-hidden /> Bearbeiten
             </Pressable>
             <Pressable
               onClick={() => onRegenerate()}
               // Nicht gesperrt: eine neue Anfrage bricht die laufende ab
               // (app/page.tsx, atlasAbort), es kann sich nichts stauen.
-              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg"
+              className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
-              <RefreshCw size={14} aria-hidden className={regenerating ? "opacity-50" : undefined} />
+              <RefreshCw size={16} aria-hidden className={regenerating ? "opacity-50" : undefined} />
               {regenerating ? "ATLAS ordnet an …" : "Neu ansetzen"}
             </Pressable>
             {spareSlot}

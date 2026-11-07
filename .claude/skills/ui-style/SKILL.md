@@ -193,6 +193,23 @@ deckungsgleich bleiben. Deutsche Anführungszeichen „…“.
 `body` (sonst stirbt `position:sticky`). z-Ordnung: Sticky-Kopf 20 < Dock 30 <
 Sheets 50.
 
+## Heute
+
+- **Aufbau von oben:** Kicker „Deine Einheit heute · Datum“ → Titel (Name der
+  Einheit oder „Wo trainierst du heute?“) → Bestandszeile (`heute-bestand`) →
+  **Wochenleiste** (Mo–So, trainierte Tage als Tinte-Kreis mit Haken, heute mit
+  Rand, „2 von 3 Einheiten“) → Ort-Segment → Karte (Phasenband, Begründung,
+  Plan-Quelle) → Übungszeilen (Regionsbalken 4 px, Figur 32 px, Name, „3 × 10–15
+  Wdh · Muskel“ in der Regionsfarbe, Gewicht rechts) → Umbauen (Pillen) und
+  Wunschfeld → Hinweiskarten → Wochenraster.
+- **Zeit und Start im Dock über der Tab-Leiste** (`StartDock` per Portal in den
+  `NavSlot` der AppShell): Stufen 20/30/45/60/90 und „frei“ (öffnet ein Blatt mit
+  dem Feld — kein Eingabefeld im Dock), darunter „Training starten“. Nie während
+  der Ortsfrage, nicht für eine erledigte Einheit; läuft eine Einheit, nur
+  „Training fortsetzen“. Die AppShell misst Leiste + Dock und gibt dem Inhalt so
+  viel Auslauf.
+- Phasenband-Nummern nur, wenn der schmalste Kader ≥ 20 px breit ist (gemessen).
+
 ## Fokus-Modus (Training)
 
 - **Aufbau von oben:** Kopf (Schließen links, „Übung 2 von 6“, Restzeit; darunter

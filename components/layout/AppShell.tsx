@@ -2,6 +2,8 @@
 
 import { Cloud, CloudOff, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useCallback, useRef, useState } from "react";
+import { NavSlotContext } from "./NavSlot";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { LiftMark } from "@/components/brand/LiftMark";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -21,6 +23,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useWakeLock(settings.keepAwake !== false);
 
   const hideChrome = pathname?.startsWith("/workout") || false;
+
+  // Tab-Leiste + Platz darüber sind fest unten; der Inhalt bekommt GEMESSEN
+  // so viel Auslauf (feste Abstände zu festen Docks sind verboten).
+  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
+  const [navH, setNavH] = useState(0);
+  const navObs = useRef<ResizeObserver | null>(null);
+  const navRef = useCallback((el: HTMLElement | null) => {
+    navObs.current?.disconnect();
+    navObs.current = null;
+    if (!el) {
+      setNavH(0);
+      return;
+    }
+    const melde = () => setNavH(Math.round(el.getBoundingClientRect().height));
+    melde();
+    const ro = new ResizeObserver(melde);
+    ro.observe(el);
+    navObs.current = ro;
+  }, []);
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
@@ -86,10 +107,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
           )}
-          <div className="mx-auto max-w-md px-5 pb-28 pt-5">
-            <PageTransition>{children}</PageTransition>
-          </div>
-          {!hideChrome && <BottomNav />}
+          <NavSlotContext.Provider value={hideChrome ? null : navSlot}>
+            <div
+              className="mx-auto max-w-md px-5 pb-28 pt-5"
+              style={!hideChrome && navH > 0 ? { paddingBottom: navH + 24 } : undefined}
+            >
+              <PageTransition>{children}</PageTransition>
+            </div>
+          </NavSlotContext.Provider>
+          {!hideChrome && <BottomNav navRef={navRef} slotRef={setNavSlot} />}
         </div>
       )}
     </>
