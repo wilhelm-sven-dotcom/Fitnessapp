@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import { MareySpur } from "@/components/brand/MareySpur";
+import { Marke } from "@/components/brand/Marke";
 import { Button } from "@/components/ui/Button";
 import { ChipToggle } from "@/components/ui/ChipToggle";
 import { Segment } from "@/components/ui/Segment";
@@ -69,10 +69,9 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          {/* Icon-Platte: die Nachbildung des App-Icons (I1 „Marey-Spur") —
-              Kollodium-dunkel auch im Archiv, deshalb die feste Farbe und der
-              weiche Icon-Radius. Die Hairline fasst die Platte, im Atelier
-              wäre sie sonst grundgleich. Raster und Signatur führt I1 nicht. */}
+          {/* Nachbildung des App-Icons: warmes Dunkel auch im hellen Modus,
+              deshalb die festen Farben und der Icon-Radius; die Linie fasst
+              das Feld im dunklen Modus, dort wäre es sonst grundgleich. */}
           <span
             aria-hidden
             className="relative block overflow-hidden border border-line"
@@ -84,7 +83,7 @@ export function Welcome() {
               color: TINTE_DUNKEL,
             }}
           >
-            <MareySpur size={84} />
+            <Marke size={84} />
           </span>
 
           <p className="mt-7 text-3xs font-semibold uppercase tracking-label text-muted">

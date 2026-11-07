@@ -3,9 +3,8 @@
 import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
-/** Schalter (38 × 20, Pille) mit rundem 16er-Knopf; der Zustandswechsel
- *  bleibt HART ohne Gleiten (Filmtransport). An = Siegellack-Fläche,
- *  aus = Faden-Rahmen + Schleier-Knopf. */
+/** Schalter (Pille) mit rundem Knopf; der Zustandswechsel bleibt hart ohne
+ *  Gleiten. An = Tinte-Fläche, aus = `surface-2`. `role="switch"`. */
 export function Toggle({
   checked,
   onChange,

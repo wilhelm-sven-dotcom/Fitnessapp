@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import type { ChipTone } from "@/lib/coaching";
 
-// Hinweis-Chip Platte 311: Katalogschild-Optik — 1 px Faden, Versal-Mono,
-// Ton nur als Schriftfarbe (Messing = über Ziel, Cyanotypie = im Ziel).
+// Hinweis-Chip: Pille mit Rand `border-line`, Ton nur als Schriftfarbe
+// (Warnung = über Ziel, Erfolg = im Ziel).
 const toneClass: Record<ChipTone, string> = {
   amber: "text-status-over",
   emerald: "text-status-in",

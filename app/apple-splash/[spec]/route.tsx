@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { mareyArt } from "@/lib/phasen/figur-art";
+import { markeArt } from "@/lib/marke-art";
 import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
 
 /**
@@ -8,9 +8,10 @@ import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
  * zeigt ohne `apple-touch-startup-image` einen WEISSEN Frame — ausgerechnet
  * vor einem Startbild, dessen ganzer Witz die unsichtbare Naht ist.
  *
- * Deshalb hier dasselbe Bild wie das Icon: Marey-Spur in Kreide auf
- * Kollodium, zentriert. Der In-App-Splash übernimmt danach auf demselben
- * Grund — kein Farbsprung, kein Bruch.
+ * Deshalb hier dasselbe Zeichen wie das Icon (Scheiben in Regionsfarben auf
+ * warmem Dunkel), zentriert und ohne Text (Satori bettet keine Schrift ein).
+ * Der In-App-Splash übernimmt danach auf demselben Grund und mit dem
+ * Zeichen an derselben Stelle — kein Farbsprung, kein Bruch.
  *
  * Die Maße sind eine Whitelist (Gerätepixel = CSS × DPR); Unbekanntes fällt
  * auf das häufigste Format. Die `<link>`-Zeilen dazu stehen als
@@ -45,10 +46,10 @@ export function GET(_req: Request, { params }: { params: { spec: string } }) {
           background: GRUND_DUNKEL,
         }}
       >
-        {/* 0,55 der Breite: die Spur füllt davon rund 60 %, steht also so
-            groß im Bild wie die Figur im In-App-Startbild danach. */}
-        <svg width={Math.round(w * 0.55)} height={Math.round(w * 0.55)} viewBox="0 0 48 48">
-          {mareyArt(TINTE_DUNKEL)}
+        {/* 0,45 der Breite, genau mittig: wie das Zeichen im In-App-Startbild
+            danach (splash-css.ts), damit es an der Naht nicht springt. */}
+        <svg width={Math.round(w * 0.45)} height={Math.round(w * 0.45)} viewBox="0 0 48 48">
+          {markeArt(TINTE_DUNKEL)}
         </svg>
       </div>
     ),

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LiftMark } from "@/components/brand/LiftMark";
+import { Marke } from "@/components/brand/Marke";
 import { useTraining } from "@/components/providers/TrainingProvider";
 
 export default function StravaCallbackPage() {
@@ -48,7 +48,7 @@ export default function StravaCallbackPage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
       <div className="flex h-24 w-24 items-center justify-center text-fg">
-        <LiftMark size={56} />
+        <Marke size={56} />
       </div>
       <p className="mt-6 max-w-xs text-sm leading-relaxed text-muted">{msg}</p>
     </div>

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Abschnitts-Kicker — EIN Rezept für alle Überschriften über Karten und
- * Sektionen (Versal-Mono, gesperrt, Schleier). Versalien kommen aus CSS,
+ * Sektionen (Versalien, gesperrt `tracking-label`, `text-muted`). Versalien kommen aus CSS,
  * im DOM steht Normalschreibung (Screenreader).
  */
 export function Kicker({

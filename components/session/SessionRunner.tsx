@@ -47,7 +47,7 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { bandOfActive, REGION_VAR, regionOf } from "@/lib/phasen/band";
+import { bandOfActive, REGION_VAR, regionOf, type Region } from "@/lib/phasen/band";
 import { plattenNummern } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
@@ -125,6 +125,7 @@ export function SessionRunner() {
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
   const [completeFigur, setCompleteFigur] = useState<PhasenFigurDef | null>(null);
+  const [completeRegion, setCompleteRegion] = useState<Region | undefined>(undefined);
   // Rekord-Tafel des Sieger-Moments — ebenfalls VOR dem Save (recordMap kennt
   // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
   const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
@@ -759,6 +760,7 @@ export function SessionRunner() {
       ? byId.get(final.session.items[0].exerciseId)
       : undefined;
     setCompleteFigur(hauptEx ? figurFor(hauptEx) : null);
+    setCompleteRegion(hauptEx ? regionOf(hauptEx) : undefined);
     // Tafel des Maximums: bester rekordschlagender Arbeitssatz der Studie.
     // recordMap kennt nur das Archiv — die laufende Studie ist noch nicht im
     // Log, `best` ist also genau die Marke, die es zu schlagen galt. Bei
@@ -787,6 +789,7 @@ export function SessionRunner() {
       const prevSession = log.find((s) => s.date === best.date);
       sieger = {
         figur: figurFor(ex),
+        region: regionOf(ex),
         exName: ex.name,
         wert,
         einheit: recordUnit(best.kind),
@@ -824,6 +827,7 @@ export function SessionRunner() {
         summary={complete}
         name={todaySession?.name}
         figur={completeFigur ?? undefined}
+        region={completeRegion}
         sieger={completeSieger ?? undefined}
         onDone={() => router.replace("/")}
       />

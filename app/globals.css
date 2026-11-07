@@ -77,9 +77,6 @@
   --radius-inner: 14px;
   --radius-pill: 9999px;
   --radius-xs: 6px;
-
-  --panel-shadow: none;
-  --panel-shadow-lg: none;
 }
 
 /* Dunkel: gleiche Rollen, warmes Dunkel. Regions-Flächen bleiben modusgleich,

@@ -24,20 +24,15 @@ import { useTraining } from "@/components/providers/TrainingProvider";
  */
 
 /**
- * Mindest-Standzeit des Startbilds, gerechnet ab Navigationsbeginn.
+ * Mindest-Standzeit des Startbilds, gerechnet ab `window.__sp0`.
  *
- * Die Choreografien sind FERTIG, wenn die Wortmarke eingerastet ist:
- * V1 440 + 160 = 600 · V2 520 + 160 = 680 · V3 500 (hart). Darunter darf die
- * Untergrenze nicht liegen — sonst reißt der Abgang genau das Bild weg, auf
- * das die ganze Choreografie zuläuft (bei 440 ms sah man die Wortmarke nur
- * noch wegfliegen). Der Rest ist Haltezeit, damit das fertige Bild in Ruhe
- * gelesen wird: rund anderthalb Sekunden, in denen bei V3 der
- * Registrierpunkt schlägt, bei V1 die Belichtungsstriche blinken und bei V2
- * das Zoetrop läuft. Das ist bewusst großzügig — das Startbild ist der
- * Moment, in dem die App sich vorstellt; wem das zu lang ist, der schaltet
- * es unter Aussehen ab.
+ * Die Choreografie ist FERTIG, wenn die Wortmarke eingerastet ist (~920 ms,
+ * Ablauf in `splash-css.ts`). Darunter darf die Untergrenze nicht liegen —
+ * sonst reißt der Abgang genau das Bild weg, auf das alles zuläuft. Der Rest
+ * ist Haltezeit, damit das fertige Zeichen kurz steht. Wem das zu lang ist,
+ * der schaltet das Startbild unter Aussehen ab.
  */
-const MIN_MS = 2200;
+const MIN_MS = 1600;
 /** Abgangsdauer — deckungsgleich mit der CSS-Regel für data-splash="ab". */
 const AB_MS = 180;
 

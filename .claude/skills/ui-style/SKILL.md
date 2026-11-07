@@ -298,6 +298,26 @@ IST die Geräteliste; Migration in `loadAll` (`ensureOrte`, feste Ids
 ATLAS-Anfrage vor der Wahl); die Einheit trägt ihre Ort-Signatur; Einstellungen
 wählen nur den BEARBEITETEN Ort.
 
+## Marke
+
+- **Zeichen:** vier Hantelscheiben (Rot, Blau, Gelb, Grün = die Regionen) auf
+  heller Stange, eine Zeichnung für alles: `lib/marke-art.tsx` (Satori-tauglich:
+  nur `<g>`/`<line>`, feste Hexwerte aus `lib/grundfarben.ts`), im DOM
+  `components/brand/Marke.tsx` (Stange in `currentColor`).
+- **Icon:** `lib/icon-art.tsx` auf `GRUND_DUNKEL`, komplett im
+  Maskable-Kreis. Bei JEDER Änderung `ICON_VERSION` hochzählen und
+  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen,
+  dazu `CACHE` in `public/sw.js`.
+- **Startbild:** eine Choreografie (Stange, vier Scheiben rasten ein,
+  Wortmarke), kritisches Inline-CSS in `components/start/splash-css.ts`,
+  Zeichen genau mittig bei 45 vw wie im iOS-Startbild
+  (`app/apple-splash/[spec]`), Mindestzeit `MIN_MS` in `SplashGate`,
+  Notausgang 4 s im Pre-Paint-Skript, reduzierte Bewegung = Standbild.
+  Gespeicherte Werte v1/v2/v3/zufall zeigen alle dieses Startbild, „aus“ keins.
+- **Teilen-Poster** (`lib/share-card.ts`): warmes Dunkel, Karte in der
+  Regionsfarbe der Übung mit Figur, darunter der gehobene Satz groß und
+  „Geschätztes 1RM … kg“ beschriftet.
+
 ## Test-Anker (`scripts/*.mjs`, Port 3199, Produktions-Build)
 
 Änderung NUR zusammen mit dem Skript im selben Commit:

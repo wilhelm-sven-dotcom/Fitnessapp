@@ -10,6 +10,7 @@ import { success } from "@/lib/haptics";
 import { EASE_OUT } from "@/lib/motion";
 import type { PhasenFigurDef } from "@/lib/phasen/figuren";
 import type { RecordKind } from "@/lib/records";
+import type { Region } from "@/lib/phasen/band";
 import { renderShareCard } from "@/lib/share-card";
 import { speak } from "@/lib/voice";
 
@@ -21,6 +22,8 @@ export interface SiegerTafel {
   wert: number;
   einheit: string;
   kind: RecordKind;
+  /** Region der Übung — Farbe der Poster-Karte. */
+  region: Region;
   /** Der gehobene Satz („25 kg × 12“) — steht groß, die Kennzahl darunter. */
   satz?: string;
   delta?: number;
@@ -40,6 +43,7 @@ export function SessionComplete({
   summary,
   name,
   figur,
+  region,
   sieger,
   onDone,
 }: {
@@ -48,6 +52,8 @@ export function SessionComplete({
   name?: string;
   /** Phasenfigur der Hauptübung (Poster der Studie ohne Maximum). */
   figur?: PhasenFigurDef;
+  /** Region der Hauptübung (Poster-Karte ohne Rekord). */
+  region?: Region;
   /** Rekord-Tafel, wenn diese Platte ein Maximum enthält. */
   sieger?: SiegerTafel;
   onDone: () => void;
@@ -72,9 +78,14 @@ export function SessionComplete({
             plattenNr,
             dateISO: new Date().toISOString(),
             figur: sieger.figur,
+            region: sieger.region,
             exName: sieger.exName,
             wert: sieger.wert,
             einheit: sieger.einheit,
+            rekordArt: sieger.kind,
+            satz: sieger.satz,
+            delta: sieger.delta,
+            prevNr: sieger.prevPlattenNr,
             koerperKg,
           }
         : {
@@ -82,9 +93,11 @@ export function SessionComplete({
             plattenNr,
             dateISO: new Date().toISOString(),
             figur,
+            region,
             titel: name || "Einheit",
             kaderZahl: summary.sets,
             tonnage: summary.tonnage,
+            dauerMin: summary.durationMin,
             koerperKg,
           },
     )

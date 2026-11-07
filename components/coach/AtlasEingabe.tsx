@@ -40,7 +40,7 @@ export function AtlasEingabe({
   const dock = (
     <div className="mx-auto max-w-md">
       {vorschlaege.length > 0 && (
-        <div className="-mx-5 mb-2.5 flex gap-2 overflow-x-auto px-5" aria-label="Fragen an ATLAS">
+        <div className="no-scrollbar -mx-5 mb-2.5 flex gap-2 overflow-x-auto px-5" aria-label="Fragen an ATLAS">
           {vorschlaege.map((s) => (
             <Pressable
               key={s}

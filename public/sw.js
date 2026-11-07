@@ -23,7 +23,10 @@
 // v35: Look „Regionen“ — neue Grundfarben im Manifest (background_color,
 // theme_color) und neue Schrift; das Manifest liegt cache-first, ohne Bump
 // läse ein installiertes Gerät die alten Farben weiter.
-const CACHE = "training-v35";
+// v36: neues App-Zeichen (Scheiben in Regionsfarben, ICON_VERSION 4), neues
+// Startbild — Icon-Routen und Manifest liegen cache-first, ohne Bump bliebe
+// das alte Icon auf installierten Geräten.
+const CACHE = "training-v36";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only

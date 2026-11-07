@@ -6,16 +6,15 @@ import type { Kader, KaderGruppe } from "@/lib/phasen/band";
 import { cn } from "@/lib/utils";
 
 /**
- * Das Phasenband — der Filmstreifen der Einheit (Signatur, ersetzt das
- * Etappen-Profil). Jeder Arbeitssatz ein Kader: Breite ∝ Wiederholungen
- * (flex-grow), belichtet = Tintenfüllung (Höhe = Leistung/Rekord) mit
- * eingefrorener Silhouette in Kartonfarbe (nur hero), aktiv = Siegellack-
- * Rahmen + Zoetrop-Figur, offen = Fadenraster + Basislinie (IWF-Farbe der
- * Last, sonst Tinte, 45 %). Gruppen trennt eine Fuge.
+ * Das Phasenband — die Einheit als Streifen (Signatur). Jeder Arbeitssatz
+ * ein Segment: Breite ∝ Wiederholungen (flex-grow), erledigt = Füllung in der
+ * Regionsfarbe (Höhe = Leistung/Rekord, im hero mit Figur), aktiv = Rand +
+ * Figur, offen = Raster + Tönung der Region und Basislinie (Scheibenfarbe der
+ * geplanten Last). Gruppen trennt eine Fuge; Nummern nur ab Mindestbreite.
  *
- * Motion (Filmtransport): die Füllung KRIECHT NICHT — sie steht hart im
- * Commit-Moment (steps(1)); dieses Band rendert reine Zustände. live/punkt
- * sind konstante Vollbalken (Fokus-Kopf bzw. Kompakt-Anzeigen).
+ * Motion: die Füllung kriecht nicht — sie steht hart im Moment des Eintrags;
+ * dieses Band rendert reine Zustände. live/punkt sind konstante Segmente
+ * (Trainingskopf bzw. Kompakt-Anzeigen).
  */
 
 export type PhasenbandGroesse = "hero" | "zeile" | "mini" | "live" | "punkt";

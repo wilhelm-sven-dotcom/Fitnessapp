@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { NavSlotContext } from "./NavSlot";
 import { PressableLink } from "@/components/ui/PressableLink";
-import { LiftMark } from "@/components/brand/LiftMark";
+import { Marke } from "@/components/brand/Marke";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -73,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2 text-fg">
-                  <LiftMark size={18} />
+                  <Marke size={24} />
                   <span className="font-display text-lg font-extrabold">Platte 311</span>
                 </div>
                 <div className="flex items-center gap-1">

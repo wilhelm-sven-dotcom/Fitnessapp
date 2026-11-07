@@ -5,7 +5,7 @@ import { FILM, TRANSPORT_EIN } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /** Button-Press nach Filmtransport: Down sofort (steps(1)) auf scale 0,985,
- *  Up in 80 ms Transport zurück. Fokus-Ring = Cyanotypie (Platte 311). */
+ *  Up in 80 ms Transport zurück. Fokus-Ring = `fokus`. */
 export function Pressable({
   className,
   children,

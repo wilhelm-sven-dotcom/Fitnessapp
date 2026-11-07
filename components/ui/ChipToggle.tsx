@@ -4,8 +4,8 @@ import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
 /**
- * DER wählbare Chip (Mehrfachauswahl, Filter): Pille, Versal-Mono, aktiv in
- * Tinte, inaktiv mit Faden-Rahmen. Ersetzt die früheren Einzel-Rezepte in
+ * DER wählbare Chip (Mehrfachauswahl, Filter): Pille, Normalschreibung,
+ * aktiv in Tinte, inaktiv mit Rand `border-line` (beide voll lesbar). Ersetzt die früheren Einzel-Rezepte in
  * Profil, Begrüßung, Katalog-Filtern und Übungs-Editor. Der reine Hinweis-
  * Chip ohne Bedienung bleibt `Chip`.
  */
