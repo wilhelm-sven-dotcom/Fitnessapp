@@ -289,6 +289,7 @@ export function SessionCard({
             return (
               <li
                 key={z.it.id}
+                data-exercise-id={z.ex.id}
                 className={cn(
                   "border-t border-line py-2.5",
                   i === zeilen.length - 1 && "border-b",

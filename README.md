@@ -9,7 +9,11 @@ Rücken.
 
 ## Wie die App funktioniert
 
-**Heute (`/`)** — ATLAS stellt jeden Tag eine neue Einheit aus dem gesamten
+**Heute (`/`)** — Zuerst die Frage „Wo trainierst du heute?“ (Zuhause,
+Studio oder eigene Orte, jeweils mit eigener Geräteliste), danach stellt
+ATLAS die Einheit aus genau den Übungen zusammen, die der Ort hergibt. Der Ort
+ist oben jederzeit umschaltbar; eine unberührte Einheit wird dann neu
+zusammengestellt. ATLAS stellt jeden Tag eine neue Einheit aus dem gesamten
 Katalog zusammen: bedarfsgerecht (Wochen-Volumen-Defizit + Tage seit letztem
 Reiz je Muskel), abwechslungsreich (am längsten nicht verwendete Übung je
 Muster) und passend zum Zeitbudget. Keine festen Pläne, keine Vorlagen. Die
@@ -90,6 +94,7 @@ npm run build    # Produktions-Build
 npm run smoke    # End-to-End-Smoke gegen den Build (ohne API-Key = Fallback-Pfade)
 npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
 npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingszeit
+npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
 ```
 
 ## Umgebungsvariablen

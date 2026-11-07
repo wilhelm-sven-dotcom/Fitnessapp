@@ -100,7 +100,8 @@ export interface WorkoutDay {
   createdAt: string;
 }
 
-/** A named equipment preset (gym profile) — e.g. Studio, Zuhause, Reise. */
+/** Ein Trainingsort mit seinen Geräten — z. B. Zuhause, Studio, Reise.
+ *  Die Oberfläche sagt „Ort“, der Code bleibt bei GymProfile. */
 export interface GymProfile {
   id: string;
   name: string;
@@ -162,6 +163,8 @@ export interface LoggedSession {
   readiness?: Readiness;
   /** ATLAS-Debrief: three verdict lines, generated at save time (stable). */
   debrief?: string[];
+  /** Trainingsort beim Speichern (Namens-Snapshot, z. B. „Studio“). */
+  ort?: string;
 }
 
 export interface BodyMetric {
@@ -252,8 +255,12 @@ export interface AppSettings {
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */
   onboarded?: boolean;
-  /** Active gym profile id (equipment preset). */
+  /** Aktiver Trainingsort (GymProfile-Id) — „wo trainierst du heute?“. Seine
+   *  Geräte SIND die Geräteliste der App (lib/orte.ts). */
   activeGymId?: string;
+  /** Einmal-Migration gelaufen: Orte „Zuhause“/„Studio“ angelegt (lib/orte.ts).
+   *  Danach kommt ein gelöschtes Studio nicht wieder. */
+  orteM1?: boolean;
   /** Smallest available weight increment — suggestions snap to it (default 2.5). */
   weightStep?: number;
   /** Warm up with an easy bike spin before every session. */

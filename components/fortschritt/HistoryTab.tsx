@@ -85,8 +85,11 @@ type TimelineItem =
 /** Verlauf: EINE Timeline für Kraft und Ausdauer — löschen, manuell
  *  nachtragen, Strava-Import; Kraft-Einheiten klappen ins Satz-Detail auf. */
 export function HistoryTab() {
-  const { log, cardio, deleteSession, addManualCardio, removeCardio, allLib } =
+  const { log, cardio, deleteSession, addManualCardio, removeCardio, allLib, gyms } =
     useTraining();
+  // Der Ort steht erst in der Zeile, wenn es mehr als einen gibt — sonst wäre
+  // es auf jeder Einheit dasselbe Wort.
+  const zeigeOrt = gyms.length > 1;
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
   // Plattennummern (chronologisch, abgeleitet) + Rekordzahl je Platte.
   const plattenNr = useMemo(() => plattenNummern(log), [log]);
@@ -312,6 +315,7 @@ export function HistoryTab() {
                     <div className="flex items-center gap-2">
                       <p className="truncate font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
                         Einheit <span className="tabular-nums">{plattenNr.get(s) ?? "–"}</span> · {fmtDate(s.date)}
+                        {zeigeOrt && s.ort ? ` · ${s.ort}` : ""}
                       </p>
                       {s.backTraffic && (
                         <span

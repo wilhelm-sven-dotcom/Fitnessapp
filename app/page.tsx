@@ -5,17 +5,21 @@ import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck } from 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
+import { OrtFrage } from "@/components/home/OrtFrage";
 import { SessionCard } from "@/components/home/SessionCard";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { CoachCard } from "@/components/coach/CoachCard";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Pressable } from "@/components/ui/pressable";
+import { Segment } from "@/components/ui/Segment";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { homeChips } from "@/lib/coaching";
 import { tap } from "@/lib/haptics";
 import { loadActiveState } from "@/lib/active-session";
+import { geraeteLabels, ortSignatur } from "@/lib/orte";
+import { reqOk } from "@/lib/progression";
 import { generateFallbackSession } from "@/lib/session-fallback";
 import {
   passeZeitAn,
@@ -58,6 +62,9 @@ export default function HomePage() {
     setBackSpareToday,
     backSafeActive,
     disabledExercises,
+    gyms,
+    activeGym,
+    waehleOrt,
   } = useTraining();
 
   const has = useMemo(
@@ -81,10 +88,14 @@ export default function HomePage() {
   // Läuft gerade eine Einheit? Der Live-State lebt gerätelokal (KEYS.active) —
   // hier nur lesen, der Runner verwaltet ihn.
   const [running, setRunning] = useState<{ name: string } | null>(null);
+  /** Erst nach dieser Prüfung darf ein Ortswechsel neu komponieren. */
+  const [aktivGeprueft, setAktivGeprueft] = useState(false);
   useEffect(() => {
     let alive = true;
     void loadActiveState().then((st) => {
-      if (alive) setRunning(st ? { name: st.session.name } : null);
+      if (!alive) return;
+      setRunning(st ? { name: st.session.name } : null);
+      setAktivGeprueft(true);
     });
     return () => {
       alive = false;
@@ -104,6 +115,14 @@ export default function HomePage() {
   runningRef.current = !!running;
 
   const sessionLocked = !!running || !!todaySession?.completedAt;
+
+  // Trainingsort: die Signatur dieses Renders (Ort-Id + Geräte). compose()
+  // stempelt sie auf die Einheit — weicht sie später ab, passt die Einheit
+  // nicht mehr zum Ort.
+  const mehrereOrte = gyms.length >= 2;
+  const ortJetzt = activeGym
+    ? { id: activeGym.id, name: activeGym.name, sig: ortSignatur(activeGym) }
+    : undefined;
 
   /** Frisch komponieren: Fallback sofort, ATLAS ersetzt still, wenn möglich.
    *
@@ -127,6 +146,7 @@ export default function HomePage() {
     const gen = ++genRef.current;
     const variant = opts.variant ?? "normal";
     const budgetMin = opts.budget ?? settings.timeBudgetMin;
+    const ort = ortJetzt;
     const fallback = generateFallbackSession({
       allLib,
       has,
@@ -137,7 +157,11 @@ export default function HomePage() {
       variant,
       disabled: disabledExercises,
     });
-    setTodaySession(opts.wish ? { ...fallback, wish: opts.wish } : fallback);
+    setTodaySession({
+      ...fallback,
+      ...(ort ? { ort } : {}),
+      ...(opts.wish ? { wish: opts.wish } : {}),
+    });
     setComposing(true);
 
     // KI abgeschaltet → beim Fallback bleiben (bewusste Nutzer-Entscheidung).
@@ -174,6 +198,9 @@ export default function HomePage() {
           persona: athletePersona(effectiveProfile(settings, body), settings.userName),
           readinessLine,
           disabled: disabledExercises,
+          ort: activeGym
+            ? { name: activeGym.name, geraete: geraeteLabels(activeGym.equip) }
+            : undefined,
         },
         { signal: ctrl.signal },
       )
@@ -188,15 +215,17 @@ export default function HomePage() {
           setAtlasFehler(null);
           const cur = sessionRef.current;
           // Nur die eigene, unveränderte Fallback-Fassung ersetzen — nie eine
-          // editierte oder bereits gestartete Einheit.
+          // editierte oder bereits gestartete Einheit, und nie eine für einen
+          // inzwischen gewechselten Ort.
           if (runningRef.current) return;
           if (
             cur &&
             cur.date === r.session.date &&
             cur.source === "fallback" &&
-            !cur.edited
+            !cur.edited &&
+            cur.ort?.sig === ort?.sig
           ) {
-            setTodaySession(r.session);
+            setTodaySession(ort ? { ...r.session, ort } : r.session);
           }
         })
         .catch(() => {
@@ -210,12 +239,44 @@ export default function HomePage() {
     else frageAtlas();
   };
 
-  // Beim ersten Öffnen des Tages (oder nach Mitternacht) frisch komponieren.
+  // Beim ersten Öffnen des Tages (oder nach Mitternacht) frisch komponieren —
+  // bei mehreren Orten erst, wenn der Ort für heute gewählt ist. Die Wahl
+  // setzt `activeGymId` UND `ortTag` im selben Render; der Effekt läuft dann
+  // mit frischer Closure (Geräte des gewählten Orts).
   const needsCompose = !todaySession || todaySession.date !== todayKey();
+  const [ortTag, setOrtTag] = useState<string | null>(null);
+  const frageOffen = mehrereOrte && needsCompose && ortTag !== todayKey();
   useEffect(() => {
-    if (needsCompose) compose();
+    if (needsCompose && !frageOffen) compose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needsCompose]);
+  }, [needsCompose, frageOffen]);
+  const waehleHeute = (id: string) => {
+    tap();
+    waehleOrt(id);
+    setOrtTag(todayKey());
+  };
+
+  // Passt die Einheit nicht mehr zum Ort (Umschalter, Geräte geändert, Sync)?
+  // Unberührt → neu zusammenstellen; ein Pfad für alle Auslöser. Bearbeitet →
+  // nur Hinweis, die Eingriffe gehören dem Nutzer. Läuft/erledigt → nichts.
+  const veraltet =
+    !needsCompose &&
+    !!todaySession?.ort &&
+    !!ortJetzt &&
+    todaySession.ort.sig !== ortJetzt.sig;
+  const neuFuerOrt = aktivGeprueft && veraltet && !sessionLocked && !todaySession?.edited;
+  useEffect(() => {
+    if (neuFuerOrt) compose({ wish: todaySession?.wish, variant: todaySession?.variant });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [neuFuerOrt, ortJetzt?.sig]);
+  const fehlendHier = useMemo(() => {
+    if (!veraltet || !todaySession) return 0;
+    const byId = new Map(allLib.map((e) => [e.id, e]));
+    return todaySession.items.filter((it) => {
+      const ex = byId.get(it.exerciseId);
+      return !!ex && !reqOk(ex, has);
+    }).length;
+  }, [veraltet, todaySession, allLib, has]);
 
   const resolved = useMemo(
     () => (todaySession ? resolveDailySession(todaySession, allLib, has) : []),
@@ -290,9 +351,11 @@ export default function HomePage() {
           Einheit <span className="tabular-nums">{plattenNr}</span> · {plattenDatum}
         </p>
         <h1 className="mt-1.5 font-display text-3xl italic leading-tight text-fg">
-          {todaySession?.name ?? "Einheit wird zusammengestellt …"}
+          {frageOffen
+            ? "Wo trainierst du heute?"
+            : (todaySession?.name ?? "Einheit wird zusammengestellt …")}
         </h1>
-        {todaySession && todaySession.items.length > 0 && (
+        {!frageOffen && todaySession && todaySession.items.length > 0 && (
           <p className="mt-2 font-mono text-2xs uppercase tracking-gesperrt text-muted">
             <span className="tabular-nums">{todaySession.items.length}</span> Übungen ·{" "}
             <span className="tabular-nums">{saetzeGesamt}</span> Sätze · ca.{" "}
@@ -300,6 +363,51 @@ export default function HomePage() {
           </p>
         )}
       </header>
+
+      {mehrereOrte && !frageOffen && (
+        <Segment
+          label="Trainingsort heute"
+          options={gyms.map((g) => ({ value: g.id, label: g.name }))}
+          value={activeGym?.id}
+          onChange={(id) => {
+            tap();
+            waehleOrt(id);
+          }}
+          disabled={!!running}
+          className="mb-4"
+        />
+      )}
+
+      {veraltet && !sessionLocked && todaySession?.edited && todaySession.ort && activeGym && (
+        <div className="mb-4 rounded-card border border-line-card bg-surface-1 px-4 py-3">
+          <p className="text-sm leading-snug text-fg">
+            {todaySession.ort.id !== activeGym.id
+              ? `Diese Einheit ist für ${todaySession.ort.name} geplant.`
+              : `Die Geräte für ${activeGym.name} haben sich geändert.`}
+            {fehlendHier > 0 &&
+              ` ${fehlendHier} ${fehlendHier === 1 ? "Übung geht" : "Übungen gehen"} hier nicht.`}
+          </p>
+          <Pressable
+            onClick={() => {
+              tap();
+              compose({ wish: todaySession.wish, variant: todaySession.variant });
+            }}
+            className="mt-2 rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-accent-ink"
+          >
+            Für {activeGym.name} neu zusammenstellen
+          </Pressable>
+        </div>
+      )}
+
+      {frageOffen && (
+        <OrtFrage
+          gyms={gyms}
+          zuletztId={activeGym?.id}
+          allLib={allLib}
+          disabled={disabledExercises}
+          onWaehle={waehleHeute}
+        />
+      )}
 
       {chips.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
@@ -326,7 +434,7 @@ export default function HomePage() {
       )}
 
       {/* Die heutige Einheit — das eine Herzstück der Seite. */}
-      {todaySession?.completedAt ? (
+      {frageOffen ? null : todaySession?.completedAt ? (
         <Card className="mb-4 p-5">
           <p className="flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
             <CheckCircle2 size={14} className="text-cyanotypie" /> Heute erledigt

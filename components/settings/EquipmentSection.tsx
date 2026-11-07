@@ -1,27 +1,45 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Kicker } from "@/components/ui/Kicker";
 import { Pressable } from "@/components/ui/pressable";
+import { Segment } from "@/components/ui/Segment";
+import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { EQUIP_LIST, STUDIO_EQUIP } from "@/lib/exercises";
-import { reqOk } from "@/lib/progression";
+import { EQUIP_LIST } from "@/lib/exercises";
+import { availableExercises } from "@/lib/today-session";
 import { muscleOf, MUSCLE_ORDER } from "@/lib/volume";
 import { cn } from "@/lib/utils";
 
 /**
- * Geräte & Gym-Profile — früher auf der Plan-Seite, jetzt in den
- * Einstellungen: es ist Setup, kein Tagesgeschäft. ATLAS komponiert nur aus
- * Übungen, die das aktive Profil hergibt.
+ * Orte & Geräte — Setup, kein Tagesgeschäft. Das Register wählt nur, WELCHEN
+ * Ort du hier bearbeitest; wo du heute trainierst, entscheidet die Heute-Seite
+ * („Wo trainierst du heute?“). ATLAS komponiert nur aus Übungen, die der Ort
+ * hergibt — ändern sich die Geräte des heutigen Orts, stellt Heute die noch
+ * unberührte Einheit neu zusammen.
  */
 export function EquipmentSection() {
-  const { equip, toggleEquip, allLib, gyms, switchGym, addGym, removeGym, settings } =
-    useTraining();
-  const [newGym, setNewGym] = useState("");
+  const {
+    gyms,
+    activeGym,
+    toggleEquip,
+    addGym,
+    renameGym,
+    removeGym,
+    allLib,
+    disabledExercises,
+  } = useTraining();
+  const [editId, setEditId] = useState<string | null>(null);
+  const [neuerOrt, setNeuerOrt] = useState("");
+  const [loeschen, setLoeschen] = useState(false);
+  const ort = gyms.find((g) => g.id === editId) ?? activeGym ?? gyms[0] ?? null;
 
-  const equipStats = useMemo(() => {
-    const has = (k: string) => (equip as string[]).includes(k);
-    const available = allLib.filter((e) => e.pattern !== "cardio" && reqOk(e, has));
+  const stats = useMemo(() => {
+    if (!ort) return { count: 0, cov: 0 };
+    const has = (k: string) => (ort.equip as string[]).includes(k);
+    const available = availableExercises(allLib, has, disabledExercises);
     const muscles = new Set<string>();
     available.forEach((e) => {
       const m = muscleOf(e);
@@ -29,108 +47,140 @@ export function EquipmentSection() {
       if (m.secondary) muscles.add(m.secondary);
     });
     return { count: available.length, cov: muscles.size };
-  }, [equip, allLib]);
+  }, [ort, allLib, disabledExercises]);
+
+  if (!ort) return null;
+  const heute = ort.id === activeGym?.id;
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
-        Geräte & Profile
+      <Kicker as="h2" className="mb-3">
+        Orte & Geräte
+      </Kicker>
+
+      {gyms.length > 1 && (
+        <Segment
+          label="Ort bearbeiten"
+          options={gyms.map((g) => ({ value: g.id, label: g.name }))}
+          value={ort.id}
+          onChange={setEditId}
+          className="mb-2"
+        />
+      )}
+      <p className="mb-4 text-xs leading-relaxed text-muted">
+        {heute
+          ? "Hier trainierst du heute."
+          : `Heute trainierst du: ${activeGym?.name ?? "–"}. Den Ort wählst du auf der Heute-Seite.`}
       </p>
 
-      <div className="mb-3 flex flex-wrap gap-2">
-        {gyms.map((g) => {
-          const active = settings.activeGymId === g.id;
-          return (
-            <div
-              key={g.id}
-              className={cn(
-                "flex items-center overflow-hidden rounded-full",
-                active ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
-              )}
-            >
-              <Pressable
-                onClick={() => switchGym(g.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-sessions"
-              >
-                {g.name}
-              </Pressable>
-              {active && gyms.length > 1 && (
-                <Pressable
-                  onClick={() => removeGym(g.id)}
-                  aria-label={`Profil ${g.name} löschen`}
-                  className="py-1.5 pl-0.5 pr-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-sessions"
-                >
-                  <X size={12} />
-                </Pressable>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="mb-4 flex gap-2">
+      <label className="mb-4 block">
+        <span className="mb-1.5 block font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          Name
+        </span>
         <input
-          value={newGym}
-          onChange={(e) => setNewGym(e.target.value)}
-          placeholder="Neues Profil (z. B. Studio)"
-          aria-label="Neues Gym-Profil anlegen"
-          className="min-w-0 flex-1 rounded-pill bg-surface-2 px-3 py-2 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-        />
-        <Pressable
-          onClick={() => {
-            if (!newGym.trim()) return;
-            addGym(newGym);
-            setNewGym("");
+          key={ort.id}
+          defaultValue={ort.name}
+          maxLength={40}
+          onBlur={(e) => {
+            if (!e.target.value.trim()) e.target.value = ort.name;
+            else if (e.target.value.trim() !== ort.name) renameGym(ort.id, e.target.value);
           }}
-          disabled={!newGym.trim()}
-          className="shrink-0 rounded-pill bg-surface-2 px-3 py-2 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
-        >
-          Anlegen
-        </Pressable>
-      </div>
-      {!gyms.some((g) => g.name.toLowerCase().includes("studio")) && (
-        <Pressable
-          onClick={() => addGym("Studio", STUDIO_EQUIP)}
-          className="mb-4 flex items-center gap-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
-        >
-          + Studio-Profil anlegen — voll ausgestattet inkl. Kabelzug & Geräten
-        </Pressable>
-      )}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="w-full rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+        />
+      </label>
 
       <p className="mb-2 text-xs leading-relaxed text-muted">
-        Tippe an, was im aktiven Profil verfügbar ist — ATLAS und die
-        Übungsauswahl passen sich sofort an.
+        Tippe an, was es an diesem Ort gibt — ATLAS plant nur mit diesen Geräten.
       </p>
       <div className="grid grid-cols-2 gap-2">
         {EQUIP_LIST.map((e) => {
-          const on = equip.includes(e.key);
+          const on = ort.equip.includes(e.key);
           return (
             <Pressable
               key={e.key}
-              onClick={() => toggleEquip(e.key)}
+              onClick={() => toggleEquip(e.key, ort.id)}
+              aria-pressed={on}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-card px-3 py-3 text-sm focus:outline-none",
-                on
-                  ? "bg-accent-sessions font-medium text-on-accent"
-                  : "bg-surface-2 text-muted",
+                "flex items-center justify-between gap-2 rounded-card px-3 py-3 text-left text-sm",
+                on ? "bg-accent-sessions font-medium text-on-accent" : "bg-surface-2 text-muted",
               )}
             >
-              <span className="min-w-0 truncate">{e.label}</span>
-              {on && <Check size={15} strokeWidth={3} className="shrink-0" />}
+              <span className="min-w-0 hyphens-auto break-words">{e.label}</span>
+              {on && <Check size={16} strokeWidth={2.5} className="shrink-0" />}
             </Pressable>
           );
         })}
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-card bg-surface-0 px-3 py-2 text-xs text-muted">
+      <p className="mt-3 flex items-center justify-between rounded-card bg-surface-0 px-3 py-2 font-mono text-2xs text-muted">
         <span>
-          <span className="font-mono tabular-nums text-fg">{equipStats.count}</span>{" "}
-          Übungen verfügbar
+          <span className="tabular-nums text-fg">{stats.count}</span> Übungen verfügbar
         </span>
         <span>
-          <span className="font-mono tabular-nums text-fg">{equipStats.cov}</span>/
-          {MUSCLE_ORDER.length} Muskelgruppen
+          <span className="tabular-nums text-fg">{stats.cov}</span>/{MUSCLE_ORDER.length}{" "}
+          Muskelgruppen
         </span>
+      </p>
+
+      {gyms.length > 1 && (
+        <Pressable
+          onClick={() => setLoeschen(true)}
+          className="mt-3 rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-accent-ink"
+        >
+          {`„${ort.name}“ löschen`}
+        </Pressable>
+      )}
+
+      <div className="mt-5 border-t border-line-card pt-4">
+        <Kicker className="mb-2">Neuer Ort</Kicker>
+        <div className="flex gap-2">
+          <input
+            value={neuerOrt}
+            onChange={(e) => setNeuerOrt(e.target.value)}
+            maxLength={40}
+            placeholder="z. B. Hotel"
+            aria-label="Neuen Ort anlegen"
+            className="min-w-0 flex-1 rounded-pill border border-line bg-transparent px-3 py-2 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          />
+          <Button
+            variant="secondary"
+            disabled={!neuerOrt.trim()}
+            onClick={() => {
+              if (!neuerOrt.trim()) return;
+              setEditId(addGym(neuerOrt));
+              setNeuerOrt("");
+            }}
+          >
+            Anlegen
+          </Button>
+        </div>
       </div>
+
+      <Sheet open={loeschen} onClose={() => setLoeschen(false)} title={`„${ort.name}“ löschen?`}>
+        <p className="mb-4 text-sm leading-relaxed text-muted">
+          Der Ort und seine Geräteliste verschwinden. Gespeicherte Einheiten bleiben,
+          wie sie sind.
+        </p>
+        <div className="flex flex-col gap-2 pb-2">
+          <Button
+            variant="danger"
+            full
+            onClick={() => {
+              removeGym(ort.id);
+              setEditId(null);
+              setLoeschen(false);
+            }}
+          >
+            Ort löschen
+          </Button>
+          <Button variant="ghost" full onClick={() => setLoeschen(false)}>
+            Abbrechen
+          </Button>
+        </div>
+      </Sheet>
     </section>
   );
 }

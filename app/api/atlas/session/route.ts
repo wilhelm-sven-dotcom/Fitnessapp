@@ -5,6 +5,7 @@ import {
   BUILD_DAILY_SESSION_TOOL,
   sanitizeDailySession,
 } from "@/lib/atlas/session-tool";
+import { EQUIP_LIST } from "@/lib/exercises";
 import { allowRequest, clientKey } from "@/lib/rate-limit";
 import type { SessionVariant } from "@/lib/session-model";
 
@@ -28,7 +29,11 @@ interface SessionReqBody {
   context?: string;
   /** Profil-Zeile (athletePersona). */
   persona?: string;
+  /** Trainingsort heute: Name + Geräte-Namen (lib/orte.ts geraeteLabels). */
+  ort?: { name?: unknown; geraete?: unknown };
 }
+
+const GERAETE_LABELS = new Set(EQUIP_LIST.map((e) => e.label));
 
 const VARIANT_TASK: Record<SessionVariant, string> = {
   normal:
@@ -77,6 +82,13 @@ export async function POST(req: Request) {
     body.variant === "reset" || body.variant === "exam" ? body.variant : "normal";
   const context = (body.context ?? "").toString().slice(0, 6000);
   const persona = (body.persona ?? "").toString().slice(0, 400);
+  // Ort nur als Klartext-Hinweis — Name gekappt, Geräte nur aus der bekannten
+  // Liste (kein freier Text ins Prompt). Die harte Grenze bleibt availableIds.
+  const ortName =
+    typeof body.ort?.name === "string" ? body.ort.name.replace(/\s+/g, " ").trim().slice(0, 40) : "";
+  const ortGeraete = (Array.isArray(body.ort?.geraete) ? body.ort.geraete : [])
+    .filter((g): g is string => typeof g === "string" && GERAETE_LABELS.has(g))
+    .slice(0, EQUIP_LIST.length);
 
   // Dynamischer Teil NACH dem gecachten Präfix: Aufgabe, Verfügbarkeit, Kontext.
   const dynamic = [
@@ -88,6 +100,9 @@ export async function POST(req: Request) {
       ? `Eigene Übungen des Athleten (zusätzlich wählbar):\n${custom
           .map((e) => `- ${e.id} · ${e.name}${e.pattern ? ` · ${e.pattern}` : ""}${e.muscle ? ` · ${e.muscle}` : ""}`)
           .join("\n")}`
+      : "",
+    ortName
+      ? `Trainingsort heute: ${ortName}. Geräte dort: ${ortGeraete.length ? ortGeraete.join(", ") : "keine (nur Körpergewicht)"}.`
       : "",
     `HEUTE VERFÜGBAR sind ausschließlich diese Übungs-Ids (Equipment-gefiltert):\n${availableIds.join(", ")}`,
     `Aktuelle Trainingsdaten:\n${context.trim() || "keine"}`,

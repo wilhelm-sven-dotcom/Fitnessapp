@@ -51,6 +51,8 @@ const SEED = {
   benchMigrated: true,
   themeMigratedM72: true,
   splash: "aus",
+  // Ein Ort (nur „Zuhause“) → keine Ortsfrage; die prüft pruefe-ort.mjs.
+  orteM1: true,
 };
 
 /** Seite mit gesetztem Seed öffnen; `route` bedient /api/atlas/session. */

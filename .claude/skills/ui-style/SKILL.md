@@ -385,12 +385,45 @@ Opus-Runde, alle parallel — „erst gut, dann gar nicht"):
   eine Textzeile sagt, dass gearbeitet wird. Timeouts großzügig setzen
   (60 s), sie sollen echte Antworten nicht abschneiden.
 
+## Trainingsort: „Wo trainierst du heute?“
+
+Orte (Zuhause, Studio, frei benennbar) sind `GymProfile` mit eigener
+Geräteliste (`lib/orte.ts`). Fünf Regeln, alle aus echten Fehlern:
+
+- **Der aktive Ort IST die Geräteliste.** `equip` im Provider wird aus
+  `gyms` + `settings.activeGymId` abgeleitet; KEYS.equip ist nur Spiegel.
+  Vorher liefen flache Liste (Merge: lokal gewinnt) und `activeGymId`
+  (Merge: Cloud gewinnt) auseinander.
+- **Migration läuft in `loadAll`, nicht in einem Effekt** (`ensureOrte`):
+  Kind-Effekte laufen vor Eltern-Effekten — die Heute-Seite hätte sonst einmal
+  ohne Orte komponiert. Vorbelegte Orte tragen FESTE Ids (`gym_zuhause`,
+  `gym_studio`), damit die Cloud-Union keine Dubletten baut; `orteM1` sorgt
+  dafür, dass ein gelöschtes Studio nicht wiederkommt.
+- **Erst wählen, dann komponieren.** Ab zwei Orten steht beim ersten Öffnen
+  des Tages die Frage statt der Einheit, und es geht KEINE Anfrage an ATLAS
+  raus, bevor getippt wurde (jede Komposition ist eine Opus-Runde). Mit einem
+  Ort entfällt die Frage.
+- **Die Einheit trägt ihre Ort-Signatur** (`DailySession.ort.sig` = Ort-Id +
+  Geräte). Weicht sie ab (Umschalter, Geräte in den Einstellungen, Sync),
+  stellt Heute eine UNBERÜHRTE Einheit neu zusammen — ein Effekt, ein Pfad.
+  Eine bearbeitete bekommt nur einen Hinweis mit Knopf, eine laufende oder
+  erledigte bleibt stehen. Die Ersetzungs-Wache für späte ATLAS-Antworten
+  prüft die Signatur mit.
+- **Einstellungen wählen nur, welcher Ort BEARBEITET wird**, nie, wo heute
+  trainiert wird — das entscheidet allein die Heute-Seite.
+
+Die gespeicherte Einheit trägt `ort` als Namens-Snapshot; der Verlauf zeigt
+ihn, sobald es mehr als einen Ort gibt, und ATLAS bekommt ihn im Verlauf
+(`recentUseBlock`) und als eigene Zeile „Trainingsort heute“ mit.
+
 ## Smoke-Invarianten (`scripts/smoke.mjs`, Port 3199, prod build)
 
 Diese Strings/Anker klickt der Smoke — Änderung NUR mit Ko-Evolution von
 smoke.mjs im selben Commit:
 
-- Heute: „Deine Einheit heute" · „Training starten" · „Einheit bearbeiten" ·
+- Heute: „Deine Einheit heute" (steht auch über der Ortsfrage) · „Wo
+  trainierst du heute?" · Orts-Kacheln als Button, Name beginnt mit dem Ort
+  (`/^Zuhause/`, `/^Studio/`) · „Training starten" · „Einheit bearbeiten" ·
   „Übung wählen" · „… tauschen" (Regex-Ende) · „Bearbeiten"
 - Check-in: „Tagesform" · „Überspringen"
 - Aufwärmen: aria-label „Aufwärmen beenden"
@@ -399,10 +432,11 @@ smoke.mjs im selben Commit:
 - Pause: „Pause" (exact:false)
 - Abschluss: aria „Training beenden" · „Zum Abschluss" · „Wie fühlt sich dein
   unterer Rücken an?" + „Gut" (exact) · „Beenden & speichern"
-- Fortschritt: „Verlauf" (exact) — Alt-Session „Ganzkörper A" muss rendern
+- Fortschritt: „Verlauf" (exact) — Alt-Session „Ganzkörper A" muss rendern,
+  die neue Einheit zeigt „Zuhause“ in der Meta-Zeile
 - Katalog: „Eigene Übung anlegen" · „z. B. Landmine Press" · „Übung anlegen" ·
   „1 eigene" (Substring)
-- Settings: „Geräte" · „ATLAS"
+- Settings: „Geräte" (aus „Orte & Geräte") · „ATLAS"
 - Seed migriert `theme:"dark"` → hell (M72-Migration bleibt); /workout läuft
   im erzwungenen Atelier.
 - Seed setzt `splash: "aus"` — die Durchlauf-Checks sollen nicht ~2,4 s auf
@@ -420,3 +454,11 @@ lassen.
 fest: fünf Zeit-Klicks → genau EINE Anfrage (ohne Abbruch waren es fünf),
 429 → „ausgelastet", hängende Route → Bedienung bleibt frei, bearbeitete
 Einheit → Umfang passt sich ohne KI-Aufruf an.
+
+pruefe-training und pruefe-zeitbudget seeden `orteM1: true` → nur „Zuhause“,
+keine Ortsfrage. Die prüft `scripts/pruefe-ort.mjs` (`npm run pruefe:ort`):
+keine Anfrage vor der Wahl, Studio-Anfrage mit Ort und Maschinen,
+Umschalten ohne Maschinen/Kabel (Ids per `data-exercise-id` an den
+Listenzeilen, Gegenliste per Regex aus lib/exercises.ts), Reload ohne Frage,
+bearbeitete Einheit → Hinweis statt Neukomposition, Geräte im Studio
+abgewählt → Heute stellt ohne Maschinen neu zusammen.

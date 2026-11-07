@@ -38,7 +38,9 @@ function recentUseBlock(log: LoggedSession[], allLib: Exercise[]): string {
       .map((e) => byId.get(e.id)?.name ?? e.name)
       .slice(0, 8)
       .join(", ");
-    if (names) lines.push(`- ${s.date.slice(0, 10)}: ${names}`);
+    // Ort mitschreiben: wer zwischen Zuhause und Studio wechselt, hat je Ort
+    // andere Übungen — ATLAS soll das nicht für Willkür halten.
+    if (names) lines.push(`- ${s.date.slice(0, 10)}${s.ort ? ` (${s.ort})` : ""}: ${names}`);
   }
   return lines.length ? `Zuletzt trainierte Übungen:\n${lines.join("\n")}` : "";
 }
@@ -58,6 +60,9 @@ export interface AtlasSessionRequest {
   readinessLine?: string;
   /** Vom Nutzer deaktivierte Übungs-Ids — landen nicht im ATLAS-Pool. */
   disabled?: string[];
+  /** Trainingsort heute (Name + Geräte-Namen) — für Begründung und Briefing;
+   *  die harte Grenze bleibt `availableIds`. */
+  ort?: { name: string; geraete: string[] };
 }
 
 /**
@@ -133,6 +138,7 @@ export async function requestAtlasSession(
         variant: req.variant ?? "normal",
         context: contextParts.join("\n\n"),
         persona: req.persona,
+        ort: req.ort,
       }),
     });
     if (res.status === 429) return { fehler: "limit" };

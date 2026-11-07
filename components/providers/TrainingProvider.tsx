@@ -44,6 +44,7 @@ import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
+import { ensureOrte } from "@/lib/orte";
 import { prTimeline } from "@/lib/records";
 import {
   sanitizeBody,
@@ -272,7 +273,8 @@ interface TrainingContextValue {
   lastPerf: (id: string) => LastPerf | null;
   /** Nur für die Anzeige — siehe RelatedPerf; speist NIE die Empfehlung. */
   lastPerfRelated: (id: string) => RelatedPerf | null;
-  toggleEquip: (k: EquipKey) => void;
+  /** Gerät an einem Ort an/aus — ohne `gymId` am aktiven Ort. */
+  toggleEquip: (k: EquipKey, gymId?: string) => void;
   addCustom: (data: CustomExerciseInput) => void;
   updateCustom: (id: string, data: CustomExerciseInput) => void;
   removeCustom: (id: string) => void;
@@ -286,9 +288,15 @@ interface TrainingContextValue {
   addDay: (day: WorkoutDay) => void;
   updateDay: (day: WorkoutDay) => void;
   removeDay: (id: string) => void;
+  /** Trainingsorte (Zuhause, Studio, …). */
   gyms: GymProfile[];
-  switchGym: (id: string) => void;
-  addGym: (name: string, equipPreset?: EquipKey[]) => void;
+  /** Der Ort, an dem heute trainiert wird — seine Geräte sind `equip`. */
+  activeGym: GymProfile | null;
+  /** „Wo trainierst du heute?“ — setzt den aktiven Ort. */
+  waehleOrt: (id: string) => void;
+  /** Neuen Ort anlegen (wechselt NICHT den heutigen Ort) — liefert die Id. */
+  addGym: (name: string, equipPreset?: EquipKey[]) => string;
+  renameGym: (id: string, name: string) => void;
   removeGym: (id: string) => void;
   /** Den Live-State des Runners als LoggedSession speichern (leer → null). */
   saveActiveSession: (state: ActiveSessionState) => Promise<SessionSummary | null>;
@@ -382,7 +390,9 @@ export function useTraining(): TrainingContextValue {
 
 export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [log, setLog] = useState<LoggedSession[]>([]);
-  const [equip, setEquip] = useState<EquipKey[]>(DEFAULT_EQUIP);
+  // Flache Geräteliste: nur noch Spiegel/Fallback. Die Wahrheit sind die
+  // Geräte des aktiven Orts (siehe `equip` weiter unten, lib/orte.ts).
+  const [equipFlat, setEquipFlat] = useState<EquipKey[]>(DEFAULT_EQUIP);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
@@ -465,7 +475,23 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       };
       void storage.setJSON(KEYS.settings, settingsLoaded);
     }
-    setEquip(equipLoaded);
+    // Orte: „Zuhause“/„Studio“ anlegen, Alt-Namen und Dubletten heilen,
+    // `activeGymId` reparieren — VOR dem ersten Render, sonst komponiert die
+    // Heute-Seite (Kind-Effekte laufen vor Eltern-Effekten) einmal ohne Orte.
+    const orte = ensureOrte(gymsLoaded, equipLoaded, settingsLoaded);
+    if (orte.changed) {
+      gymsLoaded = orte.gyms;
+      settingsLoaded = orte.settings;
+      void storage.setJSON(KEYS.gyms, gymsLoaded);
+      void storage.setJSON(KEYS.settings, settingsLoaded);
+    }
+    // Spiegel nachziehen: KEYS.equip folgt dem aktiven Ort.
+    const aktivLoaded = gymsLoaded.find((g) => g.id === settingsLoaded.activeGymId);
+    if (aktivLoaded && aktivLoaded.equip.join(",") !== equipLoaded.join(",")) {
+      equipLoaded = [...aktivLoaded.equip];
+      void storage.setJSON(KEYS.equip, equipLoaded);
+    }
+    setEquipFlat(equipLoaded);
     setChoices(sanitizeStringMap(c));
     setCustom(sanitizeCustom(cu));
     setBody(sanitizeBody(b));
@@ -725,6 +751,16 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }), [cloudConfigured, cloudEmail, cloudBusy, collectLocal, pullOrSeed]);
 
   const allLib = useMemo(() => [...LIB, ...custom], [custom]);
+  // Der aktive Ort ist die Wahrheit für die Geräte (lib/orte.ts). Die flache
+  // Liste greift nur im Augenblick, bevor die Orte geladen sind.
+  const activeGym = useMemo(
+    () => gyms.find((g) => g.id === settings.activeGymId) ?? gyms[0] ?? null,
+    [gyms, settings.activeGymId],
+  );
+  const equip = useMemo<EquipKey[]>(
+    () => (activeGym ? activeGym.equip : equipFlat),
+    [activeGym, equipFlat],
+  );
   const has = useMemo(() => (k: string) => (equip as string[]).includes(k), [equip]);
 
   const lastBackRed =
@@ -950,7 +986,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.exerciseNotes, next);
   }, []);
   const saveEquip = useCallback(async (next: EquipKey[]) => {
-    setEquip(next);
+    setEquipFlat(next);
     await storage.setJSON(KEYS.equip, next);
   }, []);
   const saveCustom = useCallback(async (next: Exercise[]) => {
@@ -974,14 +1010,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.cardio, next);
   }, []);
 
-  // Ensure one gym profile exists — migrate from the flat equipment list.
-  useEffect(() => {
-    if (loading || gyms.length > 0) return;
-    const g: GymProfile = { id: "gym_" + Date.now(), name: "Mein Gym", equip };
-    void saveGyms([g]);
-    void saveSettings({ ...settings, activeGymId: g.id });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, gyms.length]);
   // Sprungtests laden (unkritisch fürs erste Rendern — darf nachladen).
   useEffect(() => {
     void storage.getJSON<JumpEntry[]>(KEYS.jumps, []).then((js) => {
@@ -1157,37 +1185,50 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveExerciseNotes(next);
     };
 
-    const switchGym = (id: string) => {
+    // Orte. Der aktive Ort entscheidet über die Geräte; KEYS.equip spiegelt ihn
+    // nur (Export, ältere gecachte App-Stände). Jeder Handler schreibt Settings
+    // höchstens EINMAL — zwei Schreiber im selben Handler verlören den ersten.
+    const waehleOrt = (id: string) => {
       const g = gyms.find((x) => x.id === id);
-      if (!g) return;
-      void saveEquip(g.equip);
+      if (!g || settings.activeGymId === id) return;
       void saveSettings({ ...settings, activeGymId: id });
+      void saveEquip([...g.equip]);
     };
-    const addGym = (name: string, equipPreset?: EquipKey[]) => {
+    const addGym = (name: string, equipPreset?: EquipKey[]): string => {
       const g: GymProfile = {
-        id: "gym_" + Date.now(),
-        name: name.trim() || "Neues Gym",
+        id: "gym_" + Date.now().toString(36),
+        name: name.trim().slice(0, 40) || "Neuer Ort",
         equip: equipPreset ? [...equipPreset] : [...equip],
       };
       void saveGyms([...gyms, g]);
-      void saveSettings({ ...settings, activeGymId: g.id });
-      // Preset-Profile (z. B. Studio) schalten die Geräteliste direkt um.
-      if (equipPreset) void saveEquip([...equipPreset]);
+      return g.id;
+    };
+    const renameGym = (id: string, name: string) => {
+      const clean = name.trim().slice(0, 40);
+      if (!clean) return;
+      void saveGyms(gyms.map((g) => (g.id === id ? { ...g, name: clean } : g)));
     };
     const removeGym = (id: string) => {
       if (gyms.length <= 1) return;
       const next = gyms.filter((g) => g.id !== id);
       void saveGyms(next);
-      if (settings.activeGymId === id) {
-        void saveEquip(next[0].equip);
+      if (activeGym?.id === id) {
         void saveSettings({ ...settings, activeGymId: next[0].id });
+        void saveEquip([...next[0].equip]);
       }
     };
-    const toggleEquip = (k: EquipKey) => {
-      const next = equip.includes(k) ? equip.filter((x) => x !== k) : [...equip, k];
-      void saveEquip(next);
-      const aid = settings.activeGymId;
-      if (aid) void saveGyms(gyms.map((g) => (g.id === aid ? { ...g, equip: next } : g)));
+    const toggleEquip = (k: EquipKey, gymId?: string) => {
+      const target = gyms.find((g) => g.id === (gymId ?? activeGym?.id));
+      if (!target) {
+        // Nur denkbar, solange noch keine Orte geladen sind.
+        void saveEquip(equipFlat.includes(k) ? equipFlat.filter((x) => x !== k) : [...equipFlat, k]);
+        return;
+      }
+      const next = target.equip.includes(k)
+        ? target.equip.filter((x) => x !== k)
+        : [...target.equip, k];
+      void saveGyms(gyms.map((g) => (g.id === target.id ? { ...g, equip: next } : g)));
+      if (target.id === activeGym?.id) void saveEquip(next);
     };
 
     const setWeightStep = (step: number) =>
@@ -1353,6 +1394,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       if (deloadActive) newSession.isDeload = true;
       if (s.variant === "exam") newSession.isExam = true;
       if (s.variant === "reset") newSession.isBackReset = true;
+      // Ort als Namens-Snapshot (wie die Übungs-Notiz): was an dem Tag galt.
+      const ortName = s.ort?.name ?? activeGym?.name;
+      if (ortName) newSession.ort = ortName;
       const newLog = [...log, newSession];
       // Summary for the completion takeover — computed BEFORE state clears so
       // the celebration can show exactly what this session achieved.
@@ -1469,25 +1513,32 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       // Sanitizer statt roher Cast — dieselbe Härtung wie loadAll (eine Wahrheit).
       // Ein fehlendes Feld behält den aktuellen State (Teil-Backup löscht nichts).
       const nextLog = sanitizeSessions(d.log);
-      const nextEquip = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
+      const nextEquipRaw = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
       const nextChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : choices;
       const nextCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : custom;
       const nextBody = d.body !== undefined ? sanitizeBody(d.body) : body;
       const nextCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : cardio;
       const nextDays = d.days !== undefined ? sanitizeDays(d.days) : days;
-      const nextGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
+      const nextGymsRaw = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
       const nextExerciseVideos =
         d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
       const nextWarmupVideos =
         d.warmupVideos !== undefined ? sanitizeVideoMap(d.warmupVideos) : warmupVideos;
       const nextExerciseNotes =
         d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : exerciseNotes;
-      const nextSettings =
+      const nextSettingsRaw =
         d.settings && typeof d.settings === "object"
           ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
           : settings;
+      // Dieselbe Orte-Heilung wie beim Laden: ein Backup ohne Orte oder mit
+      // verwaister `activeGymId` darf keinen ortlosen Zustand hinterlassen.
+      const orte = ensureOrte(nextGymsRaw, nextEquipRaw, nextSettingsRaw);
+      const nextGyms = orte.gyms;
+      const nextSettings = orte.settings;
+      const nextEquip =
+        nextGyms.find((g) => g.id === nextSettings.activeGymId)?.equip ?? nextEquipRaw;
       setLog(nextLog);
-      setEquip(nextEquip);
+      setEquipFlat(nextEquip);
       setChoices(nextChoices);
       setCustom(nextCustom);
       setBody(nextBody);
@@ -1566,8 +1617,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       updateDay,
       removeDay,
       gyms,
-      switchGym,
+      activeGym,
+      waehleOrt,
       addGym,
+      renameGym,
       removeGym,
       saveActiveSession,
       amendLastDebrief,
@@ -1646,6 +1699,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     deloadActive,
     days,
     gyms,
+    activeGym,
+    equipFlat,
     todaySession,
     jumps,
     cardio,

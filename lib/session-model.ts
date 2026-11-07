@@ -28,6 +28,15 @@ export interface PlannedExercise {
 export type SessionSource = "atlas" | "fallback" | "manuell";
 export type SessionVariant = "normal" | "reset" | "exam";
 
+/** Für welchen Trainingsort die Einheit komponiert wurde. `sig` (Ort-Id +
+ *  Geräte, lib/orte.ts `ortSignatur`) erkennt Ortswechsel UND geänderte
+ *  Geräte — dann passt die Einheit nicht mehr und Heute stellt neu zusammen. */
+export interface SessionOrt {
+  id: string;
+  name: string;
+  sig: string;
+}
+
 export interface DailySession {
   /** Stabil pro Komposition (z. B. "today-2026-08-08-1"). */
   id: string;
@@ -48,6 +57,8 @@ export interface DailySession {
   /** Nutzer hat manuell eingegriffen — eine später eintreffende KI-Antwort
    *  darf diese Fassung nicht mehr ersetzen. */
   edited?: boolean;
+  /** Trainingsort der Komposition (fehlt bei Einheiten von vor den Orten). */
+  ort?: SessionOrt;
   schemaVersion: 1;
 }
 

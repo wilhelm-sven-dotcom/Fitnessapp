@@ -1,5 +1,5 @@
 import { band, readinessScore, type ReadinessBand } from "@/lib/readiness";
-import type { Exercise, Pattern, Readiness } from "@/lib/types";
+import type { EquipKey, Exercise, Pattern, Readiness } from "@/lib/types";
 import type { PlannedExercise } from "@/lib/session-model";
 
 /**
@@ -28,8 +28,10 @@ export interface WarmupDrill {
   priority: number;
   /** Rückenlast: „safe" wird bei Rücken-Ampel bevorzugt, „deep" gemieden. */
   backLoad: "safe" | "neutral" | "deep";
-  /** Nötiges Equipment — ohne Eintrag immer machbar. */
-  equipment?: "band"[];
+  /** Nötiges Equipment (EquipKey des Orts) — ohne Eintrag immer machbar.
+   *  Vorher stand hier „band“, das Gerät heißt aber „bands“: die Band-Drills
+   *  erschienen deshalb nie. */
+  equipment?: EquipKey[];
   /** Figure key in `FIG` to animate. Defaults to the drill `id` when omitted. */
   figure?: string;
   /** Animations-Tempo im Player (ms pro Zyklus) — Default 2600. */
@@ -285,7 +287,7 @@ const D = {
     patterns: ["hpull", "vpull"],
     priority: 4,
     backLoad: "safe",
-    equipment: ["band"],
+    equipment: ["bands"],
   },
   wall_slides: {
     id: "wall_slides",
@@ -334,7 +336,7 @@ const D = {
     patterns: ["core", "hinge", "squat"],
     priority: 2,
     backLoad: "safe",
-    equipment: ["band"],
+    equipment: ["bands"],
   },
 } satisfies Record<string, WarmupDrill>;
 
@@ -383,7 +385,7 @@ export interface WarmupOpts {
   lastBackRed?: boolean;
   /** „Auf dem Bike aufwärmen"-Setting. */
   bike?: boolean;
-  /** Equipment-Predicate (z. B. has("band")). */
+  /** Equipment-Predicate des heutigen Orts (z. B. has("bands")). */
   has?: (tag: string) => boolean;
   /** Rotations-Seed — Datum der Einheit (Reload-stabil). */
   seed?: string;
@@ -442,7 +444,9 @@ export function warmupFor(
   };
 
   /* ── RAISE ── */
-  if (opts.bike || patterns.has("cardio")) {
+  // Einrollen nur, wo ein Bike steht — die Einstellung gilt für Orte mit Bike,
+  // im Studio ohne Rad soll es keinen Rad-Drill geben.
+  if ((opts.bike && hasEq("bike")) || patterns.has("cardio")) {
     // Frisch → kürzer einrollen; müde → die vollen 3 Minuten.
     add(b === "high" ? { ...D.bike_easy, durationSec: 120 } : D.bike_easy);
   } else {

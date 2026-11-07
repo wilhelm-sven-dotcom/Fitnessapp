@@ -51,6 +51,8 @@ await page.addInitScript(() => {
       benchMigrated: true,
       themeMigratedM72: true,
       splash: "aus",
+      // Ein Ort (nur „Zuhause“) → keine Ortsfrage; die prüft pruefe-ort.mjs.
+      orteM1: true,
     }),
   );
 });

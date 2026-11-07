@@ -5,7 +5,7 @@
  *   npm run build && npm run smoke
  *
  * Startet selbst `next start` auf Port 3199, fährt die Kern-Reise ab:
- * Boot ohne Splash → Heute angesetzt → Editor-Tausch → Training starten →
+ * Boot ohne Splash → Ortsfrage (Zuhause) → Heute angesetzt → Editor-Tausch → Training starten →
  * Check-in überspringen → Aufwärmen → Satz loggen (Inline-Pause, ATLAS-Zeile)
  * → Reload mitten in der Einheit (Resume!) → Abschluss speichern → Verlauf
  * zeigt die Einheit → Katalog-Filter + eigene Übung → Alt-Log (A/B/C) rendert.
@@ -113,14 +113,23 @@ try {
   });
   console.log(`OK boot: Inhalt nach ${Date.now() - t0} ms, kein Splash`);
 
-  // ── 2 · Heute: komponierte Einheit mit ≥3 Übungen + why-Zeilen ──
+  // ── 2 · Ortsfrage: zwei vorbelegte Orte → erst wählen, dann komponieren ──
+  step = "ort";
+  await page.getByText("Wo trainierst du heute?", { exact: false }).first().waitFor({ timeout: 5000 });
+  const vorWahl = (await page.textContent("body")) ?? "";
+  if (/Training starten/.test(vorWahl)) throw new Error("Einheit steht schon vor der Ortswahl");
+  await page.getByRole("button", { name: /^Studio/ }).first().waitFor({ timeout: 3000 });
+  await page.getByRole("button", { name: /^Zuhause/ }).first().click();
+  console.log("OK ort: Frage steht, Zuhause gewählt");
+
+  // ── 3 · Heute: komponierte Einheit mit ≥3 Übungen + why-Zeilen ──
   step = "heute";
   await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 8000 });
   const items = await page.locator("main, body").first().textContent();
   if (!/0[123]/.test(items ?? "")) throw new Error("Nummerierte Übungsliste fehlt");
   console.log("OK heute: Einheit frisch komponiert (Fallback-Generator)");
 
-  // ── 3 · Editor: Übung tauschen greift ──
+  // ── 4 · Editor: Übung tauschen greift ──
   step = "editor";
   await page.getByText("Bearbeiten", { exact: false }).first().click();
   await page.getByText("Einheit bearbeiten").waitFor({ timeout: 5000 });
@@ -145,7 +154,7 @@ try {
   await page.waitForTimeout(500);
   console.log("OK editor: Tausch im Edit-Sheet greift");
 
-  // ── 4 · Start → Check-in überspringen → Aufwärmen → Bühne ──
+  // ── 5 · Start → Check-in überspringen → Aufwärmen → Bühne ──
   step = "start";
   await page.getByText("Training starten", { exact: false }).first().click();
   await page.waitForURL("**/workout", { timeout: 8000 });
@@ -155,7 +164,7 @@ try {
   await page.getByTestId("stage-order").waitFor({ timeout: 8000 });
   console.log("OK start: Check-in übersprungen, Bühne zeigt Übung 1");
 
-  // ── 5 · Satz loggen → Inline-Pause + ATLAS-Zeile (kein Overlay) ──
+  // ── 6 · Satz loggen → Inline-Pause + ATLAS-Zeile (kein Overlay) ──
   step = "satz";
   const inputs = page.locator(".set-active input");
   if ((await inputs.count()) >= 2) {
@@ -171,13 +180,13 @@ try {
   if (!/ATLAS/.test(stageTxt)) throw new Error("ATLAS-Panel fehlt");
   console.log("OK satz: Inline-Pause läuft, ATLAS-Zeile steht");
 
-  // ── 6 · Reload mitten in der Einheit → Resume intakt ──
+  // ── 7 · Reload mitten in der Einheit → Resume intakt ──
   step = "resume";
   await page.reload({ waitUntil: "networkidle" });
   await page.getByTestId("stage-order").waitFor({ timeout: 8000 });
   console.log("OK resume: Einheit nach Reload nahtlos fortgesetzt");
 
-  // ── 7 · Abschluss speichern → Sieger-Moment ──
+  // ── 8 · Abschluss speichern → Sieger-Moment ──
   step = "abschluss";
   await page.getByLabel("Training beenden").click();
   await page.getByText("Zum Abschluss").first().click();
@@ -187,16 +196,17 @@ try {
   await page.waitForTimeout(1500);
   console.log("OK abschluss: Einheit gespeichert");
 
-  // ── 8 · Verlauf: neue UND Alt-Format-Einheit rendern ──
+  // ── 9 · Verlauf: neue UND Alt-Format-Einheit rendern, Ort steht dabei ──
   step = "verlauf";
   await page.goto(BASE + "/fortschritt", { waitUntil: "networkidle" });
   await page.getByText("Verlauf", { exact: true }).first().click();
   await page.waitForTimeout(600);
   const hist = (await page.textContent("body")) ?? "";
   if (!/Ganzkörper A/.test(hist)) throw new Error("Alt-Format-Einheit (A/B/C) fehlt im Verlauf");
-  console.log("OK verlauf: neue + alte Einheiten in der Timeline");
+  if (!/Zuhause/.test(hist)) throw new Error("Ort der gespeicherten Einheit fehlt im Verlauf");
+  console.log("OK verlauf: neue + alte Einheiten in der Timeline, Ort „Zuhause“");
 
-  // ── 9 · Katalog: Filter + eigene Übung ──
+  // ── 10 · Katalog: Filter + eigene Übung ──
   step = "katalog";
   await page.goto(BASE + "/uebungen", { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
@@ -209,7 +219,7 @@ try {
   if (!/1 eigene/.test(kat)) throw new Error("Eigene-Zähler fehlt");
   console.log("OK katalog: Filter-Seite + eigene Übung");
 
-  // ── 10 · Einstellungen rendern (Theme, Geräte, ATLAS-Sektion) ──
+  // ── 11 · Einstellungen rendern (Theme, Orte & Geräte, ATLAS-Sektion) ──
   step = "settings";
   await page.goto(BASE + "/settings", { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
@@ -217,7 +227,7 @@ try {
   if (!/ATLAS/.test(set) || !/Geräte/.test(set)) throw new Error("Settings unvollständig");
   console.log("OK settings: Seite vollständig");
 
-  // ── 11 · Startbild: erscheint beim Kaltstart und räumt sich selbst ab ──
+  // ── 12 · Startbild: erscheint beim Kaltstart und räumt sich selbst ab ──
   step = "startbild";
   const splashCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await splashCtx.addInitScript(() => {
