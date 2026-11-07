@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { toast } from "@/lib/toast";
+import { Kicker } from "@/components/ui/Kicker";
 
 const inputCls =
   "rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-volume";
@@ -30,9 +31,9 @@ export function CloudSyncSection() {
   if (!cloud.configured) {
     return (
       <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+        <Kicker as="h2" className="mb-2">
           Cloud-Sync
-        </p>
+        </Kicker>
         <p className="text-xs leading-relaxed text-muted">
           Noch nicht eingerichtet. Hinterlege{" "}
           <span className="font-mono text-muted">NEXT_PUBLIC_SUPABASE_URL</span> und{" "}
@@ -104,7 +105,9 @@ export function CloudSyncSection() {
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">Cloud-Sync</p>
+      <Kicker as="h2" className="mb-3">
+        Cloud-Sync
+      </Kicker>
 
       {cloud.email ? (
         <div className="space-y-3">

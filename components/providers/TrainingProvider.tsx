@@ -316,6 +316,9 @@ interface TrainingContextValue {
   setDuckSpotify: (on: boolean) => void;
   setAiPlanning: (on: boolean) => void;
   setCoachLive: (on: boolean) => void;
+  /** EIN Schalter für ATLAS im Training: Zuspruch zwischen den Sätzen UND
+   *  Live-Reaktion — schreibt beide Felder in einem Settings-Write. */
+  setAtlasImTraining: (on: boolean) => void;
   /** Die heutige, frisch komponierte Einheit (ATLAS / Fallback / manuell). */
   todaySession: DailySession | null;
   /** Persistiert mit (KEYS.today). `null` löscht die heutige Einheit. */
@@ -1214,6 +1217,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveSettings({ ...settings, aiPlanning: on });
     const setCoachLive = (on: boolean) =>
       void saveSettings({ ...settings, coachLive: on });
+    const setAtlasImTraining = (on: boolean) =>
+      void saveSettings({ ...settings, coachLive: on, coachMotivation: on });
     const setVoiceCues = (on: boolean) =>
       void saveSettings({ ...settings, voiceCues: on });
     const setCueVolume = (v: number) =>
@@ -1607,6 +1612,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setDuckSpotify,
       setAiPlanning,
       setCoachLive,
+      setAtlasImTraining,
       todaySession,
       setTodaySession,
       jumps,

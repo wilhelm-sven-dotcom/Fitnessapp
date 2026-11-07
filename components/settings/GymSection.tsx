@@ -3,12 +3,14 @@
 import { Volume2 } from "lucide-react";
 import { beepStart, primeAudio } from "@/lib/beep";
 import { Button } from "@/components/ui/Button";
-import { Pressable } from "@/components/ui/pressable";
+import { Kicker } from "@/components/ui/Kicker";
+import { Segment } from "@/components/ui/Segment";
 import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 
-/** Gym-Modus: alles, was WÄHREND einer Einheit wirkt (Ansagen, Töne,
- *  Ducking, Wake Lock, Gewichtsstufe) — 1:1 aus der Settings-Seite extrahiert. */
+/** Gym-Modus: alles, was WÄHREND einer Einheit wirkt (Ansagen, Töne, Wake
+ *  Lock, Gewichtsstufe). Musik-Absenkung steht bei Spotify, ATLAS im
+ *  Training bei ATLAS — dort, wo man sie sucht. */
 export function GymSection() {
   const {
     settings,
@@ -16,16 +18,14 @@ export function GymSection() {
     setCueVolume,
     setWeightStep,
     setBikeWarmup,
-    setDuckSpotify,
-    setCoachMotivation,
     setKeepAwake,
   } = useTraining();
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-4 font-mono text-xs uppercase tracking-widest text-muted">
+      <Kicker as="h2" className="mb-4">
         Gym-Modus
-      </p>
+      </Kicker>
       <div className="space-y-5">
         <Toggle
           checked={!!settings.voiceCues}
@@ -34,22 +34,10 @@ export function GymSection() {
           hint="Sagt den Pausen-Countdown und neue Rekorde an — freihändig im Gym. Browser muss Sprachausgabe unterstützen."
         />
         <Toggle
-          checked={settings.duckSpotify !== false}
-          onChange={setDuckSpotify}
-          label="Musik leiser bei Countdown"
-          hint="Senkt Spotify in den letzten Sekunden kurz ab und stellt danach zurück — braucht Premium und ein aktives Gerät."
-        />
-        <Toggle
           checked={!!settings.bikeWarmup}
           onChange={setBikeWarmup}
           label="Auf dem Bike aufwärmen"
-          hint="Stellt jeder Einheit ein lockeres 3-Minuten-Einrollen auf dem Peloton voran (Bike muss im Gym aktiv sein)."
-        />
-        <Toggle
-          checked={settings.coachMotivation !== false}
-          onChange={setCoachMotivation}
-          label="ATLAS-Zuspruch im Training"
-          hint="ATLAS spornt dich zwischen den Sätzen kurz an — nur als Text, stört die Musik nie. Jederzeit abschaltbar."
+          hint="Stellt jeder Einheit ein lockeres 3-Minuten-Einrollen voran — nur an Orten, deren Geräteliste ein Bike hat."
         />
         <Toggle
           checked={settings.keepAwake !== false}
@@ -62,23 +50,15 @@ export function GymSection() {
           <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
             Kleinste Hantelstufe, die du laden kannst — die Vorschläge runden darauf.
           </p>
-          <div className="flex gap-1 rounded-card bg-surface-2 p-1">
-            {[1.25, 2.5, 5].map((s) => {
-              const active = (settings.weightStep ?? 2.5) === s;
-              return (
-                <Pressable
-                  key={s}
-                  onClick={() => setWeightStep(s)}
-                  className={
-                    "flex-1 rounded-card py-2 text-sm font-medium tabular-nums focus:outline-none " +
-                    (active ? "bg-strong text-on-strong" : "text-muted")
-                  }
-                >
-                  {`${s}`.replace(".", ",")} kg
-                </Pressable>
-              );
-            })}
-          </div>
+          <Segment
+            label="Gewichtsstufe"
+            options={[1.25, 2.5, 5].map((s) => ({
+              value: s,
+              label: `${String(s).replace(".", ",")} kg`,
+            }))}
+            value={settings.weightStep ?? 2.5}
+            onChange={setWeightStep}
+          />
         </div>
         <div>
           <div className="flex items-center justify-between gap-3">
@@ -98,28 +78,17 @@ export function GymSection() {
           <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
             Countdown-Töne im Aufwärmen und beim Sprungtest — lauter stellen, wenn nebenbei Musik läuft.
           </p>
-          <div className="flex gap-1 rounded-card bg-surface-2 p-1">
-            {[
-              { v: 0.5, l: "Leise" },
-              { v: 1, l: "Normal" },
-              { v: 2, l: "Laut" },
-              { v: 3, l: "Max" },
-            ].map((o) => {
-              const active = (settings.cueVolume ?? 1) === o.v;
-              return (
-                <Pressable
-                  key={o.l}
-                  onClick={() => setCueVolume(o.v)}
-                  className={
-                    "flex-1 rounded-card py-2 text-sm font-medium focus:outline-none " +
-                    (active ? "bg-strong text-on-strong" : "text-muted")
-                  }
-                >
-                  {o.l}
-                </Pressable>
-              );
-            })}
-          </div>
+          <Segment
+            label="Signalton-Lautstärke"
+            options={[
+              { value: 0.5, label: "Leise" },
+              { value: 1, label: "Normal" },
+              { value: 2, label: "Laut" },
+              { value: 3, label: "Max" },
+            ]}
+            value={settings.cueVolume ?? 1}
+            onChange={setCueVolume}
+          />
         </div>
       </div>
     </section>

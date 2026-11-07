@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Pressable } from "@/components/ui/pressable";
+import { Kicker } from "@/components/ui/Kicker";
+import { Segment } from "@/components/ui/Segment";
 import { CloudSyncSection } from "@/components/settings/CloudSyncSection";
 import { StravaSection } from "@/components/settings/StravaSection";
 import { SpotifySection } from "@/components/settings/SpotifySection";
@@ -17,7 +18,6 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 
 /** Vier ruhige Segmente statt zwölf gestapelter Karten (Muster: Fortschritt).
  *  Körperdaten werden nicht mehr hier erfasst — das lebt bei Fortschritt →
@@ -27,7 +27,7 @@ type Segment = "training" | "aussehen" | "verbindungen" | "daten";
 const SEGMENTS: { key: Segment; label: string }[] = [
   { key: "training", label: "Training" },
   { key: "aussehen", label: "Aussehen" },
-  { key: "verbindungen", label: "Verbindungen" },
+  { key: "verbindungen", label: "Dienste" },
   { key: "daten", label: "Daten" },
 ];
 
@@ -81,30 +81,23 @@ function SettingsContent() {
 
   return (
     <div>
-      <PageHeader title="Einstellungen" eyebrow="Einstellungen" />
+      <PageHeader title="Einstellungen" eyebrow="Deine App" />
 
-      <div className="mb-4 flex overflow-hidden rounded-card border border-line-card bg-surface-1 p-1">
-        {SEGMENTS.map((s) => (
-          <Pressable
-            key={s.key}
-            onClick={() => setSeg(s.key)}
-            aria-pressed={seg === s.key}
-            className={cn(
-              "min-w-0 flex-1 truncate rounded-card py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-ink",
-              seg === s.key ? "bg-surface-2 text-fg" : "text-muted",
-            )}
-          >
-            {s.label}
-          </Pressable>
-        ))}
-      </div>
+      <Segment
+        label="Bereich"
+        options={SEGMENTS.map((s) => ({ value: s.key, label: s.label }))}
+        value={seg}
+        onChange={setSeg}
+        className="mb-4"
+      />
 
+      {/* Orte zuerst: die meistgebrauchte Einstellung seit der Ortswahl. */}
       {seg === "training" && (
         <>
-          <ProfileSection />
-          <AtlasSection />
           <EquipmentSection />
+          <AtlasSection />
           <GymSection />
+          <ProfileSection />
         </>
       )}
 
@@ -121,9 +114,9 @@ function SettingsContent() {
       {seg === "daten" && (
         <>
           <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+            <Kicker as="h2" className="mb-2">
               Daten
-            </p>
+            </Kicker>
             <p className="mb-3 text-xs leading-relaxed text-muted">
               Alle Einheiten liegen auf diesem Gerät. Sichere sie als Datei
               oder spiele ein Backup zurück.
@@ -176,9 +169,9 @@ function SettingsContent() {
           </Sheet>
 
           <section className="rounded-card border border-line-card bg-surface-1 p-5">
-            <p className="mb-2 font-mono text-xs uppercase tracking-widest text-muted">
+            <Kicker as="h2" className="mb-2">
               Als App installieren
-            </p>
+            </Kicker>
             <p className="text-xs leading-relaxed text-muted">
               iPhone: in Safari unten auf „Teilen“ tippen → „Zum Home-Bildschirm“.
               Android: im Chrome-Menü „App installieren“. Danach startet Training im
