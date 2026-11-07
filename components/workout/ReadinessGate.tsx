@@ -3,6 +3,7 @@
 import { Bike, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { JumpCheck } from "@/components/workout/JumpCheck";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { Toggle } from "@/components/ui/Toggle";
@@ -55,7 +56,7 @@ export function ReadinessGate({
       <p className="mb-4 text-sm text-muted">
         Kurz einschätzen — die Einheit passt sich an.
       </p>
-      {/* Zünd-Check: gemessene Tagesform — das Ergebnis setzt die
+      {/* Sprungtest: gemessene Tagesform — das Ergebnis setzt die
           Energie-Ampel automatisch (bleibt von Hand übersteuerbar). */}
       <JumpCheck
         baseline={jumpBaseline(jumps)}
@@ -119,19 +120,12 @@ export function ReadinessGate({
           Stattdessen: Rücken-Reset — ganz ohne Gewichte
         </Pressable>
       )}
-      <Pressable
-        onClick={submit}
-        disabled={!complete}
-        className="mt-5 w-full rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
-      >
-        Zur Kalibrierung
-      </Pressable>
-      <Pressable
-        onClick={onClose}
-        className="mt-2 w-full rounded-card py-2.5 text-sm text-muted focus:outline-none"
-      >
+      <Button size="lg" full onClick={submit} disabled={!complete} className="mt-5">
+        Weiter zum Aufwärmen
+      </Button>
+      <Button variant="ghost" full onClick={onClose} className="mt-2">
         Überspringen
-      </Pressable>
+      </Button>
     </Sheet>
   );
 }

@@ -1,3 +1,4 @@
+import { fmtGewicht } from "@/lib/format";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import type { Exercise, LoggedSession, SetEntry } from "@/lib/types";
 
@@ -66,7 +67,7 @@ function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label
     const m = kind === "weight" ? oneRm(w, r) : r;
     if (m > best) {
       best = m;
-      label = kind === "weight" ? `${w} × ${r}` : kind === "time" ? `${r} s` : `${r} Wdh`;
+      label = kind === "weight" ? `${fmtGewicht(w)} × ${r}` : kind === "time" ? `${r} s` : `${r} Wdh`;
     }
   }
   return { value: kind === "weight" ? Math.round(best) : best, label };

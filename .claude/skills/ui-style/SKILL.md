@@ -273,7 +273,7 @@ spricht schlicht, das Design bleibt unverändert.
 | Einheit · „Deine Einheit heute" · „Einheit 12" | Studie, Platte Nr. |
 | Training starten / fortsetzen | Studie beginnen |
 | Satz · „Satz 2" · „10 Sätze" · „Aufw." | Kader, Kalibr. |
-| Pause | Verschlusszeit |
+| Pause · „Pause beenden“ | Verschlusszeit |
 | Aufwärmen | Kalibrierung der Apparatur, Akt I, Apparat n |
 | Übung 1/5 · „Übung läuft" | Bühne, Akt II, Zoetrop 8 B/s |
 | Rekord · „Neuer Rekord" · „Persönlicher Rekord" | Maximum, Tafel des Maximums |
@@ -281,6 +281,8 @@ spricht schlicht, das Design bleibt unverändert.
 | Abschluss · „Beenden & speichern" | Auswertung, Platte archivieren |
 | Plan · „Basisplan (offline)" | Versuchsanordnung, Basisprotokoll |
 | ATLAS · Coach | Studienleiter |
+| Sprungtest | Zünd-Check, Zündung |
+| Weiter zum Aufwärmen · Training verlassen | Zur Kalibrierung · Studie verlassen |
 | Wochen-Rückblick | Wochen-Protokoll (Folio) |
 | Hell / Dunkel | Archiv / Atelier |
 | Muskeln | Myologie |
@@ -348,11 +350,35 @@ z-Ordnung: Sticky-Kopf 20 < Dock 30 < Sheets 50.
   (Vorher/Weiter) unten bleibt fürs Springen — das ist kein Duplikat,
   sondern eine andere Absicht.
 
+## Fokus-Modus: eine Frage, ein Rezept, ein Komma
+
+- **„Wie schwer war's?“ fragt EINMAL — im Pausenfeld direkt nach dem Satz.**
+  Vorher stand die RIR-/Intensitäts-Skala bis zu dreimal gleichzeitig im
+  Bild (unter dem erledigten Satz, im offenen Satz, im Pausenfeld). Erledigte
+  Sätze zeigen den Wert als Text („22,5 kg × 8 · RIR 2“); die Skala erscheint
+  im offenen Satz nur, wenn ein schon eingetragener Satz korrigiert wird.
+  `setFieldEffort` plant die ATLAS-Reaktion neu, wenn die Bewertung nach dem
+  Eintrag kommt — das Modell sieht sie also trotzdem.
+- Der Knopf im Pausenfeld heißt „Pause beenden“ — „Weiter“ bleibt dem
+  Blätter-Knopf (nächste offene Übung) vorbehalten, zwei gleiche Wörter mit
+  zwei Bedeutungen gab es vorher.
+- Jede Hauptaktion des Ablaufs ist ein `Button` (Check-in „Weiter zum
+  Aufwärmen“, Blättern, „Zur ersten Übung“, „Nächste Übung“, „Beenden &
+  speichern“, Abbruch-Sheet) — vorher wechselten dunkle Satzschrift-Blöcke
+  und rote Versal-Pillen von Schritt zu Schritt.
+- Gewichte in der Oberfläche immer über `fmtGewicht` (lib/format.ts): Komma,
+  bis zwei Nachkommastellen („81,25“ bei 1,25er-Stufen — `fmtKg` rundet auf
+  eine Stelle und ist für berechnete Werte). Eingabefelder bleiben
+  `type="number"`, das Format gehört der Anzeige.
+
 ## ATLAS-Kontext: jede Zahl trägt ihre Einheit
 
 Was ins Modell geht (`lib/atlas/transcript.ts`, `lib/trainer.ts`), schreibt
 Einheiten AUS: `80 kg × 12 Wdh`, ohne Gewicht `12 Wdh`, gehalten `45 s`,
 Plan als `3 Sätze à 8–12 Wdh`.
+
+Das gilt auch für abgeleitete Texte: der Rekord-Text der Oberfläche
+(„82,5 × 8“) geht als „Bestwert: 82,5 kg × 8 Wdh“ ins Transkript.
 
 **Warum das eine harte Regel ist:** vorher stand im selben Transkript
 `80×12` (Gewicht × Wiederholungen) und `3×8–12` (Sätze × Wiederholungen) —

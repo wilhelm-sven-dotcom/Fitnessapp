@@ -16,7 +16,7 @@ import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { SessionComplete, type SiegerTafel } from "@/components/workout/SessionComplete";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
-import { Pressable } from "@/components/ui/pressable";
+import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
@@ -951,6 +951,7 @@ export function SessionRunner() {
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
         weightStep={settings.weightStep ?? 2.5}
+        zoetropOn={settings.zoetrope !== false}
         onOpenGuide={() => setGuideOpen(true)}
         onSwap={
           !isExam && ex.pattern !== "cardio" && stagePool.some((e) => e.id !== ex.id)
@@ -995,28 +996,26 @@ export function SessionRunner() {
       />
 
       <div className="flex items-center gap-2 pt-1">
-        <Pressable
+        <Button
+          variant="secondary"
           onClick={goPrev}
           disabled={st.currentIndex === 0}
           aria-label="Vorherige Übung"
-          className="flex shrink-0 items-center justify-center rounded-card bg-surface-2 px-4 py-3.5 text-fg focus:outline-none disabled:opacity-30"
+          className="shrink-0 px-4 py-3.5"
         >
-          <ChevronLeft size={18} />
-        </Pressable>
-        <Pressable
-          onClick={goNext}
-          className="flex flex-1 items-center justify-center gap-2 rounded-card bg-strong py-3.5 text-sm font-semibold text-on-strong focus:outline-none"
-        >
+          <ChevronLeft size={18} aria-hidden />
+        </Button>
+        <Button variant="strong" onClick={goNext} className="flex-1 py-3.5">
           {openLeft === 0 ? (
             <>
-              <Flag size={16} /> Zum Abschluss
+              <Flag size={16} aria-hidden /> Zum Abschluss
             </>
           ) : (
             <>
-              Weiter <ChevronRight size={16} strokeWidth={2.5} />
+              Weiter <ChevronRight size={16} strokeWidth={2.5} aria-hidden />
             </>
           )}
-        </Pressable>
+        </Button>
       </div>
 
       {rest && (
@@ -1081,27 +1080,22 @@ export function SessionRunner() {
               Beenden speichert diese — der Rest wird verworfen.
             </p>
             <div className="flex flex-col gap-2">
-              <Pressable
+              <Button
+                variant="strong"
+                full
                 onClick={() => {
                   setExitOpen(false);
                   patch((s) => ({ ...s, phase: "finish" }));
                 }}
-                className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
                 Zum Abschluss
-              </Pressable>
-              <Pressable
-                onClick={() => setExitOpen(false)}
-                className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
+              </Button>
+              <Button variant="secondary" full onClick={() => setExitOpen(false)}>
                 Weiter trainieren
-              </Pressable>
-              <Pressable
-                onClick={doDiscard}
-                className="rounded-card py-2 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
+              </Button>
+              <Button variant="danger" full onClick={doDiscard}>
                 Ohne Speichern verwerfen
-              </Pressable>
+              </Button>
             </div>
           </>
         ) : (
@@ -1111,18 +1105,12 @@ export function SessionRunner() {
               nichts gespeichert.
             </p>
             <div className="flex flex-col gap-2">
-              <Pressable
-                onClick={doDiscard}
-                className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
-                Studie verlassen
-              </Pressable>
-              <Pressable
-                onClick={() => setExitOpen(false)}
-                className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
+              <Button variant="strong" full onClick={doDiscard}>
+                Training verlassen
+              </Button>
+              <Button variant="secondary" full onClick={() => setExitOpen(false)}>
                 Weiter trainieren
-              </Pressable>
+              </Button>
             </div>
           </>
         )}

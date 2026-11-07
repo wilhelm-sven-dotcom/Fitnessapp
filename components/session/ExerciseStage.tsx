@@ -5,11 +5,12 @@ import { Check, ChevronRight, Repeat, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { SetRow } from "@/components/workout/SetRow";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { PATTERN_LABEL } from "@/lib/exercises";
-import { fmtKg } from "@/lib/format";
+import { fmtGewicht } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
 import { figurFor } from "@/lib/phasen/figuren";
 import { isFilled } from "@/lib/stats";
@@ -127,7 +128,7 @@ export function ExerciseStage({
     const kg = Number(top.weight) || 0;
     const rir = top.rir != null ? ` · RIR ${top.rir}` : "";
     return kg > 0
-      ? `${fmtKg(kg)} × ${top.reps}${rir}`
+      ? `${fmtGewicht(kg)} × ${top.reps}${rir}`
       : `${top.reps} Wdh${rir}`;
   };
   const lastInline = (() => {
@@ -295,10 +296,7 @@ export function ExerciseStage({
           um die nächste Übung aufzurufen. Der Blätter-Knopf unten bleibt fürs
           Vor- und Zurückspringen, dieser ist der Abschluss der Übung. */}
       {alleBelichtet && (
-        <Pressable
-          onClick={onNext}
-          className="mt-2.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-card bg-accent-sessions px-4 py-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie active:bg-accent-press"
-        >
+        <Button full onClick={onNext} className="mt-2.5 min-h-11 py-3">
           {nextExName ? (
             <>
               <span className="shrink-0">Nächste Übung</span>
@@ -309,10 +307,10 @@ export function ExerciseStage({
             </>
           ) : (
             <>
-              <Check size={15} strokeWidth={2.5} /> Zum Abschluss
+              <Check size={15} strokeWidth={2.5} aria-hidden /> Zum Abschluss
             </>
           )}
-        </Pressable>
+        </Button>
       )}
 
       {/* Fußzeile: Guide links, Schnell-Tausch rechts — bewusst AUSSERHALB der

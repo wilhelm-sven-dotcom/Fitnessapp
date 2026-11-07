@@ -1243,7 +1243,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           : settings.athleteProfile,
       });
 
-    /** Zünd-Check: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
+    /** Sprungtest: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
     const addJump = (heightCm: number) => {
       const next = [...jumps, { date: new Date().toISOString(), heightCm }].slice(-60);
       setJumps(next);

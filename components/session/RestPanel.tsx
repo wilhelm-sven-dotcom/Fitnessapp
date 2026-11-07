@@ -113,30 +113,27 @@ export function RestPanel({
               );
             })}
           </div>
-          <div className="mt-2 flex justify-between font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
-            <span>
-              <span className="tabular-nums">{STRICHE}</span> Striche · 1/s
-            </span>
+          <div className="mt-2 flex justify-end font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
             <span className="tabular-nums">Pause {total} s</span>
           </div>
 
           <div className="mt-3 flex items-center gap-2">
             <Pressable
               onClick={onAdd}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-pill border border-strong px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+              className="flex min-h-11 flex-none items-center justify-center gap-1 rounded-pill border border-strong px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg"
             >
               <Plus size={13} /> 15 s
             </Pressable>
             <Pressable
               onClick={onSkip}
               className={cn(
-                "flex min-h-11 flex-1 items-center justify-center gap-1 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+                "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2",
                 over
                   ? "bg-accent-sessions text-on-accent active:bg-accent-press"
                   : "border border-line text-muted",
               )}
             >
-              <FastForward size={13} /> Weiter
+              <FastForward size={14} aria-hidden /> Pause beenden
             </Pressable>
           </div>
 

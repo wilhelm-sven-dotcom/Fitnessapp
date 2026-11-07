@@ -8,6 +8,7 @@ import { TimedSet } from "./TimedSet";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
+import { fmtGewicht } from "@/lib/format";
 import { tick } from "@/lib/haptics";
 import { SPRING } from "@/lib/motion";
 import type { SetEntry, Unit } from "@/lib/types";
@@ -39,9 +40,14 @@ const inputClass =
   "min-w-0 flex-1 rounded-pill bg-transparent py-1 text-center font-mono text-readout font-bold leading-none tabular-nums text-fg placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
 
 /** One logged set in three states — das Kader-Logbuch: ein belichteter Kader
- *  ist eine kompakte Registerzeile (Anstrengung bleibt editierbar), der
- *  OFFENE KADER ist das Instrument mit Siegellack-Rahmen (Fokus.dc), ein
- *  kommender Kader eine stille Geisterzeile. */
+ *  ist eine kompakte Registerzeile (Antippen = korrigieren), der OFFENE KADER
+ *  ist das Instrument mit Siegellack-Rahmen (Fokus.dc), ein kommender Kader
+ *  eine stille Geisterzeile.
+ *
+ *  „Wie schwer war's?“ fragt EINMAL: im Pausenfeld direkt nach dem Satz.
+ *  Vorher stand die Skala bis zu dreimal gleichzeitig im Bild (unter dem
+ *  erledigten Satz, im offenen Satz, im Pausenfeld). Hier erscheint sie nur
+ *  noch, wenn ein schon eingetragener Satz korrigiert wird. */
 export function SetRow({
   label,
   isWarmup,
@@ -177,8 +183,17 @@ export function SetRow({
     const summary = timed
       ? `${set.reps} s`
       : set.weight !== "" && set.weight != null
-        ? `${set.weight} kg × ${set.reps}`
+        ? `${fmtGewicht(set.weight)} kg × ${set.reps}`
         : `${set.reps} Wdh`;
+    const anstrengung = isWarmup
+      ? null
+      : timed
+        ? set.intensity != null
+          ? `Int ${set.intensity}`
+          : null
+        : set.rir != null
+          ? `RIR ${set.rir}`
+          : null;
     return (
       <div>
         <Pressable
@@ -192,6 +207,7 @@ export function SetRow({
           </span>
           <span className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-fg">
             {summary}
+            {anstrengung && <span className="text-muted"> · {anstrengung}</span>}
           </span>
           {isRecord && (
             <motion.span
@@ -204,12 +220,6 @@ export function SetRow({
             </motion.span>
           )}
         </Pressable>
-        {!isWarmup &&
-          (timed ? (
-            <Scale className="pl-12" label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
-          ) : (
-            <Scale className="pl-12" label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
-          ))}
       </div>
     );
   }
@@ -221,7 +231,7 @@ export function SetRow({
         ? `${ghostReps} s`
         : "—"
       : ghostWeight
-        ? `${ghostWeight} × ${ghostReps ?? ""}`.trim()
+        ? `${fmtGewicht(ghostWeight)} × ${ghostReps ?? ""}`.trim()
         : (ghostReps ?? "—");
     return (
       <Pressable
@@ -353,12 +363,16 @@ export function SetRow({
             const v = oneTapValues();
             if (!v) return null;
             return v.weight
-              ? `Satz protokollieren · ${v.weight} kg × ${v.reps}`
+              ? `Satz protokollieren · ${fmtGewicht(v.weight)} kg × ${v.reps}`
               : `Satz protokollieren · ${v.reps} Wdh`;
           })()}
         </Button>
       )}
+      {/* Skala nur beim KORRIGIEREN eines eingetragenen Satzes — frische
+          Sätze bewertet das Pausenfeld (eine Frage, eine Stelle). */}
       {!isWarmup &&
+        set.reps !== "" &&
+        set.reps != null &&
         (timed ? (
           <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
         ) : (

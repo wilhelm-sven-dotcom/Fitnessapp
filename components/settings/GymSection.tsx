@@ -96,7 +96,7 @@ export function GymSection() {
             </Button>
           </div>
           <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
-            Countdown-Töne im Aufwärmen und beim Zünd-Check — lauter stellen, wenn nebenbei Musik läuft.
+            Countdown-Töne im Aufwärmen und beim Sprungtest — lauter stellen, wenn nebenbei Musik läuft.
           </p>
           <div className="flex gap-1 rounded-card bg-surface-2 p-1">
             {[

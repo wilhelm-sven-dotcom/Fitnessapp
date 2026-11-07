@@ -5,6 +5,7 @@ import { Pause, Play, Volume2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
@@ -164,12 +165,9 @@ export function WarmupPlayer({
         <p className="max-w-xs font-mono text-2xs uppercase tracking-gesperrt text-muted">
           Jetzt kann es losgehen.
         </p>
-        <Pressable
-          onClick={onFinished ?? onClose}
-          className="mt-2 rounded-pill bg-accent-sessions px-6 py-3 font-mono text-sm font-semibold uppercase tracking-gesperrt-3 text-on-accent active:bg-accent-press focus:outline-none"
-        >
+        <Button size="lg" onClick={onFinished ?? onClose} className="mt-2 px-6 tracking-gesperrt-3">
           Zur ersten Übung
-        </Pressable>
+        </Button>
       </div>
     );
   }

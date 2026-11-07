@@ -23,7 +23,7 @@ export function Scale({
 }) {
   return (
     <div className={cn("mt-1.5 flex items-center gap-2", className)}>
-      <span className="shrink-0 font-mono text-xs uppercase tracking-widest text-faint">
+      <span className="shrink-0 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
         {label}
       </span>
       <div className="flex flex-1 gap-1">
@@ -35,7 +35,7 @@ export function Scale({
             className={cn(
               // 44-px-Ziel: der meistgetippte Control im Training — mit
               // Schweiß an den Händen zählt jede Zielfläche.
-              "flex h-11 flex-1 items-center justify-center rounded-pill text-sm font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+              "flex h-11 flex-1 items-center justify-center rounded-pill text-sm font-medium tabular-nums",
               value === o ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
             )}
           >

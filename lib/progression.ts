@@ -10,7 +10,7 @@ import type {
   WorkoutDay,
 } from "@/lib/types";
 import { pickPreferred } from "@/lib/affinity";
-import { fmtKg } from "@/lib/format";
+import { fmtGewicht } from "@/lib/format";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
@@ -381,7 +381,7 @@ export function presc(
           r: String(r),
           suggestedWeight: w,
           reason: "start",
-          line: `Heute: ${ex.sets} × ${ex.repLow}–${ex.repHigh} · Vorschlag ${fmtKg(w)} kg — Startgewicht, 2–3 Wdh im Tank`,
+          line: `Heute: ${ex.sets} × ${ex.repLow}–${ex.repHigh} · Vorschlag ${fmtGewicht(w)} kg — Startgewicht, 2–3 Wdh im Tank`,
         };
       }
     }
@@ -415,7 +415,7 @@ export function presc(
         r: String(ex.repLow),
         suggestedWeight: lastW ? w : undefined,
         reason: "lighter",
-        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW ? w : "?"} kg`,
+        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW ? fmtGewicht(w) : "?"} kg`,
       };
     }
     return {
@@ -454,7 +454,7 @@ export function presc(
         r: String(r),
         suggestedWeight: w,
         reason: adj.reason,
-        line: `Heute: ${ex.sets} × ${r} @ ${w} kg${note}`,
+        line: `Heute: ${ex.sets} × ${r} @ ${fmtGewicht(w)} kg${note}`,
       };
     }
     const r = repOf(adj.repTarget);
@@ -496,7 +496,7 @@ export function presc(
         r: String(r),
         suggestedWeight: w,
         reason: "up",
-        line: `Heute: ${ex.sets} × ${r} @ ${w} kg${opts.cap ? "" : " — hoch!"}`,
+        line: `Heute: ${ex.sets} × ${r} @ ${fmtGewicht(w)} kg${opts.cap ? "" : " — hoch!"}`,
       };
     }
     const tr = repOf(Math.min(ex.repHigh, maxReps + 1));
@@ -506,7 +506,7 @@ export function presc(
       r: String(tr),
       suggestedWeight: lastW ? w : undefined,
       reason: "rep",
-      line: `Heute: ${ex.sets} × ${tr} @ ${lastW ? w : "?"} kg`,
+      line: `Heute: ${ex.sets} × ${tr} @ ${lastW ? fmtGewicht(w) : "?"} kg`,
     };
   }
   const tr = opts.cap

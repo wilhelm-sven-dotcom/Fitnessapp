@@ -34,7 +34,7 @@ import {
   sportLabel,
   type Sport,
 } from "@/lib/cardio-sport";
-import { fmtDate, isoWeek } from "@/lib/format";
+import { fmtDate, fmtGewicht, isoWeek } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
 import { plattenNummern } from "@/lib/platte";
 import { weekStartMon } from "@/lib/volume";
@@ -406,7 +406,7 @@ export function HistoryTab() {
                             ex.unit === "Sek"
                               ? `${st.reps}s`
                               : st.weight
-                                ? `${st.weight}×${st.reps}`
+                                ? `${fmtGewicht(st.weight)}×${st.reps}`
                                 : `${st.reps}`,
                           )
                           .join("  ") || "—"}

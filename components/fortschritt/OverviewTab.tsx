@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Readout } from "@/components/ui/Readout";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { fmtDateShort } from "@/lib/format";
+import { fmtDateShort, fmtGewicht } from "@/lib/format";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
 import { weeklyMuscleVolume } from "@/lib/volume";
 import { cn } from "@/lib/utils";
@@ -125,7 +125,7 @@ export function OverviewTab() {
             const e = oneRm(w, r);
             if (e > best) {
               best = e;
-              bl = `${w} × ${r}`;
+              bl = `${fmtGewicht(w)} × ${r}`;
             }
           });
           value = Math.round(best);

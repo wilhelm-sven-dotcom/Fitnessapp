@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Save } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { doneWorkSets } from "@/lib/active-session";
 import type { ActiveSessionState } from "@/lib/active-session";
@@ -90,18 +91,20 @@ export function FinishFlow({
         />
       </div>
 
-      <Pressable
+      <Button
+        size="lg"
+        full
         onClick={() => onSave(back, note)}
         disabled={saving}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-pill bg-accent-sessions py-4 font-mono text-sm font-semibold uppercase tracking-gesperrt-3 text-on-accent active:bg-accent-press focus:outline-none disabled:opacity-60"
+        className="mt-4 tracking-gesperrt-3"
       >
-        <Save size={18} strokeWidth={2.5} />
+        <Save size={18} strokeWidth={2.5} aria-hidden />
         {saving
           ? "Speichert …"
           : done === 0
             ? "Training verlassen"
             : "Beenden & speichern"}
-      </Pressable>
+      </Button>
     </div>
   );
 }
