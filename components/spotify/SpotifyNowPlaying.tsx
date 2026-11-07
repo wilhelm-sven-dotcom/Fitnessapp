@@ -16,7 +16,7 @@ export function SpotifyNowPlaying() {
   if (!connected) return null;
 
   return (
-    <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-surface-1 p-2.5 shadow-card">
+    <div className="mb-3 flex items-center gap-3 rounded-card border border-line bg-surface-1 p-2.5">
       <span
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-surface-2 bg-cover bg-center text-accent-ink"
         style={now?.artUrl ? { backgroundImage: `url(${now.artUrl})` } : undefined}
@@ -40,19 +40,19 @@ export function SpotifyNowPlaying() {
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">
-        <Pressable onClick={prev} aria-label="Vorheriger Titel" className="rounded-full p-2 text-muted">
+        <Pressable onClick={prev} aria-label="Vorheriger Titel" className="rounded-pill p-2 text-muted">
           <SkipBack size={16} />
         </Pressable>
         {now?.isPlaying ? (
-          <Pressable onClick={pause} aria-label="Pause" className="rounded-full p-2 text-fg">
+          <Pressable onClick={pause} aria-label="Pause" className="rounded-pill p-2 text-fg">
             <Pause size={17} />
           </Pressable>
         ) : (
-          <Pressable onClick={play} aria-label="Abspielen" className="rounded-full p-2 text-fg">
+          <Pressable onClick={play} aria-label="Abspielen" className="rounded-pill p-2 text-fg">
             <Play size={17} />
           </Pressable>
         )}
-        <Pressable onClick={next} aria-label="Nächster Titel" className="rounded-full p-2 text-muted">
+        <Pressable onClick={next} aria-label="Nächster Titel" className="rounded-pill p-2 text-muted">
           <SkipForward size={16} />
         </Pressable>
       </div>

@@ -47,7 +47,7 @@ export function RecordsBoard({
               <Pressable
                 onClick={() => onJump?.(e.exId)}
                 aria-label={`Trend von ${e.name} zeigen`}
-                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-card py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-card py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-fg">{e.name}</p>
@@ -72,7 +72,7 @@ export function RecordsBoard({
             onClick={() => setShowAll((v) => !v)}
             aria-expanded={showAll}
             aria-controls={listId}
-            className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+            className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           >
             <ChevronDown
               size={15}

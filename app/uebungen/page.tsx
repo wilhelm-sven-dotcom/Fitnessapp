@@ -6,6 +6,7 @@ import { CustomExerciseEditor } from "@/components/exercises/CustomExerciseEdito
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ChipToggle } from "@/components/ui/ChipToggle";
 import { Pressable } from "@/components/ui/pressable";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
@@ -34,28 +35,6 @@ const PATTERN_ORDER: Pattern[] = [
   "calf",
   "cardio",
 ];
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Pressable
-      onClick={onClick}
-      className={cn(
-        "shrink-0 rounded-pill px-2.5 py-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
-        active ? "bg-strong text-on-strong" : "border border-line bg-transparent text-muted",
-      )}
-    >
-      {children}
-    </Pressable>
-  );
-}
 
 export default function ExerciseCatalogPage() {
   const { allLib, exerciseVideos, has, disabledExercises, toggleExerciseDisabled } = useTraining();
@@ -139,37 +118,37 @@ export default function ExerciseCatalogPage() {
 
       {/* Filter: Muster · Muskel · nur verfügbare Geräte. */}
       <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
-        <FilterChip active={!patFilter} onClick={() => setPatFilter(null)}>
+        <ChipToggle active={!patFilter} onClick={() => setPatFilter(null)}>
           Alle Muster
-        </FilterChip>
+        </ChipToggle>
         {PATTERN_ORDER.map((p) => (
-          <FilterChip
+          <ChipToggle
             key={p}
             active={patFilter === p}
             onClick={() => setPatFilter((cur) => (cur === p ? null : p))}
           >
             {PATTERN_LABEL[p]}
-          </FilterChip>
+          </ChipToggle>
         ))}
       </div>
       <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
-        <FilterChip active={!muscleFilter} onClick={() => setMuscleFilter(null)}>
+        <ChipToggle active={!muscleFilter} onClick={() => setMuscleFilter(null)}>
           Alle Muskeln
-        </FilterChip>
+        </ChipToggle>
         {MUSCLE_ORDER.map((m) => (
-          <FilterChip
+          <ChipToggle
             key={m}
             active={muscleFilter === m}
             onClick={() => setMuscleFilter((cur) => (cur === m ? null : m))}
           >
             {MUSCLE_LABEL[m]}
-          </FilterChip>
+          </ChipToggle>
         ))}
       </div>
       <div className="mb-4 flex items-center gap-1.5">
-        <FilterChip active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
+        <ChipToggle active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
           Nur mit deinen Geräten
-        </FilterChip>
+        </ChipToggle>
         <span className="ml-auto font-mono text-xs tabular-nums text-faint">
           {shown} Treffer
         </span>
@@ -267,7 +246,7 @@ export default function ExerciseCatalogPage() {
                           setEditorOpen(true);
                         }}
                         aria-label={`${ex.name} bearbeiten`}
-                        className="shrink-0 rounded-full p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                        className="shrink-0 rounded-pill p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                       >
                         <Pencil size={14} />
                       </Pressable>
@@ -278,7 +257,7 @@ export default function ExerciseCatalogPage() {
                         aria-label={`${ex.name} ${off ? "aktivieren" : "deaktivieren"}`}
                         aria-pressed={off}
                         className={cn(
-                          "shrink-0 rounded-full p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+                          "shrink-0 rounded-pill p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
                           off ? "text-status-over" : "text-faint",
                         )}
                       >

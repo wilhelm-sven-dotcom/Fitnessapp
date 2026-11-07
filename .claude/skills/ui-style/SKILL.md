@@ -7,7 +7,8 @@ description: >-
   „Platte 311" — Muybridge-Bewegungslabor: Albumin-Papier hell („Archiv"),
   Kollodium-Dunkelkammer („Atelier", Fokus-Modus immer dunkel), Siegellack-
   Akzent, Cyanotypie & Messing, Old Standard TT (Kursive) + IBM Plex Mono
-  (trägt Body), Radius 3/2/1 px, NULL Schatten, Filmtransport-Motion,
+  (trägt Body), Radius 14/Pille/4 px (weich, aber flach), NULL Schatten,
+  Filmtransport-Motion,
   Phasenfiguren & Phasenband, Marey-Spur als Icon, Startbild in drei
   Choreografien; Bediensprache ist schlichtes Alltagsdeutsch.
   Enthält die echten Tokens, Rezepte, Verbote und Smoke-Invarianten.
@@ -63,8 +64,16 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
   `var(--cyanotypie)`, `--gelb` := `var(--messing)`, `--rot` & `--live` :=
   `var(--accent)`. Neue Arbeit nutzt die echten Namen.
 - `text-accent-ink` = Siegellack als Schriftfarbe (danger-Buttons, aktive Tabs).
-- **Radius:** `rounded-card` **3px** · `rounded-pill` **2px** · `rounded-xs`
-  **1px**. Nichts anderes. Eckig ist Programm.
+- **Radius:** `rounded-card` **14px** (Karten, Sheets, Kacheln, mehrzeilige
+  Felder) · `rounded-pill` **9999px** (Knöpfe, Chips, Segmente, einzeilige
+  Felder, Schalter, Balken) · `rounded-xs` **4px** (Kleinteile: Kader im
+  Phasenband, Farbtupfer, Kalender-Kästchen, Skeleton). Nichts anderes — kein
+  `rounded-full`/`-sm`/`-lg` im JSX, die Tokens sind die einzige Quelle.
+  **Nutzer-Entscheid „runder“ (Nov 2026):** vorher 3/2/1 px („eckig ist
+  Programm“); die Kabinettkarten-Ecke passt ebenso zur Fotografie. Flach
+  bleibt es trotzdem: null Schatten, Trennung über Fäden.
+  **Kader nie als Pille:** bei 64 px Höhe und schmalen Bildern macht der
+  Pillen-Radius aus jedem Filmbild ein Stadion — Kader tragen `rounded-xs`.
 - **Schatten: NULL.** `--panel-shadow(-lg)` = none, `.glass` ist opak.
   Trennung leisten Hairlines.
 
@@ -87,17 +96,33 @@ PWA, Container `max-w-md`, Touch-/Press-zentriert (kein Hover-First).
 
 ## Komponenten-Rezepte (`components/ui/`)
 
-- **Button:** Versal-Mono `tracking-gesperrt-2`, `rounded-pill` (2px).
+- **Button:** Versal-Mono `tracking-gesperrt-2`, `rounded-pill` (Pille).
+  JEDE Hauptaktion ist ein `Button` — keine handgebauten Knopf-Rezepte.
   `primary` Siegellack-Fläche + `active:bg-accent-press` (hart, kein Fade);
   `secondary` 1px `border-strong`, transparent; `ghost` Text Schleier;
   `danger` 1px Rand + Text `accent-ink` (kein roter Block). Kein Schatten.
 - **Card:** `rounded-card border border-line-card bg-surface-1 p-3.5` —
   alle Varianten identisch, kein elevated/glass-Unterschied mehr.
-- **Chip:** `rounded-pill border border-line`, `text-3xs uppercase
-  tracking-gesperrt`; Ton = Schriftfarbe, aktiv Fläche Tinte/Text Grund.
-- **Toggle:** 38×20, `rounded-pill`; Knopf 16px `rounded-xs` (eckig!);
+- **Chip** (Hinweis, nicht bedienbar): `rounded-pill border border-line`,
+  `text-3xs uppercase tracking-gesperrt`; Ton = Schriftfarbe.
+- **ChipToggle** (wählbar, Mehrfachauswahl, Filter): Pille, Versal-Mono
+  `text-3xs`, aktiv `border-strong bg-strong text-on-strong`, inaktiv
+  `border-line text-muted`, `aria-pressed`. Einziges Rezept für Profil,
+  Begrüßung, Katalog-Filter und Übungs-Editor.
+- **Segment** (genau eine Wahl): Pillen-Rahmen `border-line-card
+  bg-surface-1 p-1`, Pillen-Segmente, aktiv Tinte, `aria-pressed`. Einziges
+  Rezept für alle Umschalter (Einstellungen, Ort, Modus, Startbild,
+  Gewichtsstufe, Erfahrung).
+- **Kicker:** `components/ui/Kicker.tsx` — `font-mono text-3xs font-semibold
+  uppercase tracking-gesperrt-2 text-muted`. Jede Abschnitts-Überschrift.
+  Das Alt-Rezept `text-xs uppercase tracking-widest` ist abgelöst.
+- **Toggle:** 38×20, `rounded-pill`; Knopf 16px RUND (`rounded-pill`);
   Wechsel HART ohne Gleiten; an = Siegellack/Knopf on-accent, aus =
   border-line/Knopf Schleier. `role="switch"` bleibt.
+- **`cn()` kennt die eigenen Tokens** (lib/utils.ts, `extendTailwindMerge`):
+  `tracking-gesperrt*`, `rounded-card/pill/xs`, `text-2xs…readout-lg`. Ohne
+  das blieben z. B. `tracking-gesperrt-2` UND `tracking-gesperrt` stehen und
+  die Stylesheet-Reihenfolge gewönne statt der Überschreibung.
 - **Input:** `rounded-pill border border-line bg-transparent px-3 …
   focus-visible:ring-2 focus-visible:ring-cyanotypie` (Fokus-Ringe sind
   Cyanotypie, nie Siegellack).
@@ -487,7 +512,8 @@ smoke.mjs im selben Commit:
 - Abschluss: aria „Training beenden" · „Zum Abschluss" · „Wie fühlt sich dein
   unterer Rücken an?" + „Gut" (exact) · „Beenden & speichern"
 - Fortschritt: „Verlauf" (exact) — Alt-Session „Ganzkörper A" muss rendern,
-  die neue Einheit zeigt „Zuhause“ in der Meta-Zeile
+  die neue Einheit zeigt „Zuhause“ in der Fußzeile („… Sätze · alle
+  erledigt · Zuhause“)
 - Katalog: „Eigene Übung anlegen" · „z. B. Landmine Press" · „Übung anlegen" ·
   „1 eigene" (Substring)
 - Settings: „Geräte" (aus „Orte & Geräte") · „ATLAS"

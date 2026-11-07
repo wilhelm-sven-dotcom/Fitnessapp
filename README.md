@@ -70,7 +70,8 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 „Platte 311" — fotografisches Systemdesign: helles Albumin-Papier
 („Archiv") und Kollodium-Dunkelkammer („Atelier"), Siegellack-Akzent,
 Cyanotypie und Messing, Old Standard TT (Kursive) + IBM Plex Mono (trägt
-den Body), Radius 3/2/1 px, null Schatten, „Filmtransport"-Motion (harte
+den Body), weiche Ecken (Karten 14 px, Bedienelemente als Pille), null
+Schatten, „Filmtransport"-Motion (harte
 Rucks, Kreide-Blitz, Zoetrop mit 8 B/s). Das App-Icon ist die Marey-Spur:
 die Referenzfigur dreimal überlagert, Kreide auf Kollodium. Beim Kaltstart
 läuft ein Startbild (Vorgabe „311", dazu zwei Alternativen) — immer dunkel,

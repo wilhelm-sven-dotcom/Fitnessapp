@@ -11,7 +11,7 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
   return (
     <div className="py-12 text-center">
       <AlertTriangle size={28} className="mx-auto mb-3 text-accent-ink" />
-      <h2 className="font-display text-2xl font-bold tracking-tight text-fg">
+      <h2 className="font-display text-2xl italic text-fg">
         Etwas ist schiefgelaufen
       </h2>
       <p className="mx-auto mt-2 max-w-xs text-sm text-muted">

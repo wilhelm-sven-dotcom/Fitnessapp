@@ -216,7 +216,7 @@ export function SessionComplete({
               className="mt-2 font-mono text-readout-lg font-bold leading-none tabular-nums text-messing"
             >
               {fmtDe(sieger.wert)}
-              <span className="ml-1.5 align-middle text-sm font-medium tracking-widest">
+              <span className="ml-1.5 align-middle text-sm font-medium tracking-gesperrt">
                 {sieger.einheit.toUpperCase()}
               </span>
             </motion.p>

@@ -200,7 +200,7 @@ export function GuideSheet({
                     if (e.key === "Enter") saveNote();
                   }}
                   placeholder="z. B. Unterstützungsband, Gurte, 20-kg-Band"
-                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                 />
                 <Pressable
                   type="button"
@@ -231,7 +231,7 @@ export function GuideSheet({
                     setNoteEditing(true);
                   }}
                   aria-label="Hilfsmittel ändern"
-                  className="shrink-0 rounded-full p-1.5 text-muted"
+                  className="shrink-0 rounded-pill p-1.5 text-muted"
                 >
                   <Pencil size={14} />
                 </Pressable>
@@ -239,7 +239,7 @@ export function GuideSheet({
                   type="button"
                   onClick={() => setExerciseNote(ex.id, null)}
                   aria-label="Hilfsmittel entfernen"
-                  className="shrink-0 rounded-full p-1.5 text-muted"
+                  className="shrink-0 rounded-pill p-1.5 text-muted"
                 >
                   <Trash2 size={14} />
                 </Pressable>
@@ -260,7 +260,7 @@ export function GuideSheet({
 
           {ex.back && (
             <div className="mb-2 rounded-card border-l-2 border-status-over bg-surface-2 px-3 py-2">
-              <p className="mb-1 font-mono text-xs uppercase tracking-widest text-status-over">
+              <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-status-over">
                 Rücken
               </p>
               <p className="text-sm text-fg">{ex.back}</p>

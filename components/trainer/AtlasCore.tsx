@@ -101,7 +101,7 @@ export function AtlasCore({
       {/* Rim light behind the core — breathes with it. */}
       {!flat && (
         <div
-          className="pointer-events-none absolute rounded-full blur-2xl"
+          className="pointer-events-none absolute rounded-pill blur-2xl"
           style={{
             inset: size * 0.22,
             backgroundColor: "var(--accent)",

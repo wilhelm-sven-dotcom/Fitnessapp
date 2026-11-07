@@ -3,9 +3,9 @@
 import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
-/** Kipphebel der Apparatur (38 × 20, Radius 2): eckiger 16er-Knopf,
- *  Zustandswechsel HART ohne Gleiten (Filmtransport: Zahnrad, kein Slider).
- *  An = Siegellack-Fläche, aus = Faden-Rahmen + Schleier-Knopf. */
+/** Schalter (38 × 20, Pille) mit rundem 16er-Knopf; der Zustandswechsel
+ *  bleibt HART ohne Gleiten (Filmtransport). An = Siegellack-Fläche,
+ *  aus = Faden-Rahmen + Schleier-Knopf. */
 export function Toggle({
   checked,
   onChange,
@@ -35,7 +35,7 @@ export function Toggle({
         style={{ width: 38 }}
       >
         <span
-          className={cn("absolute h-4 w-4 rounded-xs", checked ? "bg-on-accent" : "bg-muted")}
+          className={cn("absolute h-4 w-4 rounded-pill", checked ? "bg-on-accent" : "bg-muted")}
           style={{ top: 1, left: checked ? 19 : 1 }}
         />
       </Pressable>

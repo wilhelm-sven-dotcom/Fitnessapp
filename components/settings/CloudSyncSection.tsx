@@ -225,7 +225,7 @@ export function CloudSyncSection() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="6-stelliger Code"
-              className={`min-w-0 flex-1 text-center font-mono tabular-nums tracking-widest placeholder:tracking-normal ${inputCls}`}
+              className={`min-w-0 flex-1 text-center font-mono tabular-nums tracking-gesperrt-3 placeholder:tracking-normal ${inputCls}`}
             />
             <Pressable
               onClick={() => void confirmCode()}

@@ -17,7 +17,10 @@
 // wechseln zwar mit `?v=3`, aber /manifest.webmanifest tut das NICHT — ohne
 // Bump liest ein installiertes Gerät weiter das alte Manifest und darin die
 // alten `?v=2`-Icons.
-const CACHE = "training-v33";
+// v34: Ortswahl Zuhause/Studio, vereinfachte Heute-Seite, runde Ecken —
+// ein großes UI-Release; ohne Bump hielte ein installiertes Gerät Chunks
+// des alten Builds im Cache.
+const CACHE = "training-v34";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only

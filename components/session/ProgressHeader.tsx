@@ -41,7 +41,7 @@ export function ProgressHeader({
           <Pressable
             onClick={onExit}
             aria-label="Training beenden"
-            className="-m-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="-m-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           >
             <X size={18} />
           </Pressable>

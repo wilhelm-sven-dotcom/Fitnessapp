@@ -20,7 +20,7 @@ export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: Phas
     <div>
       <Card variant="elevated" className="mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
             <CalendarRange size={13} className="text-accent-ink" /> Phase
           </span>
           <span className="font-mono text-xs text-faint">
@@ -54,19 +54,19 @@ export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: Phas
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
           <span className="flex items-center gap-1.5">
             <span
-              className="h-3 w-3 rounded-sm"
+              className="h-3 w-3 rounded-xs"
               style={{ background: "var(--accent-ink)" }}
               aria-hidden
             />
             aktuelle Woche
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-sm" style={{ background: "var(--line)" }} aria-hidden />
+            <span className="h-3 w-3 rounded-xs" style={{ background: "var(--line)" }} aria-hidden />
             Training
           </span>
           <span className="flex items-center gap-1.5">
             <span
-              className="h-3 w-3 rounded-sm"
+              className="h-3 w-3 rounded-xs"
               style={{ background: "var(--surface-2)" }}
               aria-hidden
             />
@@ -74,9 +74,9 @@ export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: Phas
           </span>
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <p className="font-display text-2xl font-bold tracking-tight text-fg">{p.title}</p>
+          <p className="font-display text-2xl italic text-fg">{p.title}</p>
           {p.due && (
-            <span className="rounded-pill bg-surface-2 px-2 py-0.5 font-mono text-xs uppercase tracking-widest text-accent-ink">
+            <span className="rounded-pill bg-surface-2 px-2 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-accent-ink">
               fällig
             </span>
           )}

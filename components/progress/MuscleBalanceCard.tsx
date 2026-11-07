@@ -36,7 +36,7 @@ export function MuscleBalanceCard({
 
   return (
     <Card className="mb-3">
-      <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">
+      <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
         Muskel-Balance
       </p>
       <p className="mb-2 text-xs text-muted">
@@ -79,7 +79,7 @@ export function MuscleBalanceCard({
               </span>
               <span
                 className={cn(
-                  "rounded-sm px-1.5 py-0.5 text-xs font-medium text-on-color",
+                  "rounded-xs px-1.5 py-0.5 text-xs font-medium text-on-color",
                   r.status === "balanced" ? "bg-accent-volume" : "bg-status-over",
                 )}
               >

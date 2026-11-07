@@ -64,9 +64,12 @@
   --font-body: var(--font-plexmono);
   --font-mono: var(--font-plexmono);
 
-  --radius-card: 3px; /* Fotoecken, keine Pillen */
-  --radius-pill: 2px;
-  --radius-xs: 1px;
+  /* Weich, aber flach (Nutzer-Entscheid „runder“): Karten mit Kabinett-
+     karten-Ecken, Bedienelemente als Pille, Kleinteile (Kader, Tupfer,
+     Kästchen) leicht gerundet. Schatten bleiben null. */
+  --radius-card: 14px;
+  --radius-pill: 9999px;
+  --radius-xs: 4px;
 
   /* Das Labor wirft keine Schatten: Trennung leisten Fäden (Hairlines). */
   --panel-shadow: none;

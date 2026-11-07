@@ -36,7 +36,7 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
               <span className="w-24 shrink-0 text-xs text-muted">
                 {MUSCLE_LABEL[m.muscle]}
               </span>
-              <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+              <div className="relative h-2.5 flex-1 overflow-hidden rounded-pill bg-surface-2">
                 <div
                   className="absolute inset-y-0"
                   style={{
@@ -46,7 +46,7 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
                   }}
                 />
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ease-out"
+                  className="absolute inset-y-0 left-0 rounded-pill transition-[width] duration-500 ease-out"
                   style={{ width: `${pct}%`, backgroundColor: statusVar[m.status] }}
                 />
               </div>

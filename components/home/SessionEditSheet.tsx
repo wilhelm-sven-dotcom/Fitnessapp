@@ -82,7 +82,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(moveItem(session, it.id, -1))}
                     disabled={i === 0}
                     aria-label="Nach oben"
-                    className="rounded-full p-1.5 text-muted focus:outline-none disabled:opacity-30"
+                    className="rounded-pill p-1.5 text-muted focus:outline-none disabled:opacity-30"
                   >
                     <ArrowUp size={15} />
                   </Pressable>
@@ -90,7 +90,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(moveItem(session, it.id, 1))}
                     disabled={i === session.items.length - 1}
                     aria-label="Nach unten"
-                    className="rounded-full p-1.5 text-muted focus:outline-none disabled:opacity-30"
+                    className="rounded-pill p-1.5 text-muted focus:outline-none disabled:opacity-30"
                   >
                     <ArrowDown size={15} />
                   </Pressable>
@@ -101,7 +101,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(setItemSets(session, it.id, it.sets - 1))}
                     disabled={it.sets <= 1}
                     aria-label="Ein Satz weniger"
-                    className="rounded-full bg-surface-2 p-1.5 text-fg focus:outline-none disabled:opacity-30"
+                    className="rounded-pill bg-surface-2 p-1.5 text-fg focus:outline-none disabled:opacity-30"
                   >
                     <Minus size={13} />
                   </Pressable>
@@ -112,7 +112,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(setItemSets(session, it.id, it.sets + 1))}
                     disabled={it.sets >= 6}
                     aria-label="Ein Satz mehr"
-                    className="rounded-full bg-surface-2 p-1.5 text-fg focus:outline-none disabled:opacity-30"
+                    className="rounded-pill bg-surface-2 p-1.5 text-fg focus:outline-none disabled:opacity-30"
                   >
                     <Plus size={13} />
                   </Pressable>
@@ -132,7 +132,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(removeItem(session, it.id))}
                     disabled={session.items.length <= 1}
                     aria-label={`${ex.name} entfernen`}
-                    className="rounded-full p-1.5 text-status-danger focus:outline-none disabled:opacity-30"
+                    className="rounded-pill p-1.5 text-status-danger focus:outline-none disabled:opacity-30"
                   >
                     <Trash2 size={14} />
                   </Pressable>
@@ -144,7 +144,7 @@ export function SessionEditSheet({
 
         <Pressable
           onClick={() => setAdding(true)}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
           <Plus size={15} /> Übung hinzufügen
         </Pressable>

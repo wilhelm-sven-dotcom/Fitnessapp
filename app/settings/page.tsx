@@ -148,7 +148,7 @@ function SettingsContent() {
             title="Wirklich alles löschen?"
           >
             <p className="mb-4 text-sm leading-relaxed text-muted">
-              Alle Einheiten, Rekorde und Messreihen werden unwiderruflich
+              Alle Einheiten, Rekorde und Verläufe werden unwiderruflich
               gelöscht. Ein Export vorher sichert alles als Datei.
             </p>
             <div className="flex flex-col gap-2 pb-2">

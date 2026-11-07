@@ -38,8 +38,8 @@ export function WarmupCatalogSection() {
 
   return (
     <>
-      <section className="mb-4 overflow-hidden rounded-card border border-line bg-surface-1 shadow-card">
-        <p className="border-b border-line px-4 py-2 font-mono text-xs uppercase tracking-widest text-muted">
+      <section className="mb-4 overflow-hidden rounded-card border border-line bg-surface-1">
+        <p className="border-b border-line px-4 py-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
           Aufwärmen · Übungen <span className="text-faint">· {drills.length}</span>
         </p>
         <div className="px-2 py-1">
@@ -47,7 +47,7 @@ export function WarmupCatalogSection() {
             <Pressable
               key={d.id}
               onClick={() => setSelected(d)}
-              className="flex w-full min-w-0 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              className="flex w-full min-w-0 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
             >
               <span className="min-w-0 truncate text-sm text-fg">{d.name}</span>
               <span className="flex shrink-0 items-center gap-2">

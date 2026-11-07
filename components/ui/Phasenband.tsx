@@ -81,7 +81,10 @@ function KaderZelle({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-pill border",
+        // Kader sind Filmbilder: kleine Ecke (xs), nie Pille — bei 64 px Höhe
+        // und schmalen Kadern würde der Pillen-Radius aus jedem Bild ein
+        // Stadion machen.
+        "relative overflow-hidden rounded-xs border",
         aktiv ? "border-accent-ink" : "border-line-card",
       )}
       style={{

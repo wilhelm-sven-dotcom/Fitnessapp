@@ -342,7 +342,7 @@ export default function CoachPage() {
               <Pressable
                 onClick={() => persistChat([])}
                 aria-label="Verlauf löschen"
-                className="ml-2 shrink-0 rounded-full p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                className="ml-2 shrink-0 rounded-pill p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
               >
                 <Trash2 size={15} />
               </Pressable>

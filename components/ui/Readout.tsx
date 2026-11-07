@@ -42,12 +42,12 @@ export function Readout({
   return (
     <div className={cn("min-w-0", className)}>
       {eyebrow && (
-        <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">{eyebrow}</p>
+        <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">{eyebrow}</p>
       )}
       <p className="flex items-baseline gap-1.5">
         <span
           className={cn(
-            "font-display font-semibold leading-none tracking-tight tabular-nums text-fg",
+            "font-mono font-bold leading-none tabular-nums text-fg",
             SIZE[size],
           )}
           style={tone ? { color: tone } : undefined}

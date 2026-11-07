@@ -170,7 +170,7 @@ export function OverviewTab() {
         action={
           <Pressable
             onClick={() => router.push("/")}
-            className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
+            className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong focus:outline-none"
           >
             <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
           </Pressable>
@@ -234,7 +234,7 @@ export function OverviewTab() {
       {list.length > 0 && (
         <div className="space-y-3">
           <p className="mt-5 px-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
-            Messreihen · {list.length}
+            Verläufe · {list.length}
           </p>
           {trends.map((e) => (
             <div
@@ -276,7 +276,7 @@ export function OverviewTab() {
                         {e.top}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs uppercase tracking-wider text-faint">
+                    <p className="mt-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-faint">
                       Bestwert
                     </p>
                   </div>
@@ -297,7 +297,7 @@ export function OverviewTab() {
           {list.length > TREND_PREVIEW && (
             <Pressable
               onClick={() => setShowAllTrends((v) => !v)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
             >
               <ChevronDown
                 size={15}

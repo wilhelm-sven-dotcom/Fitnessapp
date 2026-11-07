@@ -43,7 +43,7 @@ export function WarmupDrillSheet({
           {badge && (
             <span
               className={cn(
-                "mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium",
+                "mb-3 inline-block rounded-pill px-3 py-1 text-xs font-medium",
                 badge.cls,
               )}
             >

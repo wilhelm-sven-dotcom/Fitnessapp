@@ -183,8 +183,8 @@ export function HistoryTab() {
   };
 
   const inputCls =
-    "w-full rounded-pill bg-surface-2 px-3 py-2.5 text-sm tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions";
-  const eyebrowCls = "mb-1.5 block font-mono text-xs uppercase tracking-widest text-muted";
+    "w-full rounded-pill bg-surface-2 px-3 py-2.5 text-sm tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
+  const eyebrowCls = "mb-1.5 block font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted";
 
   if (items.length === 0) {
     return (
@@ -195,7 +195,7 @@ export function HistoryTab() {
         action={
           <Pressable
             onClick={() => router.push("/")}
-            className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong shadow-card-lg focus:outline-none"
+            className="flex items-center justify-center gap-2 rounded-card bg-strong px-5 py-3 text-sm font-semibold text-on-strong focus:outline-none"
           >
             <Play size={16} strokeWidth={2.5} /> Erste Einheit starten
           </Pressable>
@@ -210,10 +210,10 @@ export function HistoryTab() {
         {stats.map((s) => (
           <div
             key={s.l}
-            className="rounded-card border border-line bg-surface-1 p-3 text-center shadow-card"
+            className="rounded-card border border-line bg-surface-1 p-3 text-center"
           >
-            <p className="font-display text-lg font-semibold tabular-nums text-fg">{s.v}</p>
-            <p className="mt-0.5 font-mono text-xs uppercase tracking-wider text-faint">
+            <p className="font-mono text-lg font-bold tabular-nums text-fg">{s.v}</p>
+            <p className="mt-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-faint">
               {s.l}
             </p>
           </div>
@@ -222,7 +222,7 @@ export function HistoryTab() {
 
       <Pressable
         onClick={() => setAddOpen(true)}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
       >
         <Plus size={16} /> Cardio-Einheit nachtragen
       </Pressable>
@@ -248,14 +248,14 @@ export function HistoryTab() {
               <div
                 className="flex items-center gap-3 rounded-card border border-line-card bg-surface-1 p-3"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accent-ink">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-surface-2 text-accent-ink">
                   <Icon size={17} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 truncate text-sm font-medium text-fg">
                     {c.title || sportLabel(c.sport)}
                     {dupeIds.has(c.id) && (
-                      <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 font-mono text-xs uppercase tracking-wider text-status-over">
+                      <span className="shrink-0 rounded-pill bg-surface-2 px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-status-over">
                         möglich doppelt
                       </span>
                     )}
@@ -274,7 +274,7 @@ export function HistoryTab() {
                         void removeCardio(c.id);
                         setConfirmDel(null);
                       }}
-                      className="-m-2 flex min-h-11 items-center p-2 font-mono text-xs text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      className="-m-2 flex min-h-11 items-center p-2 font-mono text-xs text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                     >
                       Löschen?
                     </Pressable>
@@ -282,7 +282,7 @@ export function HistoryTab() {
                     <Pressable
                       onClick={() => setConfirmDel(`c-${c.id}`)}
                       aria-label="Einheit löschen"
-                      className="-m-2 flex h-11 w-11 items-center justify-center text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      className="-m-2 flex h-11 w-11 items-center justify-center text-faint transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                     >
                       <Trash2 size={14} />
                     </Pressable>
@@ -315,12 +315,11 @@ export function HistoryTab() {
                     <div className="flex items-center gap-2">
                       <p className="truncate font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
                         Einheit <span className="tabular-nums">{plattenNr.get(s) ?? "–"}</span> · {fmtDate(s.date)}
-                        {zeigeOrt && s.ort ? ` · ${s.ort}` : ""}
                       </p>
                       {s.backTraffic && (
                         <span
                           className={cn(
-                            "h-2 w-2 shrink-0 rounded-full",
+                            "h-2 w-2 shrink-0 rounded-pill",
                             trafficDot[s.backTraffic],
                           )}
                           aria-label={`Rücken ${s.backTraffic}`}
@@ -358,6 +357,9 @@ export function HistoryTab() {
               <div className="flex items-baseline justify-between gap-2 px-4 pb-3 font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
                 <span>
                   <span className="tabular-nums">{kaderZahl}</span> Sätze · alle erledigt
+                  {/* Ort in der Fußzeile: oben ist neben Volumen und Löschen kein
+                      Platz, dort wurde er abgeschnitten. */}
+                  {zeigeOrt && s.ort ? ` · ${s.ort}` : ""}
                 </span>
                 {rekorde > 0 && (
                   <span className="text-messing">
@@ -375,7 +377,7 @@ export function HistoryTab() {
                       setConfirmDel(null);
                       if (isOpen) setExpanded(null);
                     }}
-                    className="rounded-card bg-surface-2 px-3 py-2 text-sm font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+                    className="rounded-card bg-surface-2 px-3 py-2 text-sm font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                   >
                     Einheit löschen
                   </Pressable>
@@ -415,7 +417,7 @@ export function HistoryTab() {
                   ))}
                   {s.debrief && s.debrief.length > 0 && (
                     <div className="mt-2 rounded-card bg-surface-0 px-3 py-2">
-                      <p className="mb-1 flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+                      <p className="mb-1 flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
                         <AtlasMark size={12} className="text-fg" /> ATLAS
                       </p>
                       <p className="text-sm italic leading-relaxed text-muted">

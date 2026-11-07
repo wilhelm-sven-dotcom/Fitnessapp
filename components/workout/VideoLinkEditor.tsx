@@ -65,7 +65,7 @@ export function VideoLinkEditor({
           }}
           placeholder="youtube.com/shorts/… einfügen"
           className={cn(
-            "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
+            "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
             invalid && "ring-2 ring-status-danger",
           )}
         />
@@ -113,7 +113,7 @@ export function VideoLinkEditor({
           type="button"
           onClick={() => startEdit(url)}
           aria-label="Link ändern"
-          className="shrink-0 rounded-full p-1.5 text-muted"
+          className="shrink-0 rounded-pill p-1.5 text-muted"
         >
           <Pencil size={14} />
         </Pressable>
@@ -121,7 +121,7 @@ export function VideoLinkEditor({
           type="button"
           onClick={() => onChange(null)}
           aria-label="Link entfernen"
-          className="shrink-0 rounded-full p-1.5 text-muted"
+          className="shrink-0 rounded-pill p-1.5 text-muted"
         >
           <Trash2 size={14} />
         </Pressable>
@@ -133,7 +133,7 @@ export function VideoLinkEditor({
     // Einladungs-Karte: hier fehlt noch das Bild zur Ausführung.
     return (
       <div className="rounded-card border border-line bg-surface-0 p-4">
-        <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
           Video-Anleitung
         </p>
         <p className="mt-1 text-sm text-muted">
@@ -147,7 +147,7 @@ export function VideoLinkEditor({
             <Pressable
               type="button"
               onClick={() => startEdit("")}
-              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
             >
               <Youtube size={15} /> YouTube-Link hinzufügen
             </Pressable>

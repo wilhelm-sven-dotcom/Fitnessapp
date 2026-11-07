@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <PressableLink
                         href="/settings?seg=verbindungen"
                         aria-label="Cloud-Sync aktiv"
-                        className="flex h-11 w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="flex h-11 w-11 items-center justify-center rounded-pill focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                         style={{ color: "var(--accent-ink)" }}
                       >
                         <Cloud size={20} />
@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <PressableLink
                         href="/settings?seg=verbindungen"
                         aria-label="Anmelden für Cloud-Sync"
-                        className="flex h-11 w-11 items-center justify-center rounded-full text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="flex h-11 w-11 items-center justify-center rounded-pill text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                       >
                         <CloudOff size={20} />
                       </PressableLink>
@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <PressableLink
                     href="/settings"
                     aria-label="Einstellungen"
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    className="flex h-11 w-11 items-center justify-center rounded-pill text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
                   >
                     <Settings size={20} />
                   </PressableLink>

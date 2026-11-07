@@ -120,7 +120,7 @@ export function JumpCheck({
         {phase !== "measuring" && (
           <Pressable
             onClick={() => void start()}
-            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           >
             {phase === "done" || phase === "failed" ? "Nochmal" : "Messen"}
           </Pressable>
@@ -144,7 +144,7 @@ export function JumpCheck({
         <p className="mt-1.5 text-sm text-fg">
           <span
             className={cn(
-              "font-display text-2xl font-bold tabular-nums",
+              "font-mono text-2xl font-bold tabular-nums",
               result.band === "low" ? "text-status-danger" : "text-accent-ink",
             )}
           >

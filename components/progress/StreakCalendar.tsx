@@ -35,7 +35,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   return (
     <Card className="rounded-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-xs uppercase tracking-widest text-muted">
+        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
           Diese & letzte Wochen
         </p>
         <span className="text-xs text-muted">Ziel 3× / Woche</span>
@@ -56,7 +56,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
                       initial={reduce ? false : { opacity: 0, scale: 0.6 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: wi * 0.06 + di * 0.04, ...SPRING.pop }}
-                      className={c ? "h-3 w-3 rounded-sm" : "h-3 w-3 rounded-sm bg-surface-2"}
+                      className={c ? "h-3 w-3 rounded-xs" : "h-3 w-3 rounded-xs bg-surface-2"}
                       style={c ? { backgroundColor: c } : undefined}
                     />
                   );

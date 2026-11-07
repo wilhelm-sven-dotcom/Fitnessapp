@@ -115,7 +115,7 @@ export function ReadinessGate({
       {onReset && vals.back === 1 && (
         <Pressable
           onClick={onReset}
-          className="mt-4 w-full rounded-card bg-surface-2 py-3 text-sm font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="mt-4 w-full rounded-card bg-surface-2 py-3 text-sm font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         >
           Stattdessen: Rücken-Reset — ganz ohne Gewichte
         </Pressable>

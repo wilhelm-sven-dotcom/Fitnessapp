@@ -87,7 +87,7 @@ export function FinishFlow({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="mt-4 w-full resize-none rounded-card border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
         />
       </div>
 

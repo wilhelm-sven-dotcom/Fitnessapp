@@ -781,7 +781,7 @@ export function SessionRunner() {
       <div aria-busy="true" className="mx-auto max-w-md px-5 pt-5">
         <div className="flex items-center justify-between">
           <Skeleton pulse className="h-8 w-24" />
-          <Skeleton pulse className="h-8 w-8 rounded-full" />
+          <Skeleton pulse className="h-8 w-8 rounded-pill" />
         </div>
         <Skeleton pulse className="mt-6 h-7 w-2/3" />
         <Skeleton pulse className="mt-4 h-64 w-full" />
@@ -793,10 +793,10 @@ export function SessionRunner() {
     return (
       <>
         <div className="pt-10 text-center">
-          <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+          <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
             Gleich geht&apos;s los
           </p>
-          <h1 className="mt-1 font-display text-2xl italic tracking-tight text-fg">
+          <h1 className="mt-1 font-display text-2xl italic text-fg">
             {todaySession?.name ?? "Deine Einheit"}
           </h1>
         </div>

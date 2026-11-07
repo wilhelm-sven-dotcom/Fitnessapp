@@ -21,7 +21,7 @@ const sevKicker: Record<CoachSeverity, string> = {
 const sevLabel: Record<CoachSeverity, string> = {
   urgent: "Dringend",
   warn: "Achtung",
-  info: "Befund",
+  info: "Info",
 };
 
 export function CoachCard({
@@ -52,7 +52,7 @@ export function CoachCard({
             onClick={onDismiss}
             aria-label="Ausblenden"
             // 44-px-Ziel ohne Layout-Versatz: negative Margin frisst das Padding.
-            className="-m-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted focus:outline-none"
+            className="-m-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none"
           >
             <X size={15} />
           </Pressable>

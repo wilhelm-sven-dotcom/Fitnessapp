@@ -21,11 +21,11 @@ export function EmptyState({
     <div className="flex flex-col items-center px-6 py-12 text-center">
       <div
         aria-hidden
-        className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface-2"
+        className="mb-5 flex h-16 w-16 items-center justify-center rounded-pill border border-line bg-surface-2"
       >
         <Icon size={26} className="text-muted" />
       </div>
-      <h3 className="font-display text-lg font-semibold tracking-tight text-fg">{title}</h3>
+      <h3 className="font-display text-xl italic text-fg">{title}</h3>
       {description && (
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">{description}</p>
       )}

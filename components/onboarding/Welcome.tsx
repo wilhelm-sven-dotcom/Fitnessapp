@@ -4,7 +4,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { MareySpur } from "@/components/brand/MareySpur";
 import { Button } from "@/components/ui/Button";
-import { Pressable } from "@/components/ui/pressable";
+import { ChipToggle } from "@/components/ui/ChipToggle";
+import { Segment } from "@/components/ui/Segment";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
 import type { Experience, TrainingGoal } from "@/lib/types";
@@ -15,14 +16,14 @@ const EXP: { v: Experience; label: string }[] = [
   { v: "erfahren", label: "Erfahren" },
 ];
 const GOALS: { v: TrainingGoal; label: string }[] = [
-  { v: "aufbau", label: "Aufbau" },
+  { v: "aufbau", label: "Muskelaufbau" },
   { v: "optik", label: "Optik" },
   { v: "kraft", label: "Kraft" },
 ];
 
 /**
  * Erster Start — das Frontispiz des Labors (Onboarding.dc): Icon-Platte,
- * Muybridge-Buchsatz, Name des Athleten + Level/Ziel, dann ist die
+ * Muybridge-Buchsatz, Name + Erfahrung/Ziel, dann ist die
  * Apparatur eingerichtet. Der Eintritts-Stagger bleibt als dokumentierte
  * Bestands-Ausnahme neben dem Filmtransport.
  */
@@ -91,7 +92,7 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25, ease: EASE_OUT }}
         >
-          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Name des Athleten</p>
+          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Dein Name</p>
           <input
             type="text"
             value={name}
@@ -100,39 +101,21 @@ export function Welcome() {
             className="mb-4 w-full rounded-pill border border-line bg-transparent px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           />
 
-          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Level</p>
-          <div className="mb-4 flex gap-1 rounded-pill border border-line-card bg-surface-1 p-1">
-            {EXP.map((x) => (
-              <Pressable
-                key={x.v}
-                onClick={() => setExp(x.v)}
-                aria-pressed={exp === x.v}
-                className={
-                  "flex-1 rounded-pill py-2 font-mono text-3xs uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie " +
-                  (exp === x.v ? "bg-strong text-on-strong" : "text-muted")
-                }
-              >
-                {x.label}
-              </Pressable>
-            ))}
-          </div>
+          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Erfahrung</p>
+          <Segment
+            label="Erfahrung"
+            options={EXP.map((x) => ({ value: x.v, label: x.label }))}
+            value={exp}
+            onChange={setExp}
+            className="mb-4"
+          />
 
           <p className={`mb-1.5 px-1 ${fieldLabel}`}>Ziel</p>
           <div className="mb-6 flex flex-wrap gap-2">
             {GOALS.map((g) => (
-              <Pressable
-                key={g.v}
-                onClick={() => toggleGoal(g.v)}
-                aria-pressed={goals.includes(g.v)}
-                className={
-                  "rounded-pill border px-3.5 py-1.5 font-mono text-3xs uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie " +
-                  (goals.includes(g.v)
-                    ? "border-strong bg-strong text-on-strong"
-                    : "border-line text-muted")
-                }
-              >
+              <ChipToggle key={g.v} onClick={() => toggleGoal(g.v)} active={goals.includes(g.v)}>
                 {g.label}
-              </Pressable>
+              </ChipToggle>
             ))}
           </div>
 

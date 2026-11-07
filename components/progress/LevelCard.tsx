@@ -23,14 +23,14 @@ export function LevelCard() {
     <div>
       <Card variant="elevated" className="mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
+          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
             <Trophy size={13} className="text-accent-ink" /> Trainingslevel
           </span>
           <Pressable
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
             aria-label="Wie das Level entsteht"
-            className="-m-2 flex min-h-11 items-center gap-1 rounded-card p-2 font-mono text-xs tabular-nums text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+            className="-m-2 flex min-h-11 items-center gap-1 rounded-card p-2 font-mono text-xs tabular-nums text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
           >
             {lvl.xp} XP <ChevronRight size={12} aria-hidden />
           </Pressable>
