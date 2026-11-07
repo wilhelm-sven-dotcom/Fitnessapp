@@ -253,6 +253,7 @@ export function SetRow({
   const oneTapReady = !timed && oneTapValues() != null && (set.reps === "" || set.reps == null);
   return (
     <motion.div
+      data-testid="satz-aktiv"
       className="set-active space-y-3 rounded-card p-3.5"
       initial={reduce ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
@@ -357,7 +358,7 @@ export function SetRow({
       )}
       {dbHint && <p className="font-mono text-3xs text-muted">{dbHint}</p>}
       {oneTapReady && (
-        <Button size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation tracking-gesperrt-3">
+        <Button data-testid="satz-protokollieren" size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation tracking-gesperrt-3">
           <Check size={16} strokeWidth={2.5} />
           {(() => {
             const v = oneTapValues();

@@ -360,7 +360,7 @@ export default function HomePage() {
             : (todaySession?.name ?? "Einheit wird zusammengestellt …")}
         </h1>
         {!frageOffen && todaySession && todaySession.items.length > 0 && (
-          <p className="mt-2 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+          <p data-testid="heute-bestand" className="mt-2 font-mono text-2xs uppercase tracking-gesperrt text-muted">
             Einheit <span className="tabular-nums">{plattenNr}</span> ·{" "}
             <span className="tabular-nums">{todaySession.items.length}</span> Übungen ·{" "}
             <span className="tabular-nums">{saetzeGesamt}</span> Sätze ·{" "}

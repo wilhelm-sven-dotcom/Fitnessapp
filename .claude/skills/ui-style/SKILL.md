@@ -506,6 +506,11 @@ smoke.mjs im selben Commit:
 - Text-Prüfungen lesen den SICHTBAREN Text (`innerText`): `textContent`
   enthält auch den Richtungsvertrag im `<script>` von app/layout.tsx, der
   „Training starten“ und „Zuhause“ nennt — die Prüfung wäre sonst leer.
+- Test-IDs (Prüfgerüst, Nov 2026): `start` (Heute-CTA), `heute-bestand`
+  (Zeile „Einheit · Übungen · Sätze · Min“), `session-root` (Wurzel des
+  SessionRunner, trägt das gemessene `paddingBottom`), `satz-aktiv` /
+  `satz-protokollieren` (offener Satz), `[data-sheet="‹Titel›"]` an jeder
+  Sheet-Wurzel. Skripte greifen darüber statt über Klassen oder Elternknoten.
 - Bearbeiten-Sheet und Übungswahl: `data-testid="edit-row-name"` /
   `"picker-row-name"` (vorher hingen die Skripte an Tailwind-Klassen — jede
   Stiländerung hätte sie zerrissen)

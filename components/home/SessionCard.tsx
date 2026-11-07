@@ -211,6 +211,7 @@ export function SessionCard({
       {/* Der große CTA + Hinweis, was zuerst kommt. */}
       <div>
         <Button
+          data-testid="start"
           onClick={() => {
             tap();
             onStart();

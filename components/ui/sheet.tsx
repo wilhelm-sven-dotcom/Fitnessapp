@@ -78,7 +78,7 @@ export function Sheet({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50" data-sheet={title ?? ""}>
           {/* Scrim: flache 40 % Tinte (Archiv-Tinte in beiden Modi — das
               Atelier kennt keinen hellen Schleier), erscheint und fällt HART. */}
           <motion.div

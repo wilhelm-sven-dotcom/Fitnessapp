@@ -900,6 +900,7 @@ export function SessionRunner() {
     // verdeckte es die Satzliste, und man sah nicht mehr, wie viele Sätze
     // noch offen sind.
     <div
+      data-testid="session-root"
       className="space-y-3"
       style={dockH > 0 ? { paddingBottom: dockH + 12 } : undefined}
     >

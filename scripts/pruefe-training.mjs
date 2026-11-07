@@ -104,7 +104,7 @@ pruefe(
 );
 // Der Inhalt muss so weit auslaufen, dass man bis unter das Dock scrollen kann.
 const auslauf = await page.evaluate(() => {
-  const el = document.querySelector('[data-testid="stage-order"]')?.parentElement;
+  const el = document.querySelector('[data-testid="session-root"]');
   return el ? parseFloat(getComputedStyle(el).paddingBottom) : 0;
 });
 pruefe(

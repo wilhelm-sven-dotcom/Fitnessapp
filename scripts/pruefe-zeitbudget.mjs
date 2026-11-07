@@ -154,7 +154,7 @@ const zeitKlick = async (pg, min) =>
     await pg.getByTestId("edit-row-name").first().textContent()
   )?.trim();
   await pg.getByLabel(/tauschen$/).first().click();
-  const picker = pg.locator("div.fixed").filter({ hasText: "Übung wählen" }).last();
+  const picker = pg.locator('[data-sheet="Übung wählen"]').last();
   await picker.waitFor({ timeout: 8000 });
   const rows = picker.getByTestId("picker-row-name");
   const ziel =
@@ -164,14 +164,14 @@ const zeitKlick = async (pg, min) =>
   await pg.waitForTimeout(600);
   await pg.keyboard.press("Escape");
   await pg.waitForTimeout(600);
-  const vorher = (await pg.locator("body").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
+  const vorher = (await pg.getByTestId("heute-bestand").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
   // innerText liefert die per CSS versalisierte Fassung — also ohne Rücksicht
   // auf Groß-/Kleinschreibung prüfen.
   const angepasst = /angepasst/i.test(await pg.locator("body").innerText());
   anfragen = 0;
   await zeitKlick(pg, 20);
   await pg.waitForTimeout(2500);
-  const nachher = (await pg.locator("body").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
+  const nachher = (await pg.getByTestId("heute-bestand").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
   pruefe(angepasst, "D · Einheit gilt als bearbeitet");
   pruefe(anfragen === 0, `D · keine ATLAS-Anfrage bei bearbeiteter Einheit (${anfragen})`);
   pruefe(

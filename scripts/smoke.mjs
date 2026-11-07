@@ -127,8 +127,10 @@ try {
   // ── 3 · Heute: komponierte Einheit mit ≥3 Übungen + why-Zeilen ──
   step = "heute";
   await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 8000 });
-  const items = await page.locator("main, body").first().textContent();
-  if (!/0[123]/.test(items ?? "")) throw new Error("Nummerierte Übungsliste fehlt");
+  // Zeilen der Übungsliste zählen (früher: /0[123]/ auf textContent — das
+  // traf auch Kadernummern und Ziffern des Startbilds und bestand immer).
+  const zeilen = await page.locator("[data-exercise-id]").count();
+  if (zeilen < 3) throw new Error(`Übungsliste zu kurz (${zeilen} Zeilen)`);
   console.log("OK heute: Einheit frisch komponiert (Fallback-Generator)");
 
   // ── 4 · Editor: Übung tauschen greift ──
@@ -141,7 +143,7 @@ try {
   await page.getByLabel(/tauschen$/).first().click();
   // Oberstes Sheet („Übung wählen") — die zweite Zeile ist sicher eine
   // Alternative (die erste kann die aktuelle Übung sein).
-  const picker = page.locator("div.fixed").filter({ hasText: "Übung wählen" }).last();
+  const picker = page.locator('[data-sheet="Übung wählen"]').last();
   await picker.waitFor({ timeout: 5000 });
   const rows = picker.getByTestId("picker-row-name");
   const target =
@@ -178,8 +180,10 @@ try {
     await inputs.nth(0).press("Enter");
   }
   await page.getByText("Pause", { exact: false }).first().waitFor({ timeout: 5000 });
-  const stageTxt = (await page.textContent("body")) ?? "";
-  if (!/ATLAS/.test(stageTxt)) throw new Error("ATLAS-Panel fehlt");
+  // Sichtbarer Text: textContent enthielte das Richtungs-Skript im Layout,
+  // in dem „ATLAS“ ohnehin steht.
+  const stageTxt = await page.locator("body").innerText();
+  if (!/ATLAS/i.test(stageTxt)) throw new Error("ATLAS-Panel fehlt");
   console.log("OK satz: Inline-Pause läuft, ATLAS-Zeile steht");
 
   // ── 7 · Reload mitten in der Einheit → Resume intakt ──
@@ -227,8 +231,8 @@ try {
   step = "settings";
   await page.goto(BASE + "/settings", { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
-  const set = (await page.textContent("body")) ?? "";
-  if (!/ATLAS/.test(set) || !/Geräte/.test(set)) throw new Error("Settings unvollständig");
+  const set = await page.locator("body").innerText();
+  if (!/ATLAS/i.test(set) || !/Geräte/i.test(set)) throw new Error("Settings unvollständig");
   console.log("OK settings: Seite vollständig");
 
   // ── 12 · Startbild: erscheint beim Kaltstart und räumt sich selbst ab ──
