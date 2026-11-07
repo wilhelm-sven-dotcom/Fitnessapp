@@ -11,10 +11,24 @@ import { EASE_OUT } from "@/lib/motion";
 import type { Experience, TrainingGoal } from "@/lib/types";
 import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
 
-const EXP: { v: Experience; label: string }[] = [
-  { v: "anfänger", label: "Anfänger" },
-  { v: "fortgeschritten", label: "Mittel" },
-  { v: "erfahren", label: "Erfahren" },
+// Die Stufe steuert die Startgewichte (lib/start-weight.ts, EXP_MULT 0,7 ·
+// 1,0 · 1,25) und steht im Profil, das ATLAS bekommt.
+const EXP: { v: Experience; label: string; satz: string }[] = [
+  {
+    v: "anfänger",
+    label: "Anfänger",
+    satz: "Neu im Krafttraining oder nach langer Pause. Startgewichte rund 30 % leichter.",
+  },
+  {
+    v: "fortgeschritten",
+    label: "Mittel",
+    satz: "Du trainierst regelmäßig und kennst die Grundübungen. Startgewichte normal.",
+  },
+  {
+    v: "erfahren",
+    label: "Erfahren",
+    satz: "Jahre am Eisen, saubere Technik auch bei schweren Sätzen. Startgewichte rund 25 % höher.",
+  },
 ];
 const GOALS: { v: TrainingGoal; label: string }[] = [
   { v: "aufbau", label: "Muskelaufbau" },
@@ -23,10 +37,8 @@ const GOALS: { v: TrainingGoal; label: string }[] = [
 ];
 
 /**
- * Erster Start — das Frontispiz des Labors (Onboarding.dc): Icon-Platte,
- * Muybridge-Buchsatz, Name + Erfahrung/Ziel, dann ist die
- * Apparatur eingerichtet. Der Eintritts-Stagger bleibt als dokumentierte
- * Bestands-Ausnahme neben dem Filmtransport.
+ * Erster Start: App-Zeichen, ein Absatz, was die App tut, dann Name,
+ * Erfahrung (mit einem erklärenden Satz je Stufe) und Ziel.
  */
 export function Welcome() {
   const { completeOnboarding } = useTraining();
@@ -37,8 +49,7 @@ export function Welcome() {
   const toggleGoal = (v: TrainingGoal) =>
     setGoals((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
 
-  const fieldLabel =
-    "font-mono text-3xs font-medium uppercase tracking-label text-muted";
+  const fieldLabel = "text-3xs font-semibold uppercase tracking-label text-muted";
 
   return (
     <motion.div
@@ -76,14 +87,14 @@ export function Welcome() {
             <MareySpur size={84} />
           </span>
 
-          <p className="mt-7 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-            Das Bewegungslabor
+          <p className="mt-7 text-3xs font-semibold uppercase tracking-label text-muted">
+            Krafttraining mit ATLAS
           </p>
-          <h1 className="mt-2 font-display font-bold text-4xl text-fg">Platte 311</h1>
+          <h1 className="mt-2 font-display text-4xl font-extrabold text-fg">Platte 311</h1>
           <p className="mt-4 max-w-xs text-base leading-relaxed text-fg">
-            1887 zerlegte Muybridge Bewegung in Einzelbilder — Platte 311 zeigt
-            einen Gewichtheber. Diese App führt die Reihe fort: Du trainierst,
-            ATLAS schaut zu und stellt die nächste Einheit zusammen.
+            Du trainierst, ATLAS schaut auf deine Sätze und stellt die nächste
+            Einheit zusammen. Jede Körperregion hat ihre Farbe: Beine Rot, Druck
+            Blau, Zug Gelb, Rumpf Grün.
           </p>
         </motion.div>
 
@@ -99,7 +110,7 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="z. B. J. Weber"
-            className="mb-4 w-full rounded-pill border border-line bg-transparent px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="mb-4 min-h-12 w-full rounded-inner border border-line bg-surface-1 px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
 
           <p className={`mb-1.5 px-1 ${fieldLabel}`}>Erfahrung</p>
@@ -108,8 +119,14 @@ export function Welcome() {
             options={EXP.map((x) => ({ value: x.v, label: x.label }))}
             value={exp}
             onChange={setExp}
-            className="mb-4"
           />
+          {/* Eine Zeile zur gewählten Stufe — vorher standen die Stufen ohne
+              Erklärung da. */}
+          <p className="mb-4 mt-2 min-h-10 px-1 text-sm leading-snug text-muted" aria-live="polite">
+            {exp
+              ? EXP.find((x) => x.v === exp)?.satz
+              : "Ohne Wahl rechnet die App mit „Mittel“."}
+          </p>
 
           <p className={`mb-1.5 px-1 ${fieldLabel}`}>Ziel</p>
           <div className="mb-6 flex flex-wrap gap-2">
@@ -128,8 +145,8 @@ export function Welcome() {
           >
             Los geht&apos;s
           </Button>
-          <p className="mt-3 text-center font-mono text-4xs font-medium uppercase tracking-label text-muted">
-            Alles bleibt auf dem Gerät · Kein Konto nötig
+          <p className="mt-3 text-center text-sm text-muted">
+            Alles bleibt auf dem Gerät, kein Konto nötig.
           </p>
         </motion.div>
       </div>

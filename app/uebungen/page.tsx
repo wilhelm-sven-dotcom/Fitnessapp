@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Pencil, Plus, Search } from "lucide-react";
+import { Check, ChevronDown, Eye, EyeOff, Pencil, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CustomExerciseEditor } from "@/components/exercises/CustomExerciseEditor";
 import { Button } from "@/components/ui/Button";
@@ -8,12 +8,14 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ChipToggle } from "@/components/ui/ChipToggle";
 import { Pressable } from "@/components/ui/pressable";
+import { Sheet } from "@/components/ui/sheet";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
-import { figurFor } from "@/lib/phasen/figuren";
-import { fmtKatalogNr, katalogNummern } from "@/lib/platte";
+import { PATTERN_FIGUR } from "@/lib/phasen/figuren";
+import { REGION_VAR, regionOf } from "@/lib/phasen/band";
 import { WarmupCatalogSection } from "@/components/warmup/WarmupCatalogSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { geraetText } from "@/lib/equipment";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import { reqOk } from "@/lib/progression";
 import { MUSCLE_LABEL, MUSCLE_ORDER, muscleOf } from "@/lib/volume";
@@ -47,7 +49,12 @@ export default function ExerciseCatalogPage() {
   const [editing, setEditing] = useState<Exercise | null>(null);
 
   const customCount = useMemo(() => allLib.filter((e) => e.custom).length, [allLib]);
-  const nummern = useMemo(() => katalogNummern(allLib), [allLib]);
+  const [filterBlatt, setFilterBlatt] = useState<"muster" | "muskel" | null>(null);
+  const jeMuster = useMemo(() => {
+    const m = new Map<Pattern, number>();
+    for (const e of allLib) m.set(e.pattern, (m.get(e.pattern) ?? 0) + 1);
+    return m;
+  }, [allLib]);
 
   // Suche + Muster-/Muskel-/Equipment-Filter, dann nach Muster gruppieren.
   const groups = useMemo(() => {
@@ -101,7 +108,7 @@ export default function ExerciseCatalogPage() {
             autoCapitalize="off"
             placeholder="Übung suchen…"
             aria-label="Übung suchen"
-            className="w-full rounded-pill border border-line bg-transparent py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="min-h-11 w-full rounded-pill border border-line bg-surface-1 py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
         </div>
         <Pressable
@@ -110,48 +117,52 @@ export default function ExerciseCatalogPage() {
             setEditorOpen(true);
           }}
           aria-label="Eigene Übung anlegen"
-          className="flex shrink-0 items-center gap-1.5 rounded-pill bg-strong px-3.5 font-mono text-xs font-semibold uppercase tracking-label text-on-strong focus:outline-none"
+          className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill bg-strong px-4 text-sm font-bold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
-          <Plus size={16} strokeWidth={2.5} /> Neu
+          <Plus size={18} strokeWidth={2.5} aria-hidden /> Neu
         </Pressable>
       </div>
 
-      {/* Filter: Muster · Muskel · nur verfügbare Geräte. */}
-      <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
-        <ChipToggle active={!patFilter} onClick={() => setPatFilter(null)}>
-          Alle Muster
-        </ChipToggle>
-        {PATTERN_ORDER.map((p) => (
-          <ChipToggle
-            key={p}
-            active={patFilter === p}
-            onClick={() => setPatFilter((cur) => (cur === p ? null : p))}
+      {/* Filter in EINER Zeile: Muster und Muskel öffnen je ein Blatt, dazu
+          der Geräte-Schalter. Die Liste beginnt so direkt darunter. */}
+      <div className="mb-2 flex items-center gap-2">
+        {(
+          [
+            ["muster", patFilter ? PATTERN_LABEL[patFilter] : "Muster", !!patFilter],
+            ["muskel", muscleFilter ? MUSCLE_LABEL[muscleFilter] : "Muskel", !!muscleFilter],
+          ] as const
+        ).map(([key, label, aktiv]) => (
+          <Pressable
+            key={key}
+            onClick={() => setFilterBlatt(key)}
+            aria-haspopup="dialog"
+            className={cn(
+              "flex min-h-10 min-w-0 items-center gap-1.5 rounded-pill px-3.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+              aktiv ? "bg-strong text-on-strong" : "border border-line text-fg",
+            )}
           >
-            {PATTERN_LABEL[p]}
-          </ChipToggle>
+            <span className="truncate">{label}</span>
+            <ChevronDown size={16} className="shrink-0" aria-hidden />
+          </Pressable>
         ))}
-      </div>
-      <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
-        <ChipToggle active={!muscleFilter} onClick={() => setMuscleFilter(null)}>
-          Alle Muskeln
-        </ChipToggle>
-        {MUSCLE_ORDER.map((m) => (
-          <ChipToggle
-            key={m}
-            active={muscleFilter === m}
-            onClick={() => setMuscleFilter((cur) => (cur === m ? null : m))}
-          >
-            {MUSCLE_LABEL[m]}
-          </ChipToggle>
-        ))}
-      </div>
-      <div className="mb-4 flex items-center gap-1.5">
         <ChipToggle active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
-          Nur mit deinen Geräten
+          Meine Geräte
         </ChipToggle>
-        <span className="ml-auto font-mono text-xs tabular-nums text-faint">
-          {shown} Treffer
-        </span>
+      </div>
+      <div className="mb-4 flex min-h-8 items-center justify-between gap-2 px-1 text-sm text-muted">
+        <span className="tabular-nums">{shown} Treffer</span>
+        {(patFilter || muscleFilter || onlyAvailable) && (
+          <Pressable
+            onClick={() => {
+              setPatFilter(null);
+              setMuscleFilter(null);
+              setOnlyAvailable(false);
+            }}
+            className="rounded-pill px-2 py-1 font-semibold text-fg underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          >
+            Filter zurücksetzen
+          </Pressable>
+        )}
       </div>
 
       {groups.length === 0 ? (
@@ -174,111 +185,179 @@ export default function ExerciseCatalogPage() {
           }
         />
       ) : (
-        groups.map((g) => (
-          <section key={g.pat} className="mb-5">
-            <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
-              {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>
-            </p>
-            <div>
-              {g.list.map((ex, rowIdx) => {
-                const hasVideo = !!exerciseVideos[ex.id];
-                const available = reqOk(ex, has);
-                const off = disabledExercises.includes(ex.id);
-                const m = muscleOf(ex);
-                return (
-                  <div
-                    key={ex.id}
-                    className={cn(
-                      "flex items-center gap-1 border-t border-line",
-                      rowIdx === g.list.length - 1 && "border-b",
-                    )}
-                  >
-                    <Pressable
-                      onClick={() => setSelected(ex)}
-                      className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-0.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        groups.map((g) => {
+          const farbe = REGION_VAR[regionOf(g.list[0])];
+          return (
+            <section key={g.pat} className="mb-5">
+              {/* Gruppenkopf trägt die Figur EINMAL — die Zeilen nennen Muskel und Gerät. */}
+              <div className="mb-2 flex items-center gap-3 px-1">
+                <span aria-hidden className="w-9 shrink-0">
+                  <PhasenFigur figur={PATTERN_FIGUR[g.pat]} color={farbe} />
+                </span>
+                <h2 className="text-base font-bold text-fg">{PATTERN_LABEL[g.pat]}</h2>
+                <span className="text-sm tabular-nums text-muted">{g.list.length}</span>
+              </div>
+              <div className="overflow-hidden rounded-card bg-surface-1">
+                {g.list.map((ex, rowIdx) => {
+                  const hasVideo = !!exerciseVideos[ex.id];
+                  const available = reqOk(ex, has);
+                  const off = disabledExercises.includes(ex.id);
+                  const m = muscleOf(ex);
+                  return (
+                    <div
+                      key={ex.id}
+                      className={cn(
+                        "flex items-center gap-1 pr-1",
+                        rowIdx > 0 && "border-t border-line-card",
+                      )}
                     >
-                      <span
-                        aria-hidden
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border border-line-card bg-surface-1 p-1"
+                      <Pressable
+                        onClick={() => setSelected(ex)}
+                        className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2.5 pl-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus"
                       >
-                        <PhasenFigur
-                          figur={figurFor(ex)}
-                          mode="freeze"
-                          color={available && !off ? "var(--fg)" : "var(--muted)"}
+                        <span
+                          aria-hidden
+                          className="h-8 w-1 shrink-0 rounded-pill"
+                          style={{ backgroundColor: available && !off ? farbe : "var(--line)" }}
                         />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span
-                            className={cn(
-                              "truncate text-base font-semibold",
-                              available && !off ? "text-fg" : "text-faint",
-                              off && "line-through",
+                        <span className="min-w-0 flex-1">
+                          <span className="flex min-w-0 flex-wrap items-center gap-x-2">
+                            <span
+                              className={cn(
+                                "text-base font-semibold leading-snug",
+                                available && !off ? "text-fg" : "text-muted",
+                                off && "line-through",
+                              )}
+                            >
+                              {ex.name}
+                            </span>
+                            {ex.custom && (
+                              <span className="shrink-0 rounded-pill border border-line px-2 py-0.5 text-3xs font-semibold text-muted">
+                                Eigene
+                              </span>
                             )}
-                          >
-                            {ex.name}
+                            {off && (
+                              <span className="shrink-0 rounded-pill border border-line px-2 py-0.5 text-3xs font-semibold text-muted">
+                                Aus
+                              </span>
+                            )}
                           </span>
-                          {ex.custom && (
-                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-label text-muted">
-                              Eigene
-                            </span>
-                          )}
-                          {off && (
-                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-label text-faint">
-                              Aus
-                            </span>
-                          )}
+                          <span className="mt-0.5 block text-sm leading-snug text-muted">
+                            {ex.pattern === "cardio" ? ex.tag : MUSCLE_LABEL[m.primary]} ·{" "}
+                            {geraetText(ex.req)}
+                            {hasVideo ? " · Video" : ""}
+                          </span>
                         </span>
-                        <span className="mt-0.5 block truncate font-mono text-4xs font-medium uppercase tracking-label text-muted">
-                          {ex.pattern === "cardio" ? ex.tag : MUSCLE_LABEL[m.primary]} ·{" "}
-                          {fmtKatalogNr(nummern.get(ex.id))}
-                          {hasVideo ? " · Video" : ""}
-                        </span>
-                      </span>
-                      <span aria-hidden className="shrink-0 font-mono text-xs text-muted">
-                        →
-                      </span>
-                    </Pressable>
-                    {ex.custom && (
-                      <Pressable
-                        onClick={() => {
-                          setEditing(ex);
-                          setEditorOpen(true);
-                        }}
-                        aria-label={`${ex.name} bearbeiten`}
-                        className="shrink-0 rounded-pill p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
-                      >
-                        <Pencil size={14} />
                       </Pressable>
-                    )}
-                    {ex.pattern !== "cardio" && (
-                      <Pressable
-                        onClick={() => toggleExerciseDisabled(ex.id)}
-                        aria-label={`${ex.name} ${off ? "aktivieren" : "deaktivieren"}`}
-                        aria-pressed={off}
-                        className={cn(
-                          "shrink-0 rounded-pill p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
-                          off ? "text-status-over" : "text-faint",
-                        )}
-                      >
-                        {off ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </Pressable>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ))
+                      {ex.custom && (
+                        <Pressable
+                          onClick={() => {
+                            setEditing(ex);
+                            setEditorOpen(true);
+                          }}
+                          aria-label={`${ex.name} bearbeiten`}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+                        >
+                          <Pencil size={16} />
+                        </Pressable>
+                      )}
+                      {ex.pattern !== "cardio" && (
+                        <Pressable
+                          onClick={() => toggleExerciseDisabled(ex.id)}
+                          aria-label={`${ex.name} ${off ? "aktivieren" : "deaktivieren"}`}
+                          aria-pressed={off}
+                          className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-pill focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+                            off ? "text-warnung" : "text-muted",
+                          )}
+                        >
+                          {off ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </Pressable>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })
       )}
 
-      <p className={cn("mt-1 mb-4 px-1 text-xs text-faint", groups.length === 0 && "hidden")}>
-        Ausgegraut = Equipment fehlt. Übung antippen → Ausführung, Video und Notizen.
+      <p className={cn("mb-4 mt-1 px-1 text-sm text-muted", groups.length === 0 && "hidden")}>
+        Grauer Balken: Gerät fehlt am aktuellen Ort. Übung antippen für Anleitung,
+        Video, Notizen und deinen Verlauf.
       </p>
 
       {/* Aufwärm-Drills sind kein Teil der filterbaren Übungs-Lib — die Sektion
           erscheint nur im ungefilterten Grundzustand. */}
       {!q && !patFilter && !muscleFilter && !onlyAvailable && <WarmupCatalogSection />}
+
+      <Sheet
+        open={filterBlatt === "muster"}
+        onClose={() => setFilterBlatt(null)}
+        title="Muster"
+      >
+        <ul>
+          {[null, ...PATTERN_ORDER].map((p) => {
+            const aktiv = patFilter === p;
+            return (
+              <li key={p ?? "alle"} className="border-b border-line-card last:border-0">
+                <Pressable
+                  onClick={() => {
+                    setPatFilter(p);
+                    setFilterBlatt(null);
+                  }}
+                  aria-pressed={aktiv}
+                  className="flex min-h-12 w-full items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+                >
+                  <span aria-hidden className="w-8 shrink-0">
+                    {p && <PhasenFigur figur={PATTERN_FIGUR[p]} color="var(--fg)" />}
+                  </span>
+                  <span className="min-w-0 flex-1 text-base font-semibold text-fg">
+                    {p ? PATTERN_LABEL[p] : "Alle Muster"}
+                  </span>
+                  <span className="text-sm tabular-nums text-muted">
+                    {p ? (jeMuster.get(p) ?? 0) : allLib.length}
+                  </span>
+                  <span className="w-5 shrink-0" aria-hidden>
+                    {aktiv && <Check size={18} />}
+                  </span>
+                </Pressable>
+              </li>
+            );
+          })}
+        </ul>
+      </Sheet>
+      <Sheet
+        open={filterBlatt === "muskel"}
+        onClose={() => setFilterBlatt(null)}
+        title="Muskel"
+      >
+        <ul>
+          {[null, ...MUSCLE_ORDER].map((m) => {
+            const aktiv = muscleFilter === m;
+            return (
+              <li key={m ?? "alle"} className="border-b border-line-card last:border-0">
+                <Pressable
+                  onClick={() => {
+                    setMuscleFilter(m);
+                    setFilterBlatt(null);
+                  }}
+                  aria-pressed={aktiv}
+                  className="flex min-h-12 w-full items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+                >
+                  <span className="min-w-0 flex-1 text-base font-semibold text-fg">
+                    {m ? MUSCLE_LABEL[m] : "Alle Muskeln"}
+                  </span>
+                  <span className="w-5 shrink-0" aria-hidden>
+                    {aktiv && <Check size={18} />}
+                  </span>
+                </Pressable>
+              </li>
+            );
+          })}
+        </ul>
+      </Sheet>
 
       <GuideSheet open={!!selected} onClose={() => setSelected(null)} ex={selected} />
       <CustomExerciseEditor

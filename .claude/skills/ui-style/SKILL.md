@@ -229,6 +229,20 @@ Sheets 50.
   Löschen als `danger`-Knopf in der aufgeklappten Einheit, mit Rückfrage.
 - Veränderungen über `fmtDelta` („−1,5 kg“, echtes Minus, Komma).
 
+## Katalog, ATLAS, Einstellungen
+
+- **Platz über der Tab-Leiste** (`NavSlot`): Heute (Zeit + Start) und ATLAS
+  (Fragen als Chips + Eingabe) docken dort per Portal an. Bei offener
+  iOS-Tastatur (`visualViewport`) hebt die Leiste den Platz über die Tastatur,
+  wenn der Fokus darin liegt; sonst tritt sie zurück. Scroll-Ziele über dem
+  Dock nutzen `scrollMarginBottom: var(--nav-h)`.
+- **Katalog:** eine Filterzeile („Muster“ und „Muskel“ öffnen je ein Blatt,
+  „Meine Geräte“ als ChipToggle), Figur einmal im Gruppenkopf, Zeilen mit
+  Regionsbalken und „Muskel · Gerät“ (`geraetText`).
+- **Geräte am Ort:** ChipToggle mit Haken, Ort-Segment „Studio · 10“.
+- **Formularfelder** mit `text-base` (≥ 16 px, sonst zoomt iOS) und dem
+  Feld-Rezept; Erfahrungsstufen tragen je einen erklärenden Satz.
+
 ## Fokus-Modus (Training)
 
 - **Aufbau von oben:** Kopf (Schließen links, „Übung 2 von 6“, Restzeit; darunter

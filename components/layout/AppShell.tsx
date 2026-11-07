@@ -110,7 +110,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavSlotContext.Provider value={hideChrome ? null : navSlot}>
             <div
               className="mx-auto max-w-md px-5 pb-28 pt-5"
-              style={!hideChrome && navH > 0 ? { paddingBottom: navH + 24 } : undefined}
+              style={
+                !hideChrome && navH > 0
+                  ? ({ paddingBottom: navH + 24, "--nav-h": `${navH}px` } as React.CSSProperties)
+                  : undefined
+              }
             >
               <PageTransition>{children}</PageTransition>
             </div>

@@ -2,6 +2,7 @@
 
 import { BarChart3, CalendarDays, List, Sparkles, type LucideIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +25,53 @@ export function BottomNav({
   slotRef?: (el: HTMLDivElement | null) => void;
 }) {
   const pathname = usePathname();
+
+  // Bildschirmtastatur (iOS): das Layout-Viewport schrumpft nicht, feste
+  // Elemente lägen hinter der Tastatur. Liegt der Fokus IM Platz über den
+  // Reitern (ATLAS-Eingabe), wandert er über die Tastatur; liegt er woanders
+  // (Wunschfeld, Formular), tritt die Leiste zurück und verdeckt nichts.
+  const eigen = useRef<HTMLElement | null>(null);
+  const setRef = useCallback(
+    (el: HTMLElement | null) => {
+      eigen.current = el;
+      navRef?.(el);
+    },
+    [navRef],
+  );
+  const [tastatur, setTastatur] = useState(0);
+  const [fokusDrin, setFokusDrin] = useState(false);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const miss = () => {
+      if (!vv) return;
+      const rest = window.innerHeight - vv.height - vv.offsetTop;
+      // Unter 80 px ist es die Adressleiste, keine Tastatur.
+      setTastatur(rest > 80 ? Math.round(rest) : 0);
+    };
+    const fokus = () => setFokusDrin(!!eigen.current?.contains(document.activeElement));
+    miss();
+    vv?.addEventListener("resize", miss);
+    vv?.addEventListener("scroll", miss);
+    document.addEventListener("focusin", fokus);
+    document.addEventListener("focusout", fokus);
+    return () => {
+      vv?.removeEventListener("resize", miss);
+      vv?.removeEventListener("scroll", miss);
+      document.removeEventListener("focusin", fokus);
+      document.removeEventListener("focusout", fokus);
+    };
+  }, []);
+  const offen = tastatur > 0;
+
   return (
-    <nav ref={navRef} className="fixed inset-x-0 bottom-0 z-30">
+    <nav
+      ref={setRef}
+      className={cn("fixed inset-x-0 bottom-0 z-30", offen && !fokusDrin && "invisible")}
+      style={offen && fokusDrin ? { transform: `translateY(-${tastatur}px)` } : undefined}
+    >
       <div ref={slotRef} className="border-t border-line bg-surface-0 px-5 py-3 empty:hidden" />
       <div
-        className="border-t border-line bg-surface-1"
+        className={cn("border-t border-line bg-surface-1", offen && "hidden")}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
       <div className="mx-auto flex max-w-md">

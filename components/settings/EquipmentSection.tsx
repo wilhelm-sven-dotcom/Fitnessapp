@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ChipToggle } from "@/components/ui/ChipToggle";
 import { Kicker } from "@/components/ui/Kicker";
 import { Pressable } from "@/components/ui/pressable";
 import { Segment } from "@/components/ui/Segment";
@@ -11,7 +12,6 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { EQUIP_LIST } from "@/lib/exercises";
 import { availableExercises } from "@/lib/today-session";
 import { muscleOf, MUSCLE_ORDER } from "@/lib/volume";
-import { cn } from "@/lib/utils";
 
 /**
  * Orte & Geräte — Setup, kein Tagesgeschäft. Das Register wählt nur, WELCHEN
@@ -53,7 +53,7 @@ export function EquipmentSection() {
   const heute = ort.id === activeGym?.id;
 
   return (
-    <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
+    <section className="mb-4 rounded-card bg-surface-1 p-4">
       <Kicker as="h2" className="mb-3">
         Orte & Geräte
       </Kicker>
@@ -61,20 +61,25 @@ export function EquipmentSection() {
       {gyms.length > 1 && (
         <Segment
           label="Ort bearbeiten"
-          options={gyms.map((g) => ({ value: g.id, label: g.name }))}
+          // Der Ort mit der Zahl seiner Geräte — „Studio · 10“.
+          options={gyms.map((g) => ({
+            value: g.id,
+            label: `${g.name} · ${g.equip.length}`,
+            ariaLabel: `${g.name}, ${g.equip.length} Geräte`,
+          }))}
           value={ort.id}
           onChange={setEditId}
           className="mb-2"
         />
       )}
-      <p className="mb-4 text-xs leading-relaxed text-muted">
+      <p className="mb-4 text-sm leading-relaxed text-muted">
         {heute
           ? "Hier trainierst du heute."
           : `Heute trainierst du: ${activeGym?.name ?? "–"}. Den Ort wählst du auf der Heute-Seite.`}
       </p>
 
       <label className="mb-4 block">
-        <span className="mb-1.5 block font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+        <span className="mb-1.5 block text-3xs font-semibold uppercase tracking-label text-muted">
           Name
         </span>
         <input
@@ -88,39 +93,38 @@ export function EquipmentSection() {
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
           }}
-          className="w-full rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="min-h-11 w-full rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
       </label>
 
-      <p className="mb-2 text-xs leading-relaxed text-muted">
-        Tippe an, was es an diesem Ort gibt — ATLAS plant nur mit diesen Geräten.
+      <p className="mb-2 text-sm leading-relaxed text-muted">
+        Tippe an, was es an diesem Ort gibt. ATLAS plant nur mit diesen Geräten.
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      {/* Mehrfachauswahl im ChipToggle-Rezept: gewählt in Tinte mit Haken,
+          nicht gewählt mit Rand, beide voll lesbar. */}
+      <div className="flex flex-wrap gap-2">
         {EQUIP_LIST.map((e) => {
           const on = ort.equip.includes(e.key);
           return (
-            <Pressable
+            <ChipToggle
               key={e.key}
+              active={on}
               onClick={() => toggleEquip(e.key, ort.id)}
-              aria-pressed={on}
-              className={cn(
-                "flex items-center justify-between gap-2 rounded-card px-3 py-3 text-left text-sm",
-                on ? "bg-accent font-medium text-on-accent" : "bg-surface-2 text-muted",
-              )}
+              className="flex min-h-11 items-center gap-1.5 px-4"
             >
-              <span className="min-w-0 hyphens-auto break-words">{e.label}</span>
-              {on && <Check size={16} strokeWidth={2.5} className="shrink-0" />}
-            </Pressable>
+              {on && <Check size={16} strokeWidth={2.5} aria-hidden />}
+              {e.label}
+            </ChipToggle>
           );
         })}
       </div>
 
-      <p className="mt-3 flex items-center justify-between rounded-card bg-surface-0 px-3 py-2 font-mono text-2xs text-muted">
+      <p className="mt-3 flex items-center justify-between gap-2 rounded-inner bg-surface-0 px-3 py-2.5 text-sm text-muted">
         <span>
-          <span className="tabular-nums text-fg">{stats.count}</span> Übungen verfügbar
+          <span className="font-semibold tabular-nums text-fg">{stats.count}</span> Übungen verfügbar
         </span>
         <span>
-          <span className="tabular-nums text-fg">{stats.cov}</span>/{MUSCLE_ORDER.length}{" "}
+          <span className="font-semibold tabular-nums text-fg">{stats.cov}</span>/{MUSCLE_ORDER.length}{" "}
           Muskelgruppen
         </span>
       </p>
@@ -128,7 +132,7 @@ export function EquipmentSection() {
       {gyms.length > 1 && (
         <Pressable
           onClick={() => setLoeschen(true)}
-          className="mt-3 rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-label text-accent-ink"
+          className="mt-3 flex min-h-11 items-center rounded-pill text-sm font-semibold text-gefahr focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           {`„${ort.name}“ löschen`}
         </Pressable>
@@ -143,7 +147,7 @@ export function EquipmentSection() {
             maxLength={40}
             placeholder="z. B. Hotel"
             aria-label="Neuen Ort anlegen"
-            className="min-w-0 flex-1 rounded-pill border border-line bg-transparent px-3 py-2 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="min-h-11 min-w-0 flex-1 rounded-inner border border-line bg-surface-1 px-3 py-2 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
           <Button
             variant="secondary"

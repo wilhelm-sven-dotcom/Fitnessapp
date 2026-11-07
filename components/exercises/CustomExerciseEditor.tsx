@@ -19,12 +19,13 @@ const PATTERNS: Pattern[] = [
   "squat", "lunge", "hinge", "hpush", "vpush", "hpull", "vpull", "arm", "lateral", "core", "calf",
 ];
 
+// Feld-Rezept (ui-style): ≥ 16 px Schrift, sonst zoomt iOS beim Fokus.
 const inputClass =
-  "w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
+  "min-h-11 w-full rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1.5 mt-4 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+    <p className="mb-1.5 mt-4 text-3xs font-semibold uppercase tracking-label text-muted">
       {children}
     </p>
   );
@@ -299,7 +300,7 @@ export function CustomExerciseEditor({
       <Pressable
         onClick={save}
         disabled={!name.trim()}
-        className="mt-5 w-full rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
+        className="mt-5 flex min-h-14 w-full items-center justify-center rounded-pill bg-accent text-lg font-bold text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
       >
         {initial ? "Änderungen speichern" : "Übung anlegen"}
       </Pressable>
@@ -311,14 +312,14 @@ export function CustomExerciseEditor({
               removeCustom(initial.id);
               onClose();
             }}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-card py-2.5 text-sm font-medium text-status-danger focus:outline-none"
+            className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-pill border border-gefahr text-base font-bold text-gefahr focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
-            <Trash2 size={14} /> Wirklich löschen?
+            <Trash2 size={16} aria-hidden /> Wirklich löschen?
           </Pressable>
         ) : (
           <Pressable
             onClick={() => setConfirmDelete(true)}
-            className="mt-2 w-full rounded-card py-2.5 text-sm text-muted focus:outline-none"
+            className="mt-2 min-h-11 w-full rounded-pill text-base font-semibold text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             Übung löschen…
           </Pressable>
