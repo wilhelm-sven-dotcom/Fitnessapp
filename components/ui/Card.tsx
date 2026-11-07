@@ -6,9 +6,9 @@ type CardVariant = "base" | "elevated" | "glass";
  *  Alle drei Alt-Varianten münden im selben flachen Rezept — Hervorhebung
  *  (offener Kader) trägt an der Nutzstelle border-accent-ink. */
 const VARIANT: Record<CardVariant, string> = {
-  base: "border border-line-card bg-surface-1",
-  elevated: "border border-line-card bg-surface-1",
-  glass: "border border-line-card bg-surface-1",
+  base: "bg-surface-1",
+  elevated: "bg-surface-1",
+  glass: "bg-surface-1",
 };
 
 /**
@@ -24,7 +24,7 @@ export function Card({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant }) {
   return (
-    <div className={cn("rounded-card p-3.5", VARIANT[variant], className)} {...props}>
+    <div className={cn("rounded-card p-4", VARIANT[variant], className)} {...props}>
       {children}
     </div>
   );

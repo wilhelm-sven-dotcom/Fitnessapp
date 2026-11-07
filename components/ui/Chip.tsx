@@ -20,7 +20,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-block rounded-pill border border-line bg-surface-1 px-2.5 py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt",
+        "inline-block rounded-pill border border-line bg-surface-1 px-2.5 py-1 text-3xs font-semibold",
         toneClass[tone],
       )}
     >

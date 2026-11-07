@@ -47,7 +47,7 @@ export function StravaSection() {
       ) : strava.connected ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm text-fg">
-            <Activity size={16} className="shrink-0 text-accent-volume" />
+            <Activity size={16} className="shrink-0 text-info" />
             <span className="min-w-0 truncate">
               Verbunden{strava.athlete ? ` als ${strava.athlete}` : ""} · {rides} Einheiten
             </span>

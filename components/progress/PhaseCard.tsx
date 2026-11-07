@@ -20,7 +20,7 @@ export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: Phas
     <div>
       <Card variant="elevated" className="mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             <CalendarRange size={13} className="text-accent-ink" /> Phase
           </span>
           <span className="font-mono text-xs text-faint">
@@ -74,9 +74,9 @@ export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: Phas
           </span>
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <p className="font-display text-2xl italic text-fg">{p.title}</p>
+          <p className="font-display font-bold text-2xl text-fg">{p.title}</p>
           {p.due && (
-            <span className="rounded-pill bg-surface-2 px-2 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-accent-ink">
+            <span className="rounded-pill bg-surface-2 px-2 py-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-accent-ink">
               fällig
             </span>
           )}

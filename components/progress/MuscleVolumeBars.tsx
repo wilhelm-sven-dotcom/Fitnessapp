@@ -7,8 +7,8 @@ import { MUSCLE_LABEL, volumeTargetFor, type MuscleVolume } from "@/lib/volume";
 // über Ziel = Gelb — identisch zur Status-Semantik in tailwind.config.ts.
 const statusVar: Record<MuscleVolume["status"], string> = {
   under: "var(--accent)",
-  in: "var(--gruen)",
-  over: "var(--gelb)",
+  in: "var(--erfolg)",
+  over: "var(--warnung)",
 };
 
 const fmt = (n: number) => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });

@@ -49,14 +49,14 @@ export function OrtFrage({
               <span aria-hidden className="block w-14 text-fg">
                 <PhasenFigur figur={PATTERN_FIGUR[ortMuster(g)]} color="var(--fg)" />
               </span>
-              <span className="mt-2 font-display text-xl italic leading-tight text-fg">
+              <span className="mt-2 font-display font-bold text-xl leading-tight text-fg">
                 {g.name}
               </span>
-              <span className="mt-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
+              <span className="mt-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
                 <span className="tabular-nums">{zahl}</span> Übungen
-                {g.id === zuletztId && <span className="text-cyanotypie"> · zuletzt</span>}
+                {g.id === zuletztId && <span className="text-info"> · zuletzt</span>}
               </span>
-              <span className="mt-0.5 font-mono text-4xs uppercase tracking-gesperrt text-muted">
+              <span className="mt-0.5 font-mono text-4xs uppercase tracking-label text-muted">
                 {geraete}
               </span>
             </Pressable>
@@ -65,7 +65,7 @@ export function OrtFrage({
       </div>
       <PressableLink
         href="/settings"
-        className="mt-3 inline-block rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted"
+        className="mt-3 inline-block rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted"
       >
         Orte & Geräte bearbeiten →
       </PressableLink>

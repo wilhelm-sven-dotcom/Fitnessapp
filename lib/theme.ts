@@ -1,28 +1,15 @@
 /**
- * Appearance helpers. EINE Design-Identität („Platte 311"); nur data-theme
- * auf <html> steuert Archiv/Atelier ("system" wird zur Laufzeit aufgelöst) —
- * das ARCHIV (hell) ist der Grundzustand. Alle Farben gehören dem Design
- * (globals.css); es gibt keinen Akzent-Override und keinen Icon-Designer mehr.
- *
- * Theme-Lock: Der Fokus-Modus (/workout) läuft IMMER im Atelier. Die Route
- * setzt `setThemeLock("dark")` und räumt beim Verlassen wieder auf; solange
- * der Lock steht, gewinnt er gegen jede Präferenz (auch bei System-Wechseln,
- * die der Provider weiterreicht). Das Pre-Paint-Skript in layout.tsx spiegelt
- * dieselbe Regel für den Kaltstart auf /workout.
+ * Hell/Dunkel. Nur data-theme auf <html> steuert den Modus ("system" wird zur
+ * Laufzeit aufgelöst); Hell ist der Grundzustand. Alle Farben gehören dem
+ * Design (globals.css). Das Training folgt der Einstellung wie jede andere
+ * Seite (Nutzer-Entscheid Nov 2026, vorher erzwungenes Dunkel).
  */
+import { GRUND_DUNKEL, GRUND_HELL } from "@/lib/grundfarben";
 
 export type ThemePref = "dark" | "light" | "system";
 
-const DARK_BG = "#141210";
-const LIGHT_BG = "#f2ecdd";
-
-let themeLock: "dark" | null = null;
-
-/** Erzwungenes Atelier (Fokus-Modus) an-/abschalten — Aufrufer wendet danach
- *  `applyTheme` an, damit der Wechsel sofort sichtbar wird. */
-export function setThemeLock(lock: "dark" | null): void {
-  themeLock = lock;
-}
+const DARK_BG = GRUND_DUNKEL;
+const LIGHT_BG = GRUND_HELL;
 
 export function resolveTheme(pref: ThemePref | undefined): "dark" | "light" {
   if (pref === "dark") return "dark";
@@ -35,7 +22,7 @@ export function resolveTheme(pref: ThemePref | undefined): "dark" | "light" {
 /** Apply theme to <html> and match the status-bar color. */
 export function applyTheme(pref: ThemePref | undefined): void {
   if (typeof document === "undefined") return;
-  const resolved = themeLock ?? resolveTheme(pref);
+  const resolved = resolveTheme(pref);
   const commit = () => {
     document.documentElement.setAttribute("data-theme", resolved);
     const meta = document.querySelector('meta[name="theme-color"]');

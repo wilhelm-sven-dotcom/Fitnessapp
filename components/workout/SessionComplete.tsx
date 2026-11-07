@@ -147,7 +147,7 @@ export function SessionComplete({
         <motion.div
           aria-hidden
           className="pointer-events-none fixed inset-0"
-          style={{ backgroundColor: "#f4f9fc" }}
+          style={{ backgroundColor: "var(--card)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.85, 0, 0, 0.85, 0] }}
           transition={{ duration: 0.26, times: [0, 0.06, 0.3, 0.55, 0.6, 0.85], ease: "linear" }}
@@ -166,12 +166,12 @@ export function SessionComplete({
           initial={reduce ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={stagger(0)}
-          className="flex w-full items-baseline justify-between font-mono text-2xs font-semibold uppercase tracking-gesperrt"
+          className="flex w-full items-baseline justify-between font-mono text-2xs font-semibold uppercase tracking-label"
         >
           <span className="text-fg">
             Einheit <span className="tabular-nums">{plattenNr}</span>
           </span>
-          <span className={sieger ? "text-messing" : "text-cyanotypie"}>
+          <span className={sieger ? "text-rekord" : "text-info"}>
             {sieger ? "Neuer Rekord" : "Gespeichert"}
           </span>
         </motion.p>
@@ -182,7 +182,7 @@ export function SessionComplete({
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(1)}
-              className="mt-8 font-mono text-2xs font-semibold uppercase tracking-gesperrt-4 text-messing"
+              className="mt-8 font-mono text-2xs font-semibold uppercase tracking-label text-rekord"
             >
               Persönlicher Rekord
             </motion.p>
@@ -191,21 +191,21 @@ export function SessionComplete({
               animate={{ opacity: 1, scaleX: 1 }}
               transition={stagger(2)}
               aria-hidden
-              className="mt-3 block h-px w-28 bg-messing"
+              className="mt-3 block h-px w-28 bg-rekord"
             />
             <motion.div
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(3)}
-              className="mt-5 w-40 text-messing"
+              className="mt-5 w-40 text-rekord"
             >
-              <PhasenFigur figur={sieger.figur} mode="freeze" color="var(--messing)" raster />
+              <PhasenFigur figur={sieger.figur} mode="freeze" color="var(--rekord)" />
             </motion.div>
             <motion.h1
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(4)}
-              className="mt-4 font-display text-3xl italic text-fg"
+              className="mt-4 font-display font-bold text-3xl text-fg"
             >
               {sieger.exName}
             </motion.h1>
@@ -213,10 +213,10 @@ export function SessionComplete({
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(5)}
-              className="mt-2 font-mono text-readout-lg font-bold leading-none tabular-nums text-messing"
+              className="mt-2 font-mono text-readout-lg font-bold leading-none tabular-nums text-rekord"
             >
               {fmtDe(sieger.wert)}
-              <span className="ml-1.5 align-middle text-sm font-medium tracking-gesperrt">
+              <span className="ml-1.5 align-middle text-sm font-medium tracking-label">
                 {sieger.einheit.toUpperCase()}
               </span>
             </motion.p>
@@ -224,7 +224,7 @@ export function SessionComplete({
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(6)}
-              className="mt-3 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted"
+              className="mt-3 font-mono text-3xs font-medium uppercase tracking-label text-muted"
             >
               {sieger.delta != null && sieger.delta > 0
                 ? `+${fmtDe(sieger.delta)} ${sieger.einheit} über ${
@@ -251,7 +251,7 @@ export function SessionComplete({
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(2)}
-              className="mt-4 font-display text-3xl italic text-fg"
+              className="mt-4 font-display font-bold text-3xl text-fg"
             >
               {name || "Einheit"}
             </motion.h1>
@@ -277,7 +277,7 @@ export function SessionComplete({
               eyebrow={summary.prs === 1 ? "Rekord" : "Rekorde"}
               value={summary.prs}
               size="md"
-              tone="var(--messing)"
+              tone="var(--rekord)"
             />
           )}
         </motion.div>
@@ -288,7 +288,7 @@ export function SessionComplete({
           transition={stagger(8)}
           className="mt-8 w-full"
         >
-          <div className="mb-1.5 flex items-center justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          <div className="mb-1.5 flex items-center justify-between font-mono text-3xs font-medium uppercase tracking-label text-muted">
             <span className="flex items-center gap-1.5">
               Level
               <AnimatePresence mode="popLayout" initial={false}>
@@ -310,14 +310,14 @@ export function SessionComplete({
           </div>
           <div className="h-1.5 overflow-hidden rounded-xs bg-surface-2" aria-hidden>
             <div
-              className="h-full bg-accent-sessions"
+              className="h-full bg-accent"
               style={{
                 width: `${Math.round(pct * 100)}%`,
                 transition: reduce ? undefined : "width 1s cubic-bezier(0.22,1,0.36,1)",
               }}
             />
           </div>
-          <p className="mt-2 font-mono text-3xs uppercase tracking-gesperrt text-muted">
+          <p className="mt-2 font-mono text-3xs uppercase tracking-label text-muted">
             Diese Woche: {summary.weekSets}/{summary.weekTarget} Sätze
           </p>
         </motion.div>
@@ -331,12 +331,12 @@ export function SessionComplete({
             data-testid="session-debrief"
             className="mt-6 w-full rounded-card border border-line-card bg-surface-1 p-3.5 text-left"
           >
-            <p className="mb-2 flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
+            <p className="mb-2 flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
               <AtlasMark size={14} className="text-fg" /> ATLAS
             </p>
             <div className="space-y-1.5">
               {summary.debrief.map((l, i) => (
-                <p key={i} className="font-display text-base leading-relaxed text-fg">
+                <p key={i} className="text-base leading-relaxed text-fg">
                   {l}
                 </p>
               ))}
@@ -362,7 +362,7 @@ export function SessionComplete({
             <Button
               size="lg"
               onClick={share}
-              className="flex-1 whitespace-nowrap tracking-gesperrt"
+              className="flex-1 whitespace-nowrap tracking-label"
             >
               Teilen
             </Button>

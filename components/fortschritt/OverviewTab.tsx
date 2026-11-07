@@ -197,7 +197,7 @@ export function OverviewTab() {
       {/* Volumen je Woche: 7-Wochen-Tonnage als Balkenreihe (45 % Opazität,
           die laufende Woche voll) — diskrete Reihe, kein Verlauf. */}
       <Card className="mb-4">
-        <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+        <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-label text-muted">
           <span>Volumen je Woche</span>
           <span className="tabular-nums">
             {(wochenTonnage[6] / 1000).toLocaleString("de-DE", { maximumFractionDigits: 1 })} t
@@ -207,7 +207,7 @@ export function OverviewTab() {
           {wochenTonnage.map((v, i) => (
             <div
               key={i}
-              className="flex-1 bg-cyanotypie"
+              className="flex-1 bg-info"
               style={{
                 height: `${Math.max(v > 0 ? 8 : 2, Math.round((v / Math.max(...wochenTonnage, 1)) * 100))}%`,
                 opacity: i === 6 ? 1 : 0.45,
@@ -215,7 +215,7 @@ export function OverviewTab() {
             />
           ))}
         </div>
-        <div className="mt-1.5 flex justify-between font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+        <div className="mt-1.5 flex justify-between font-mono text-4xs font-medium uppercase tracking-label text-muted">
           <span>Vor 6 Wochen</span>
           <span>Diese Woche</span>
         </div>
@@ -233,7 +233,7 @@ export function OverviewTab() {
 
       {list.length > 0 && (
         <div className="space-y-3">
-          <p className="mt-5 px-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <p className="mt-5 px-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Verläufe · {list.length}
           </p>
           {trends.map((e) => (
@@ -248,15 +248,15 @@ export function OverviewTab() {
               <Card
                 className={cn(
                   "transition-shadow duration-300",
-                  flashId === e.id && "ring-2 ring-cyanotypie",
+                  flashId === e.id && "ring-2 ring-fokus",
                 )}
               >
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="truncate font-display text-lg italic leading-tight text-fg">
+                    <h3 className="truncate text-base font-semibold leading-tight text-fg">
                       {e.name}
                     </h3>
-                    <p className="mt-0.5 font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+                    <p className="mt-0.5 font-mono text-4xs font-medium uppercase tracking-label text-muted">
                       {kindLabel[e.kind]}
                     </p>
                   </div>
@@ -267,16 +267,16 @@ export function OverviewTab() {
                           initial={reduce ? false : { scale: 0.7, opacity: 0 }}
                           animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
                           transition={{ duration: 0.5, ease: "easeOut" }}
-                          className="rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
+                          className="rounded-pill border border-rekord px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-rekord"
                         >
                           Rekord
                         </motion.span>
                       )}
-                      <p className="font-mono text-lg font-bold leading-none tabular-nums text-cyanotypie">
+                      <p className="font-mono text-lg font-bold leading-none tabular-nums text-info">
                         {e.top}
                       </p>
                     </div>
-                    <p className="mt-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-faint">
+                    <p className="mt-1 font-mono text-3xs font-semibold uppercase tracking-label text-faint">
                       Bestwert
                     </p>
                   </div>
@@ -297,7 +297,7 @@ export function OverviewTab() {
           {list.length > TREND_PREVIEW && (
             <Pressable
               onClick={() => setShowAllTrends((v) => !v)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-2.5 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <ChevronDown
                 size={15}

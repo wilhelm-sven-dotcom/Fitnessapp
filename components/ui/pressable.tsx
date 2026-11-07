@@ -16,7 +16,7 @@ export function Pressable({
       whileTap={{ scale: 0.985, transition: { duration: 0 } }}
       transition={{ duration: FILM.press, ease: TRANSPORT_EIN }}
       className={cn(
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
         className,
       )}
       {...props}

@@ -17,7 +17,7 @@ export function Kicker({
   return (
     <Tag
       className={cn(
-        "font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted",
+        "text-3xs font-semibold uppercase tracking-label text-muted",
         className,
       )}
     >

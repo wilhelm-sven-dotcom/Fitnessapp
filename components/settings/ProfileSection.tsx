@@ -25,7 +25,7 @@ const GOALS: { v: TrainingGoal; label: string }[] = [
 const INJURIES: InjuryArea[] = ["rücken", "knie", "schulter", "ellbogen", "handgelenk"];
 
 const zahlFeld =
-  "w-24 rounded-pill border border-line bg-transparent px-3 py-2 text-center font-mono text-base tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
+  "w-24 rounded-pill border border-line bg-transparent px-3 py-2 text-center font-mono text-base tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 /** Editable athlete profile — drives the coach/builder prompts and the engine. */
 export function ProfileSection() {

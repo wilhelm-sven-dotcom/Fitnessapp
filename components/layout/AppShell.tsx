@@ -52,10 +52,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2 text-fg">
-                  <LiftMark size={17} />
-                  <span className="font-mono text-2xs font-semibold uppercase tracking-gesperrt-3">
-                    Platte 311
-                  </span>
+                  <LiftMark size={18} />
+                  <span className="font-display text-lg font-extrabold">Platte 311</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {cloud.configured &&
@@ -63,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <PressableLink
                         href="/settings?seg=verbindungen"
                         aria-label="Cloud-Sync aktiv"
-                        className="flex h-11 w-11 items-center justify-center rounded-pill focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                        className="flex h-11 w-11 items-center justify-center rounded-pill focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                         style={{ color: "var(--accent-ink)" }}
                       >
                         <Cloud size={20} />
@@ -72,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <PressableLink
                         href="/settings?seg=verbindungen"
                         aria-label="Anmelden für Cloud-Sync"
-                        className="flex h-11 w-11 items-center justify-center rounded-pill text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                        className="flex h-11 w-11 items-center justify-center rounded-pill text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                       >
                         <CloudOff size={20} />
                       </PressableLink>
@@ -80,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <PressableLink
                     href="/settings"
                     aria-label="Einstellungen"
-                    className="flex h-11 w-11 items-center justify-center rounded-pill text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                    className="flex h-11 w-11 items-center justify-center rounded-pill text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                   >
                     <Settings size={20} />
                   </PressableLink>

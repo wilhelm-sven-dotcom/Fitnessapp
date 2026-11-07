@@ -15,7 +15,7 @@ const sevSurface: Record<CoachSeverity, string> = {
 };
 const sevKicker: Record<CoachSeverity, string> = {
   urgent: "text-accent-ink",
-  warn: "text-messing",
+  warn: "text-rekord",
   info: "text-muted",
 };
 const sevLabel: Record<CoachSeverity, string> = {
@@ -39,7 +39,7 @@ export function CoachCard({
         <div className="min-w-0">
           <p
             className={cn(
-              "font-mono text-3xs font-semibold uppercase tracking-gesperrt",
+              "font-mono text-3xs font-semibold uppercase tracking-label",
               sevKicker[card.severity],
             )}
           >
@@ -62,7 +62,7 @@ export function CoachCard({
       {card.action === "deload" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-pill bg-accent-sessions px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="mt-3 rounded-pill bg-accent px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           Entlastungswoche starten
         </Pressable>
@@ -70,7 +70,7 @@ export function CoachCard({
       {card.action === "exam" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-pill bg-accent-sessions px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="mt-3 rounded-pill bg-accent px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           Prüfung antreten
         </Pressable>
@@ -78,7 +78,7 @@ export function CoachCard({
       {card.action === "back-reset" && onAccept && (
         <Pressable
           onClick={onAccept}
-          className="mt-3 rounded-pill bg-accent-sessions px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="mt-3 rounded-pill bg-accent px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           Rücken-Reset starten
         </Pressable>

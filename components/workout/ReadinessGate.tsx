@@ -66,7 +66,7 @@ export function ReadinessGate({
       />
       {cardioAdvice.level !== "none" && (
         <div className="mb-4 flex items-start gap-2 rounded-card bg-surface-2 p-3">
-          <Bike size={15} className="mt-0.5 shrink-0 text-accent-coverage" />
+          <Bike size={15} className="mt-0.5 shrink-0 text-info" />
           <p className="text-xs leading-relaxed text-muted">{cardioAdvice.body}</p>
         </div>
       )}
@@ -82,7 +82,7 @@ export function ReadinessGate({
                   className={cn(
                     "flex-1 rounded-card py-2.5 text-sm focus:outline-none",
                     vals[row.key] === o.v
-                      ? "bg-accent-sessions text-on-accent"
+                      ? "bg-accent text-on-accent"
                       : "bg-surface-2 text-muted",
                   )}
                 >

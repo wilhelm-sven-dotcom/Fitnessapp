@@ -223,7 +223,7 @@ export default function CoachPage() {
   const buildEl = (
     <Pressable
       onClick={() => router.push("/")}
-      className="flex w-full items-center justify-between gap-2 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left text-sm text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+      className="flex w-full items-center justify-between gap-2 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left text-sm text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
       <span className="flex items-center gap-2">
         <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
@@ -259,36 +259,36 @@ export default function CoachPage() {
         <div className="flex items-baseline justify-between gap-2">
           <span className="flex items-center gap-2">
             <AtlasMark size={16} live className="text-fg" />
-            <h1 className="font-mono text-2xs font-semibold uppercase tracking-gesperrt-2 text-fg">
+            <h1 className="font-mono text-2xs font-semibold uppercase tracking-label text-fg">
               ATLAS · Coach
             </h1>
           </span>
-          <span className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          <span className="font-mono text-3xs font-medium uppercase tracking-label text-muted">
             Einheit <span className="tabular-nums">{plattenNummer(log)}</span> · Mission{" "}
             <span className="tabular-nums">{Math.round(trainer.mission.pct * 100)}</span> %
           </span>
         </div>
-        <p className="mt-2.5 font-display text-base leading-relaxed text-fg">
+        <p className="mt-2.5 text-base leading-relaxed text-fg">
           {trainer.directive.text}
         </p>
-        <p className="mt-0.5 font-mono text-3xs uppercase tracking-gesperrt text-muted">
+        <p className="mt-0.5 font-mono text-3xs uppercase tracking-label text-muted">
           {trainer.directive.reason}
         </p>
       </div>
 
       {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
       <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-3.5">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
           Wochen-Rückblick · KW {isoWeek(new Date())}
         </p>
-        <p className="mt-2 whitespace-pre-wrap font-display text-base leading-relaxed text-fg">
+        <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-fg">
           {rapport || briefing.coachNote}
         </p>
         {!rapport && (
           <Pressable
             onClick={() => void loadRapport()}
             disabled={rapportBusy}
-            className="mt-3 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none disabled:opacity-50"
+            className="mt-3 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none disabled:opacity-50"
           >
             <Sparkles size={13} />
             {rapportBusy ? "ATLAS schreibt …" : "Ausführlicher Rückblick"}
@@ -299,13 +299,13 @@ export default function CoachPage() {
       {/* Gespräch. */}
       {loaded && messages.length === 0 ? (
         <div>
-          <p className="mb-2 px-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">Frag ATLAS:</p>
+          <p className="mb-2 px-1 font-mono text-3xs font-medium uppercase tracking-label text-muted">Frag ATLAS:</p>
           <div className="space-y-2">
             {SUGGESTIONS.map((s) => (
               <Pressable
                 key={s}
                 onClick={() => send(s)}
-                className="flex w-full items-center justify-between gap-2 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left text-sm text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                className="flex w-full items-center justify-between gap-2 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left text-sm text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
               >
                 {s}
                 <Send size={15} className="shrink-0 text-faint" />
@@ -342,7 +342,7 @@ export default function CoachPage() {
               <Pressable
                 onClick={() => persistChat([])}
                 aria-label="Verlauf löschen"
-                className="ml-2 shrink-0 rounded-pill p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                className="ml-2 shrink-0 rounded-pill p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
               >
                 <Trash2 size={15} />
               </Pressable>
@@ -364,7 +364,7 @@ export default function CoachPage() {
           rows={1}
           placeholder="Frag ATLAS …"
           aria-label="Nachricht an ATLAS"
-          className="flex-1 resize-none rounded-pill border border-line bg-transparent px-4 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="flex-1 resize-none rounded-pill border border-line bg-transparent px-4 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
         <Button
           onClick={() => void send(input)}

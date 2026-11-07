@@ -36,7 +36,7 @@ export function Segment<T extends string | number>({
       role="group"
       aria-label={label}
       className={cn(
-        "flex gap-1 rounded-pill border border-line-card bg-surface-1 p-1",
+        "flex gap-1 rounded-pill bg-surface-2 p-1",
         disabled && "opacity-50",
         className,
       )}
@@ -54,7 +54,7 @@ export function Segment<T extends string | number>({
             aria-pressed={active}
             aria-label={o.ariaLabel}
             className={cn(
-              "min-h-9 min-w-0 flex-1 truncate rounded-pill px-2 py-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt",
+              "min-h-10 min-w-0 flex-1 truncate rounded-pill px-2 py-2 text-sm font-semibold",
               active ? "bg-strong text-on-strong" : "text-muted",
             )}
           >

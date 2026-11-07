@@ -144,7 +144,7 @@ export function SessionEditSheet({
 
         <Pressable
           onClick={() => setAdding(true)}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           <Plus size={15} /> Übung hinzufügen
         </Pressable>

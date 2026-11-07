@@ -101,7 +101,7 @@ export default function ExerciseCatalogPage() {
             autoCapitalize="off"
             placeholder="Übung suchen…"
             aria-label="Übung suchen"
-            className="w-full rounded-pill border border-line bg-transparent py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="w-full rounded-pill border border-line bg-transparent py-2.5 pl-9 pr-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
         </div>
         <Pressable
@@ -110,7 +110,7 @@ export default function ExerciseCatalogPage() {
             setEditorOpen(true);
           }}
           aria-label="Eigene Übung anlegen"
-          className="flex shrink-0 items-center gap-1.5 rounded-pill bg-strong px-3.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-strong focus:outline-none"
+          className="flex shrink-0 items-center gap-1.5 rounded-pill bg-strong px-3.5 font-mono text-xs font-semibold uppercase tracking-label text-on-strong focus:outline-none"
         >
           <Plus size={16} strokeWidth={2.5} /> Neu
         </Pressable>
@@ -176,7 +176,7 @@ export default function ExerciseCatalogPage() {
       ) : (
         groups.map((g) => (
           <section key={g.pat} className="mb-5">
-            <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+            <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
               {PATTERN_LABEL[g.pat]} <span className="text-faint">· {g.list.length}</span>
             </p>
             <div>
@@ -195,7 +195,7 @@ export default function ExerciseCatalogPage() {
                   >
                     <Pressable
                       onClick={() => setSelected(ex)}
-                      className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-0.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                      className="flex min-w-0 flex-1 items-center gap-3 py-2 pl-0.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                     >
                       <span
                         aria-hidden
@@ -211,7 +211,7 @@ export default function ExerciseCatalogPage() {
                         <span className="flex min-w-0 items-center gap-2">
                           <span
                             className={cn(
-                              "truncate font-display text-lg italic",
+                              "truncate text-base font-semibold",
                               available && !off ? "text-fg" : "text-faint",
                               off && "line-through",
                             )}
@@ -219,17 +219,17 @@ export default function ExerciseCatalogPage() {
                             {ex.name}
                           </span>
                           {ex.custom && (
-                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-gesperrt text-muted">
+                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-label text-muted">
                               Eigene
                             </span>
                           )}
                           {off && (
-                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-gesperrt text-faint">
+                            <span className="shrink-0 rounded-pill border border-line px-1.5 py-0.5 font-mono text-4xs font-semibold uppercase tracking-label text-faint">
                               Aus
                             </span>
                           )}
                         </span>
-                        <span className="mt-0.5 block truncate font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+                        <span className="mt-0.5 block truncate font-mono text-4xs font-medium uppercase tracking-label text-muted">
                           {ex.pattern === "cardio" ? ex.tag : MUSCLE_LABEL[m.primary]} ·{" "}
                           {fmtKatalogNr(nummern.get(ex.id))}
                           {hasVideo ? " · Video" : ""}
@@ -246,7 +246,7 @@ export default function ExerciseCatalogPage() {
                           setEditorOpen(true);
                         }}
                         aria-label={`${ex.name} bearbeiten`}
-                        className="shrink-0 rounded-pill p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                        className="shrink-0 rounded-pill p-2 text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                       >
                         <Pencil size={14} />
                       </Pressable>
@@ -257,7 +257,7 @@ export default function ExerciseCatalogPage() {
                         aria-label={`${ex.name} ${off ? "aktivieren" : "deaktivieren"}`}
                         aria-pressed={off}
                         className={cn(
-                          "shrink-0 rounded-pill p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+                          "shrink-0 rounded-pill p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                           off ? "text-status-over" : "text-faint",
                         )}
                       >

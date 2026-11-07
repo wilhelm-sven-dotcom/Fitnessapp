@@ -9,6 +9,7 @@ import { Segment } from "@/components/ui/Segment";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
 import type { Experience, TrainingGoal } from "@/lib/types";
+import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
 
 const EXP: { v: Experience; label: string }[] = [
   { v: "anfänger", label: "Anfänger" },
@@ -37,7 +38,7 @@ export function Welcome() {
     setGoals((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
 
   const fieldLabel =
-    "font-mono text-3xs font-medium uppercase tracking-gesperrt-2 text-muted";
+    "font-mono text-3xs font-medium uppercase tracking-label text-muted";
 
   return (
     <motion.div
@@ -68,18 +69,18 @@ export function Welcome() {
               width: 84,
               height: 84,
               borderRadius: 18,
-              backgroundColor: "#141210",
-              color: "#e9e1ce",
+              backgroundColor: GRUND_DUNKEL,
+              color: TINTE_DUNKEL,
             }}
           >
             <MareySpur size={84} />
           </span>
 
-          <p className="mt-7 font-mono text-3xs font-semibold uppercase tracking-gesperrt-4 text-muted">
+          <p className="mt-7 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Das Bewegungslabor
           </p>
-          <h1 className="mt-2 font-display text-4xl italic text-fg">Platte 311</h1>
-          <p className="mt-4 max-w-xs font-display text-base leading-relaxed text-fg">
+          <h1 className="mt-2 font-display font-bold text-4xl text-fg">Platte 311</h1>
+          <p className="mt-4 max-w-xs text-base leading-relaxed text-fg">
             1887 zerlegte Muybridge Bewegung in Einzelbilder — Platte 311 zeigt
             einen Gewichtheber. Diese App führt die Reihe fort: Du trainierst,
             ATLAS schaut zu und stellt die nächste Einheit zusammen.
@@ -98,7 +99,7 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="z. B. J. Weber"
-            className="mb-4 w-full rounded-pill border border-line bg-transparent px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="mb-4 w-full rounded-pill border border-line bg-transparent px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
 
           <p className={`mb-1.5 px-1 ${fieldLabel}`}>Erfahrung</p>
@@ -123,11 +124,11 @@ export function Welcome() {
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
             size="lg"
             full
-            className="tracking-gesperrt-3"
+            className=""
           >
             Los geht&apos;s
           </Button>
-          <p className="mt-3 text-center font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
+          <p className="mt-3 text-center font-mono text-4xs font-medium uppercase tracking-label text-muted">
             Alles bleibt auf dem Gerät · Kein Konto nötig
           </p>
         </motion.div>

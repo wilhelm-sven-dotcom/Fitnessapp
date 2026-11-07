@@ -112,14 +112,14 @@ function drawFigur(
 }
 
 export async function renderShareCard(data: ShareCardData): Promise<Blob> {
-  const display = cssVar("--font-oldstandard", "'Old Standard TT', Georgia, serif");
-  const mono = cssVar("--font-plexmono", "'IBM Plex Mono', ui-monospace, monospace");
+  const display = cssVar("--font-display", "Archivo, system-ui, sans-serif");
+  const mono = cssVar("--font-body", "Archivo, system-ui, sans-serif");
 
   // Schriften anwärmen (best effort) — load() akzeptiert die Familien-Stacks.
   if (typeof document !== "undefined" && document.fonts?.load) {
     try {
       await Promise.all([
-        document.fonts.load(`italic 400 92px ${display}`),
+        document.fonts.load(`800 92px ${display}`),
         document.fonts.load(`700 151px ${mono}`),
         document.fonts.load(`600 30px ${mono}`),
       ]);
@@ -198,15 +198,15 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
     drawFigur(ctx, data.figur, (W - fw) / 2, 88 * S, fw, KREIDE);
   }
 
-  // Name / Titel in Old-Standard-Kursive — lange Studien-Titel werden auf
+  // Name / Titel in der Titelschrift — lange Titel werden auf
   // Plattenbreite eingepasst (Canvas kennt keinen Zeilenumbruch).
   ctx.fillStyle = KREIDE;
   const name = data.kind === "maximum" ? (data.exName ?? "") : (data.titel ?? "");
   let nameGrad = 34;
-  ctx.font = `italic 400 ${nameGrad * S}px ${display}`;
+  ctx.font = `800 ${nameGrad * S}px ${display}`;
   while (nameGrad > 18 && ctx.measureText(name).width > W - 2 * padX) {
     nameGrad -= 2;
-    ctx.font = `italic 400 ${nameGrad * S}px ${display}`;
+    ctx.font = `800 ${nameGrad * S}px ${display}`;
   }
   ctx.fillText(name, W / 2, 300 * S);
 

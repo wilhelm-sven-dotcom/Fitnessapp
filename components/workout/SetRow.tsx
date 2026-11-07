@@ -37,7 +37,7 @@ function StepBtn({
 export type SetState = "done" | "active" | "upcoming";
 
 const inputClass =
-  "min-w-0 flex-1 rounded-pill bg-transparent py-1 text-center font-mono text-readout font-bold leading-none tabular-nums text-fg placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
+  "min-w-0 flex-1 rounded-pill bg-transparent py-1 text-center font-mono text-readout font-bold leading-none tabular-nums text-fg placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 /** One logged set in three states — das Kader-Logbuch: ein belichteter Kader
  *  ist eine kompakte Registerzeile (Antippen = korrigieren), der OFFENE KADER
@@ -199,10 +199,10 @@ export function SetRow({
         <Pressable
           onClick={onActivate}
           aria-label={`${label} bearbeiten`}
-          className="flex w-full items-center gap-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="flex w-full items-center gap-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
-          <Check size={15} strokeWidth={2.5} className="shrink-0 text-cyanotypie" />
-          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          <Check size={15} strokeWidth={2.5} className="shrink-0 text-info" />
+          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-label text-muted">
             {label}
           </span>
           <span className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-fg">
@@ -214,7 +214,7 @@ export function SetRow({
               initial={reduce ? false : { scale: 0.7, opacity: 0 }}
               animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex shrink-0 items-center gap-1 rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
+              className="flex shrink-0 items-center gap-1 rounded-pill border border-rekord px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-rekord"
             >
               <Trophy size={11} strokeWidth={2.5} /> Rekord
             </motion.span>
@@ -237,10 +237,10 @@ export function SetRow({
       <Pressable
         onClick={onActivate}
         aria-label={`${label} starten`}
-        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
         <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-xs border border-line" />
-        <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt">
+        <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-label">
           {label}
         </span>
         <span className="flex-1 truncate font-mono text-sm tabular-nums">{ghost}</span>
@@ -259,7 +259,7 @@ export function SetRow({
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}
     >
-      <div className="flex justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-accent-ink">
+      <div className="flex justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-label text-accent-ink">
         <span>{isWarmup ? `Aufwärmen · ${label}` : `Jetzt · ${label}`}</span>
         {zielLabel && <span className="tabular-nums">{zielLabel}</span>}
       </div>
@@ -268,14 +268,14 @@ export function SetRow({
           initial={reduce ? false : { scale: 0.9, opacity: 0 }}
           animate={reduce ? undefined : { scale: [0.9, 1.08, 1], opacity: 1 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
+          className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-label text-rekord"
         >
           <Trophy size={12} className="shrink-0" /> Neuer Rekord
         </motion.p>
       )}
       {timed ? (
         <div className="flex items-center gap-2">
-          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-label text-muted">
             {label}
           </span>
           <TimedSet value={set.reps} onChange={(val) => onReps(set.reps, val)} />
@@ -285,7 +285,7 @@ export function SetRow({
           {/* Gewicht: ±Stepper in weightStep-Schritten — Tastatur nur bei
               direktem Tap ins Feld (Fokus selektiert den Inhalt komplett). */}
           <div>
-            <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+            <p className="font-mono text-3xs font-medium uppercase tracking-label text-muted">
               Last kg
             </p>
             <div className="mt-1.5 flex items-center gap-2">
@@ -314,7 +314,7 @@ export function SetRow({
           </div>
           {/* Wiederholungen: ±1-Stepper, Basis ist die Zielvorgabe. */}
           <div>
-            <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+            <p className="font-mono text-3xs font-medium uppercase tracking-label text-muted">
               Wiederholungen
             </p>
             <div className="mt-1.5 flex items-center gap-2">
@@ -344,12 +344,12 @@ export function SetRow({
       )}
       {/* Referenzzeile: Letztes Mal (Schleier) · Rekord (Messing). */}
       {!isWarmup && (lastLabel || recordLabel) && (
-        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 font-mono text-3xs font-medium uppercase tracking-gesperrt">
+        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 font-mono text-3xs font-medium uppercase tracking-label">
           <span className="text-muted">
             {lastLabel ? `Letztes Mal ${lastLabel}` : "Erstes Mal"}
           </span>
           {recordLabel && !isRecord && (
-            <span className="text-messing">Rekord {recordLabel}</span>
+            <span className="text-rekord">Rekord {recordLabel}</span>
           )}
         </div>
       )}
@@ -358,7 +358,7 @@ export function SetRow({
       )}
       {dbHint && <p className="font-mono text-3xs text-muted">{dbHint}</p>}
       {oneTapReady && (
-        <Button data-testid="satz-protokollieren" size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation tracking-gesperrt-3">
+        <Button data-testid="satz-protokollieren" size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation">
           <Check size={16} strokeWidth={2.5} />
           {(() => {
             const v = oneTapValues();

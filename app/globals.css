@@ -3,108 +3,133 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────────────────────
-   EIN Design: „Platte 311" — das Bewegungslabor (Muybridge, 1887).
-   Jede Wiederholung ein Kader, jede Einheit eine fotografische Platte.
-   „Archiv" (Albumin-Hell) ist der Grundzustand; [data-theme="dark"] ist das
-   „Atelier" (Kollodium-Dunkel) — der Fokus-Modus (/workout) läuft IMMER im
-   Atelier (Theme-Lock in lib/theme.ts). Flache Felder, 0,5–1px-Fäden,
-   KEINE Schatten, Radius 1/2/3 px. Funktionsfarben: Siegellack = Akzent/
-   Aktiv/CTA · Cyanotypie = Daten/Hypothese · Messing = Rekord/Maximum ·
-   IWF-Scheibenfarben = Lastcodierung (modusgleich). Fonts aus layout.tsx:
-   IBM Plex Mono trägt ALLE UI inkl. Body, Old Standard TT nur Benanntes
-   (Titel kursiv, Buchsatz). Kontraste: tinte 14,3:1 · siegellack-Fläche
-   5,5:1 · cyanotypie 6,1:1; schleier 1,76:1 (hell) ist der bewusste
-   Design-Entscheid „Bleistift-Notiz" für Sekundärtext.
+   EIN Design: „Regionen“ — Krafttraining in Scheibenfarben.
+   Warmes Papier (hell) und warmes Dunkel ([data-theme="dark"]); jede
+   Körperregion hat eine Farbe (Beine Rot, Druck Blau, Zug Gelb, Rumpf Grün,
+   wie die Wettkampf-Hantelscheiben), alles andere ist Tinte. Hauptaktionen
+   sind Tinte-Flächen. Archivo trägt alles (breit für Titel). Keine Schatten,
+   Radius 20/14/Pille/6. Kontrast: Text ≥ 4,5:1, Bedienelemente ≥ 3:1 —
+   `npm run kontrast -- --streng`. Werte und Rezepte: .claude/skills/ui-style.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
-  --base: #f2ecdd; /* Grund — Albumin-Papier des Archivs */
-  --card: #faf6ea; /* Fläche — die Platte/Karteikarte */
-  --surface-2: #e4dbc5; /* eingelassene Fläche (Inputs, Chips) */
-  --line: #d4c9b0; /* der Faden — Hairlines auf dem Grund */
-  --line-card: #e4dbc5; /* Faden auf der Fläche (Raster in Karten) */
-  --fg: #221c14; /* Tinte */
-  --muted: #c0b396; /* Schleier — Sekundärtext (Bleistift-Notiz) */
-  --faint: #c0b396; /* = Schleier: das Design kennt EINE Sekundärstufe */
-  --strong: #221c14;
-  --on-strong: #f2ecdd;
-  --glass: #f2ecdd; /* opak — das Labor kennt kein Milchglas */
+  --base: #f6f4ef; /* Grund */
+  --card: #ffffff; /* Fläche: Karten, Sheets, Zeilen */
+  --surface-2: #ece8e0; /* eingelassen: Segment-Spur, Stepper, Chips */
+  --line: #dcd6ca; /* Linie auf dem Grund */
+  --line-card: #e8e3da; /* Linie auf der Fläche */
+  --fg: #16140f; /* Tinte */
+  --muted: #5a554b; /* Nebentext 7,4:1 auf Fläche */
+  --faint: #6a6458; /* Hinweis/Meta 5,9:1 auf Fläche */
+  --strong: #16140f;
+  --on-strong: #ffffff;
+  --glass: #f6f4ef; /* opak: kein Milchglas */
 
-  --accent: #b23a1e; /* Siegellack — Akzent, Aktiv-Markierung, CTA */
-  --accent-press: #9e3319; /* Siegellack 8 % dunkler — Button-Down, hart */
-  --on-accent: #faf6ea; /* Tinte auf Siegellack-Fläche */
-  --ink-on-color: #faf6ea;
-  --accent-ink: #b23a1e; /* Siegellack als Vordergrund-Marke (5,5:1) */
-  --accent-2: #c0b396; /* neutrale Eyebrows/Labels = Schleier */
+  --accent: #16140f; /* Hauptaktion = Tinte */
+  --accent-press: #2e2a22;
+  --on-accent: #ffffff;
+  --ink-on-color: #ffffff;
+  --accent-ink: #16140f;
 
-  --cyanotypie: #1f5c86; /* Daten, Hypothesen, Charts (6,1:1) */
-  --messing: #97711f; /* Rekord/Maximum — Messingplakette */
-  --stufe-1: #d8e4ee; /* Myologie-Quartile (diskret, I→IV) */
-  --stufe-2: #a8c4da;
-  --stufe-3: #5f93b8;
-  --stufe-4: #1f5c86;
-  --iwf-rot: #c1332b; /* IWF-Scheibenfarben — modusgleich */
-  --iwf-blau: #2b6390;
-  --iwf-gelb: #d2a32c;
-  --iwf-gruen: #3a7d54;
-  --blaupause: #1f5c86; /* Poster-Festfarben (Cyanotypie-Druck) */
-  --kreide-blau: #f4f9fc;
+  --info: #2b5fb8; /* Daten, Charts, Links 6,1:1 */
+  --fokus: #2b5fb8; /* Fokusring */
+  --rekord: #8a6100; /* Rekorde 5,5:1 */
+  --erfolg: #257a4c;
+  --warnung: #a85500;
+  --gefahr: #c7352b;
 
-  /* Legacy-Aliasse (München-’72-Namen) — Werte zeigen auf die neuen
-     Funktionsfarben, damit alle Alt-Nutzstellen bis zu ihrem Umbau korrekt
-     rendern: Orange/Grün → Cyanotypie (Daten), Gelb → Messing (Warnstufe),
-     Rot/Live → Siegellack. getComputedStyle liefert substituierte Hexes. */
-  --orange: var(--cyanotypie);
-  --gruen: var(--cyanotypie);
-  --gelb: var(--messing);
-  --rot: var(--accent);
-  --live: var(--accent);
+  /* Regionen: Marke/Schrift (≥ 3:1 bzw. ≥ 4,5:1 auf Fläche) … */
+  --beine: #c7352b;
+  --druck: #2b5fb8;
+  --zug: #8f6700;
+  --rumpf: #257a4c;
+  --cardio: #6a6458;
+  /* … und Flächen mit ihrer Schrift (modusgleich). */
+  --beine-flaeche: #c7352b;
+  --druck-flaeche: #2b5fb8;
+  --zug-flaeche: #e3a600;
+  --rumpf-flaeche: #257a4c;
+  --cardio-flaeche: #ece8e0;
+  --auf-beine: #ffffff;
+  --auf-druck: #ffffff;
+  --auf-zug: #16140f;
+  --auf-rumpf: #ffffff;
+  --auf-cardio: #16140f;
 
-  --font-display: var(--font-oldstandard);
-  --font-body: var(--font-plexmono);
-  --font-mono: var(--font-plexmono);
+  --stufe-1: #d9d2c3; /* Muskel-Stufen I–IV */
+  --stufe-2: #a99f8c;
+  --stufe-3: #6e6656;
+  --stufe-4: #16140f;
 
-  /* Weich, aber flach (Nutzer-Entscheid „runder“): Karten mit Kabinett-
-     karten-Ecken, Bedienelemente als Pille, Kleinteile (Kader, Tupfer,
-     Kästchen) leicht gerundet. Schatten bleiben null. */
-  --radius-card: 14px;
+  /* IWF-Scheibenfarben = dieselben Scheiben wie die Regionen (modusgleich). */
+  --iwf-rot: #c7352b;
+  --iwf-blau: #2b5fb8;
+  --iwf-gelb: #e3a600;
+  --iwf-gruen: #257a4c;
+
+  --scrim: rgba(22, 20, 15, 0.45);
+
+  --font-display: var(--font-archivo);
+  --font-body: var(--font-archivo);
+  --font-mono: var(--font-archivo);
+
+  --radius-card: 20px;
+  --radius-inner: 14px;
   --radius-pill: 9999px;
-  --radius-xs: 4px;
+  --radius-xs: 6px;
 
-  /* Das Labor wirft keine Schatten: Trennung leisten Fäden (Hairlines). */
   --panel-shadow: none;
   --panel-shadow-lg: none;
 }
 
-/* Atelier: Kollodium-Dunkel — gleiche Anatomie, Töne gedreht. Poster- und
-   IWF-Farben bleiben modusgleich (physische Referenz: Scheiben, Druck). */
+/* Dunkel: gleiche Rollen, warmes Dunkel. Regions-Flächen bleiben modusgleich,
+   Marken und Schrift werden heller. */
 [data-theme="dark"] {
   color-scheme: dark;
-  --base: #141210;
-  --card: #1d1a16;
-  --surface-2: #342e24;
-  --line: #2e2921;
-  --line-card: #342e24;
-  --fg: #e9e1ce;
-  --muted: #57503f;
-  --faint: #57503f;
-  --strong: #e9e1ce;
-  --on-strong: #141210;
-  --glass: #141210;
+  --base: #13120f;
+  --card: #1d1b17;
+  --surface-2: #2a2722;
+  --line: #34302a;
+  --line-card: #2e2a24;
+  --fg: #f3f0e8;
+  --muted: #b8b1a2;
+  --faint: #a39c8d;
+  --strong: #f3f0e8;
+  --on-strong: #13120f;
+  --glass: #13120f;
 
-  --accent: #e06a45;
-  --accent-press: #c85a38;
-  --on-accent: #141210;
-  --ink-on-color: #141210;
-  --accent-ink: #e06a45;
-  --accent-2: #57503f;
+  --accent: #f3f0e8;
+  --accent-press: #d9d4c8;
+  --on-accent: #13120f;
+  --ink-on-color: #ffffff;
+  --accent-ink: #f3f0e8;
 
-  --cyanotypie: #6fa7cc;
-  --messing: #d4a649;
-  --stufe-1: #24313d;
-  --stufe-2: #33526b;
-  --stufe-3: #4f7fa3;
-  --stufe-4: #6fa7cc;
+  --info: #7ea7f0;
+  --fokus: #7ea7f0;
+  --rekord: #e3b341;
+  --erfolg: #5cc28a;
+  --warnung: #f0a04b;
+  --gefahr: #f07a6b;
+
+  --beine: #f07a6b;
+  --druck: #7ea7f0;
+  --zug: #e3b341;
+  --rumpf: #5cc28a;
+  --cardio: #a39c8d;
+  --cardio-flaeche: #2a2722;
+  --auf-cardio: #f3f0e8;
+
+  --stufe-1: #3a362e;
+  --stufe-2: #6e6656;
+  --stufe-3: #a99f8c;
+  --stufe-4: #f3f0e8;
+
+  --scrim: rgba(0, 0, 0, 0.55);
+}
+
+/* Archivo breit für Titel, Übungsköpfe, Restzeit, Wortmarke. */
+.font-display {
+  font-stretch: 125%;
 }
 
 html {
@@ -188,8 +213,7 @@ body {
   background-color: var(--base);
 }
 
-/* Ehemals Milchglas: das Labor kennt keine Unschärfe — sticky Chrome steht
-   opak auf dem Grund, die Trennung leistet der Faden (border-line). */
+/* Sticky-Leisten stehen opak auf dem Grund; Trennung über die Linie. */
 .glass {
   background-color: var(--glass);
 }
@@ -204,10 +228,10 @@ body {
   display: none;
 }
 
-/* Satz-Logbuch: der OFFENE KADER trägt den Siegellack-Rahmen (Fokus.dc). */
+/* Offener Satz: Fläche mit 2-px-Rahmen in Tinte (Etappe 3: Regionsfarbe). */
 .set-active {
   background: var(--card);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--fg);
 }
 
 /* ── Zoetrop — die EINE Bewegung des Labors ─────────────────────────────────

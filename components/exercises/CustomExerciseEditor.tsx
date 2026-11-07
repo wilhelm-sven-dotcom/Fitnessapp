@@ -20,11 +20,11 @@ const PATTERNS: Pattern[] = [
 ];
 
 const inputClass =
-  "w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
+  "w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1.5 mt-4 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+    <p className="mb-1.5 mt-4 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
       {children}
     </p>
   );
@@ -211,7 +211,7 @@ export function CustomExerciseEditor({
               onClick={() => setUnit(u)}
               className={cn(
                 "px-3 py-1.5 text-xs font-medium focus:outline-none",
-                unit === u ? "bg-accent-sessions text-on-accent" : "text-muted",
+                unit === u ? "bg-accent text-on-accent" : "text-muted",
               )}
             >
               {u === "Wdh" ? "Wiederholungen" : "Sekunden"}

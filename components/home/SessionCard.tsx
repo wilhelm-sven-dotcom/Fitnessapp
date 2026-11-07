@@ -154,11 +154,11 @@ export function SessionCard({
       <Card className="p-4">
         <Phasenband gruppen={gruppen} groesse="hero" zoetropOn={settings.zoetrope !== false} />
         {session.briefing && (
-          <p className="mt-3 font-display text-base leading-relaxed text-fg">
+          <p className="mt-3 text-base leading-relaxed text-fg">
             {session.briefing}
           </p>
         )}
-        <Kicker className="mt-3 border-t border-line-card pt-2.5 font-medium tracking-gesperrt">
+        <Kicker className="mt-3 border-t border-line-card pt-2.5 font-medium tracking-label">
           {quelle}
           {session.edited ? " · angepasst" : ""}
         </Kicker>
@@ -168,7 +168,7 @@ export function SessionCard({
           Stufen ein freies Feld: 43 oder 53 Minuten sind echte Zeitfenster,
           und ATLAS bekommt die Zahl ohnehin als Zahl. */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+        <span className="mr-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
           Zeit
         </span>
         {BUDGETS.map((b) => (
@@ -202,7 +202,7 @@ export function SessionCard({
           aria-label="Zeitbudget frei eingeben, Minuten"
           placeholder="frei"
           className={cn(
-            "w-16 rounded-pill border bg-transparent px-2 py-2 text-center font-mono text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+            "w-16 rounded-pill border bg-transparent px-2 py-2 text-center font-mono text-xs font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
             BUDGETS.includes(budgetMin) ? "border-line text-muted" : "border-strong text-fg",
           )}
         />
@@ -218,11 +218,11 @@ export function SessionCard({
           }}
           size="lg"
           full
-          className="tracking-gesperrt-3"
+          className=""
         >
           {locked ? "Training fortsetzen" : "Training starten"}
         </Button>
-        <p className="mt-2 text-center font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
+        <p className="mt-2 text-center font-mono text-4xs font-medium uppercase tracking-label text-muted">
           {locked ? "Die Einheit läuft" : "Zuerst: Aufwärmen"}
         </p>
       </div>
@@ -249,8 +249,8 @@ export function SessionCard({
                     style={{ backgroundColor: tintByItem.get(z.it.id), opacity: 0.8 }}
                   />
                   <div className="min-w-0">
-                    <p className="font-display text-lg italic leading-snug text-fg">{z.ex.name}</p>
-                    <p className="mt-0.5 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+                    <p className="text-base font-semibold leading-snug text-fg">{z.ex.name}</p>
+                    <p className="mt-0.5 font-mono text-3xs font-medium uppercase tracking-label text-muted">
                       <span className="tabular-nums">{z.ziel}</span> · {MUSCLE_LABEL[m.primary]}
                     </p>
                   </div>
@@ -258,19 +258,19 @@ export function SessionCard({
                 {z.weight != null && (
                   <p className="shrink-0 text-right font-mono tabular-nums">
                     {z.plus != null && (
-                      <span className="mr-1.5 text-2xs font-semibold text-cyanotypie">
+                      <span className="mr-1.5 text-2xs font-semibold text-info">
                         +{fmtGewicht(z.plus)}
                       </span>
                     )}
                     <span className="text-lg font-semibold text-fg">{fmtGewicht(z.weight)}</span>
-                    <span className="ml-1 text-3xs font-medium uppercase tracking-gesperrt text-muted">
+                    <span className="ml-1 text-3xs font-medium uppercase tracking-label text-muted">
                       kg
                     </span>
                   </p>
                 )}
               </div>
               {z.it.why && (
-                <p className="mt-1 pl-4 font-display text-sm leading-snug text-muted">
+                <p className="mt-1 pl-4 text-sm leading-snug text-muted">
                   {z.it.why}
                 </p>
               )}
@@ -285,7 +285,7 @@ export function SessionCard({
           <div className="flex flex-wrap items-center gap-2">
             <Pressable
               onClick={onEdit}
-              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg"
+              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg"
             >
               <Pencil size={14} aria-hidden /> Bearbeiten
             </Pressable>
@@ -293,7 +293,7 @@ export function SessionCard({
               onClick={() => onRegenerate()}
               // Nicht gesperrt: eine neue Anfrage bricht die laufende ab
               // (app/page.tsx, atlasAbort), es kann sich nichts stauen.
-              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg"
+              className="flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg"
             >
               <RefreshCw size={14} aria-hidden className={regenerating ? "opacity-50" : undefined} />
               {regenerating ? "ATLAS ordnet an …" : "Neu ansetzen"}

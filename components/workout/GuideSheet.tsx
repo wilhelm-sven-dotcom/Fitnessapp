@@ -91,7 +91,7 @@ export function GuideSheet({
     <Sheet open={open} onClose={onClose} title={ex?.name}>
       {ex && (
         <>
-          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Guide · {fmtKatalogNr(katalogNr)} · {MUSCLE_LABEL[muscleOf(ex).primary]}
           </p>
           {/* Media-Slot: das Video IST die Ausführungs-Anleitung. */}
@@ -141,22 +141,22 @@ export function GuideSheet({
 
           {ex.cue && (
             <div className="mb-3">
-              <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+              <p className="font-mono text-3xs font-medium uppercase tracking-label text-muted">
                 Technik
               </p>
-              <p className="mt-1 font-display text-base leading-relaxed text-fg">{ex.cue}</p>
+              <p className="mt-1 text-base leading-relaxed text-fg">{ex.cue}</p>
             </div>
           )}
 
           {(ex.steps?.length ?? 0) > 0 ? (
             <div className="mb-3">
-              <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+              <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-label text-muted">
                 Ausführung
               </p>
               <ol className="space-y-1.5">
                 {(ex.steps ?? []).map((s, i) => (
                   <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-fg">
-                    <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-cyanotypie">
+                    <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-info">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span>{s}</span>
@@ -200,7 +200,7 @@ export function GuideSheet({
                     if (e.key === "Enter") saveNote();
                   }}
                   placeholder="z. B. Unterstützungsband, Gurte, 20-kg-Band"
-                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                  className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                 />
                 <Pressable
                   type="button"
@@ -260,7 +260,7 @@ export function GuideSheet({
 
           {ex.back && (
             <div className="mb-2 rounded-card border-l-2 border-status-over bg-surface-2 px-3 py-2">
-              <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-status-over">
+              <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-status-over">
                 Rücken
               </p>
               <p className="text-sm text-fg">{ex.back}</p>

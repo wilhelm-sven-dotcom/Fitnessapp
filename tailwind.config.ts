@@ -11,129 +11,102 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        // Platte 311: IBM Plex Mono trägt ALLE UI inkl. Body (Messgeräte-
-        // Charakter); Old Standard TT nur für Benanntes (Titel, Buchsatz).
-        sans: [
-          "var(--font-body)",
-          "IBM Plex Mono",
-          "ui-monospace",
-          "SFMono-Regular",
-          "Menlo",
-          "monospace",
-        ],
-        body: [
-          "var(--font-body)",
-          "IBM Plex Mono",
-          "ui-monospace",
-          "SFMono-Regular",
-          "Menlo",
-          "monospace",
-        ],
-        mono: [
-          "var(--font-mono)",
-          "IBM Plex Mono",
-          "ui-monospace",
-          "SFMono-Regular",
-          "Menlo",
-          "monospace",
-        ],
-        display: ["var(--font-display)", "Old Standard TT", "Georgia", "serif"],
+        // „Regionen“: Archivo trägt alles. `font-display` setzt zusätzlich
+        // die breite Schnittbreite (globals.css), `font-mono` ist Archivo.
+        sans: ["var(--font-body)", "Archivo", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "Archivo", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "Archivo", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Archivo", "system-ui", "sans-serif"],
       },
-      // Beschriftungsgrade des Labors (Basis-Skala bleibt daneben gültig):
-      // 2xs..5xs = Labels/Kicker/Nav/Kadernummern, titel = Karten-Titel
-      // kursiv, readout(-lg) = große Messwerte. KEINE Arbitrary-Values im JSX.
+      // Lesbare Mindestgrößen: Labels 12 px, Meta 11 px, 10 px nur für
+      // Diagramm-Beschriftung. Keine Arbitrary-Values im JSX.
       fontSize: {
-        "2xs": ["11px", { lineHeight: "1.35" }],
-        "3xs": ["10px", { lineHeight: "1.3" }],
-        "4xs": ["9px", { lineHeight: "1.25" }],
-        "5xs": ["8px", { lineHeight: "1.2" }],
+        "2xs": ["12px", { lineHeight: "1.4" }],
+        "3xs": ["12px", { lineHeight: "1.35" }],
+        "4xs": ["11px", { lineHeight: "1.3" }],
+        "5xs": ["10px", { lineHeight: "1.25" }],
         titel: ["28px", { lineHeight: "1.1" }],
         readout: ["44px", { lineHeight: "1" }],
-        "readout-lg": ["56px", { lineHeight: "1" }],
+        "readout-lg": ["64px", { lineHeight: "0.95" }],
       },
-      // Gesperrte Versalien (typografisch „gesperrt") — vier Stufen statt
-      // tracking-[.3em]-Arbitraries: Chips/Meta · Buttons/Labels · Kicker/
-      // Katalogschilder · Stempel/Hero-Kicker (Werte aus dem Handoff).
+      // Eine Sperrung für Versal-Labels.
       letterSpacing: {
-        gesperrt: "0.14em",
-        "gesperrt-2": "0.24em",
-        "gesperrt-3": "0.28em",
-        "gesperrt-4": "0.32em",
+        label: "0.08em",
       },
       colors: {
-        // Funktionsfarben Platte 311: Siegellack (accent) = Aktiv/CTA,
-        // Cyanotypie = Daten/Hypothese, Messing = Rekord. Die Bereichs-
-        // Aliasse (sessions/volume/coverage/coach/live) zeigen über die
-        // CSS-Vars auf diese Funktionsfarben, bis alle Nutzstellen auf die
-        // neuen Namen umgezogen sind.
+        // Hauptaktion = Tinte (accent), gedrückt, Schrift darauf.
         accent: {
-          sessions: "var(--accent)",
-          volume: "var(--gruen)",
-          coverage: "var(--orange)",
+          DEFAULT: "var(--accent)",
+          press: "var(--accent-press)",
+          ink: "var(--accent-ink)",
         },
-        coach: "var(--orange)",
-        "accent-2": "var(--accent-2)",
-        live: "var(--live)",
-        cyanotypie: "var(--cyanotypie)",
-        messing: "var(--messing)",
-        // Button-Down-Fläche: Siegellack 8 % dunkler, harter Wechsel.
-        "accent-press": "var(--accent-press)",
-        blaupause: "var(--blaupause)",
-        "kreide-blau": "var(--kreide-blau)",
-        // Myologie-Quartile (diskrete Stufen I–IV, keine Verläufe).
+        // Funktionsrollen.
+        info: "var(--info)",
+        fokus: "var(--fokus)",
+        rekord: "var(--rekord)",
+        erfolg: "var(--erfolg)",
+        warnung: "var(--warnung)",
+        gefahr: "var(--gefahr)",
+        // Körperregionen: Marke/Schrift, Fläche, Schrift auf Fläche.
+        region: {
+          beine: "var(--beine)",
+          druck: "var(--druck)",
+          zug: "var(--zug)",
+          rumpf: "var(--rumpf)",
+          cardio: "var(--cardio)",
+          "beine-flaeche": "var(--beine-flaeche)",
+          "druck-flaeche": "var(--druck-flaeche)",
+          "zug-flaeche": "var(--zug-flaeche)",
+          "rumpf-flaeche": "var(--rumpf-flaeche)",
+          "cardio-flaeche": "var(--cardio-flaeche)",
+          "auf-beine": "var(--auf-beine)",
+          "auf-druck": "var(--auf-druck)",
+          "auf-zug": "var(--auf-zug)",
+          "auf-rumpf": "var(--auf-rumpf)",
+          "auf-cardio": "var(--auf-cardio)",
+        },
+        // Muskel-Stufen I–IV (diskret, keine Verläufe).
         stufe: {
           1: "var(--stufe-1)",
           2: "var(--stufe-2)",
           3: "var(--stufe-3)",
           4: "var(--stufe-4)",
         },
-        // IWF-Scheibenfarben — Lastcodierung, in beiden Modi identisch.
+        // Wettkampf-Scheibenfarben (Lastcodierung), modusgleich.
         iwf: {
           rot: "var(--iwf-rot)",
           blau: "var(--iwf-blau)",
           gelb: "var(--iwf-gelb)",
           gruen: "var(--iwf-gruen)",
         },
-        // Semantic status (Volumen-Balken, Coach-Banner, Readiness)
+        // Status (Volumen-Balken, Coach-Hinweise, Tagesform).
         status: {
           under: "var(--accent)",
-          in: "var(--gruen)",
-          over: "var(--gelb)",
-          danger: "var(--rot)",
+          in: "var(--erfolg)",
+          over: "var(--warnung)",
+          danger: "var(--gefahr)",
         },
-        // Material surfaces — theme-driven via CSS variables.
         surface: {
           0: "var(--base)",
           1: "var(--card)",
           2: "var(--surface-2)",
           3: "var(--line)",
         },
-        // Semantic foreground/line tokens (flip with theme).
         fg: "var(--fg)",
         muted: "var(--muted)",
         faint: "var(--faint)",
         line: "var(--line)",
-        // Faden AUF der Kartenfläche (Raster, Kader-Rahmen).
         "line-card": "var(--line-card)",
         strong: "var(--strong)",
         "on-strong": "var(--on-strong)",
-        // Tinte auf akzentgefüllten Flächen (hell: Grund, dunkel: Kollodium).
         "on-accent": "var(--on-accent)",
-        // Tinte auf JEDEM satten Farbfeld.
         "on-color": "var(--ink-on-color)",
-        // Akzent als Vordergrund-Marke (Text/Icon) — lesbar auf dem Grund.
-        "accent-ink": "var(--accent-ink)",
       },
       borderRadius: {
         card: "var(--radius-card)",
+        inner: "var(--radius-inner)",
         pill: "var(--radius-pill)",
         xs: "var(--radius-xs)",
-      },
-      // Das Labor wirft keine Schatten — die Vars sind auf `none` gestellt;
-      // die Utilities bleiben, bis alle Nutzstellen umgezogen sind.
-      boxShadow: {
-        card: "var(--panel-shadow)",
-        "card-lg": "var(--panel-shadow-lg)",
       },
     },
   },

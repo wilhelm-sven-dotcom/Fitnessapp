@@ -20,7 +20,10 @@
 // v34: Ortswahl Zuhause/Studio, vereinfachte Heute-Seite, runde Ecken —
 // ein großes UI-Release; ohne Bump hielte ein installiertes Gerät Chunks
 // des alten Builds im Cache.
-const CACHE = "training-v34";
+// v35: Look „Regionen“ — neue Grundfarben im Manifest (background_color,
+// theme_color) und neue Schrift; das Manifest liegt cache-first, ohne Bump
+// läse ein installiertes Gerät die alten Farben weiter.
+const CACHE = "training-v35";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only

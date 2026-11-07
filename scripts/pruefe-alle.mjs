@@ -13,6 +13,16 @@ if (!existsSync(".next/BUILD_ID")) {
   process.exit(1);
 }
 
+// Ein liegengebliebener Server auf 3199 würde den ALTEN Build ausliefern —
+// die Prüfungen liefen dann gegen fremde Chunks und scheiterten ohne Grund.
+try {
+  await fetch("http://127.0.0.1:3199/");
+  console.error("Port 3199 ist belegt (alter Server?) – erst beenden, z. B. pkill -f next-server.");
+  process.exit(1);
+} catch {
+  /* frei */
+}
+
 const SKRIPTE = [
   "scripts/smoke.mjs",
   "scripts/pruefe-training.mjs",

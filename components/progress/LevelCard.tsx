@@ -23,14 +23,14 @@ export function LevelCard() {
     <div>
       <Card variant="elevated" className="mb-4 rounded-card p-5">
         <div className="mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             <Trophy size={13} className="text-accent-ink" /> Trainingslevel
           </span>
           <Pressable
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
             aria-label="Wie das Level entsteht"
-            className="-m-2 flex min-h-11 items-center gap-1 rounded-card p-2 font-mono text-xs tabular-nums text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="-m-2 flex min-h-11 items-center gap-1 rounded-card p-2 font-mono text-xs tabular-nums text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             {lvl.xp} XP <ChevronRight size={12} aria-hidden />
           </Pressable>
@@ -40,7 +40,7 @@ export function LevelCard() {
 
         <div className="mt-4 h-1.5 overflow-hidden rounded-pill bg-surface-2" aria-hidden>
           <div
-            className="h-full rounded-pill bg-accent-sessions transition-[width] duration-500"
+            className="h-full rounded-pill bg-accent transition-[width] duration-500"
             style={{ width: `${Math.round(lvl.pct * 100)}%` }}
           />
         </div>

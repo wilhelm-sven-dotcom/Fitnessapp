@@ -793,10 +793,10 @@ export function SessionRunner() {
     return (
       <>
         <div className="pt-10 text-center">
-          <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Gleich geht&apos;s los
           </p>
-          <h1 className="mt-1 font-display text-2xl italic text-fg">
+          <h1 className="mt-1 font-display font-bold text-2xl text-fg">
             {todaySession?.name ?? "Deine Einheit"}
           </h1>
         </div>
@@ -925,7 +925,7 @@ export function SessionRunner() {
       </div>
 
       <div className="px-1">
-        <p className="truncate font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+        <p className="truncate font-mono text-3xs font-medium uppercase tracking-label text-muted">
           {/* Der Fokus steckt oft schon im Namen („Ganzkörper · Brust & Rücken") —
               dann nicht doppelt anhängen. */}
           {st.session.name}

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { mareyArt } from "@/lib/phasen/figur-art";
+import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
 
 /**
  * Der OS-Splash für iOS im Standalone-Modus. Android und Chrome bauen ihn
@@ -41,13 +42,13 @@ export function GET(_req: Request, { params }: { params: { spec: string } }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#141210",
+          background: GRUND_DUNKEL,
         }}
       >
         {/* 0,55 der Breite: die Spur füllt davon rund 60 %, steht also so
             groß im Bild wie die Figur im In-App-Startbild danach. */}
         <svg width={Math.round(w * 0.55)} height={Math.round(w * 0.55)} viewBox="0 0 48 48">
-          {mareyArt("#e9e1ce")}
+          {mareyArt(TINTE_DUNKEL)}
         </svg>
       </div>
     ),

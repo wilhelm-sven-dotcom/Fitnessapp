@@ -161,11 +161,11 @@ export function ExerciseStage({
           else if (info.offset.x > 56 || info.velocity.x > 500) onPrev();
         }}
       >
-        <div className="flex justify-between gap-2 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+        <div className="flex justify-between gap-2 font-mono text-3xs font-medium uppercase tracking-label text-muted">
           <span>
             Übung <span className="tabular-nums">{index + 1}/{total}</span>
           </span>
-          <span className={cn(alleBelichtet && "text-cyanotypie")}>
+          <span className={cn(alleBelichtet && "text-info")}>
             {alleBelichtet ? "Alle Sätze erledigt" : "Übung läuft"}
           </span>
         </div>
@@ -177,23 +177,22 @@ export function ExerciseStage({
               color="var(--accent)"
               zoetropOn={zoetropOn}
               buehne
-              raster
             />
           </div>
         )}
         <div className="mt-2.5 flex items-baseline justify-between gap-3">
-          <h2 className="min-w-0 truncate font-display text-titel italic text-fg">
+          <h2 className="min-w-0 truncate font-display font-bold text-titel text-fg">
             {ex.name}
           </h2>
           {ex.pattern === "cardio" ? (
-            <span className="shrink-0 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+            <span className="shrink-0 font-mono text-2xs uppercase tracking-label text-muted">
               <span className="tabular-nums">
                 {ex.repLow}–{ex.repHigh}
               </span>{" "}
               Min
             </span>
           ) : (
-            <span className="shrink-0 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+            <span className="shrink-0 font-mono text-2xs uppercase tracking-label text-muted">
               Satz{" "}
               <span className="tabular-nums">
                 {Math.min(done + 1, work.length)}/{work.length}
@@ -201,16 +200,16 @@ export function ExerciseStage({
             </span>
           )}
         </div>
-        <p className="mt-1 font-mono text-3xs uppercase tracking-gesperrt text-muted">
+        <p className="mt-1 font-mono text-3xs uppercase tracking-label text-muted">
           {ex.tag} · {PATTERN_LABEL[ex.pattern]}
         </p>
         {item.why && (
-          <p className="mt-1.5 font-display text-sm leading-snug text-muted">{item.why}</p>
+          <p className="mt-1.5 text-sm leading-snug text-muted">{item.why}</p>
         )}
         {aidNote && (
           <Pressable
             onClick={onOpenGuide}
-            className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             <Wrench size={12} className="shrink-0" />
             <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
@@ -233,7 +232,7 @@ export function ExerciseStage({
           <Pressable
             onClick={() => onCardioToggle(!cardioDone)}
             className={cn(
-              "flex w-full items-center justify-center gap-2 rounded-pill border py-2.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+              "flex w-full items-center justify-center gap-2 rounded-pill border py-2.5 font-mono text-xs font-semibold uppercase tracking-label focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
               cardioDone
                 ? "border-line text-muted"
                 : "border-strong text-fg",
@@ -318,7 +317,7 @@ export function ExerciseStage({
       <div className="mt-2 flex items-center justify-between gap-2">
         <Pressable
           onClick={onOpenGuide}
-          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 font-mono text-xs font-medium uppercase tracking-gesperrt text-accent-ink focus:outline-none"
+          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 font-mono text-xs font-medium uppercase tracking-label text-accent-ink focus:outline-none"
         >
           <ChevronRight size={14} /> Guide & Technik
         </Pressable>
@@ -326,7 +325,7 @@ export function ExerciseStage({
           <Pressable
             onClick={onSwap}
             aria-label={`${ex.name} tauschen`}
-            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill border border-strong px-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill border border-strong px-3 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             <Repeat size={13} /> Tauschen
           </Pressable>

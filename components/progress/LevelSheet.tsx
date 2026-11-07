@@ -68,7 +68,7 @@ export function LevelSheet({ open, onClose }: { open: boolean; onClose: () => vo
             {data.lvl.level + 1}. Die Schwellen wachsen mit jedem Level.
           </p>
 
-          <p className="mb-1 mt-6 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <p className="mb-1 mt-6 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Abzeichen · {unlocked}/{data.badges.length}
           </p>
           <ul>
@@ -84,7 +84,7 @@ export function LevelSheet({ open, onClose }: { open: boolean; onClose: () => vo
                       "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xs",
                       b.unlocked ? "text-on-color" : "bg-surface-2 text-faint",
                     )}
-                    style={b.unlocked ? { background: "var(--gruen)" } : undefined}
+                    style={b.unlocked ? { background: "var(--erfolg)" } : undefined}
                   >
                     <Icon size={16} strokeWidth={2.5} />
                   </span>
@@ -98,7 +98,7 @@ export function LevelSheet({ open, onClose }: { open: boolean; onClose: () => vo
                       >
                         {b.title}
                       </p>
-                      <span className="shrink-0 rounded-xs bg-surface-2 px-1 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-faint">
+                      <span className="shrink-0 rounded-xs bg-surface-2 px-1 py-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-faint">
                         {b.tier}
                       </span>
                     </div>
@@ -110,7 +110,7 @@ export function LevelSheet({ open, onClose }: { open: boolean; onClose: () => vo
                           aria-hidden
                         >
                           <div
-                            className="h-full rounded-pill bg-accent-volume"
+                            className="h-full rounded-pill bg-info"
                             style={{ width: `${Math.round(b.progress * 100)}%` }}
                           />
                         </div>

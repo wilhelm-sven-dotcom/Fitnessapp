@@ -30,7 +30,7 @@ export function ProgressHeader({
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate font-mono text-2xs font-semibold uppercase tracking-gesperrt text-fg">
+        <span className="min-w-0 truncate font-mono text-2xs font-semibold uppercase tracking-label text-fg">
           Einheit <span className="tabular-nums">{plattenNr}</span>
         </span>
         <span className="flex shrink-0 items-center gap-1">
@@ -41,7 +41,7 @@ export function ProgressHeader({
           <Pressable
             onClick={onExit}
             aria-label="Training beenden"
-            className="-m-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="-m-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             <X size={18} />
           </Pressable>
@@ -51,7 +51,7 @@ export function ProgressHeader({
       <Pressable
         onClick={onOverview}
         aria-label={`Einheit im Überblick — Übung ${currentIndex + 1} von ${gruppen.length}`}
-        className="mt-2 block w-full rounded-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+        className="mt-2 block w-full rounded-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
         <Phasenband gruppen={gruppen} groesse="live" />
       </Pressable>

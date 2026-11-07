@@ -28,7 +28,7 @@ const fail = (msg) => {
 };
 
 // ── Server hochfahren ──
-const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
   stdio: "ignore",
   env: { ...process.env, ANTHROPIC_API_KEY: "" },
 });

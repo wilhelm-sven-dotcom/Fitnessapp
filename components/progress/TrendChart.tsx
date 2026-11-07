@@ -7,7 +7,7 @@ const W = 300;
 const H = 56;
 const pad = 6;
 const GRID = "var(--line-card)"; // Faden auf der Kartenfläche
-const LINIE = "var(--cyanotypie)"; // Messkurven sprechen Cyanotypie
+const LINIE = "var(--info)"; // Messkurven sprechen Cyanotypie
 
 export interface TrendPoint {
   /** ISO-Datum — tragen ALLE Punkte eins, wird die x-Achse zeitproportional. */

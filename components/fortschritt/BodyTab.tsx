@@ -139,7 +139,7 @@ export function BodyTab() {
     <div>
       <Pressable
         onClick={() => setEntryOpen(true)}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
         <Plus size={16} /> Körperdaten eintragen
       </Pressable>
@@ -190,7 +190,7 @@ export function BodyTab() {
 
       {body.length > 0 && (
         <Card className="mb-3">
-          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Timeline
           </p>
           <div className="space-y-3">
@@ -261,7 +261,7 @@ export function BodyTab() {
                         className={cn(
                           "h-7 w-7 rounded-pill font-mono text-xs font-bold focus:outline-none",
                           pIdx === aIdx
-                            ? "bg-accent-sessions text-on-accent"
+                            ? "bg-accent text-on-accent"
                             : "bg-surface-2 text-muted",
                         )}
                       >
@@ -276,7 +276,7 @@ export function BodyTab() {
                         void deleteBodyMetric(i);
                         toast("Eintrag gelöscht.");
                       }}
-                      className="shrink-0 rounded-pill px-2 py-1 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                      className="shrink-0 rounded-pill px-2 py-1 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                     >
                       Löschen?
                     </Pressable>
@@ -284,7 +284,7 @@ export function BodyTab() {
                     <Pressable
                       onClick={() => setConfirmDel(delKey)}
                       aria-label="Eintrag löschen"
-                      className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                      className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                     >
                       <Trash2 size={14} />
                     </Pressable>

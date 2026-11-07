@@ -35,7 +35,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   return (
     <Card className="rounded-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
           Diese & letzte Wochen
         </p>
         <span className="text-xs text-muted">Ziel 3× / Woche</span>
@@ -49,7 +49,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
               <div className="flex flex-col-reverse gap-1.5">
                 {Array.from({ length: cells }, (_, di) => {
                   const done = di < w.count;
-                  const c = done ? (goalMet ? "var(--gruen)" : "var(--accent)") : null;
+                  const c = done ? (goalMet ? "var(--erfolg)" : "var(--accent)") : null;
                   return (
                     <motion.span
                       key={di}

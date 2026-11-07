@@ -161,11 +161,11 @@ export function WarmupPlayer({
   if (done) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 app-bg px-8 text-center">
-        <p className="font-display text-4xl italic text-fg">Aufgewärmt.</p>
-        <p className="max-w-xs font-mono text-2xs uppercase tracking-gesperrt text-muted">
+        <p className="font-display font-bold text-4xl text-fg">Aufgewärmt.</p>
+        <p className="max-w-xs font-mono text-2xs uppercase tracking-label text-muted">
           Jetzt kann es losgehen.
         </p>
-        <Button size="lg" onClick={onFinished ?? onClose} className="mt-2 px-6 tracking-gesperrt-3">
+        <Button size="lg" onClick={onFinished ?? onClose} className="mt-2 px-6">
           Zur ersten Übung
         </Button>
       </div>
@@ -234,7 +234,7 @@ export function WarmupPlayer({
         </div>
       </div>
 
-      <p className="mt-2 px-5 text-center font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+      <p className="mt-2 px-5 text-center font-mono text-3xs font-semibold uppercase tracking-label text-muted">
         Aufwärmen
       </p>
 
@@ -247,7 +247,7 @@ export function WarmupPlayer({
               "rounded-xs",
               total > 8 ? "h-1.5 w-1.5" : "h-2 w-2",
               i === index
-                ? "bg-accent-sessions"
+                ? "bg-accent"
                 : i < index
                   ? "bg-fg"
                   : "border border-line bg-transparent",
@@ -283,7 +283,7 @@ export function WarmupPlayer({
             </div>
           ) : fig ? (
             <div className="mb-3 w-72 rounded-card border border-line-card bg-surface-1 p-2">
-              <p className="px-1 pt-0.5 text-left font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+              <p className="px-1 pt-0.5 text-left font-mono text-3xs font-medium uppercase tracking-label text-muted">
                 Übung {index + (switching ? 2 : 1)}
               </p>
               <FigurePanel
@@ -292,7 +292,6 @@ export function WarmupPlayer({
                 viewKey="side"
                 periodMs={showing.periodMs}
                 color="var(--accent)"
-                raster
               />
             </div>
           ) : null}
@@ -304,13 +303,13 @@ export function WarmupPlayer({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE_OUT }}
         >
-          <span className="mb-4 rounded-pill border border-line px-2.5 py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
+          <span className="mb-4 rounded-pill border border-line px-2.5 py-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             {switching ? "Wechsel" : badge.label}
           </span>
-          <h2 className="font-display text-2xl italic text-fg">
+          <h2 className="font-display font-bold text-2xl text-fg">
             {switching ? `Gleich: ${showing.name}` : showing.name}
           </h2>
-          <p className="mt-3 max-w-sm font-mono text-3xs font-medium uppercase leading-relaxed tracking-gesperrt text-muted">
+          <p className="mt-3 max-w-sm font-mono text-3xs font-medium uppercase leading-relaxed tracking-label text-muted">
             {switching ? "Position wechseln — gleich weiter" : showing.cue}
           </p>
         </motion.div>
@@ -321,7 +320,7 @@ export function WarmupPlayer({
       <div className="flex items-center gap-2 px-5">
         <Pressable
           onClick={skip}
-          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-line py-3.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-muted focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-line py-3.5 font-mono text-xs font-semibold uppercase tracking-label text-muted focus:outline-none"
         >
           Überspringen
         </Pressable>
@@ -330,7 +329,7 @@ export function WarmupPlayer({
             primeAudio();
             setPaused((p) => !p);
           }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-strong py-3.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none"
+          className="flex flex-1 items-center justify-center gap-2 rounded-pill border border-strong py-3.5 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none"
         >
           {paused ? <Play size={16} /> : <Pause size={16} />} {paused ? "Weiter" : "Pause"}
         </Pressable>

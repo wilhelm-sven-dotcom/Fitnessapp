@@ -318,9 +318,9 @@ export default function HomePage() {
           onClick={toggleSpare}
           aria-pressed={backSpareToday}
           className={cn(
-            "flex items-center gap-1.5 rounded-pill border px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2",
+            "flex items-center gap-1.5 rounded-pill border px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label",
             backSpareToday
-              ? "border-transparent bg-accent-sessions text-on-accent"
+              ? "border-transparent bg-accent text-on-accent"
               : "border-line text-muted",
           )}
         >
@@ -350,17 +350,17 @@ export default function HomePage() {
           angenommene Entlastungswoche stand dort immer „W1“; die echte Phase
           zeigt Fortschritt. */}
       <header className="mb-4">
-        <div className="flex items-baseline justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt-3 text-muted">
+        <div className="flex items-baseline justify-between gap-2 font-mono text-3xs font-semibold uppercase text-muted">
           <span>Deine Einheit heute</span>
           <span className="whitespace-nowrap tabular-nums">{plattenDatum}</span>
         </div>
-        <h1 className="mt-3 font-display text-3xl italic leading-tight text-fg">
+        <h1 className="mt-3 font-display font-bold text-3xl leading-tight text-fg">
           {frageOffen
             ? "Wo trainierst du heute?"
             : (todaySession?.name ?? "Einheit wird zusammengestellt …")}
         </h1>
         {!frageOffen && todaySession && todaySession.items.length > 0 && (
-          <p data-testid="heute-bestand" className="mt-2 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+          <p data-testid="heute-bestand" className="mt-2 font-mono text-2xs uppercase tracking-label text-muted">
             Einheit <span className="tabular-nums">{plattenNr}</span> ·{" "}
             <span className="tabular-nums">{todaySession.items.length}</span> Übungen ·{" "}
             <span className="tabular-nums">{saetzeGesamt}</span> Sätze ·{" "}
@@ -397,7 +397,7 @@ export default function HomePage() {
               tap();
               compose({ wish: todaySession.wish, variant: todaySession.variant });
             }}
-            className="mt-2 rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-accent-ink"
+            className="mt-2 rounded-pill py-1 font-mono text-3xs font-semibold uppercase tracking-label text-accent-ink"
           >
             Für {activeGym.name} neu zusammenstellen
           </Pressable>
@@ -444,10 +444,10 @@ export default function HomePage() {
       {/* Die heutige Einheit — das eine Herzstück der Seite. */}
       {frageOffen ? null : todaySession?.completedAt ? (
         <Card className="mb-4 p-5">
-          <p className="flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
-            <CheckCircle2 size={14} className="text-cyanotypie" /> Heute erledigt
+          <p className="flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+            <CheckCircle2 size={14} className="text-info" /> Heute erledigt
           </p>
-          <h2 className="mt-1 font-display text-2xl italic text-fg">
+          <h2 className="mt-1 font-display font-bold text-2xl text-fg">
             {todaySession.name}
           </h2>
           <p className="mt-1 text-sm text-muted">
@@ -456,7 +456,7 @@ export default function HomePage() {
           </p>
           <Pressable
             onClick={() => compose()}
-            className="mt-4 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="mt-4 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-label text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             <RefreshCw size={13} /> Noch eine Einheit
           </Pressable>
@@ -498,7 +498,7 @@ export default function HomePage() {
         />
       ) : (
         <Card className="mb-4 p-5">
-          <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt text-muted">
+          <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Trainingsplan
           </p>
           <p className="mt-2 text-sm text-muted">ATLAS stellt die Einheit zusammen …</p>

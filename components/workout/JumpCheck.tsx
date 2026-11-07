@@ -114,13 +114,13 @@ export function JumpCheck({
   return (
     <div className="mb-4 rounded-card bg-surface-2 p-3" data-testid="jump-check">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
           Sprungtest
         </p>
         {phase !== "measuring" && (
           <Pressable
             onClick={() => void start()}
-            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             {phase === "done" || phase === "failed" ? "Nochmal" : "Messen"}
           </Pressable>

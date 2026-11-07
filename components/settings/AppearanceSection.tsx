@@ -45,7 +45,7 @@ export function AppearanceSection() {
         onChange={(e) => setName(e.target.value)}
         onBlur={() => setUserName(name)}
         placeholder="z. B. J. Weber"
-        className="w-full rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+        className="w-full rounded-pill border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       />
       <p className="mb-5 mt-1.5 text-xs text-muted">So spricht ATLAS dich an.</p>
 

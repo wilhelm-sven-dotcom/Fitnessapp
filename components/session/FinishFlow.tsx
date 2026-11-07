@@ -44,13 +44,13 @@ export function FinishFlow({
         <ArrowLeft size={18} /> Zurück zum Training
       </Pressable>
 
-      <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-3 text-muted">
+      <p className="font-mono text-3xs font-semibold uppercase text-muted">
         Abschluss
       </p>
-      <h2 className="mt-1 font-display text-2xl italic text-fg">
+      <h2 className="mt-1 font-display font-bold text-2xl text-fg">
         {state.session.name}
       </h2>
-      <p className="mt-1 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+      <p className="mt-1 font-mono text-2xs uppercase tracking-label text-muted">
         {done === 0 ? (
           "Kein Satz erledigt — Beenden speichert nichts."
         ) : (
@@ -74,7 +74,7 @@ export function FinishFlow({
               key={o.v}
               onClick={() => setBack((b) => (b === o.v ? null : o.v))}
               className={cn(
-                "flex-1 rounded-pill border py-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+                "flex-1 rounded-pill border py-3 font-mono text-xs font-semibold uppercase tracking-label focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                 back === o.v ? o.on : "border-line text-muted",
               )}
             >
@@ -87,7 +87,7 @@ export function FinishFlow({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz — wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-card border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="mt-4 w-full resize-none rounded-card border border-line bg-transparent px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
       </div>
 
@@ -96,7 +96,7 @@ export function FinishFlow({
         full
         onClick={() => onSave(back, note)}
         disabled={saving}
-        className="mt-4 tracking-gesperrt-3"
+        className="mt-4"
       >
         <Save size={18} strokeWidth={2.5} aria-hidden />
         {saving

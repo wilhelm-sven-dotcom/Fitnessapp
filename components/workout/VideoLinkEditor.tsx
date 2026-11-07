@@ -65,7 +65,7 @@ export function VideoLinkEditor({
           }}
           placeholder="youtube.com/shorts/… einfügen"
           className={cn(
-            "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
+            "min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
             invalid && "ring-2 ring-status-danger",
           )}
         />
@@ -133,7 +133,7 @@ export function VideoLinkEditor({
     // Einladungs-Karte: hier fehlt noch das Bild zur Ausführung.
     return (
       <div className="rounded-card border border-line bg-surface-0 p-4">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
           Video-Anleitung
         </p>
         <p className="mt-1 text-sm text-muted">
@@ -147,7 +147,7 @@ export function VideoLinkEditor({
             <Pressable
               type="button"
               onClick={() => startEdit("")}
-              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+              className="flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <Youtube size={15} /> YouTube-Link hinzufügen
             </Pressable>

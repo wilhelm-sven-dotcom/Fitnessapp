@@ -81,7 +81,7 @@ export function RestPanel({
           <div className="flex items-baseline justify-between gap-3">
             <p
               className={cn(
-                "min-w-0 font-mono text-3xs font-medium uppercase tracking-gesperrt",
+                "min-w-0 font-mono text-3xs font-medium uppercase tracking-label",
                 over ? "text-accent-ink" : "text-muted",
               )}
             >
@@ -107,29 +107,29 @@ export function RestPanel({
               return (
                 <div
                   key={i}
-                  className={cn("h-7 flex-1", siegellack ? "bg-accent-sessions" : "bg-fg")}
+                  className={cn("h-7 flex-1", siegellack ? "bg-accent" : "bg-fg")}
                   style={istGefallen ? { opacity: 0.14 } : undefined}
                 />
               );
             })}
           </div>
-          <div className="mt-2 flex justify-end font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+          <div className="mt-2 flex justify-end font-mono text-4xs font-medium uppercase tracking-label text-muted">
             <span className="tabular-nums">Pause {total} s</span>
           </div>
 
           <div className="mt-3 flex items-center gap-2">
             <Pressable
               onClick={onAdd}
-              className="flex min-h-11 flex-none items-center justify-center gap-1 rounded-pill border border-strong px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg"
+              className="flex min-h-11 flex-none items-center justify-center gap-1 rounded-pill border border-strong px-4 font-mono text-xs font-semibold uppercase tracking-label text-fg"
             >
               <Plus size={13} /> 15 s
             </Pressable>
             <Pressable
               onClick={onSkip}
               className={cn(
-                "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-gesperrt-2",
+                "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-pill px-4 font-mono text-xs font-semibold uppercase tracking-label",
                 over
-                  ? "bg-accent-sessions text-on-accent active:bg-accent-press"
+                  ? "bg-accent text-on-accent active:bg-accent-press"
                   : "border border-line text-muted",
               )}
             >
@@ -139,7 +139,7 @@ export function RestPanel({
 
           {set && !set.warmup && (
             <div className="mt-3">
-              <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+              <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-label text-muted">
                 Satz {setNo} — wie schwer war&apos;s?
               </p>
               {timed ? (

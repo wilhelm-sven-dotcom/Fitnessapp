@@ -1,4 +1,5 @@
 import { mareyArt } from "@/lib/phasen/figur-art";
+import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
 
 /**
  * App-Icon „Platte 311" — Richtung I1 „Marey-Spur" (Design-Nachtrag 2):
@@ -28,8 +29,8 @@ import { mareyArt } from "@/lib/phasen/figur-art";
  */
 export const ICON_VERSION = 3;
 
-const TAFEL = "#141210";
-const TINTE = "#e9e1ce";
+const TAFEL = GRUND_DUNKEL;
+const TINTE = TINTE_DUNKEL;
 
 export function iconArt(size: number) {
   return (

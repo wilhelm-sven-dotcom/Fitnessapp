@@ -26,8 +26,8 @@ export function ChipToggle({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "shrink-0 rounded-pill border px-3 py-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt",
-        active ? "border-strong bg-strong text-on-strong" : "border-line bg-transparent text-muted",
+        "min-h-9 shrink-0 rounded-pill border px-3.5 py-1.5 text-sm font-semibold",
+        active ? "border-strong bg-strong text-on-strong" : "border-line bg-transparent text-fg",
         className,
       )}
     >

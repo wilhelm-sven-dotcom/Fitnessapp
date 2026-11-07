@@ -34,7 +34,7 @@ export function RecordsBoard({
     <div>
       <Card className="mb-4 p-5">
         <div className="mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-messing">
+          <span className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-label text-rekord">
             <Trophy size={13} /> Deine Rekorde
           </span>
           <span className="font-mono text-xs text-faint">
@@ -47,7 +47,7 @@ export function RecordsBoard({
               <Pressable
                 onClick={() => onJump?.(e.exId)}
                 aria-label={`Trend von ${e.name} zeigen`}
-                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-card py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-card py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-fg">{e.name}</p>
@@ -56,7 +56,7 @@ export function RecordsBoard({
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-mono text-lg font-bold leading-tight tabular-nums text-messing">
+                  <p className="font-mono text-lg font-bold leading-tight tabular-nums text-rekord">
                     {e.value} {recordUnit(e.kind)}
                   </p>
                   {e.kind === "weight" && (
@@ -72,7 +72,7 @@ export function RecordsBoard({
             onClick={() => setShowAll((v) => !v)}
             aria-expanded={showAll}
             aria-controls={listId}
-            className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 text-sm font-medium text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             <ChevronDown
               size={15}

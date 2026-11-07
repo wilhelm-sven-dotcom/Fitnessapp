@@ -45,25 +45,39 @@ export interface KaderGruppe {
 const FILL_OHNE_REKORD = 0.62;
 const FILL_FLOOR = 0.12;
 
-/* ── Region + Intensität: die Skyline des alten Etappen-Profils, zurück im
- *    Filmstreifen. Nach dem Re-Theme standen alle geplanten Kader als
- *    identische leere Raster da („fillRatio: 0, iwf: null“ als Literale) —
- *    Farbe, Höhenkontur und Legende des Vorgängers waren ersatzlos weg, und
- *    die Übersicht las sich tot. Mapping-Herkunft: b57c742:lib/etappen.ts,
- *    Farben auf die Platte-311-Tafel gelegt (die alten Tokens --orange und
- *    --gruen sind heute Aliasse DERSELBEN Cyanotypie — die alte Tabelle
- *    würde Druck und Zug gleich färben). Rumpf bewusst Tinte statt Gelb/
- *    Messing: Gelb↔Grün fällt beim Protan-Check durch, und Messing ist die
- *    Rekordfarbe. */
+/* ── Region + Intensität: jede Übung gehört zu einer Körperregion; die Farbe
+ *    folgt den Wettkampf-Scheiben (Beine Rot, Druck Blau, Zug Gelb, Rumpf
+ *    Grün, Cardio neutral). Gelb und Grün liegen für Protan-Sehende nah
+ *    beieinander — deshalb steht die Region überall AUCH als Text (Muskel in
+ *    der Unterzeile, Region im Übungskopf); Farbe ist nie das einzige Signal
+ *    (WCAG 1.4.1). */
 
 export type Region = "unterkoerper" | "push" | "pull" | "core" | "cardio";
 
 export const REGION_VAR: Record<Region, string> = {
-  unterkoerper: "var(--accent)",
-  push: "var(--cyanotypie)",
-  pull: "var(--messing)",
-  core: "var(--fg)",
-  cardio: "var(--muted)",
+  unterkoerper: "var(--beine)",
+  push: "var(--druck)",
+  pull: "var(--zug)",
+  core: "var(--rumpf)",
+  cardio: "var(--cardio)",
+};
+
+/** Große Flächen in Regionsfarbe (Übungskopf) — modusgleich. */
+export const REGION_FLAECHE: Record<Region, string> = {
+  unterkoerper: "var(--beine-flaeche)",
+  push: "var(--druck-flaeche)",
+  pull: "var(--zug-flaeche)",
+  core: "var(--rumpf-flaeche)",
+  cardio: "var(--cardio-flaeche)",
+};
+
+/** Schrift auf `REGION_FLAECHE` (Zug-Gelb trägt Tinte, sonst Weiß). */
+export const REGION_AUF: Record<Region, string> = {
+  unterkoerper: "var(--auf-beine)",
+  push: "var(--auf-druck)",
+  pull: "var(--auf-zug)",
+  core: "var(--auf-rumpf)",
+  cardio: "var(--auf-cardio)",
 };
 
 const MUSCLE_REGION: Record<Muscle, Region> = {

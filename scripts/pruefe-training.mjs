@@ -17,7 +17,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const SHOTS = process.argv[2] ?? null;
 const exe = process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium";
 
-const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
   stdio: "ignore",
   env: { ...process.env, PORT: String(PORT) },
 });

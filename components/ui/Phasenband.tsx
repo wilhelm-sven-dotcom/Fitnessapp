@@ -70,7 +70,7 @@ function KaderZelle({
           belichtet
             ? "border-transparent bg-fg"
             : aktiv
-              ? "border-transparent bg-accent-sessions"
+              ? "border-transparent bg-accent"
               : "border-line-card bg-transparent",
         )}
         style={{ flex: `${kader.widthReps} 1 0%`, height: h }}

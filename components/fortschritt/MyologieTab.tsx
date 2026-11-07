@@ -31,20 +31,20 @@ export function MyologieTab() {
   return (
     <div>
       <Card className="mb-4">
-        <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+        <div className="flex justify-between font-mono text-3xs font-medium uppercase tracking-label text-muted">
           <span>Muskelgruppen</span>
           <span>Diese Woche</span>
         </div>
         <div className="mt-3 flex items-start justify-center gap-6">
           <div className="w-32">
             <MyologieFigur seite="vorn" stufen={stufen} />
-            <p className="mt-1.5 text-center font-mono text-4xs font-semibold uppercase tracking-gesperrt text-muted">
+            <p className="mt-1.5 text-center font-mono text-4xs font-semibold uppercase tracking-label text-muted">
               Vorn
             </p>
           </div>
           <div className="w-32">
             <MyologieFigur seite="hinten" stufen={stufen} />
-            <p className="mt-1.5 text-center font-mono text-4xs font-semibold uppercase tracking-gesperrt text-muted">
+            <p className="mt-1.5 text-center font-mono text-4xs font-semibold uppercase tracking-label text-muted">
               Hinten
             </p>
           </div>
@@ -58,20 +58,20 @@ export function MyologieTab() {
                   className="h-2.5 w-2.5 rounded-xs"
                   style={{ backgroundColor: `var(--stufe-${n})` }}
                 />
-                <span className="font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+                <span className="font-mono text-4xs font-medium uppercase tracking-label text-muted">
                   {ROEMISCH[i]}
                 </span>
               </span>
             ))}
           </span>
-          <span className="font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+          <span className="font-mono text-4xs font-medium uppercase tracking-label text-muted">
             Schema, keine Anatomie
           </span>
         </div>
       </Card>
 
       {/* Muskelgruppen im Detail: jede Muskelgruppe mit 4er-Stufenblock + Satz-Stand. */}
-      <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+      <p className="mb-1 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
         Muskelgruppen im Detail
       </p>
       <div>
@@ -106,7 +106,7 @@ export function MyologieTab() {
           );
         })}
       </div>
-      <p className="mt-2 font-mono text-4xs font-medium uppercase tracking-gesperrt text-muted">
+      <p className="mt-2 font-mono text-4xs font-medium uppercase tracking-label text-muted">
         Stufen = Quartile aufs Wochenziel der Gruppe
       </p>
     </div>

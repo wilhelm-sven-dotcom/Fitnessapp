@@ -79,11 +79,10 @@ export function Sheet({
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50" data-sheet={title ?? ""}>
-          {/* Scrim: flache 40 % Tinte (Archiv-Tinte in beiden Modi — das
-              Atelier kennt keinen hellen Schleier), erscheint und fällt HART. */}
+          {/* Scrim aus dem Token, erscheint und fällt HART. */}
           <motion.div
             className="absolute inset-0"
-            style={{ backgroundColor: "rgba(34, 28, 20, 0.4)" }}
+            style={{ backgroundColor: "var(--scrim)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0 } }}
             exit={{ opacity: 0, transition: { duration: 0 } }}
@@ -92,7 +91,7 @@ export function Sheet({
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border border-line-card bg-surface-1 focus:outline-none"
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface-1 focus:outline-none"
             initial={reduce ? { opacity: 0 } : { y: "103%" }}
             animate={
               reduce
@@ -138,11 +137,11 @@ export function Sheet({
               style={{ touchAction: "none" }}
             >
               <div className="flex justify-center pb-1 pt-3">
-                <span className="h-1 w-9 rounded-pill bg-muted" />
+                <span className="h-1 w-10 rounded-pill bg-line" />
               </div>
               {title && (
                 <div className="px-5 pb-1 pt-2">
-                  <h3 id={titleId} className="font-display text-2xl italic">
+                  <h3 id={titleId} className="font-display text-2xl font-bold">
                     {title}
                   </h3>
                 </div>
