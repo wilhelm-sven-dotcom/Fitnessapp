@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { CARDIO_DAY, DEFAULT_EQUIP, EQUIP_LIST, EXAM_DAY, LIB, RESET_DAY, TEMPLATE } from "@/lib/exercises";
+import { DEFAULT_EQUIP, EQUIP_LIST, LIB } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
@@ -30,16 +30,13 @@ import {
 } from "@/lib/session-model";
 import type { ActiveSessionState } from "@/lib/active-session";
 import type { JumpEntry } from "@/lib/jump";
-import { resolveDay, resolveResetSession, resolveSession } from "@/lib/progression";
-import { effectiveProfile } from "@/lib/athlete";
-import { exerciseAffinity } from "@/lib/affinity";
 import {
   NEUTRAL_SCALE,
   band,
   scaleFor,
   type ReadinessScale,
 } from "@/lib/readiness";
-import { estimateSessionMin, fitToBudget } from "@/lib/session-time";
+import { estimateSessionMin } from "@/lib/session-time";
 import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
@@ -773,48 +770,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 1].backTraffic === "red" &&
     log[log.length - 2].backTraffic === "red";
 
-  // Memoized — both run on every provider render otherwise (affinity scans the
-  // full log), and the provider re-renders on every keystroke in a workout.
-  const athleteInjuries = useMemo(
-    () => effectiveProfile(settings, body).injuries,
-    [settings, body],
-  );
-  const affinity = useMemo(() => exerciseAffinity(choices, log), [choices, log]);
-  const sessionOf = (key: string, backSafe = false): ResolvedSlot[] => {
-    // DAS Trainingsmodell: die heutige, frisch komponierte Einheit.
-    if (key === "today")
-      return todaySession ? resolveDailySession(todaySession, allLib, has) : [];
-    const day = days.find((d) => d.id === key);
-    if (day) return resolveDay(day, allLib, has, choices);
-    // Rücken-Reset: kuratiert und konstruktiv gewichtsfrei — keine
-    // Muster-Rotation, kein backSafe nötig.
-    if (key === RESET_DAY.key) return resolveResetSession(has, allLib, choices);
-    if (key === CARDIO_DAY.key)
-      return resolveSession(CARDIO_DAY, log.length, choices, has, allLib, {
-        injuries: athleteInjuries,
-        affinity,
-      });
-    if (key === EXAM_DAY.key)
-      return resolveSession(EXAM_DAY, log.length, choices, has, allLib, {
-        backSafe,
-        injuries: athleteInjuries,
-        affinity,
-      });
-    const tpl = TEMPLATE.find((t) => t.key === key);
-    if (!tpl) return [];
-    const idx = TEMPLATE.findIndex((t) => t.key === key);
-    return resolveSession(tpl, idx, choices, has, allLib, {
-      backSafe,
-      injuries: athleteInjuries,
-      affinity,
-    });
-  };
-
-  const nextIndex = useMemo(() => {
-    if (!log.length) return 0;
-    const idx = TEMPLATE.findIndex((t) => t.key === log[log.length - 1]?.dayKey);
-    return (idx + 1) % TEMPLATE.length;
-  }, [log]);
   const deloadActive =
     !!settings.lastDeloadDate &&
     Date.now() - new Date(settings.lastDeloadDate).getTime() < 7 * 86400000;
@@ -830,20 +785,32 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     [settings.autoregOn, todayReadiness, deloadActive],
   );
 
-  const recTpl = TEMPLATE[nextIndex];
+  // Die Empfehlung IST die heutige Einheit. Vorher stand hier die A/B/C-
+  // Vorlage TEMPLATE[nextIndex] — weil neue Einheiten mit dayKey „today“
+  // gespeichert werden, war das immer „Ganzkörper A“, und ATLAS sagte „Plan
+  // steht: Ganzkörper A“, während eine ganz andere Einheit geplant war.
+  const heuteAktuell =
+    todaySession && todaySession.date === todayKey() ? todaySession : null;
+  const recTpl = useMemo<Template>(
+    () => ({
+      key: "today",
+      name: heuteAktuell?.name ?? "Deine Einheit",
+      focus: heuteAktuell?.focus ?? "",
+      slots: [],
+    }),
+    [heuteAktuell?.name, heuteAktuell?.focus],
+  );
   const recList = useMemo(
     () =>
-      applyReadiness(
-        fitToBudget(sessionOf(recTpl.key, backSafeActive), settings.timeBudgetMin, {
-          protectCore: backSafeActive,
-          choices,
-        }).list,
-        readinessScale,
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recTpl, choices, equip, custom, backSafeActive, settings.timeBudgetMin, readinessScale],
+      heuteAktuell
+        ? applyReadiness(resolveDailySession(heuteAktuell, allLib, has), readinessScale)
+        : [],
+    [heuteAktuell, allLib, has, readinessScale],
   );
-  const estimatedMin = useMemo(() => estimateSessionMin(recList), [recList]);
+  const estimatedMin = useMemo(
+    () => (recList.length ? estimateSessionMin(recList) : settings.timeBudgetMin),
+    [recList, settings.timeBudgetMin],
+  );
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate

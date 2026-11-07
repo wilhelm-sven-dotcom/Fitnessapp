@@ -72,7 +72,10 @@ export function SessionEditSheet({
                   <span className="w-5 shrink-0 font-mono text-xs tabular-nums text-faint">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
+                  <span
+                    data-testid="edit-row-name"
+                    className="min-w-0 flex-1 truncate text-sm font-medium text-fg"
+                  >
                     {ex.name}
                   </span>
                   <Pressable

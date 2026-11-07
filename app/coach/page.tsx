@@ -49,15 +49,13 @@ export default function CoachPage() {
     trainer,
     mission,
     todaySession,
-    recTpl,
-    recList,
-    estimatedMin,
     backSafeActive,
     exerciseNotes,
   } = useTraining();
 
-  // Die ECHTE nächste Einheit: heute komponiert (todaySession), sonst die
-  // Rotation-Empfehlung — damit Empfehlungen zu dem passen, was der Start zeigt.
+  // Die ECHTE nächste Einheit: heute komponiert (todaySession). Ohne sie
+  // (Ort noch nicht gewählt, oder erledigt) gibt es keine — früher stand hier
+  // die A/B/C-Rotation, die immer „Ganzkörper A“ hieß.
   const nextSession = useMemo(() => {
     if (todaySession && !todaySession.completedAt && todaySession.items.length) {
       const resolved = resolveDailySession(todaySession, allLib, has);
@@ -71,16 +69,8 @@ export default function CoachPage() {
         })),
       };
     }
-    return {
-      name: recTpl.name,
-      focus: recTpl.focus,
-      estimatedMin,
-      exercises: recList.map(({ ex }) => ({
-        name: ex.name,
-        sets: ex.pattern === "cardio" ? 0 : ex.sets,
-      })),
-    };
-  }, [todaySession, allLib, has, recTpl, recList, estimatedMin]);
+    return undefined;
+  }, [todaySession, allLib, has]);
 
   const context = useMemo(
     () =>

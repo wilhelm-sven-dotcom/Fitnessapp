@@ -29,7 +29,6 @@ import {
   type SessionVariant,
 } from "@/lib/session-model";
 import { estimateSessionMin } from "@/lib/session-time";
-import { phaseState } from "@/lib/periodization";
 import { fmtPlatteDatum, plattenNummer } from "@/lib/platte";
 import { SPRING } from "@/lib/motion";
 import { requestAtlasSession, type AtlasFehler } from "@/lib/today-session";
@@ -51,7 +50,6 @@ export default function HomePage() {
     settings,
     setBudget,
     coach,
-    trainer,
     todayReadiness,
     allLib,
     acceptDeload,
@@ -77,7 +75,6 @@ export default function HomePage() {
   // Zykluswoche aus der Periodisierung.
   const plattenNr = plattenNummer(log);
   const plattenDatum = fmtPlatteDatum(now);
-  const zyklusWoche = phaseState(settings).cycleWeek;
   const saetzeGesamt = todaySession?.items.reduce((n, it) => n + it.sets, 0) ?? 0;
 
   const [editing, setEditing] = useState(false);
@@ -129,13 +126,16 @@ export default function HomePage() {
    *  `budget` MUSS mitgegeben werden, wenn die Zeit gerade umgestellt wurde:
    *  `compose` läuft dann aus der Closure DIESES Renders und sähe in
    *  `settings.timeBudgetMin` noch den alten Wert — die Einheit wäre für die
-   *  vorherige Zeit zusammengestellt. Gleiche Falle wie bei `backSafeActive`
-   *  weiter unten. */
+   *  vorherige Zeit zusammengestellt. Dieselbe Falle gilt für `backSafe`
+   *  (Rücken-Schalter, siehe toggleSpare). */
   const compose = (
     opts: {
       wish?: string;
       variant?: SessionVariant;
       budget?: number;
+      /** Rückenschonung für DIESE Komposition — der Schalter setzt sie im
+       *  selben Klick, die Closure kennt noch den alten Stand. */
+      backSafe?: boolean;
       /** Verzögerung NUR für die KI-Anfrage. Der Fallback steht immer sofort —
        *  wer am Zeitregler tippt, soll die neue Einheit augenblicklich sehen
        *  und nicht auf eine Opus-Runde warten, die der nächste Klick ohnehin
@@ -146,13 +146,14 @@ export default function HomePage() {
     const gen = ++genRef.current;
     const variant = opts.variant ?? "normal";
     const budgetMin = opts.budget ?? settings.timeBudgetMin;
+    const backSafe = opts.backSafe ?? backSafeActive;
     const ort = ortJetzt;
     const fallback = generateFallbackSession({
       allLib,
       has,
       log,
       budgetMin,
-      backSafe: backSafeActive,
+      backSafe,
       injuries: effectiveProfile(settings, body).injuries,
       variant,
       disabled: disabledExercises,
@@ -194,7 +195,7 @@ export default function HomePage() {
           budgetMin,
           wish: opts.wish,
           variant,
-          backSafe: backSafeActive,
+          backSafe,
           persona: athletePersona(effectiveProfile(settings, body), settings.userName),
           readinessLine,
           disabled: disabledExercises,
@@ -292,33 +293,38 @@ export default function HomePage() {
   };
 
   // „Rücken heute schonen”: Umschalten komponiert neu (solange nicht gestartet).
+  // Der neue Status geht EXPLIZIT mit: vorher lief compose() per setTimeout
+  // aus derselben Render-Closure und plante mit dem ALTEN backSafeActive —
+  // der Schalter wirkte erst bei der übernächsten Komposition.
   const toggleSpare = () => {
     tap();
     const next = !backSpareToday;
     setBackSpareToday(next);
-    if (!running && todaySession && !todaySession.completedAt) {
-      // Recompose mit neuem Schon-Status — der Effekt sieht backSafeActive
-      // erst nächsten Render, deshalb hier explizit.
-      setTimeout(() => compose(), 0);
-    }
+    if (!running && todaySession && !todaySession.completedAt)
+      compose({ wish: todaySession.wish, backSafe: lastBackRed || next });
   };
 
+  // Rücken: ein Schalter in der Umbau-Zeile; nach roter Ampel steht statt
+  // des Schalters der Grund. Bei aktiver Schonung zusätzlich der Weg zum
+  // gewichtsfreien Reset.
   const spareEl = (
-    <div>
+    <>
       {lastBackRed ? (
-        <p className="flex items-center gap-1.5 font-mono text-xs text-status-over">
-          <ShieldAlert size={13} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
+        <p className="flex basis-full items-center gap-1.5 font-mono text-xs text-accent-ink">
+          <ShieldAlert size={14} aria-hidden /> Rückenschonung aktiv — letzte Einheit „rot“
         </p>
       ) : (
         <Pressable
           onClick={toggleSpare}
           aria-pressed={backSpareToday}
           className={cn(
-            "flex items-center gap-1.5 rounded-pill px-3 py-2 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
-            backSpareToday ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+            "flex items-center gap-1.5 rounded-pill border px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2",
+            backSpareToday
+              ? "border-transparent bg-accent-sessions text-on-accent"
+              : "border-line text-muted",
           )}
         >
-          <ShieldCheck size={13} aria-hidden /> Rücken heute schonen
+          <ShieldCheck size={14} aria-hidden /> Rücken schonen
         </Pressable>
       )}
       {backSafeActive && !sessionLocked && (
@@ -327,38 +333,37 @@ export default function HomePage() {
             tap();
             compose({ variant: "reset" });
           }}
-          className="mt-2 flex items-center gap-1 text-xs font-medium text-accent-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="flex basis-full items-center gap-1 rounded-pill py-1 text-xs font-medium text-accent-ink"
         >
-          <ChevronRight size={13} aria-hidden /> Oder: Rücken-Reset komponieren — ganz ohne Gewichte
+          <ChevronRight size={14} aria-hidden /> Oder: Rücken-Reset — ganz ohne Gewichte
         </Pressable>
       )}
-    </div>
+    </>
   );
 
   const actionCards = coach.filter((c) => c.severity !== "info" || c.action);
 
   return (
     <div className="relative">
-      {/* Kopf der heutigen Einheit — Nummer und Datum, Titel in Kursive,
-          Bestandszeile (die Wortmarke trägt der App-Header). ATLAS spricht
-          in seiner eigenen Karte in der SessionCard. */}
-      <header className="mb-5">
+      {/* Kopf: Kicker + Datum, Titel in Kursive, EINE Bestandszeile (Nummer,
+          Übungen, Sätze, Minuten). Die Zykluswoche ist hier weg — ohne
+          angenommene Entlastungswoche stand dort immer „W1“; die echte Phase
+          zeigt Fortschritt. */}
+      <header className="mb-4">
         <div className="flex items-baseline justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt-3 text-muted">
           <span>Deine Einheit heute</span>
-          <span className="whitespace-nowrap tabular-nums">Zyklus · W{zyklusWoche}</span>
+          <span className="whitespace-nowrap tabular-nums">{plattenDatum}</span>
         </div>
-        <p className="mt-4 font-mono text-3xs font-medium uppercase tracking-gesperrt-3 text-muted">
-          Einheit <span className="tabular-nums">{plattenNr}</span> · {plattenDatum}
-        </p>
-        <h1 className="mt-1.5 font-display text-3xl italic leading-tight text-fg">
+        <h1 className="mt-3 font-display text-3xl italic leading-tight text-fg">
           {frageOffen
             ? "Wo trainierst du heute?"
             : (todaySession?.name ?? "Einheit wird zusammengestellt …")}
         </h1>
         {!frageOffen && todaySession && todaySession.items.length > 0 && (
           <p className="mt-2 font-mono text-2xs uppercase tracking-gesperrt text-muted">
+            Einheit <span className="tabular-nums">{plattenNr}</span> ·{" "}
             <span className="tabular-nums">{todaySession.items.length}</span> Übungen ·{" "}
-            <span className="tabular-nums">{saetzeGesamt}</span> Sätze · ca.{" "}
+            <span className="tabular-nums">{saetzeGesamt}</span> Sätze ·{" "}
             <span className="tabular-nums">{estimatedMin}</span> Min
           </p>
         )}
@@ -419,10 +424,13 @@ export default function HomePage() {
         </div>
       )}
 
-      {running && (
+      {/* Weg zurück ins Training nur, wenn die Karte ihn nicht schon trägt
+          („Training fortsetzen“) — etwa wenn die Einheit gestern Abend
+          begann und heute noch die Ortsfrage steht. */}
+      {running && (frageOffen || !todaySession || !!todaySession.completedAt) && (
         <Pressable
           onClick={() => router.push("/workout")}
-          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface-1 px-4 py-3 text-left shadow-card"
+          className="mb-4 flex w-full items-center justify-between gap-3 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left"
         >
           <span className="min-w-0 truncate text-sm text-accent-ink">
             Einheit läuft · {running.name}
@@ -487,7 +495,6 @@ export default function HomePage() {
           atlasFehler={atlasFehler}
           locked={!!running}
           spareSlot={spareEl}
-          direktive={trainer.directive.text}
         />
       ) : (
         <Card className="mb-4 p-5">

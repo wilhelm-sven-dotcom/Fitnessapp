@@ -25,6 +25,15 @@ export function fmtKg(kg: number): string {
   return (Math.round(kg * 10) / 10).toString().replace(".", ",");
 }
 
+/** Ladbares Gewicht (Hantelstufe 1,25/2,5/5) mit Komma: „20“, „22,5“,
+ *  „81,25“. Anders als `fmtKg` NICHT auf eine Stelle gerundet — sonst
+ *  stünde bei 1,25er-Stufen „81,3“ da, was keine Scheibe hergibt. */
+export function fmtGewicht(kg: number | string): string {
+  const n = typeof kg === "number" ? kg : parseFloat(String(kg).replace(",", "."));
+  if (!Number.isFinite(n)) return String(kg);
+  return n.toLocaleString("de-DE", { maximumFractionDigits: 2, useGrouping: false });
+}
+
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
 /** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,

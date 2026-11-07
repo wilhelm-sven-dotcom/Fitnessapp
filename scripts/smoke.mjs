@@ -134,14 +134,14 @@ try {
   await page.getByText("Bearbeiten", { exact: false }).first().click();
   await page.getByText("Einheit bearbeiten").waitFor({ timeout: 5000 });
   const firstName = (
-    await page.locator(".rounded-card .truncate.text-sm.font-medium").first().textContent()
+    await page.getByTestId("edit-row-name").first().textContent()
   )?.trim();
   await page.getByLabel(/tauschen$/).first().click();
   // Oberstes Sheet („Übung wählen") — die zweite Zeile ist sicher eine
   // Alternative (die erste kann die aktuelle Übung sein).
   const picker = page.locator("div.fixed").filter({ hasText: "Übung wählen" }).last();
   await picker.waitFor({ timeout: 5000 });
-  const rows = picker.locator("span.text-sm.text-fg");
+  const rows = picker.getByTestId("picker-row-name");
   const target =
     (await rows.nth(0).textContent())?.trim() === firstName ? rows.nth(1) : rows.nth(0);
   const targetName = (await target.textContent())?.trim();

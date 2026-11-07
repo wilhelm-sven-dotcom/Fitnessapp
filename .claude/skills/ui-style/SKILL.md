@@ -171,8 +171,10 @@ Frequenz-Regel bleibt: was 100×/Tag passiert, bewegt sich minimal.
   ist statisch und animiert nie. Regionsfarben (`REGION_VAR`):
   Unterkörper Siegellack · Druck Cyanotypie · Zug Messing · Rumpf Tinte ·
   Cardio Schleier (Rumpf bewusst nicht Gelb: Protan-Check, Messing =
-  Rekordfarbe). Labels unter dem Hero-Band: umbrechende Zeile, je Übung
-  Farbtupfer (tintVar) + VOLLER Name + ×N — Namen nie truncaten.
+  Rekordfarbe). Auf Heute ist die Übungsliste direkt unter der Karte die
+  Legende: jede Zeile trägt den Farbtupfer (tintVar) ihrer Region und den
+  VOLLEN Namen — Namen nie truncaten. Eine zweite Namenszeile unter dem Band
+  gibt es dort nicht mehr (die Namen standen sonst dreimal auf einer Seite).
   Größen: hero 64 · zeile 28 · mini 24 · live 14 (Vollbalken) · punkt 12;
   1px-Fugen, Gruppen-Trennung. Builder: bandOfPlanned/bandOfActive/bandOfLogged.
 - **Myologie** (`lib/heat.ts`: `stufeFor`, `muskelStufen` + `MyologieFigur`):
@@ -385,6 +387,29 @@ Opus-Runde, alle parallel — „erst gut, dann gar nicht"):
   eine Textzeile sagt, dass gearbeitet wird. Timeouts großzügig setzen
   (60 s), sie sollen echte Antworten nicht abschneiden.
 
+## Heute: eine Karte, eine Zeile, ein Start
+
+Aufbau von oben: Kicker „Deine Einheit heute“ + Datum · Titel · EINE
+Bestandszeile („Einheit 47 · 5 Übungen · 14 Sätze · 30 Min“) ·
+Ortsumschalter (ab zwei Orten) · Karte mit Phasenband, ATLAS-Begründung und
+Plan-Quelle · Zeit (20 · 30 · 45 · 60 · 90 + frei; das freie Feld bleibt
+leer, solange eine Stufe gilt) · „Training starten“ — bis hierher steht alles
+auf dem ersten Bildschirm — · Übungsliste (Tupfer, Name, Ziel · Muskel,
+Gewicht, „+2,5“ in Cyanotypie, wenn der Vorschlag über dem letzten Mal
+liegt, Warum) · Umbau-Zeile (Bearbeiten · Neu ansetzen · Rücken schonen) +
+Wunschfeld · Coach-Karten · Kalender.
+
+Was bewusst NICHT mehr dort steht: die Marey-Karte der Hauptübung (doppelt
+zur ersten Zeile; Rekord und Gewichts-Hypothese zeigt das Training), die
+eigene ATLAS-Karte samt Direktive (die stand auf der Alt-Vorlage
+„Ganzkörper A“ — die Empfehlung kommt jetzt aus der heutigen Einheit), die
+Zykluswoche (ohne Entlastungswoche immer „W1“) und das Laufend-Banner, solange
+die Karte selbst „Training fortsetzen“ trägt.
+
+Rücken-Schalter und Zeit übergeben ihren neuen Wert EXPLIZIT an
+`compose()` (`backSafe`, `budget`) — compose läuft aus der Closure des
+Klick-Renders und sähe sonst den alten Stand.
+
 ## Trainingsort: „Wo trainierst du heute?“
 
 Orte (Zuhause, Studio, frei benennbar) sind `GymProfile` mit eigener
@@ -427,6 +452,9 @@ smoke.mjs im selben Commit:
   „Übung wählen" · „… tauschen" (Regex-Ende) · „Bearbeiten"
 - Check-in: „Tagesform" · „Überspringen"
 - Aufwärmen: aria-label „Aufwärmen beenden"
+- Bearbeiten-Sheet und Übungswahl: `data-testid="edit-row-name"` /
+  `"picker-row-name"` (vorher hingen die Skripte an Tailwind-Klassen — jede
+  Stiländerung hätte sie zerrissen)
 - Übungsansicht: `data-testid="stage-order"` (ExerciseStage-section) ·
   `.set-active` mit 2 Inputs
 - Pause: „Pause" (exact:false)

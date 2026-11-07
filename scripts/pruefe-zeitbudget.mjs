@@ -84,7 +84,7 @@ const zeitKlick = async (pg, min) =>
   });
   await pg.waitForTimeout(2500); // Start-Compose abwarten
   const nachStart = anfragen;
-  for (const min of [30, 45, 60, 75, 90]) {
+  for (const min of [20, 30, 45, 60, 90]) {
     await zeitKlick(pg, min);
     await pg.waitForTimeout(800); // normales Tipptempo
   }
@@ -151,12 +151,12 @@ const zeitKlick = async (pg, min) =>
   await pg.getByText("Bearbeiten", { exact: false }).first().click();
   await pg.getByText("Einheit bearbeiten").waitFor({ timeout: 8000 });
   const ersterName = (
-    await pg.locator(".rounded-card .truncate.text-sm.font-medium").first().textContent()
+    await pg.getByTestId("edit-row-name").first().textContent()
   )?.trim();
   await pg.getByLabel(/tauschen$/).first().click();
   const picker = pg.locator("div.fixed").filter({ hasText: "Übung wählen" }).last();
   await picker.waitFor({ timeout: 8000 });
-  const rows = picker.locator("span.text-sm.text-fg");
+  const rows = picker.getByTestId("picker-row-name");
   const ziel =
     (await rows.nth(0).textContent())?.trim() === ersterName ? rows.nth(1) : rows.nth(0);
   const zielName = (await ziel.textContent())?.trim();

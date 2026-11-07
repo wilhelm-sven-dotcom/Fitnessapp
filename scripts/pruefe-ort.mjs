@@ -160,7 +160,7 @@ try {
   await pg.getByLabel(/tauschen$/).first().click();
   const picker = pg.locator("div.fixed").filter({ hasText: "Übung wählen" }).last();
   await picker.waitFor({ timeout: 8000 });
-  await picker.locator("span.text-sm.text-fg").nth(1).click();
+  await picker.getByTestId("picker-row-name").nth(1).click();
   await pg.waitForTimeout(600);
   await pg.keyboard.press("Escape");
   await pg.waitForTimeout(600);
