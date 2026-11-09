@@ -6,6 +6,7 @@ import type {
   PrescReason,
   SetEntry,
 } from "@/lib/types";
+import { istGeraeteUebung, MASCHINEN_KEYS } from "@/lib/exercises";
 import { fmtGewicht } from "@/lib/format";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
@@ -33,10 +34,18 @@ export function warmupSets(workingWeight: number, step = 2.5): SetEntry[] {
 /** Alt-Token → EquipKey (Bestandsdaten und eigene Übungen bleiben gültig). */
 const REQ_ALIAS: Record<string, string> = { dumbbell: "db", kettlebell: "kb" };
 
+/** Pseudo-Key in `has()`: der Ort plant nur an Geräten (Maschinen + Kabelzug).
+ *  So greift die Regel überall, wo `reqOk` filtert — Basisplan, ATLAS-Anfrage,
+ *  Tauschen, Zähler —, ohne dass jede Stelle den Ort kennen muss. */
+export const NUR_GERAETE = "nur-geraete";
+
 export function reqOk(ex: Exercise, has: (k: string) => boolean): boolean {
+  if (has(NUR_GERAETE) && ex.pattern !== "cardio" && !istGeraeteUebung(ex)) return false;
   return (ex.req || ["none"]).every((tok) => {
     if (tok === "none") return true;
     if (tok === "weight") return has("db") || has("kb") || has("bar");
+    // Alt: eine eigene Übung „an einer Maschine“ — irgendein Gerät genügt.
+    if (tok === "machine") return MASCHINEN_KEYS.some((k) => has(k));
     return has(REQ_ALIAS[tok] ?? tok);
   });
 }

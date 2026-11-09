@@ -26,7 +26,20 @@ export type EquipKey =
   | "box"
   | "bench"
   | "cable"
+  /** Alt: ein Sammelschalter für alle Maschinen. Wird beim Laden zu den
+   *  Einzelgeräten (`m_*`) aufgelöst; in eigenen Übungen heißt `machine`
+   *  „irgendeine Maschine“. */
   | "machine"
+  | "m_beinpresse"
+  | "m_hacksquat"
+  | "m_beinstrecker"
+  | "m_beinbeuger"
+  | "m_rueckenstrecker"
+  | "m_brustpresse"
+  | "m_butterfly"
+  | "m_schulterpresse"
+  | "m_rudern"
+  | "m_waden"
   | "bike";
 
 export type TrafficLight = "green" | "yellow" | "red";
@@ -106,6 +119,9 @@ export interface GymProfile {
   id: string;
   name: string;
   equip: EquipKey[];
+  /** Hier wird nur an Geräten trainiert (Maschinen + Kabelzug): Planung,
+   *  Tauschen und Katalog lassen freie Gewichte und Körpergewicht weg. */
+  nurGeraete?: boolean;
 }
 
 export interface EquipItem {
@@ -262,6 +278,11 @@ export interface AppSettings {
   /** Einmal-Migration gelaufen: Orte „Zuhause“/„Studio“ angelegt (lib/orte.ts).
    *  Danach kommt ein gelöschtes Studio nicht wieder. */
   orteM1?: boolean;
+  /** Einmal-Migration: Sammelschalter „Kraftgeräte“ → Einzelgeräte, Studio
+   *  „nur an Geräten“ (lib/orte.ts). */
+  geraeteM1?: boolean;
+  /** Eigene Fotos der Geräte (Geräte-Key → photo-store-Id). */
+  geraetFotos?: Partial<Record<string, string>>;
   /** Smallest available weight increment — suggestions snap to it (default 2.5). */
   weightStep?: number;
   /** Warm up with an easy bike spin before every session. */

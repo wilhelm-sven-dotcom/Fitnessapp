@@ -41,7 +41,7 @@ import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
-import { ensureOrte } from "@/lib/orte";
+import { ensureOrte, hasFuer } from "@/lib/orte";
 import { prTimeline } from "@/lib/records";
 import {
   sanitizeBody,
@@ -260,6 +260,12 @@ interface TrainingContextValue {
   lastPerfRelated: (id: string) => RelatedPerf | null;
   /** Gerät an einem Ort an/aus — ohne `gymId` am aktiven Ort. */
   toggleEquip: (k: EquipKey, gymId?: string) => void;
+  /** Mehrere Geräte eines Orts auf einmal an- oder abwählen (Sammelknopf). */
+  setOrtGeraete: (keys: readonly EquipKey[], on: boolean, gymId?: string) => void;
+  /** Ort plant nur an Geräten (Maschinen + Kabelzug). */
+  setNurGeraete: (on: boolean, gymId?: string) => void;
+  /** Eigenes Foto eines Geräts setzen (photo-store-Id) oder entfernen (null). */
+  setGeraetFoto: (geraet: string, photoId: string | null) => void;
   addCustom: (data: CustomExerciseInput) => void;
   updateCustom: (id: string, data: CustomExerciseInput) => void;
   removeCustom: (id: string) => void;
@@ -740,7 +746,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     () => (activeGym ? activeGym.equip : equipFlat),
     [activeGym, equipFlat],
   );
-  const has = useMemo(() => (k: string) => (equip as string[]).includes(k), [equip]);
+  // Geräte des heutigen Orts plus seine Regel „nur an Geräten“ (lib/orte.ts).
+  const has = useMemo(
+    () => (activeGym ? hasFuer(activeGym) : (k: string) => (equip as string[]).includes(k)),
+    [activeGym, equip],
+  );
 
   const lastBackRed =
     log.length > 0 && log[log.length - 1].backTraffic === "red";
@@ -1167,6 +1177,36 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void saveGyms(gyms.map((g) => (g.id === target.id ? { ...g, equip: next } : g)));
       if (target.id === activeGym?.id) void saveEquip(next);
     };
+    const setOrtGeraete = (keys: readonly EquipKey[], on: boolean, gymId?: string) => {
+      const target = gyms.find((g) => g.id === (gymId ?? activeGym?.id));
+      if (!target) return;
+      const next = on
+        ? [...target.equip, ...keys.filter((k) => !target.equip.includes(k))]
+        : target.equip.filter((k) => !keys.includes(k));
+      void saveGyms(gyms.map((g) => (g.id === target.id ? { ...g, equip: next } : g)));
+      if (target.id === activeGym?.id) void saveEquip(next);
+    };
+    const setNurGeraete = (on: boolean, gymId?: string) => {
+      const target = gyms.find((g) => g.id === (gymId ?? activeGym?.id));
+      if (!target) return;
+      void saveGyms(
+        gyms.map((g) => {
+          if (g.id !== target.id) return g;
+          const n: GymProfile = { ...g };
+          if (on) n.nurGeraete = true;
+          else delete n.nurGeraete;
+          return n;
+        }),
+      );
+    };
+    const setGeraetFoto = (geraet: string, photoId: string | null) => {
+      const alt = settings.geraetFotos?.[geraet];
+      if (alt && alt !== photoId) void deletePhoto(alt);
+      const fotos = { ...(settings.geraetFotos ?? {}) };
+      if (photoId) fotos[geraet] = photoId;
+      else delete fotos[geraet];
+      void saveSettings({ ...settings, geraetFotos: fotos });
+    };
 
     const setWeightStep = (step: number) =>
       void saveSettings({ ...settings, weightStep: step });
@@ -1524,6 +1564,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       lastPerf,
       lastPerfRelated,
       toggleEquip,
+      setOrtGeraete,
+      setNurGeraete,
+      setGeraetFoto,
       addCustom,
       updateCustom,
       removeCustom,

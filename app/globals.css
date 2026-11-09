@@ -69,6 +69,9 @@
   --iwf-gruen: #257a4c;
 
   --scrim: rgba(14, 15, 20, 0.5);
+  /* Abdeckung über Gerätefotos, damit weiße Schrift darauf lesbar bleibt
+     (auch über einem weißen Foto noch ≥ 5:1). Modusgleich. */
+  --bild-scrim: rgba(14, 15, 20, 0.62);
 
   --font-display: var(--font-bricolage);
   --font-body: var(--font-onest);

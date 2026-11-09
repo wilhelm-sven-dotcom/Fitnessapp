@@ -4,6 +4,7 @@
  * total across both hands, so there's no mental math mid-set.
  */
 
+import { MASCHINEN } from "@/lib/exercises";
 import { fmtKg } from "@/lib/format";
 
 /**
@@ -30,6 +31,7 @@ const GERAET: Record<string, string> = {
   machine: "Maschine",
   bike: "Bike",
   weight: "Freies Gewicht",
+  ...Object.fromEntries(MASCHINEN.map((m) => [m.key, m.label])),
 };
 
 /** Gerät einer Übung als Text für Listen: „Langhantel + Hantelbank“,

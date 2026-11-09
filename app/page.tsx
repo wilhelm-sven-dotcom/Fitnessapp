@@ -21,7 +21,7 @@ import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { homeChips } from "@/lib/coaching";
 import { tap } from "@/lib/haptics";
 import { loadActiveState } from "@/lib/active-session";
-import { geraeteLabels, ortSignatur } from "@/lib/orte";
+import { geraeteLabels, hasFuer, ortSignatur } from "@/lib/orte";
 import { reqOk } from "@/lib/progression";
 import { generateFallbackSession } from "@/lib/session-fallback";
 import {
@@ -69,8 +69,8 @@ export default function HomePage() {
   } = useTraining();
 
   const has = useMemo(
-    () => (k: string) => (equip as string[]).includes(k),
-    [equip],
+    () => (activeGym ? hasFuer(activeGym) : (k: string) => (equip as string[]).includes(k)),
+    [activeGym, equip],
   );
   const navSlot = useNavSlot();
   const chips = homeChips({ daysAgo, weekCount });
@@ -212,7 +212,11 @@ export default function HomePage() {
           readinessLine,
           disabled: disabledExercises,
           ort: activeGym
-            ? { name: activeGym.name, geraete: geraeteLabels(activeGym.equip) }
+            ? {
+                name: activeGym.name,
+                geraete: geraeteLabels(activeGym.equip),
+                nurGeraete: !!activeGym.nurGeraete,
+              }
             : undefined,
         },
         { signal: ctrl.signal },

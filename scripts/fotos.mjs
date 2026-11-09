@@ -151,10 +151,13 @@ try {
   }
   await schritt("katalog", async () => {
     await pg.goto(BASE + "/uebungen", { waitUntil: "networkidle" });
+    // Studio = „nur an Geräten“: Katalog nach Geräten, Detail mit Gerätebild.
     await shot(pg, "16-katalog", { wait: 1000 });
-    await pg.getByText("Goblet Squat", { exact: true }).first().click();
+    await pg.getByRole("button", { name: /^Beinpresse/ }).first().click();
     await shot(pg, "17-guide", { wait: 1200 });
     await pg.keyboard.press("Escape");
+    await pg.getByRole("button", { name: "Alle", exact: true }).first().click();
+    await shot(pg, "16b-katalog-alle", { wait: 800 });
   });
   await schritt("atlas", async () => {
     await pg.goto(BASE + "/coach", { waitUntil: "networkidle" });

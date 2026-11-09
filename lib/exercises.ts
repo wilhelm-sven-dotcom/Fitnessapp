@@ -23,11 +23,11 @@ export const LIB: Exercise[] = [
     steps: ["Hanteln hängen seitlich, Stand schulterbreit.", "Hüfte zurück und runter, Brust auf.", "Aus den Fersen hoch, oben Po anspannen."], back: "Aufrecht bleiben, Gewichte ziehen nicht nach vorn.", easier: "Leichter oder Goblet-Haltung." },
   { id: "box_squat", name: "Kniebeuge zur Box", pattern: "squat", tag: "Beine", req: ["bar", "box"], weighted: true, sets: 3, repLow: 6, repHigh: 10, unit: "Wdh", muscle: "quads", muscleSecondary: "glutes", cue: "Kontrolliert zur Box setzen, kurz tippen, kraftvoll hoch.",
     steps: ["Box hinter dir auf Kniehöhe.", "Hüfte zurück, kontrolliert absetzen — nicht plumpsen.", "Ohne Schwung aus den Fersen hoch."], back: "Die Box begrenzt die Tiefe — gut für sichere Technik.", easier: "Höhere Box, nur Körpergewicht." },
-  { id: "leg_press", name: "Beinpresse", pattern: "squat", tag: "Beine", req: ["machine"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "quads", muscleSecondary: "glutes", cue: "Füße mittig, unterer Rücken bleibt am Polster.",
+  { id: "leg_press", name: "Beinpresse", pattern: "squat", tag: "Beine", req: ["m_beinpresse"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "quads", muscleSecondary: "glutes", cue: "Füße mittig, unterer Rücken bleibt am Polster.",
     steps: ["Füße schulterbreit auf die Platte.", "Kontrolliert beugen bis ~90°, Rücken bleibt anliegen.", "Kraftvoll strecken, Knie nicht ganz durchdrücken."], back: "Po und Lende nicht vom Polster abheben lassen.", easier: "Weniger Gewicht, kleinerer Weg." },
-  { id: "hack_squat", name: "Hack Squat (Maschine)", pattern: "squat", tag: "Beine", req: ["machine"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "quads", muscleSecondary: "glutes", cue: "Rücken fest ans Polster, tief und kontrolliert.",
+  { id: "hack_squat", name: "Hack Squat (Maschine)", pattern: "squat", tag: "Beine", req: ["m_hacksquat"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "quads", muscleSecondary: "glutes", cue: "Rücken fest ans Polster, tief und kontrolliert.",
     steps: ["Schultern unter die Polster, Füße mittig.", "Tief beugen, Rücken bleibt ganzflächig anliegen.", "Aus den Fersen hochdrücken."], back: "Die Maschine führt — Rücken bleibt entlastet am Polster.", easier: "Weniger Gewicht, halber Weg." },
-  { id: "leg_extension", name: "Beinstrecker (Maschine)", pattern: "squat", tag: "Oberschenkel", req: ["machine"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "quads", cue: "Langsam strecken, oben kurz halten, langsam ablassen.",
+  { id: "leg_extension", name: "Beinstrecker (Maschine)", pattern: "squat", tag: "Oberschenkel", req: ["m_beinstrecker"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "quads", cue: "Langsam strecken, oben kurz halten, langsam ablassen.",
     steps: ["Schienbeine hinter die Rolle, Rücken anlehnen.", "Beine strecken, oben 1 s anspannen.", "Kontrolliert zurück, nicht fallen lassen."], back: "Sitzposition stabil, kein Hohlkreuz beim Strecken.", easier: "Weniger Gewicht, einzelne Beine." },
   { id: "wall_sit", name: "Wandsitz", pattern: "squat", tag: "Beine", req: ["none"], weighted: false, sets: 3, repLow: 30, repHigh: 60, unit: "Sek", muscle: "quads", cue: "Rücken flach an der Wand, Knie im rechten Winkel, halten.",
     steps: ["Rücken an die Wand, Füße einen Schritt vor.", "Abrutschen bis Oberschenkel waagerecht.", "Position halten, ruhig atmen."], back: "Ganzer Rücken bleibt an der Wand — sehr rückenfreundlich.", easier: "Höher sitzen (stumpferer Kniewinkel)." },
@@ -69,9 +69,9 @@ export const LIB: Exercise[] = [
     steps: ["Hantel in einer Hand, Gegenbein hebt nach hinten.", "Oberkörper senkt sich, Rücken bleibt lang.", "Aus der Hüfte zurück in den Stand."], back: "Becken gerade halten, nicht aufdrehen.", easier: "Freie Hand aufstützen, weniger tief." },
   { id: "sumo_deadlift", name: "Sumo-Kreuzheben", pattern: "hinge", tag: "Gesäß & Beine", req: ["bar"], weighted: true, sets: 3, repLow: 4, repHigh: 6, unit: "Wdh", muscle: "glutes", muscleSecondary: "hamstrings", cue: "Breiter Stand, aufrechter Rumpf, Stange sehr nah.", backCaution: true,
     steps: ["Sehr breiter Stand, Zehen leicht nach außen.", "Innen greifen, Brust auf, Rücken neutral.", "Boden wegdrücken, Hüfte und Knie zusammen strecken."], back: "Aufrechter als klassisches Kreuzheben — trotzdem: neutraler Rücken.", easier: "Leichter, Kettlebell zwischen den Beinen." },
-  { id: "leg_curl", name: "Beinbeuger (Maschine)", pattern: "hinge", tag: "Beinrückseite", req: ["machine"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "hamstrings", cue: "Ferse zum Po ziehen, langsam zurück.",
+  { id: "leg_curl", name: "Beinbeuger (Maschine)", pattern: "hinge", tag: "Beinrückseite", req: ["m_beinbeuger"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "hamstrings", cue: "Ferse zum Po ziehen, langsam zurück.",
     steps: ["Rolle an die Fersen legen (liegend oder sitzend).", "Beugen bis kurz vor den Po.", "Langsam und kontrolliert strecken."], back: "Hüfte bleibt am Polster, kein Hohlkreuz.", easier: "Weniger Gewicht, einbeinig nachhelfen." },
-  { id: "back_ext", name: "Rückenstrecker (Maschine/Bank)", pattern: "hinge", tag: "Unterer Rücken", req: ["machine"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "back", muscleSecondary: "glutes", cue: "Ruhig auf und ab, oben nicht überstrecken.", backCaution: true,
+  { id: "back_ext", name: "Rückenstrecker (Maschine/Bank)", pattern: "hinge", tag: "Unterer Rücken", req: ["m_rueckenstrecker"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "back", muscleSecondary: "glutes", cue: "Ruhig auf und ab, oben nicht überstrecken.", backCaution: true,
     steps: ["Hüfte auf das Polster, Füße fixieren.", "Oberkörper kontrolliert absenken.", "Bis in die Gerade aufrichten — nicht darüber hinaus."], back: "Stärkt den Rückenstrecker — nur schmerzfrei und ohne Schwung.", easier: "Ohne Zusatzgewicht, kleinerer Weg." },
   { id: "pull_through", name: "Pull-Through am Kabel", pattern: "hinge", tag: "Gesäß", req: ["cable"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "glutes", muscleSecondary: "hamstrings", cue: "Rückwärts zum Kabel, Seil zwischen den Beinen, Hüfte streckt.", backCaution: true,
     steps: ["Seil tief einhängen, rückwärts hinstellen.", "Hüfte zurückschieben, Seil zwischen den Beinen.", "Hüfte nach vorn strecken, Po fest."], back: "Sanfte Hinge-Schule — Rücken bleibt neutral, Zug macht das Kabel.", easier: "Weniger Gewicht, kleinerer Weg." },
@@ -91,13 +91,13 @@ export const LIB: Exercise[] = [
     steps: ["Flach auf die Bank, Hanteln über der Brust.", "Kontrolliert bis auf Brusthöhe senken.", "Hochdrücken, oben nicht anschlagen."], back: "Schulterblätter stabil, Po auf der Bank.", easier: "Leichter oder Floor Press am Boden." },
   { id: "incline_db", name: "Schrägbankdrücken (Kurzhantel)", pattern: "hpush", tag: "Obere Brust", req: ["db", "bench"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "chest", muscleSecondary: "shoulders", cue: "Bank ~30°, Hanteln tief dehnen, obere Brust arbeitet.",
     steps: ["Bank auf ~30°, Hanteln über der oberen Brust.", "Tief absenken, Ellbogen ~45° zum Körper.", "Hochdrücken, Hanteln oben nicht zusammenschlagen."], back: "Fest anlehnen, Füße fest am Boden.", easier: "Flachbank oder leichter." },
-  { id: "chest_press_machine", name: "Brustpresse (Maschine)", pattern: "hpush", tag: "Brust", req: ["machine"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "chest", muscleSecondary: "triceps", cue: "Griffe auf Brusthöhe, kontrolliert drücken und zurück.",
+  { id: "chest_press_machine", name: "Brustpresse (Maschine)", pattern: "hpush", tag: "Brust", req: ["m_brustpresse"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "chest", muscleSecondary: "triceps", cue: "Griffe auf Brusthöhe, kontrolliert drücken und zurück.",
     steps: ["Sitz so einstellen, dass die Griffe auf Brusthöhe sind.", "Nach vorn drücken, Ellbogen nicht ganz strecken.", "Langsam zurück, Dehnung zulassen."], back: "Rücken bleibt am Polster — sichere Alternative zum Bankdrücken.", easier: "Weniger Gewicht, kleinerer Weg." },
   { id: "cable_fly", name: "Fliegende am Kabel", pattern: "hpush", tag: "Brust", req: ["cable"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "chest", cue: "Große Bögen vor der Brust, Ellbogen leicht gebeugt.",
     steps: ["Griffe auf Brusthöhe, Schritt nach vorn.", "Arme in weitem Bogen vor der Brust zusammenführen.", "Kontrolliert öffnen — die Dehnung ist der Reiz."], back: "Aufrechter fester Stand, Rumpf ruhig.", easier: "Weniger Gewicht, kleinerer Bogen." },
   { id: "db_fly", name: "Fliegende (Kurzhantel, Bank)", pattern: "hpush", tag: "Brust", req: ["db", "bench"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "chest", cue: "Leicht bleiben, weiter Bogen, tiefe Dehnung.",
     steps: ["Rücken auf die Bank, Hanteln über der Brust.", "Arme mit leicht gebeugten Ellbogen weit öffnen.", "Im Bogen wieder zusammenführen."], back: "Schulterblätter stabil, kein Hohlkreuz.", easier: "Deutlich leichter, kleinerer Bogen." },
-  { id: "pec_deck", name: "Butterfly (Maschine)", pattern: "hpush", tag: "Brust", req: ["machine"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "chest", cue: "Ellbogen leicht gebeugt, vor der Brust zusammenführen.",
+  { id: "pec_deck", name: "Butterfly (Maschine)", pattern: "hpush", tag: "Brust", req: ["m_butterfly"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "chest", cue: "Ellbogen leicht gebeugt, vor der Brust zusammenführen.",
     steps: ["Sitz einstellen: Griffe auf Brusthöhe.", "Arme vor der Brust zusammenführen, kurz anspannen.", "Langsam öffnen, Dehnung spüren."], back: "Rücken bleibt fest am Polster.", easier: "Weniger Gewicht, Bewegungsweite verkleinern." },
   { id: "pushup_deficit", name: "Liegestütze erhöht (tiefer Dehnweg)", pattern: "hpush", tag: "Brust", req: ["box"], weighted: false, sets: 3, repLow: 8, repHigh: 15, unit: "Wdh", muscle: "chest", muscleSecondary: "triceps", cue: "Hände auf Erhöhungen — Brust darf tiefer als die Hände.",
     steps: ["Hände auf zwei Erhöhungen, Körper gerade.", "Brust tief zwischen die Hände absenken.", "Kraftvoll hochdrücken."], back: "Rumpf fest — die Tiefe fordert die Spannung extra.", easier: "Normale Liegestütze am Boden." },
@@ -113,7 +113,7 @@ export const LIB: Exercise[] = [
     steps: ["Stange auf den vorderen Schultern, schulterbreit greifen.", "Bauch und Po fest, Stange gerade über den Kopf drücken.", "Kopf leicht durchschieben, kontrolliert absenken."], back: "Kein Hohlkreuz — Rippen unten, Rumpf hart.", easier: "Sitzend mit Kurzhanteln." },
   { id: "arnold_press", name: "Arnold Press", pattern: "vpush", tag: "Schultern", req: ["db"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "shoulders", muscleSecondary: "triceps", cue: "Handflächen drehen beim Drücken von innen nach außen.",
     steps: ["Hanteln vor den Schultern, Handflächen zu dir.", "Beim Hochdrücken die Hände nach außen drehen.", "Auf dem Rückweg wieder eindrehen."], back: "Aufrecht, Rumpf fest, kein Hohlkreuz.", easier: "Sitzend, leichter." },
-  { id: "shoulder_press_machine", name: "Schulterpresse (Maschine)", pattern: "vpush", tag: "Schultern", req: ["machine"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "shoulders", muscleSecondary: "triceps", cue: "Rücken ans Polster, gerade nach oben drücken.",
+  { id: "shoulder_press_machine", name: "Schulterpresse (Maschine)", pattern: "vpush", tag: "Schultern", req: ["m_schulterpresse"], weighted: true, sets: 3, repLow: 8, repHigh: 12, unit: "Wdh", muscle: "shoulders", muscleSecondary: "triceps", cue: "Rücken ans Polster, gerade nach oben drücken.",
     steps: ["Sitz so einstellen, dass die Griffe auf Schulterhöhe starten.", "Nach oben drücken, Ellbogen nicht ganz strecken.", "Langsam zurück auf Schulterhöhe."], back: "Das Polster stützt den Rücken — saubere geführte Bahn.", easier: "Weniger Gewicht." },
   { id: "push_press", name: "Push Press (Langhantel)", pattern: "vpush", tag: "Schultern", req: ["bar"], weighted: true, sets: 3, repLow: 5, repHigh: 8, unit: "Wdh", muscle: "shoulders", muscleSecondary: "triceps", cue: "Kleiner Beinschwung hilft der Stange über den Kopf.",
     steps: ["Stange auf den vorderen Schultern.", "Kurz in die Knie dippen und explosiv strecken.", "Stange über Kopf ausdrücken, kontrolliert ablegen."], back: "Rumpf hart — der Impuls kommt aus den Beinen, nicht dem Kreuz.", easier: "Strikt drücken mit weniger Gewicht." },
@@ -133,7 +133,7 @@ export const LIB: Exercise[] = [
     steps: ["Füße abstützen, aufrecht hinsetzen.", "Griff zum Bauch ziehen, Ellbogen eng am Körper.", "Kontrolliert nach vorn nachlassen, Rücken bleibt lang."], back: "Aufrecht bleiben — nicht mit dem Kreuz nachschwingen.", easier: "Weniger Gewicht, kleinerer Weg." },
   { id: "chest_row_db", name: "Brustgestütztes KH-Rudern", pattern: "hpull", tag: "Rücken", req: ["db", "bench"], weighted: true, sets: 3, repLow: 10, repHigh: 12, unit: "Wdh", muscle: "back", muscleSecondary: "biceps", cue: "Brust auf die Schrägbank — der Rücken ist komplett raus.",
     steps: ["Bauchlings auf die Schrägbank legen.", "Hanteln hängen lassen, dann zur Hüfte ziehen.", "Langsam absenken, Schulterblätter öffnen lassen."], back: "Die Bank trägt den Oberkörper — beste Wahl bei empfindlichem Rücken.", easier: "Leichter, weniger Neigung." },
-  { id: "row_machine", name: "Rudermaschine", pattern: "hpull", tag: "Rücken", req: ["machine"], weighted: true, sets: 3, repLow: 10, repHigh: 12, unit: "Wdh", muscle: "back", muscleSecondary: "biceps", cue: "Brust ans Polster, Ellbogen weit nach hinten ziehen.",
+  { id: "row_machine", name: "Rudermaschine", pattern: "hpull", tag: "Rücken", req: ["m_rudern"], weighted: true, sets: 3, repLow: 10, repHigh: 12, unit: "Wdh", muscle: "back", muscleSecondary: "biceps", cue: "Brust ans Polster, Ellbogen weit nach hinten ziehen.",
     steps: ["Brustpolster einstellen, Griffe fassen.", "Ellbogen nach hinten ziehen, Schulterblätter zusammen.", "Kontrolliert nach vorn nachlassen."], back: "Das Polster nimmt den Rücken raus — geführte, sichere Bahn.", easier: "Weniger Gewicht." },
   { id: "kb_row", name: "Kettlebell-Rudern", pattern: "hpull", tag: "Rücken", req: ["kb"], weighted: true, sets: 3, repLow: 10, repHigh: 12, unit: "Wdh", muscle: "back", muscleSecondary: "biceps", cue: "Abgestützt oder vorgebeugt, Kugel eng zur Hüfte. Pro Arm.",
     steps: ["Eine Hand abstützen, Rücken lang.", "Kettlebell eng am Körper zur Hüfte ziehen.", "Kontrolliert absenken. Seite wechseln."], back: "Rücken gerade, Rumpf ruhig.", easier: "Höher abstützen, leichter." },
@@ -201,7 +201,7 @@ export const LIB: Exercise[] = [
     steps: ["Mittig auf das Band stellen, Enden greifen.", "Arme bis Schulterhöhe heben.", "Langsam ablassen."], back: "Rumpf ruhig, Schultern weg von den Ohren.", easier: "Weniger Vorspannung, einarmig." },
   { id: "reverse_fly_db", name: "Reverse Flys (vorgebeugt)", pattern: "lateral", tag: "Hintere Schulter", req: ["db"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "shoulders", muscleSecondary: "back", cue: "Vorgebeugt, leichte Hanteln weit zur Seite öffnen.",
     steps: ["Hüfte zurück, Oberkörper fast waagerecht, Rücken lang.", "Arme mit leicht gebeugten Ellbogen zur Seite heben.", "Langsam zurück, ohne Schwung."], back: "Rücken gerade halten — sehr leichtes Gewicht wählen.", easier: "Sitzend vorgebeugt oder an der Maschine." },
-  { id: "reverse_fly_machine", name: "Reverse Butterfly (Maschine)", pattern: "lateral", tag: "Hintere Schulter", req: ["machine"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "shoulders", muscleSecondary: "back", cue: "Brust ans Polster, Arme weit nach hinten öffnen.",
+  { id: "reverse_fly_machine", name: "Reverse Butterfly (Maschine)", pattern: "lateral", tag: "Hintere Schulter", req: ["m_butterfly"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "shoulders", muscleSecondary: "back", cue: "Brust ans Polster, Arme weit nach hinten öffnen.",
     steps: ["Sitz einstellen, Brust ans Polster.", "Arme auf Schulterhöhe weit nach hinten führen.", "Kontrolliert zurück, Spannung halten."], back: "Das Polster stützt — Rücken komplett entlastet.", easier: "Weniger Gewicht." },
   { id: "front_raise", name: "Frontheben", pattern: "lateral", tag: "Vordere Schulter", req: ["db"], weighted: true, sets: 3, repLow: 10, repHigh: 15, unit: "Wdh", muscle: "shoulders", cue: "Hanteln gestreckt nach vorn bis Schulterhöhe.",
     steps: ["Hanteln vor den Oberschenkeln.", "Gestreckte Arme nach vorn auf Schulterhöhe heben.", "Langsam ablassen."], back: "Nicht zurücklehnen — Rumpf hält dagegen.", easier: "Leichter, abwechselnd einarmig." },
@@ -259,7 +259,7 @@ export const LIB: Exercise[] = [
     steps: ["Hantel in einer Hand, andere Hand stützt.", "Hoch auf die Fußballen, oben anspannen.", "Sehr langsam und tief absenken."], back: "Aufrecht, Bewegung nur im Sprunggelenk.", easier: "Ohne Gewicht, beidbeinig." },
   { id: "calf_single", name: "Einbeiniges Wadenheben (Kante)", pattern: "calf", tag: "Waden", req: ["box"], weighted: false, sets: 3, repLow: 12, repHigh: 20, unit: "Wdh", muscle: "calves", cue: "Fußballen auf der Kante — die Ferse sinkt tief. Pro Bein.",
     steps: ["Fußballen auf eine Kante/Stufe stellen.", "Ferse tief unter die Kante sinken lassen.", "Kraftvoll ganz nach oben. Seite wechseln."], back: "Festhalten erlaubt — volle Bewegungsweite zählt.", easier: "Beidbeinig auf der Kante." },
-  { id: "calf_seated", name: "Wadenheben sitzend (Maschine)", pattern: "calf", tag: "Waden", req: ["machine"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "calves", cue: "Polster auf den Knien — trifft den tiefen Wadenmuskel.",
+  { id: "calf_seated", name: "Wadenheben sitzend (Maschine)", pattern: "calf", tag: "Waden", req: ["m_waden"], weighted: true, sets: 3, repLow: 12, repHigh: 15, unit: "Wdh", muscle: "calves", cue: "Polster auf den Knien — trifft den tiefen Wadenmuskel.",
     steps: ["Fußballen auf die Kante, Polster auf die Oberschenkel.", "Fersen tief absenken.", "Hoch auf die Zehenspitzen, oben halten."], back: "Aufrecht sitzen, ruhiges Tempo.", easier: "Weniger Gewicht." },
 ];
 
@@ -267,14 +267,38 @@ export const EQUIP_LIST: EquipItem[] = [
   { key: "db", label: "Kurzhanteln" }, { key: "kb", label: "Kettlebell" }, { key: "bar", label: "Langhantel" },
   { key: "pullup", label: "Klimmzugstange" }, { key: "rings", label: "Turnringe" }, { key: "bands", label: "Bänder" },
   { key: "box", label: "Erhöhung / Box" }, { key: "bench", label: "Hantelbank" },
-  { key: "cable", label: "Kabelzug" }, { key: "machine", label: "Kraftgeräte" },
+  { key: "cable", label: "Kabelzug" },
   { key: "bike", label: "Bike / Ergometer" },
 ];
+
+/** Die Kraftgeräte einzeln (Studio). Reihenfolge = Anzeige: Beine, Hüfte,
+ *  Brust, Schultern, Rücken, Waden. Kabel-Übungen hängen am Kabelzug. */
+export const MASCHINEN: EquipItem[] = [
+  { key: "m_beinpresse", label: "Beinpresse" },
+  { key: "m_hacksquat", label: "Hack-Squat" },
+  { key: "m_beinstrecker", label: "Beinstrecker" },
+  { key: "m_beinbeuger", label: "Beinbeuger" },
+  { key: "m_rueckenstrecker", label: "Rückenstrecker" },
+  { key: "m_brustpresse", label: "Brustpresse" },
+  { key: "m_butterfly", label: "Butterfly" },
+  { key: "m_schulterpresse", label: "Schulterpresse" },
+  { key: "m_rudern", label: "Rudermaschine" },
+  { key: "m_waden", label: "Wadenmaschine" },
+];
+export const MASCHINEN_KEYS: EquipKey[] = MASCHINEN.map((m) => m.key);
+
+/** Alle bekannten Geräte (Grundausstattung + Einzelgeräte). */
+export const ALLE_GERAETE: EquipItem[] = [...EQUIP_LIST, ...MASCHINEN];
+
+/** Übung an einem Gerät: Maschine (`m_*`, alt `machine`) oder Kabelzug. */
+export function istGeraeteUebung(ex: Pick<Exercise, "req">): boolean {
+  return (ex.req ?? []).some((t) => t === "cable" || t === "machine" || t.startsWith("m_"));
+}
 
 export const DEFAULT_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "rings", "bands", "box", "bench", "bike"];
 
 /** Voll ausgestattetes Studio — Vorlage für den Ort „Studio“ (lib/orte.ts). */
-export const STUDIO_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "bands", "box", "bench", "cable", "machine", "bike"];
+export const STUDIO_EQUIP: EquipKey[] = ["db", "kb", "bar", "pullup", "bands", "box", "bench", "cable", ...MASCHINEN_KEYS, "bike"];
 
 export const PATTERN_LABEL: Record<Pattern, string> = {
   squat: "Kniebeuge", lunge: "Ausfallschritt/Bein", hinge: "Hüfte/Gesäß", hpush: "Druck horizontal", vpush: "Druck über Kopf", hpull: "Zug horizontal", vpull: "Zug vertikal", arm: "Arme", lateral: "Schultern", core: "Core / Rücken-Stabi", calf: "Waden", cardio: "Cardio / Bike",

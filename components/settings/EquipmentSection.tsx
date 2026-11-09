@@ -9,7 +9,9 @@ import { Pressable } from "@/components/ui/pressable";
 import { Segment } from "@/components/ui/Segment";
 import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { EQUIP_LIST } from "@/lib/exercises";
+import { Toggle } from "@/components/ui/Toggle";
+import { EQUIP_LIST, MASCHINEN, MASCHINEN_KEYS } from "@/lib/exercises";
+import { hasFuer } from "@/lib/orte";
 import { availableExercises } from "@/lib/today-session";
 import { muscleOf, MUSCLE_ORDER } from "@/lib/volume";
 
@@ -25,6 +27,8 @@ export function EquipmentSection() {
     gyms,
     activeGym,
     toggleEquip,
+    setOrtGeraete,
+    setNurGeraete,
     addGym,
     renameGym,
     removeGym,
@@ -38,7 +42,7 @@ export function EquipmentSection() {
 
   const stats = useMemo(() => {
     if (!ort) return { count: 0, cov: 0 };
-    const has = (k: string) => (ort.equip as string[]).includes(k);
+    const has = hasFuer(ort);
     const available = availableExercises(allLib, has, disabledExercises);
     const muscles = new Set<string>();
     available.forEach((e) => {
@@ -51,6 +55,7 @@ export function EquipmentSection() {
 
   if (!ort) return null;
   const heute = ort.id === activeGym?.id;
+  const alleMaschinen = MASCHINEN_KEYS.every((k) => ort.equip.includes(k));
 
   return (
     <section className="mb-4 rounded-card border-dick border-rand bg-surface-1 p-4">
@@ -117,6 +122,44 @@ export function EquipmentSection() {
             </ChipToggle>
           );
         })}
+      </div>
+
+      {/* Kraftgeräte einzeln; der Sammelknopf wählt alle an oder ab. */}
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-fg">Kraftgeräte einzeln</p>
+        <ChipToggle
+          active={alleMaschinen}
+          onClick={() => setOrtGeraete(MASCHINEN_KEYS, !alleMaschinen, ort.id)}
+          className="flex min-h-11 items-center gap-1.5 px-4"
+        >
+          {alleMaschinen && <Check size={16} strokeWidth={2.5} aria-hidden />}
+          Kraftgeräte
+        </ChipToggle>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {MASCHINEN.map((e) => {
+          const on = ort.equip.includes(e.key);
+          return (
+            <ChipToggle
+              key={e.key}
+              active={on}
+              onClick={() => toggleEquip(e.key, ort.id)}
+              className="flex min-h-11 items-center gap-1.5 px-4"
+            >
+              {on && <Check size={16} strokeWidth={2.5} aria-hidden />}
+              {e.label}
+            </ChipToggle>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 rounded-inner border-dick border-rand px-3.5 py-3">
+        <Toggle
+          checked={!!ort.nurGeraete}
+          onChange={(on) => setNurGeraete(on, ort.id)}
+          label="Nur an Geräten trainieren"
+          hint="ATLAS plant hier nur Maschinen und Kabelzug, keine Hanteln und kein Körpergewicht."
+        />
       </div>
 
       <p className="mt-3 flex items-center justify-between gap-2 rounded-inner bg-surface-0 px-3 py-2.5 text-sm text-muted">

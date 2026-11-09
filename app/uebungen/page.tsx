@@ -8,7 +8,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ChipToggle } from "@/components/ui/ChipToggle";
 import { Pressable } from "@/components/ui/pressable";
+import { Segment } from "@/components/ui/Segment";
 import { Sheet } from "@/components/ui/sheet";
+import { GeraetBild } from "@/components/geraete/GeraetBild";
+import { GeraetFotoAktionen } from "@/components/geraete/GeraetFotoAktionen";
+import type { GeraetKey } from "@/components/geraete/GeraetZeichnung";
 import { GuideSheet } from "@/components/workout/GuideSheet";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { PATTERN_FIGUR } from "@/lib/phasen/figuren";
@@ -17,6 +21,8 @@ import { WarmupCatalogSection } from "@/components/warmup/WarmupCatalogSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { geraetText } from "@/lib/equipment";
 import { PATTERN_LABEL } from "@/lib/exercises";
+import { GERAETE_REIHENFOLGE, geraetName, geraetVon } from "@/lib/geraete";
+import { hasFuer } from "@/lib/orte";
 import { reqOk } from "@/lib/progression";
 import { MUSCLE_LABEL, MUSCLE_ORDER, muscleOf } from "@/lib/volume";
 import { cn } from "@/lib/utils";
@@ -38,8 +44,24 @@ const PATTERN_ORDER: Pattern[] = [
   "cardio",
 ];
 
+/** Eine Katalog-Gruppe: ein Gerät (Ort „nur an Geräten“) oder ein Muster. */
+interface Gruppe {
+  key: string;
+  titel: string;
+  list: Exercise[];
+  pat?: Pattern;
+  geraet?: GeraetKey;
+}
+
 export default function ExerciseCatalogPage() {
-  const { allLib, exerciseVideos, has, disabledExercises, toggleExerciseDisabled } = useTraining();
+  const { allLib, exerciseVideos, has, disabledExercises, toggleExerciseDisabled, gyms, activeGym } =
+    useTraining();
+  // Katalog nach Ort: null = der heutige Ort; „alle“ = der ganze Katalog.
+  const [sicht, setSicht] = useState<string | null>(null);
+  const sichtId = sicht ?? activeGym?.id ?? "alle";
+  const ortSicht = sichtId === "alle" ? null : (gyms.find((g) => g.id === sichtId) ?? null);
+  const nachGeraet = !!ortSicht?.nurGeraete;
+  const hasSicht = useMemo(() => (ortSicht ? hasFuer(ortSicht) : has), [ortSicht, has]);
   const [q, setQ] = useState("");
   const [patFilter, setPatFilter] = useState<Pattern | null>(null);
   const [muscleFilter, setMuscleFilter] = useState<Muscle | null>(null);
@@ -56,8 +78,9 @@ export default function ExerciseCatalogPage() {
     return m;
   }, [allLib]);
 
-  // Suche + Muster-/Muskel-/Equipment-Filter, dann nach Muster gruppieren.
-  const groups = useMemo(() => {
+  // Suche + Muster-/Muskel-Filter; am Ort nur, was er hergibt. Ort „nur an
+  // Geräten“: Gruppen je Gerät, sonst nach Bewegungsmuster.
+  const groups = useMemo<Gruppe[]>(() => {
     const needle = q.trim().toLowerCase();
     const match = (e: Exercise) => {
       if (needle) {
@@ -73,16 +96,30 @@ export default function ExerciseCatalogPage() {
         const m = muscleOf(e);
         if (m.primary !== muscleFilter && m.secondary !== muscleFilter) return false;
       }
-      if (onlyAvailable && !reqOk(e, has)) return false;
+      if (ortSicht) {
+        if (!reqOk(e, hasSicht)) return false;
+      } else if (onlyAvailable && !reqOk(e, has)) return false;
       return true;
     };
+    const sortiert = (l: Exercise[]) => l.sort((a, b) => a.name.localeCompare(b.name, "de"));
+    if (nachGeraet) {
+      const out: Gruppe[] = GERAETE_REIHENFOLGE.map((k) => ({
+        key: k,
+        titel: geraetName(k),
+        geraet: k,
+        list: sortiert(allLib.filter((e) => geraetVon(e) === k && match(e))),
+      }));
+      const rest = sortiert(allLib.filter((e) => geraetVon(e) === null && match(e)));
+      if (rest.length) out.push({ key: "weitere", titel: "Weitere Geräte", list: rest });
+      return out.filter((g) => g.list.length > 0);
+    }
     return PATTERN_ORDER.map((pat) => ({
+      key: pat,
+      titel: PATTERN_LABEL[pat],
       pat,
-      list: allLib
-        .filter((e) => e.pattern === pat && match(e))
-        .sort((a, b) => a.name.localeCompare(b.name, "de")),
+      list: sortiert(allLib.filter((e) => e.pattern === pat && match(e))),
     })).filter((g) => g.list.length > 0);
-  }, [allLib, q, patFilter, muscleFilter, onlyAvailable, has]);
+  }, [allLib, q, patFilter, muscleFilter, onlyAvailable, has, ortSicht, hasSicht, nachGeraet]);
 
   const shown = groups.reduce((a, g) => a + g.list.length, 0);
 
@@ -92,6 +129,19 @@ export default function ExerciseCatalogPage() {
         eyebrow={`${allLib.length} Übungen${customCount ? ` · ${customCount} eigene` : ""}`}
         title="Übungskatalog"
       />
+
+      {gyms.length > 0 && (
+        <Segment
+          label="Katalog für Ort"
+          options={[
+            ...gyms.map((g) => ({ value: g.id, label: g.name })),
+            { value: "alle", label: "Alle" },
+          ]}
+          value={sichtId}
+          onChange={(v) => setSicht(v)}
+          className="mb-3"
+        />
+      )}
 
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1">
@@ -145,9 +195,11 @@ export default function ExerciseCatalogPage() {
             <ChevronDown size={16} className="shrink-0" aria-hidden />
           </Pressable>
         ))}
-        <ChipToggle active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
-          Meine Geräte
-        </ChipToggle>
+        {!ortSicht && (
+          <ChipToggle active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
+            Meine Geräte
+          </ChipToggle>
+        )}
       </div>
       <div className="mb-4 flex min-h-8 items-center justify-between gap-2 px-1 text-sm text-muted">
         <span className="tabular-nums">{shown} Treffer</span>
@@ -186,21 +238,39 @@ export default function ExerciseCatalogPage() {
         />
       ) : (
         groups.map((g) => {
-          const farbe = REGION_VAR[regionOf(g.list[0])];
           return (
-            <section key={g.pat} className="mb-5">
-              {/* Gruppenkopf trägt die Figur EINMAL — die Zeilen nennen Muskel und Gerät. */}
+            <section key={g.key} className="mb-5">
+              {/* Gruppenkopf: Gerät mit Bild und Kamera-Knopf, sonst die Figur
+                  des Musters EINMAL — die Zeilen nennen Muskel und Gerät. */}
               <div className="mb-2 flex items-center gap-3 px-1">
-                <span aria-hidden className="w-9 shrink-0">
-                  <PhasenFigur figur={PATTERN_FIGUR[g.pat]} color="var(--fg)" />
-                </span>
-                <h2 className="text-base font-bold text-fg">{PATTERN_LABEL[g.pat]}</h2>
+                {g.geraet ? (
+                  <span
+                    aria-hidden
+                    className="h-12 w-16 shrink-0 overflow-hidden rounded-kachel border-dick border-rand bg-surface-1"
+                  >
+                    <GeraetBild geraet={g.geraet} dekorativ />
+                  </span>
+                ) : g.pat ? (
+                  <span aria-hidden className="w-9 shrink-0">
+                    <PhasenFigur figur={PATTERN_FIGUR[g.pat]} color="var(--fg)" />
+                  </span>
+                ) : null}
+                <h2
+                  className={cn(
+                    "min-w-0 flex-1 text-base font-bold text-fg",
+                    g.geraet && "font-display text-lg font-extrabold",
+                  )}
+                >
+                  {g.titel}
+                </h2>
                 <span className="text-sm tabular-nums text-muted">{g.list.length}</span>
+                {g.geraet && <GeraetFotoAktionen geraet={g.geraet} kompakt />}
               </div>
               <div className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
                 {g.list.map((ex, rowIdx) => {
                   const hasVideo = !!exerciseVideos[ex.id];
-                  const available = reqOk(ex, has);
+                  const available = reqOk(ex, hasSicht);
+                  const farbe = REGION_VAR[regionOf(ex)];
                   const off = disabledExercises.includes(ex.id);
                   const m = muscleOf(ex);
                   return (
@@ -284,8 +354,12 @@ export default function ExerciseCatalogPage() {
       )}
 
       <p className={cn("mb-4 mt-1 px-1 text-sm text-muted", groups.length === 0 && "hidden")}>
-        Grauer Balken: Gerät fehlt am aktuellen Ort. Übung antippen für Anleitung,
-        Video, Notizen und deinen Verlauf.
+        {ortSicht
+          ? nachGeraet
+            ? `${ortSicht.name}: nur Übungen an Geräten. Kamera-Knopf: eigenes Foto vom Gerät. `
+            : `Nur Übungen, die ${ortSicht.name} hergibt. `
+          : "Graues Quadrat: Gerät fehlt am heutigen Ort. "}
+        Übung antippen für Anleitung, Video, Notizen und deinen Verlauf.
       </p>
 
       {/* Aufwärm-Drills sind kein Teil der filterbaren Übungs-Lib — die Sektion
