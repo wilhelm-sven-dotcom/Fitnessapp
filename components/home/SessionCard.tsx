@@ -2,6 +2,7 @@
 
 import { Pencil, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
+import { GeraetBild } from "@/components/geraete/GeraetBild";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { Kicker } from "@/components/ui/Kicker";
 import { Pressable } from "@/components/ui/pressable";
@@ -11,6 +12,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { effectiveProfile } from "@/lib/athlete";
 import { fmtGewicht } from "@/lib/format";
 import { REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
+import { geraetVon } from "@/lib/geraete";
 import { figurFor } from "@/lib/phasen/figuren";
 import { presc } from "@/lib/progression";
 import { startWeight } from "@/lib/start-weight";
@@ -132,9 +134,18 @@ export function SessionCard({
                 >
                   {i + 1}
                 </span>
-                <span aria-hidden className="w-8 shrink-0">
-                  <PhasenFigur figur={figurFor(z.ex)} color="var(--fg)" />
-                </span>
+                {geraetVon(z.ex) ? (
+                  <span
+                    aria-hidden
+                    className="h-8 w-11 shrink-0 overflow-hidden rounded-xs border-2 border-rand bg-surface-1"
+                  >
+                    <GeraetBild geraet={geraetVon(z.ex)!} dekorativ />
+                  </span>
+                ) : (
+                  <span aria-hidden className="w-8 shrink-0">
+                    <PhasenFigur figur={figurFor(z.ex)} color="var(--fg)" />
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-semibold leading-snug text-fg">{z.ex.name}</p>
                   <p className="mt-0.5 text-sm tabular-nums text-muted">

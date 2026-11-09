@@ -40,8 +40,11 @@ persistiertem Verlauf — Antworten rendern strukturiert
 (Beobachtung/Einschätzung/Plan).
 
 **Katalog (`/uebungen`)** — 115 Übungen mit deutschem Voll-Content (Ausführung, Rücken-Hinweis, leichtere Variante,
-Phasenfigur-Piktogramm), filterbar nach Muster, Muskel und vorhandenen
-Geräten. Eigene Übungen sind erstklassig: voller Editor (Muskeln, Equipment,
+Phasenfigur-Piktogramm), nach Ort aufgeteilt (Studio / Zuhause / Alle) und
+filterbar nach Muster und Muskel. Im Studio wählst du die Kraftgeräte einzeln
+und trainierst auf Wunsch nur an Geräten (Maschinen und Kabelzug); der
+Katalog zeigt das Studio dann nach Geräten, jedes mit Zeichnung oder deinem
+eigenen Foto, das auch im Training und auf Heute erscheint. Eigene Übungen sind erstklassig: voller Editor (Muskeln, Equipment,
 Schema, Cues) — sie fließen automatisch in Pools, Wochenvolumen und ATLAS'
 Auswahl.
 

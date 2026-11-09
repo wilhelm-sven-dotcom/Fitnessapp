@@ -226,7 +226,8 @@ Sheets 50.
   Bestandszeile (`heute-bestand`) → **Wochenleiste** (Mo–So als Kreise mit
   Rand: trainiert blau mit Haken, heute oranger Ring; Sticker „1 von 3
   Einheiten“) → Ort-Segment → **Einheitskarte** (Rand + harter Schatten: Name
-  der Einheit, Zeilen mit Nummer-Kachel in Regionsfarbe, Figur in Tinte, Name,
+  der Einheit, Zeilen mit Nummer-Kachel in Regionsfarbe, Figur in Tinte bzw.
+  bei Geräte-Übungen das Gerät als Mini-Bild (44 × 32), Name,
   „3 × 10–15 Wdh · Muskel“, Gewicht rechts; Trenner gestrichelt; unten die
   Plan-Quelle) → ATLAS-Begründung als Sprechblase → „Zuerst kommt das
   Aufwärmen.“ → Umbauen (Pillen mit Rand) und Wunschfeld → Hinweiskarten →
@@ -267,9 +268,13 @@ Sheets 50.
   iOS-Tastatur (`visualViewport`) hebt die Leiste den Platz über die Tastatur,
   wenn der Fokus darin liegt; sonst tritt sie zurück. Scroll-Ziele über dem
   Dock nutzen `scrollMarginBottom: var(--nav-h)`.
-- **Katalog:** eine Filterzeile („Muster“ und „Muskel“ öffnen je ein Blatt,
-  „Meine Geräte“ als ChipToggle), Figur einmal im Gruppenkopf (Tinte), Zeilen
-  mit Regions-Quadrat (16 px, Rand) und „Muskel · Gerät“ (`geraetText`).
+- **Katalog:** oben ein Segment mit den Orten und „Alle“ (Vorauswahl: heutiger
+  Ort). Am Ort steht nur, was er hergibt; Ort „nur an Geräten“ gruppiert nach
+  Gerät (Mini-Bild 64 × 48, Name, Anzahl, Kamera-Knopf), sonst nach Muster.
+  Darunter eine Filterzeile („Muster“ und „Muskel“ öffnen je ein Blatt,
+  „Meine Geräte“ nur unter „Alle“), Zeilen mit Regions-Quadrat (16 px, Rand)
+  und „Muskel · Gerät“ (`geraetText`). Übungsdetail (`GuideSheet`) zeigt bei
+  Geräte-Übungen das Gerät groß oben mit den Foto-Aktionen.
 - **Geräte am Ort:** ChipToggle mit Haken, Ort-Segment „Studio · 10“.
 - **Formularfelder** mit `text-base` (≥ 16 px, sonst zoomt iOS) und dem
   Feld-Rezept; Erfahrungsstufen tragen je einen erklärenden Satz.
@@ -290,7 +295,9 @@ Sheets 50.
   dickem Rand; Tipp = Übersicht) → **Übungskarte** blau mit Rand und hartem
   Schatten, Figur weiß 56 px, Name `font-display` 2xl (bei Wörtern > 12
   Zeichen xl), Unterzeile „Satz 1 von 3 · Ziel 10–15 Wdh“, Muskel als
-  Sonnen-Sticker an der Kartenkante; wischen blättert → Pillen „Anleitung“ /
+  Sonnen-Sticker an der Kartenkante; bei Geräte-Übungen das eigene Foto als
+  Hintergrund mit `bg-bild-scrim`, sonst statt der Figur die weiße Zeichnung
+  rechts; wischen blättert → Pillen „Anleitung“ /
   „Tauschen“ (Rand, Bricolage) → Satzliste → ATLAS-Blase → „Danach ‹Übung›“
   (gestrichelt) → Blättern.
 - **Satzliste:** eingetragen = Pille mit Rand und blauem Haken-Kreis, Rekord
@@ -352,6 +359,28 @@ IST die Geräteliste; Migration in `loadAll` (`ensureOrte`, feste Ids
 ATLAS-Anfrage vor der Wahl); die Einheit trägt ihre Ort-Signatur; Einstellungen
 wählen nur den BEARBEITETEN Ort.
 
+- **Kraftgeräte einzeln:** zehn Maschinen als eigene Keys (`m_beinpresse`,
+  `m_hacksquat`, `m_beinstrecker`, `m_beinbeuger`, `m_rueckenstrecker`,
+  `m_brustpresse`, `m_butterfly`, `m_schulterpresse`, `m_rudern`, `m_waden`;
+  `lib/exercises.ts` `MASCHINEN`), Kabel-Übungen am `cable`. Der alte
+  Sammel-Key `machine` wird beim Laden zu allen Einzelgeräten (`cleanEquip`);
+  in eigenen Übungen heißt `machine` „irgendeine Maschine“.
+- **Nur an Geräten** (`GymProfile.nurGeraete`, Studio einmalig an,
+  `geraeteM1`): die Regel sitzt in `reqOk` über den Pseudo-Key `NUR_GERAETE`
+  in `has()` (`hasFuer(ort)` in `lib/orte.ts`) und gilt damit für Basisplan,
+  ATLAS-Anfrage, Tauschen und Zähler. Die Ort-Signatur enthält das Flag.
+- **Einstellungen:** Grundausstattung als Chips, darunter „Kraftgeräte
+  einzeln“ mit dem Sammelknopf „Kraftgeräte“ (alle an/aus, Test-Anker) und den
+  Einzelgeräten, dann der Schalter „Nur an Geräten trainieren“.
+- **Gerätebilder** (`components/geraete/`): `GeraetZeichnung` (elf
+  Zeichnungen, Varianten `hell` und `auf-blau`), `GeraetBild` (eigenes Foto,
+  sonst Zeichnung), `GeraetFotoAktionen` („Foto vom Gerät“ / „Foto ersetzen“ /
+  „Foto entfernen“, kompakt als Kamera-Knopf). Fotos liegen in IndexedDB
+  (`lib/photo-store.ts`, bei Cloud-Sync gespiegelt), Zuordnung in
+  `settings.geraetFotos`; NICHT im JSON-Backup. Gerät einer Übung:
+  `geraetVon(ex)` (`lib/geraete.ts`). Schrift auf Fotos liegt auf
+  `bg-bild-scrim`.
+
 ## Marke
 
 - **Name:** `APP_NAME` = „spotter“, `APP_SLUG` = „spotter“, `CLAIM` = „Ich hab
@@ -391,6 +420,8 @@ wählen nur den BEARBEITETEN Ort.
   genau ein Knopf „Kraftgeräte“ · „Neu ansetzen“ · „angepasst“ · „stellt
   gerade um“ · „ausgelastet“ (nie „nicht erreichbar“ bei 429) · „Für ‹Ort› neu
   zusammenstellen“ · „z. B. Landmine Press“ · „Übung anlegen“ · „N eigene“ ·
+  Katalog-Segment „Alle“ · Katalog-Zeile beginnt mit dem Übungsnamen
+  (`fotos.mjs` öffnet „Beinpresse“) ·
   „ATLAS“ sichtbar in Training und Einstellungen.
 - aria-labels: „Aufwärmen beenden“ · „Training beenden“ · „Eigene Übung
   anlegen“ · „Zeitbudget N Minuten“.

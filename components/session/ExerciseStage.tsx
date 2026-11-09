@@ -3,6 +3,8 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeftRight, BookOpen, Check, ChevronRight, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useGeraetFoto } from "@/components/geraete/GeraetBild";
+import { GeraetZeichnung } from "@/components/geraete/GeraetZeichnung";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { SetRow } from "@/components/workout/SetRow";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +14,7 @@ import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { fmtSatz } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
+import { geraetVon } from "@/lib/geraete";
 import { figurFor } from "@/lib/phasen/figuren";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
@@ -99,6 +102,8 @@ export function ExerciseStage({
   const reduce = useReducedMotion();
 
   const cardio = ex.pattern === "cardio";
+  const geraet = geraetVon(ex);
+  const foto = useGeraetFoto(geraet);
   const timed = ex.unit === "Sek";
 
   const activeSetIdx = sets.findIndex((s) => !s.warmup && (s.reps === "" || s.reps == null));
@@ -175,8 +180,18 @@ export function ExerciseStage({
           else if (info.offset.x > 56 || info.velocity.x > 500) onPrev();
         }}
       >
-        {!cardio && (
-          <div className="w-14 shrink-0" aria-hidden>
+        {/* Gerät mit eigenem Foto: das Foto füllt die Karte, eine feste
+            Tinte-Abdeckung hält die weiße Schrift lesbar. Eigene Ebene mit
+            overflow-hidden, damit der Sticker über die Kante ragen darf. */}
+        {foto && (
+          <div aria-hidden className="absolute inset-0 overflow-hidden rounded-card">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={foto} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-bild-scrim" />
+          </div>
+        )}
+        {!cardio && !(geraet && !foto) && (
+          <div className="relative w-14 shrink-0" aria-hidden>
             <PhasenFigur
               figur={figur}
               mode={alleErledigt ? "freeze" : "zoetrop"}
@@ -185,7 +200,7 @@ export function ExerciseStage({
             />
           </div>
         )}
-        <div className="min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1">
           <h2
             className={cn(
               "hyphens-auto break-words font-display font-extrabold leading-tight",
@@ -199,6 +214,12 @@ export function ExerciseStage({
             {zielLabel && !alleErledigt ? ` · ${zielLabel}` : ""}
           </p>
         </div>
+        {/* Gerät ohne Foto: die Zeichnung in Weiß rechts auf Blau. */}
+        {geraet && !foto && (
+          <div aria-hidden className="relative w-28 shrink-0 self-end">
+            <GeraetZeichnung geraet={geraet} variante="auf-blau" />
+          </div>
+        )}
         {/* Die Region als Sticker an der Kartenkante (Wort, nicht Farbe). */}
         <Sticker drehung={4} className="absolute -top-3.5 right-3 max-w-48 overflow-hidden">
           {ex.tag}
