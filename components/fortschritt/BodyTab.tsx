@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Readout } from "@/components/ui/Readout";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
-import { fmtDateShort } from "@/lib/format";
+import { fmtDateShort, fmtDelta } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
 import { prTimeline } from "@/lib/records";
 import { toast } from "@/lib/toast";
@@ -26,8 +26,7 @@ const fmtKg = (w: number) => String(w).replace(".", ",");
 /** "−4,2 kg" mit deutschem Komma; null ohne beide Gewichte. */
 function kgDelta(a?: number, b?: number): string | null {
   if (a == null || b == null) return null;
-  const d = Math.round((b - a) * 10) / 10;
-  return `${d > 0 ? "+" : ""}${fmtKg(d)} kg`;
+  return fmtDelta(b - a, "kg");
 }
 
 function BodyCard({
@@ -55,10 +54,7 @@ function BodyCard({
           <p className="mt-0.5 text-xs text-muted">{label}</p>
         </div>
         {points.length > 1 && (
-          <span className="text-xs tabular-nums text-muted">
-            {delta > 0 ? "+" : ""}
-            {delta.toFixed(1)} {unit}
-          </span>
+          <span className="text-sm tabular-nums text-muted">{fmtDelta(delta, unit)}</span>
         )}
       </div>
       <div className="mt-2">
@@ -139,7 +135,7 @@ export function BodyTab() {
     <div>
       <Pressable
         onClick={() => setEntryOpen(true)}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
         <Plus size={16} /> Körperdaten eintragen
       </Pressable>
@@ -190,7 +186,7 @@ export function BodyTab() {
 
       {body.length > 0 && (
         <Card className="mb-3">
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted">
+          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Timeline
           </p>
           <div className="space-y-3">
@@ -249,7 +245,7 @@ export function BodyTab() {
                         onClick={() => setBeforeIdx(pIdx)}
                         aria-label="Als Vorher-Bild setzen"
                         className={cn(
-                          "h-7 w-7 rounded-full font-mono text-xs font-bold focus:outline-none",
+                          "h-7 w-7 rounded-pill font-mono text-xs font-bold focus:outline-none",
                           pIdx === bIdx ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                         )}
                       >
@@ -259,9 +255,9 @@ export function BodyTab() {
                         onClick={() => setAfterIdx(pIdx)}
                         aria-label="Als Nachher-Bild setzen"
                         className={cn(
-                          "h-7 w-7 rounded-full font-mono text-xs font-bold focus:outline-none",
+                          "h-7 w-7 rounded-pill font-mono text-xs font-bold focus:outline-none",
                           pIdx === aIdx
-                            ? "bg-accent-sessions text-on-accent"
+                            ? "bg-accent text-on-accent"
                             : "bg-surface-2 text-muted",
                         )}
                       >
@@ -276,7 +272,7 @@ export function BodyTab() {
                         void deleteBodyMetric(i);
                         toast("Eintrag gelöscht.");
                       }}
-                      className="shrink-0 rounded-pill px-2 py-1 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      className="shrink-0 rounded-pill px-2 py-1 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                     >
                       Löschen?
                     </Pressable>
@@ -284,7 +280,7 @@ export function BodyTab() {
                     <Pressable
                       onClick={() => setConfirmDel(delKey)}
                       aria-label="Eintrag löschen"
-                      className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                      className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                     >
                       <Trash2 size={14} />
                     </Pressable>

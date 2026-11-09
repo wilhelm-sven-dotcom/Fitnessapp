@@ -17,7 +17,16 @@
 // wechseln zwar mit `?v=3`, aber /manifest.webmanifest tut das NICHT — ohne
 // Bump liest ein installiertes Gerät weiter das alte Manifest und darin die
 // alten `?v=2`-Icons.
-const CACHE = "training-v33";
+// v34: Ortswahl Zuhause/Studio, vereinfachte Heute-Seite, runde Ecken —
+// ein großes UI-Release; ohne Bump hielte ein installiertes Gerät Chunks
+// des alten Builds im Cache.
+// v35: Look „Regionen“ — neue Grundfarben im Manifest (background_color,
+// theme_color) und neue Schrift; das Manifest liegt cache-first, ohne Bump
+// läse ein installiertes Gerät die alten Farben weiter.
+// v36: neues App-Zeichen (Scheiben in Regionsfarben, ICON_VERSION 4), neues
+// Startbild — Icon-Routen und Manifest liegen cache-first, ohne Bump bliebe
+// das alte Icon auf installierten Geräten.
+const CACHE = "training-v36";
 const SHELL = "/";
 
 // True when this install replaces a previous worker (a release update) — only

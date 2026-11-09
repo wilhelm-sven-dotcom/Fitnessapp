@@ -1,33 +1,50 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Check, ChevronRight, Repeat, Wrench } from "lucide-react";
+import { ArrowLeftRight, BookOpen, Check, ChevronRight, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { SetRow } from "@/components/workout/SetRow";
+import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
-import { PATTERN_LABEL } from "@/lib/exercises";
-import { fmtKg } from "@/lib/format";
+import { fmtSatz } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
 import { figurFor } from "@/lib/phasen/figuren";
+import { REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import type { PlannedExercise } from "@/lib/session-model";
 import type { Exercise, LastPerf, Prescription, RelatedPerf, SetEntry } from "@/lib/types";
 
+const GRUND: Partial<Record<NonNullable<Prescription["reason"]>, string>> = {
+  up: "mehr als letztes Mal",
+  down: "etwas leichter als letztes Mal",
+  start: "Startgewicht, 2–3 Wdh Reserve",
+  lighter: "ruhiger Wiedereinstieg",
+};
+
+/** „Vorschlag 22,5 kg × 9 · mehr als letztes Mal“ — der Vorschlag ist das, was
+ *  in den Kacheln vorbelegt steht; „Ziel“ bleibt der Bereich aus dem Plan. */
+function vorschlagText(p: Prescription, ex: Exercise): string | undefined {
+  const timed = ex.unit === "Sek";
+  const werte = fmtSatz(p.w, p.r, timed);
+  if (!werte)
+    return p.reason === "start" && ex.weighted && !timed ? "Startgewicht selbst wählen" : undefined;
+  const grund = p.reason ? GRUND[p.reason] : undefined;
+  return `Vorschlag ${werte}${grund ? ` · ${grund}` : ""}`;
+}
+
 /**
- * Die Bühne: EINE Übung im Fokus (Fokus.dc). Oben die Bühnen-Karte —
- * Zoetrop-Figur in Siegellack auf dem 88er-Raster, Name in Kursive,
- * Satz-Stand; darunter das Kader-Logbuch (SetRow: der offene Kader ist das
- * Instrument mit Siegellack-Rahmen). Handler-Pfade unverändert.
+ * Die Bühne: EINE Übung im Fokus. Oben der Übungskopf als Fläche in der
+ * Regionsfarbe (kleine Figur, Name, Muskel und Satzstand; wischen blättert),
+ * darunter „Anleitung“ und „Tauschen“, dann die Satzliste mit der offenen
+ * Satzkarte. „Satz eintragen“ steht im Dock (SessionRunner).
  */
 export function ExerciseStage({
   ex,
   item,
-  index,
-  total,
   sets,
   presc,
   lastPerf,
@@ -50,26 +67,24 @@ export function ExerciseStage({
 }: {
   ex: Exercise;
   item: PlannedExercise;
-  index: number;
-  total: number;
   sets: SetEntry[];
   presc: Prescription;
   lastPerf: LastPerf | null;
   /** Verwandte Übung als Ersatz-Historie — reine Anzeige. */
   relatedPerf: RelatedPerf | null;
-  /** Name der nächsten Übung — null beim letzten Eintrag (dann Abschluss). */
+  /** Name der nächsten offenen Übung — null, wenn danach der Abschluss kommt. */
   nextExName?: string | null;
   record: ExRecord | null;
   isExam: boolean;
   aidNote?: string;
-  /** Schrittweite der Gewichts-Stepper im Satz-Logbuch (settings.weightStep). */
+  /** Schrittweite der Gewichts-Stepper (settings.weightStep). */
   weightStep?: number;
   /** Zoetrop-Gate (settings.zoetrope). */
   zoetropOn?: boolean;
   onOpenGuide: () => void;
   /** Schnell-Tausch der aktuellen Übung — nur gereicht, wenn erlaubt & Pool da. */
   onSwap?: () => void;
-  /** Swipe auf der Bühne blättert zwischen Übungen (Buttons bleiben). */
+  /** Wischen über den Übungskopf blättert zwischen Übungen. */
   onPrev: () => void;
   onNext: () => void;
   onWeight: (i: number, val: string) => void;
@@ -78,24 +93,28 @@ export function ExerciseStage({
   onIntensity: (i: number, val: number) => void;
   onCardioToggle: (done: boolean) => void;
 }) {
-  // Fokus-Logbuch: der manuell geöffnete Satz; sonst der erste offene Arbeitssatz.
+  // Der manuell geöffnete Satz; sonst der erste offene Arbeitssatz.
   const [editIdx, setEditIdx] = useState<number | null>(null);
   useEffect(() => setEditIdx(null), [item.id]);
   const reduce = useReducedMotion();
 
-  const activeSetIdx = sets.findIndex(
-    (s) => !s.warmup && (s.reps === "" || s.reps == null),
-  );
+  const region = regionOf(ex);
+  const flaeche = REGION_FLAECHE[region];
+  const auf = REGION_AUF[region];
+  const cardio = ex.pattern === "cardio";
+  const timed = ex.unit === "Sek";
+
+  const activeSetIdx = sets.findIndex((s) => !s.warmup && (s.reps === "" || s.reps == null));
   const effActive = editIdx ?? activeSetIdx;
   const work = sets.filter((s) => !s.warmup);
   const done = work.filter(isFilled).length;
-  const alleBelichtet = ex.pattern !== "cardio" && activeSetIdx < 0;
+  const alleErledigt = !cardio && activeSetIdx < 0;
 
-  const prescLine = isExam
-    ? "Prüfung: Rampe 5 · 4 · 3 — steigere zum schweren Test-Satz."
-    : presc.line;
+  const vorschlag = isExam
+    ? "Prüfung: Rampe 5 · 4 · 3, steigere zum schweren Test-Satz."
+    : vorschlagText(presc, ex);
 
-  // Ghost-Werte fürs Logbuch (Vorschlag bzw. zuletzt bewegtes Gewicht).
+  // Platzhalter (Vorschlag bzw. zuletzt bewegtes Gewicht).
   const lastW = [...sets]
     .reverse()
     .find((s) => !s.warmup && s.weight !== "" && s.weight != null)?.weight;
@@ -105,52 +124,52 @@ export function ExerciseStage({
     : undefined;
   const ghostReps = presc.r || String(ex.repHigh);
 
+  // Ein Wort über 12 Zeichen („Schulterdrücken,“) passt in der breiten
+  // Schrift nicht in eine Zeile — eine Stufe kleiner statt Silbentrennung.
+  const langesWort = ex.name.split(/\s+/).some((w) => w.length > 12);
   const cardioDone = !!sets[0] && sets[0].reps !== "" && sets[0].reps != null;
   const figur = figurFor(ex);
 
-  // „Letztes Mal"-Inline-Zeile für den offenen Kader (Fokus.dc):
-  // stärkster Arbeitssatz von damals + RIR.
-  //
-  // Zwei Dinge waren hier falsch: der Referenzsatz wurde über das höchste
-  // GEWICHT gewählt — bei Eigengewichtsübungen sind alle Gewichte 0, also
-  // gewann willkürlich der erste Satz statt des besten. Und ohne Gewicht
-  // stand ein nacktes „× 12" in der Zeile. `setMetric` kennt die richtige
-  // Kennzahl je Übungsart schon (e1RM gewichtet, sonst Wiederholungen bzw.
-  // Sekunden) — dieselbe, nach der auch die Rekorde gewertet werden.
-  const bestSatz = (sets_: SetEntry[]) => {
-    const w = sets_.filter((s) => !s.warmup && isFilled(s));
+  // „Letztes Mal“: stärkster Arbeitssatz nach der Rekord-Kennzahl der Übung
+  // (e1RM gewichtet, sonst Wiederholungen bzw. Sekunden) + RIR.
+  const bestSatz = (list: SetEntry[]) => {
+    const w = list.filter((s) => !s.warmup && isFilled(s));
     if (!w.length) return null;
     return w.reduce((a, b) => (setMetric(ex, b) > setMetric(ex, a) ? b : a));
   };
   const perfLabel = (top: SetEntry) => {
-    if (ex.unit === "Sek") return `${top.reps} s`;
-    const kg = Number(top.weight) || 0;
-    const rir = top.rir != null ? ` · RIR ${top.rir}` : "";
-    return kg > 0
-      ? `${fmtKg(kg)} × ${top.reps}${rir}`
-      : `${top.reps} Wdh${rir}`;
+    const rir = !timed && top.rir != null ? ` · RIR ${top.rir}` : "";
+    return `${fmtSatz(top.weight, top.reps, timed)}${rir}`;
   };
   const lastInline = (() => {
     const eigen = bestSatz(lastPerf?.sets ?? []);
     if (eigen) return perfLabel(eigen);
-    // Kein eigener Verlauf: die verwandte Übung nennen statt „Erstes Mal" —
-    // die Komposition rotiert bewusst, die Zahlen von gestern zählen trotzdem.
+    // Kein eigener Verlauf: die verwandte Übung nennen statt „Erstes Mal“.
     const verwandt = bestSatz(relatedPerf?.sets ?? []);
-    if (verwandt && relatedPerf)
-      return `${relatedPerf.exName} ${perfLabel(verwandt)}`;
+    if (verwandt && relatedPerf) return `${relatedPerf.exName}: ${perfLabel(verwandt)}`;
     return null;
   })();
-  const zielLabel =
-    ex.pattern === "cardio"
-      ? undefined
-      : `Ziel ${item.sets} × ${item.repLow}${item.repHigh > item.repLow ? `–${item.repHigh}` : ""}`;
+  const recordLabel = record
+    ? record.kind === "weight"
+      ? record.label.replace(" × ", " kg × ")
+      : record.label
+    : undefined;
+  const zielLabel = cardio
+    ? undefined
+    : `Ziel ${item.repLow}${item.repHigh > item.repLow ? `–${item.repHigh}` : ""} ${timed ? "s" : "Wdh"}`;
+  const stand = cardio
+    ? `${item.repLow}–${item.repHigh} Min`
+    : alleErledigt
+      ? "Alle Sätze erledigt"
+      : `Satz ${Math.min(done + 1, work.length)} von ${work.length}`;
 
   return (
     <section data-testid="stage-order">
-      {/* Bühnen-Karte = Wischfläche: horizontal blättern; das Kader-Logbuch
-          darunter bleibt reine Tipp-Zone. */}
+      {/* Übungskopf = Wischfläche: horizontal blättern; Satzliste darunter
+          bleibt reine Tipp-Zone. */}
       <motion.div
-        className="rounded-card border border-line-card bg-surface-1 p-3.5"
+        className="flex items-center gap-3 rounded-card p-4"
+        style={{ backgroundColor: flaeche, color: auf }}
         drag={reduce ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.18}
@@ -160,107 +179,97 @@ export function ExerciseStage({
           else if (info.offset.x > 56 || info.velocity.x > 500) onPrev();
         }}
       >
-        <div className="flex justify-between gap-2 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-          <span>
-            Übung <span className="tabular-nums">{index + 1}/{total}</span>
-          </span>
-          <span className={cn(alleBelichtet && "text-cyanotypie")}>
-            {alleBelichtet ? "Alle Sätze erledigt" : "Übung läuft"}
-          </span>
-        </div>
-        {ex.pattern !== "cardio" && (
-          <div className="mt-2.5">
+        {!cardio && (
+          <div className="w-14 shrink-0" aria-hidden>
             <PhasenFigur
               figur={figur}
-              mode={alleBelichtet ? "freeze" : "zoetrop"}
-              color="var(--accent)"
+              mode={alleErledigt ? "freeze" : "zoetrop"}
+              color={auf}
               zoetropOn={zoetropOn}
-              buehne
-              raster
             />
           </div>
         )}
-        <div className="mt-2.5 flex items-baseline justify-between gap-3">
-          <h2 className="min-w-0 truncate font-display text-titel italic text-fg">
+        <div className="min-w-0 flex-1">
+          <h2
+            className={cn(
+              "hyphens-auto break-words font-display font-extrabold leading-tight",
+              langesWort ? "text-xl" : "text-2xl",
+            )}
+          >
             {ex.name}
           </h2>
-          {ex.pattern === "cardio" ? (
-            <span className="shrink-0 font-mono text-2xs uppercase tracking-gesperrt text-muted">
-              <span className="tabular-nums">
-                {ex.repLow}–{ex.repHigh}
-              </span>{" "}
-              Min
-            </span>
-          ) : (
-            <span className="shrink-0 font-mono text-2xs uppercase tracking-gesperrt text-muted">
-              Satz{" "}
-              <span className="tabular-nums">
-                {Math.min(done + 1, work.length)}/{work.length}
-              </span>
-            </span>
-          )}
+          <p className="mt-1 text-sm font-medium tabular-nums">
+            {ex.tag} · {stand}
+          </p>
         </div>
-        <p className="mt-1 font-mono text-3xs uppercase tracking-gesperrt text-muted">
-          {ex.tag} · {PATTERN_LABEL[ex.pattern]}
-        </p>
-        {item.why && (
-          <p className="mt-1.5 font-display text-sm leading-snug text-muted">{item.why}</p>
-        )}
-        {aidNote && (
-          <Pressable
-            onClick={onOpenGuide}
-            className="flex min-h-11 items-center gap-1 rounded-card text-xs text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
-          >
-            <Wrench size={12} className="shrink-0" />
-            <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
-          </Pressable>
-        )}
       </motion.div>
 
-      {ex.pattern === "cardio" ? (
-        <div className="mt-3 rounded-card border border-line-card bg-surface-1 p-3.5">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Pressable
+          onClick={onOpenGuide}
+          className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        >
+          <BookOpen size={18} aria-hidden /> Anleitung
+        </Pressable>
+        {onSwap && (
+          <Pressable
+            onClick={onSwap}
+            aria-label={`${ex.name} tauschen`}
+            className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          >
+            <ArrowLeftRight size={18} aria-hidden /> Tauschen
+          </Pressable>
+        )}
+      </div>
+      {aidNote && (
+        <Pressable
+          onClick={onOpenGuide}
+          className="mt-1 flex min-h-11 w-full items-center gap-1.5 rounded-inner text-sm text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        >
+          <Wrench size={14} className="shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">Hilfsmittel: {aidNote}</span>
+        </Pressable>
+      )}
+      {/* Warum diese Übung — Kontext für den Einstieg, danach nur Ballast. */}
+      {item.why && done === 0 && (
+        <p className="mt-2 text-sm leading-snug text-muted">{item.why}</p>
+      )}
+
+      {cardio ? (
+        <div className="mt-3 rounded-card bg-surface-1 p-4">
           {ex.steps.length > 0 && (
-            <ul className="mb-3 space-y-1">
+            <ol className="mb-3 space-y-1.5">
               {ex.steps.map((st, i) => (
-                <li key={i} className="flex gap-2 text-xs leading-relaxed text-muted">
-                  <span className="font-mono text-faint">{i + 1}</span>
+                <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted">
+                  <span className="tabular-nums text-faint">{i + 1}</span>
                   <span>{st}</span>
                 </li>
               ))}
-            </ul>
+            </ol>
           )}
-          <Pressable
+          <Button
+            variant={cardioDone ? "secondary" : "primary"}
+            size="lg"
+            full
             onClick={() => onCardioToggle(!cardioDone)}
-            className={cn(
-              "flex w-full items-center justify-center gap-2 rounded-pill border py-2.5 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie",
-              cardioDone
-                ? "border-line text-muted"
-                : "border-strong text-fg",
-            )}
           >
-            <Check size={16} strokeWidth={2.5} />
+            <Check size={18} strokeWidth={2.5} aria-hidden />
             {cardioDone ? "Erledigt" : "Als erledigt markieren"}
-          </Pressable>
+          </Button>
         </div>
       ) : (
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 space-y-2">
           {(() => {
             let workIdx = 0;
             return sets.map((s, i) => {
-              const label = s.warmup ? "Aufw." : `Satz ${++workIdx}`;
+              const label = s.warmup ? "Aufwärmen" : `Satz ${++workIdx}`;
               const filled = s.reps !== "" && s.reps != null;
               const state: "active" | "done" | "upcoming" =
                 i === effActive ? "active" : filled ? "done" : "upcoming";
               return (
-                // layout="position" = reine Translation: beim Aktiv-Wechsel
-                // GLEITEN die Zeilen an ihre neuen Plätze (kein Scale-Morph,
-                // der Ring und Inputs verzerren würde). SetRow selbst bleibt
-                // unangetastet — .set-active trägt weiter den Smoke-Test.
-                <motion.div
-                  key={i}
-                  layout={reduce ? false : "position"}
-                  transition={SPRING.panel}
-                >
+                // layout="position" = reine Translation: beim Wechsel des
+                // offenen Satzes gleiten die Zeilen an ihre neuen Plätze.
+                <motion.div key={i} layout={reduce ? false : "position"} transition={SPRING.panel}>
                   <SetRow
                     label={label}
                     isWarmup={!!s.warmup}
@@ -268,19 +277,20 @@ export function ExerciseStage({
                     set={s}
                     isDumbbell={ex.req.includes("dumbbell") || ex.req.includes("db")}
                     state={state}
+                    region={region}
                     ghostWeight={s.warmup ? undefined : ghostWeight}
                     ghostReps={s.warmup ? undefined : ghostReps}
                     weightStep={weightStep}
                     zielLabel={zielLabel}
                     lastLabel={lastInline}
-                    prescLine={state === "active" && !s.warmup ? prescLine : undefined}
+                    vorschlag={state === "active" && !s.warmup ? vorschlag : undefined}
                     onWeight={(val) => onWeight(i, val)}
                     onReps={(oldVal, val) => onReps(i, oldVal, val)}
                     onRir={(val) => onRir(i, val)}
                     onIntensity={(val) => onIntensity(i, val)}
                     onActivate={() => setEditIdx(i)}
                     onDeactivate={() => setEditIdx((k) => (k === i ? null : k))}
-                    recordLabel={record?.label}
+                    recordLabel={recordLabel}
                     isRecord={beatsRecord(ex, s, record ?? null)}
                   />
                 </motion.div>
@@ -290,50 +300,23 @@ export function ExerciseStage({
         </div>
       )}
 
-      {/* Übung fertig → hier weiter. Der Blick steht nach dem letzten Eintrag
-          genau hier; vorher musste man ans Seitenende oder in die Übersicht,
-          um die nächste Übung aufzurufen. Der Blätter-Knopf unten bleibt fürs
-          Vor- und Zurückspringen, dieser ist der Abschluss der Übung. */}
-      {alleBelichtet && (
-        <Pressable
-          onClick={onNext}
-          className="mt-2.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-card bg-accent-sessions px-4 py-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-on-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie active:bg-accent-press"
-        >
+      {/* Übung fertig → hier weiter: der Blick steht nach dem letzten
+          Eintrag genau hier. */}
+      {alleErledigt && (
+        <Button size="lg" full onClick={onNext} className="mt-3 whitespace-nowrap">
           {nextExName ? (
             <>
               <span className="shrink-0">Nächste Übung</span>
-              <span className="min-w-0 truncate normal-case tracking-normal opacity-90">
-                {nextExName}
-              </span>
-              <ChevronRight size={15} strokeWidth={2.5} className="shrink-0" />
+              <span className="min-w-0 truncate font-normal">{nextExName}</span>
+              <ChevronRight size={18} strokeWidth={2.5} className="shrink-0" aria-hidden />
             </>
           ) : (
             <>
-              <Check size={15} strokeWidth={2.5} /> Zum Abschluss
+              <Check size={18} strokeWidth={2.5} aria-hidden /> Zum Abschluss
             </>
           )}
-        </Pressable>
+        </Button>
       )}
-
-      {/* Fußzeile: Guide links, Schnell-Tausch rechts — bewusst AUSSERHALB der
-          Wischfläche oben, damit kein Swipe-Tap-Konflikt entsteht. */}
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <Pressable
-          onClick={onOpenGuide}
-          className="-ml-2 flex min-h-11 items-center gap-1 rounded-card px-2 py-2 font-mono text-xs font-medium uppercase tracking-gesperrt text-accent-ink focus:outline-none"
-        >
-          <ChevronRight size={14} /> Guide & Technik
-        </Pressable>
-        {onSwap && (
-          <Pressable
-            onClick={onSwap}
-            aria-label={`${ex.name} tauschen`}
-            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill border border-strong px-3 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
-          >
-            <Repeat size={13} /> Tauschen
-          </Pressable>
-        )}
-      </div>
     </section>
   );
 }

@@ -94,7 +94,7 @@ export function BodyEntrySheet({
           onChange={(e) => setBw(e.target.value)}
           placeholder="Gewicht kg"
           aria-label="Körpergewicht in kg"
-          className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
         <input
           type="number"
@@ -104,7 +104,7 @@ export function BodyEntrySheet({
           onChange={(e) => setWaist(e.target.value)}
           placeholder="Bauch cm"
           aria-label="Bauchumfang in cm"
-          className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="min-w-0 flex-1 rounded-card bg-surface-2 px-3 py-2.5 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
       </div>
       <input

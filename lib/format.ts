@@ -25,6 +25,41 @@ export function fmtKg(kg: number): string {
   return (Math.round(kg * 10) / 10).toString().replace(".", ",");
 }
 
+/** Ladbares Gewicht (Hantelstufe 1,25/2,5/5) mit Komma: „20“, „22,5“,
+ *  „81,25“. Anders als `fmtKg` NICHT auf eine Stelle gerundet — sonst
+ *  stünde bei 1,25er-Stufen „81,3“ da, was keine Scheibe hergibt. */
+export function fmtGewicht(kg: number | string): string {
+  const n = typeof kg === "number" ? kg : parseFloat(String(kg).replace(",", "."));
+  if (!Number.isFinite(n)) return String(kg);
+  return n.toLocaleString("de-DE", { maximumFractionDigits: 2, useGrouping: false });
+}
+
+/** Ein Satz in einer Schreibweise für Zeile, Karte, Dock und Abschluss:
+ *  „22,5 kg × 12“ (mit Gewicht), „12 Wdh“ (ohne), „45 s“ (gehalten). */
+export function fmtSatz(
+  weight: string | number | undefined | null,
+  reps: string | number | undefined | null,
+  timed: boolean,
+): string {
+  const r = reps == null ? "" : String(reps);
+  if (timed) return r ? `${r} s` : "";
+  const kg = Number(String(weight ?? "").replace(",", "."));
+  if (weight !== "" && weight != null && Number.isFinite(kg) && kg > 0)
+    return `${fmtGewicht(kg)} kg × ${r}`.trim();
+  return r ? `${r} Wdh` : "";
+}
+
+/** Veränderung mit Vorzeichen und Komma: „+0,5 kg“, „−1,5 kg“ (echtes
+ *  Minuszeichen), „0,0 cm“. Eine Nachkommastelle. */
+export function fmtDelta(d: number, unit: string): string {
+  const r = Math.round(d * 10) / 10;
+  const betrag = Math.abs(r).toLocaleString("de-DE", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  return `${r > 0 ? "+" : r < 0 ? "−" : ""}${betrag} ${unit}`;
+}
+
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
 /** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,
@@ -36,15 +71,6 @@ export function daysSince(iso: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return Math.max(0, Math.round((today.getTime() - d.getTime()) / 86_400_000));
-}
-
-/** „heute" · „gestern" · „vor N Tagen" — für die Letztes-Mal-Karte. */
-export function fmtDaysAgo(iso: string): string {
-  if (isNaN(new Date(iso).getTime())) return "—";
-  const n = daysSince(iso);
-  if (n === 0) return "heute";
-  if (n === 1) return "gestern";
-  return `vor ${n} Tagen`;
 }
 
 /** ISO-Kalenderwoche (Mo-basiert) — von lib/trainer re-exportiert. */

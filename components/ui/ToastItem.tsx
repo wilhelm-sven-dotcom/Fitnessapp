@@ -56,7 +56,7 @@ export function ToastItem({ t }: { t: ToastRecord }) {
   return (
     <div
       onClick={() => setLeaving(true)}
-      className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-pill bg-strong px-3.5 py-2.5 text-left font-mono text-2xs font-medium text-on-strong"
+      className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-pill bg-strong px-4 py-3 text-left text-sm font-semibold text-on-strong"
       style={{
         opacity: shown ? 1 : 0,
         transform: reduce ? undefined : shown ? "translateY(0)" : "translateY(12px)",
@@ -80,7 +80,7 @@ export function ToastItem({ t }: { t: ToastRecord }) {
             t.action?.onClick();
             setLeaving(true);
           }}
-          className="shrink-0 rounded-xs font-semibold uppercase tracking-gesperrt underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+          className="shrink-0 rounded-xs font-bold underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           {t.action.label}
         </button>

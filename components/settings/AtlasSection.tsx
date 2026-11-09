@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Kicker } from "@/components/ui/Kicker";
 import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 
 /**
- * ATLAS-Einstellungen: KI-Komposition + Live-Coaching an/aus, dazu der
+ * ATLAS-Einstellungen: KI-Komposition und ATLAS im Training an/aus, dazu der
  * Server-Key-Status. Ohne Key läuft alles über den deterministischen Fallback.
+ * „Im Training“ war früher zweimal da (Zuspruch im Gym-Modus, Live-Coaching
+ * hier) — für den Nutzer ist das EINE Frage: redet ATLAS im Training mit?
  */
 export function AtlasSection() {
-  const { settings, setAiPlanning, setCoachLive } = useTraining();
+  const { settings, setAiPlanning, setAtlasImTraining } = useTraining();
   const [configured, setConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -29,9 +32,9 @@ export function AtlasSection() {
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">
+      <Kicker as="h2" className="mb-1">
         ATLAS
-      </p>
+      </Kicker>
       <p className="mb-4 text-xs leading-relaxed text-muted">
         {configured === false
           ? "Kein Server-Key hinterlegt — ATLAS nutzt den eingebauten Basis-Planer. Für die KI wird ANTHROPIC_API_KEY serverseitig benötigt."
@@ -46,10 +49,10 @@ export function AtlasSection() {
           onChange={setAiPlanning}
         />
         <Toggle
-          label="Live-Coaching im Training"
-          hint="ATLAS reagiert auf deine Sätze und meldet sich in der Pause."
-          checked={settings.coachLive !== false}
-          onChange={setCoachLive}
+          label="ATLAS im Training"
+          hint="Kurzer Zuspruch zwischen den Sätzen und eine Reaktion auf jeden Satz in der Pause — nur als Text, die Musik bleibt."
+          checked={settings.coachLive !== false && settings.coachMotivation !== false}
+          onChange={setAtlasImTraining}
         />
       </div>
     </section>

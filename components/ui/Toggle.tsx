@@ -3,9 +3,8 @@
 import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
-/** Kipphebel der Apparatur (38 × 20, Radius 2): eckiger 16er-Knopf,
- *  Zustandswechsel HART ohne Gleiten (Filmtransport: Zahnrad, kein Slider).
- *  An = Siegellack-Fläche, aus = Faden-Rahmen + Schleier-Knopf. */
+/** Schalter (Pille) mit rundem Knopf; der Zustandswechsel bleibt hart ohne
+ *  Gleiten. An = Tinte-Fläche, aus = `surface-2`. `role="switch"`. */
 export function Toggle({
   checked,
   onChange,
@@ -29,14 +28,14 @@ export function Toggle({
         aria-label={label}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative h-5 shrink-0 rounded-pill border focus:outline-none",
-          checked ? "border-transparent bg-accent-sessions" : "border-line bg-transparent",
+          "relative h-7 shrink-0 rounded-pill focus:outline-none",
+          checked ? "bg-strong" : "bg-surface-2",
         )}
-        style={{ width: 38 }}
+        style={{ width: 46 }}
       >
         <span
-          className={cn("absolute h-4 w-4 rounded-xs", checked ? "bg-on-accent" : "bg-muted")}
-          style={{ top: 1, left: checked ? 19 : 1 }}
+          className={cn("absolute h-5 w-5 rounded-pill", checked ? "bg-on-strong" : "bg-muted")}
+          style={{ top: 4, left: checked ? 22 : 4 }}
         />
       </Pressable>
     </div>

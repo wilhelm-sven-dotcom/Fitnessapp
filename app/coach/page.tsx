@@ -1,9 +1,11 @@
 "use client";
 
-import { ChevronRight, Dumbbell, KeyRound, Send, Sparkles, Trash2 } from "lucide-react";
+import { ChevronRight, Dumbbell, KeyRound, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { AtlasEingabe } from "@/components/coach/AtlasEingabe";
+import { useNavSlot } from "@/components/layout/NavSlot";
+import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -39,6 +41,7 @@ const SUGGESTIONS = [
  */
 export default function CoachPage() {
   const router = useRouter();
+  const navSlot = useNavSlot();
   const {
     log,
     allLib,
@@ -49,15 +52,13 @@ export default function CoachPage() {
     trainer,
     mission,
     todaySession,
-    recTpl,
-    recList,
-    estimatedMin,
     backSafeActive,
     exerciseNotes,
   } = useTraining();
 
-  // Die ECHTE nächste Einheit: heute komponiert (todaySession), sonst die
-  // Rotation-Empfehlung — damit Empfehlungen zu dem passen, was der Start zeigt.
+  // Die ECHTE nächste Einheit: heute komponiert (todaySession). Ohne sie
+  // (Ort noch nicht gewählt, oder erledigt) gibt es keine — früher stand hier
+  // die A/B/C-Rotation, die immer „Ganzkörper A“ hieß.
   const nextSession = useMemo(() => {
     if (todaySession && !todaySession.completedAt && todaySession.items.length) {
       const resolved = resolveDailySession(todaySession, allLib, has);
@@ -71,16 +72,8 @@ export default function CoachPage() {
         })),
       };
     }
-    return {
-      name: recTpl.name,
-      focus: recTpl.focus,
-      estimatedMin,
-      exercises: recList.map(({ ex }) => ({
-        name: ex.name,
-        sets: ex.pattern === "cardio" ? 0 : ex.sets,
-      })),
-    };
-  }, [todaySession, allLib, has, recTpl, recList, estimatedMin]);
+    return undefined;
+  }, [todaySession, allLib, has]);
 
   const context = useMemo(
     () =>
@@ -233,13 +226,13 @@ export default function CoachPage() {
   const buildEl = (
     <Pressable
       onClick={() => router.push("/")}
-      className="flex w-full items-center justify-between gap-2 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left text-sm text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+      className="flex min-h-12 w-full items-center justify-between gap-2 rounded-card bg-surface-1 px-4 py-3 text-left text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
-      <span className="flex items-center gap-2">
-        <Dumbbell size={15} className="shrink-0 text-accent-ink" aria-hidden />
+      <span className="flex items-center gap-2.5">
+        <Dumbbell size={18} className="shrink-0" aria-hidden />
         Zur heutigen Einheit
       </span>
-      <ChevronRight size={15} className="shrink-0 text-faint" />
+      <ChevronRight size={18} className="shrink-0 text-muted" aria-hidden />
     </Pressable>
   );
 
@@ -263,67 +256,47 @@ export default function CoachPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* Status-Kopf: ATLAS + Tages-Direktive. */}
-      <div className="mb-4 rounded-card border border-line-card bg-surface-1 p-3.5">
-        <div className="flex items-baseline justify-between gap-2">
+      <Card>
+        <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
             <AtlasMark size={16} live className="text-fg" />
-            <h1 className="font-mono text-2xs font-semibold uppercase tracking-gesperrt-2 text-fg">
-              ATLAS · Coach
-            </h1>
+            <h1 className="text-3xs font-semibold uppercase tracking-label text-fg">ATLAS · Coach</h1>
           </span>
-          <span className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-            Einheit <span className="tabular-nums">{plattenNummer(log)}</span> · Mission{" "}
-            <span className="tabular-nums">{Math.round(trainer.mission.pct * 100)}</span> %
+          <span className="text-sm tabular-nums text-muted">
+            Einheit {plattenNummer(log)} · Mission {Math.round(trainer.mission.pct * 100)} %
           </span>
         </div>
-        <p className="mt-2.5 font-display text-base leading-relaxed text-fg">
-          {trainer.directive.text}
-        </p>
-        <p className="mt-0.5 font-mono text-3xs uppercase tracking-gesperrt text-muted">
-          {trainer.directive.reason}
-        </p>
-      </div>
+        <p className="mt-2.5 text-lg font-semibold leading-snug text-fg">{trainer.directive.text}</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted">{trainer.directive.reason}</p>
+      </Card>
 
       {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
-      <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-3.5">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt-2 text-muted">
+      <Card>
+        <p className="text-3xs font-semibold uppercase tracking-label text-muted">
           Wochen-Rückblick · KW {isoWeek(new Date())}
         </p>
-        <p className="mt-2 whitespace-pre-wrap font-display text-base leading-relaxed text-fg">
+        <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-fg">
           {rapport || briefing.coachNote}
         </p>
         {!rapport && (
           <Pressable
             onClick={() => void loadRapport()}
             disabled={rapportBusy}
-            className="mt-3 flex items-center gap-1.5 rounded-pill border border-strong px-3 py-2 font-mono text-xs font-semibold uppercase tracking-gesperrt-2 text-fg focus:outline-none disabled:opacity-50"
+            className="mt-3 flex min-h-11 items-center gap-2 rounded-pill border border-line px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-50"
           >
-            <Sparkles size={13} />
+            <Sparkles size={16} aria-hidden />
             {rapportBusy ? "ATLAS schreibt …" : "Ausführlicher Rückblick"}
           </Pressable>
         )}
-      </section>
+      </Card>
 
-      {/* Gespräch. */}
+      {/* Gespräch — die Fragen stehen als Chips über dem Feld im Dock. */}
       {loaded && messages.length === 0 ? (
         <div>
-          <p className="mb-2 px-1 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">Frag ATLAS:</p>
-          <div className="space-y-2">
-            {SUGGESTIONS.map((s) => (
-              <Pressable
-                key={s}
-                onClick={() => send(s)}
-                className="flex w-full items-center justify-between gap-2 rounded-card border border-line-card bg-surface-1 px-4 py-3 text-left text-sm text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
-              >
-                {s}
-                <Send size={15} className="shrink-0 text-faint" />
-              </Pressable>
-            ))}
-          </div>
-          <p className="mb-2 mt-5 px-1 text-xs text-muted">
-            Oder direkt konkret — Wunsch rein, fertige Einheit raus:
+          <p className="mb-2 px-1 text-sm text-muted">
+            Oder direkt konkret: Wunsch rein, fertige Einheit raus.
           </p>
           {buildEl}
         </div>
@@ -333,58 +306,39 @@ export default function CoachPage() {
             m.role === "user" ? (
               <div
                 key={i}
-                className="ml-8 rounded-card bg-strong px-4 py-3 text-sm leading-relaxed text-on-strong"
+                className="ml-8 rounded-card bg-strong px-4 py-3 text-base leading-relaxed text-on-strong"
               >
                 {m.content}
               </div>
             ) : (
-              <ProtokollBubble
-                key={i}
-                text={m.content}
-                busy={busy && i === messages.length - 1}
-              />
+              <ProtokollBubble key={i} text={m.content} busy={busy && i === messages.length - 1} />
             ),
           )}
-          <div ref={endRef} />
+          {/* Scroll-Ziel mit Abstand zum Dock (Höhe aus der AppShell). */}
+          <div ref={endRef} style={{ scrollMarginBottom: "calc(var(--nav-h, 0px) + 16px)" }} />
           {!busy && messages.length > 0 && (
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center justify-between gap-2 pt-1">
               {buildEl}
               <Pressable
                 onClick={() => persistChat([])}
                 aria-label="Verlauf löschen"
-                className="ml-2 shrink-0 rounded-full p-2.5 text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
               >
-                <Trash2 size={15} />
+                <Trash2 size={18} />
               </Pressable>
             </div>
           )}
         </div>
       )}
 
-      <div className="mt-4 flex items-end gap-2">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void send(input);
-            }
-          }}
-          rows={1}
-          placeholder="Frag ATLAS …"
-          aria-label="Nachricht an ATLAS"
-          className="flex-1 resize-none rounded-pill border border-line bg-transparent px-4 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
-        />
-        <Button
-          onClick={() => void send(input)}
-          disabled={busy || !input.trim()}
-          aria-label="Senden"
-          className="h-11 w-11 shrink-0 p-0 tracking-normal"
-        >
-          <Send size={18} strokeWidth={2.5} />
-        </Button>
-      </div>
+      <AtlasEingabe
+        slot={navSlot}
+        value={input}
+        onChange={setInput}
+        onSend={(t) => void send(t)}
+        busy={busy}
+        vorschlaege={loaded && messages.length === 0 ? SUGGESTIONS : []}
+      />
     </div>
   );
 }

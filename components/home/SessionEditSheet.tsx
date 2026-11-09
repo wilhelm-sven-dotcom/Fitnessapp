@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Minus, Plus, Repeat, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeftRight, ArrowUp, Minus, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { Pressable } from "@/components/ui/pressable";
@@ -64,74 +64,79 @@ export function SessionEditSheet({
             const ex = byId.get(it.exerciseId);
             if (!ex) return null;
             return (
-              <div
-                key={it.id}
-                className="rounded-card border border-line bg-surface-1 p-3"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-5 shrink-0 font-mono text-xs tabular-nums text-faint">
-                    {String(i + 1).padStart(2, "0")}
+              <div key={it.id} className="rounded-inner bg-surface-0 p-3">
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 w-6 shrink-0 text-sm tabular-nums text-faint">
+                    {i + 1}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
-                    {ex.name}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      data-testid="edit-row-name"
+                      className="text-base font-semibold leading-snug text-fg"
+                    >
+                      {ex.name}
+                    </p>
+                    {/* Bereich je Satz in der Kopfzeile — in der Zeile mit
+                        den Knöpfen brach er auf schmalen iPhones um. */}
+                    <p className="mt-0.5 whitespace-nowrap text-sm tabular-nums text-muted">
+                      {it.repLow}
+                      {it.repHigh > it.repLow ? `–${it.repHigh}` : ""}{" "}
+                      {ex.unit === "Sek" ? "s" : "Wdh"} je Satz
+                    </p>
+                  </div>
                   <Pressable
                     onClick={() => onChange(moveItem(session, it.id, -1))}
                     disabled={i === 0}
                     aria-label="Nach oben"
-                    className="rounded-full p-1.5 text-muted focus:outline-none disabled:opacity-30"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                   >
-                    <ArrowUp size={15} />
+                    <ArrowUp size={18} />
                   </Pressable>
                   <Pressable
                     onClick={() => onChange(moveItem(session, it.id, 1))}
                     disabled={i === session.items.length - 1}
                     aria-label="Nach unten"
-                    className="rounded-full p-1.5 text-muted focus:outline-none disabled:opacity-30"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                   >
-                    <ArrowDown size={15} />
+                    <ArrowDown size={18} />
                   </Pressable>
                 </div>
-                <div className="mt-2 flex items-center gap-2 pl-7">
-                  <span className="font-mono text-xs text-faint">Sätze</span>
-                  <Pressable
-                    onClick={() => onChange(setItemSets(session, it.id, it.sets - 1))}
-                    disabled={it.sets <= 1}
-                    aria-label="Ein Satz weniger"
-                    className="rounded-full bg-surface-2 p-1.5 text-fg focus:outline-none disabled:opacity-30"
-                  >
-                    <Minus size={13} />
-                  </Pressable>
-                  <span className="w-5 text-center font-mono text-sm tabular-nums text-fg">
-                    {it.sets}
-                  </span>
-                  <Pressable
-                    onClick={() => onChange(setItemSets(session, it.id, it.sets + 1))}
-                    disabled={it.sets >= 6}
-                    aria-label="Ein Satz mehr"
-                    className="rounded-full bg-surface-2 p-1.5 text-fg focus:outline-none disabled:opacity-30"
-                  >
-                    <Plus size={13} />
-                  </Pressable>
-                  <span className="font-mono text-xs tabular-nums text-faint">
-                    × {it.repLow}
-                    {it.repHigh > it.repLow ? `–${it.repHigh}` : ""}
-                    {ex.unit === "Sek" ? " s" : ""}
-                  </span>
+                <div className="mt-2 flex items-center gap-2 pl-8">
+                  <div className="flex items-center rounded-pill bg-surface-2">
+                    <Pressable
+                      onClick={() => onChange(setItemSets(session, it.id, it.sets - 1))}
+                      disabled={it.sets <= 1}
+                      aria-label="Ein Satz weniger"
+                      className="flex h-10 w-10 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                    >
+                      <Minus size={16} />
+                    </Pressable>
+                    <span className="min-w-14 text-center text-sm font-semibold tabular-nums text-fg">
+                      {it.sets} {it.sets === 1 ? "Satz" : "Sätze"}
+                    </span>
+                    <Pressable
+                      onClick={() => onChange(setItemSets(session, it.id, it.sets + 1))}
+                      disabled={it.sets >= 6}
+                      aria-label="Ein Satz mehr"
+                      className="flex h-10 w-10 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                    >
+                      <Plus size={16} />
+                    </Pressable>
+                  </div>
                   <Pressable
                     onClick={() => setSwapFor(it.id)}
                     aria-label={`${ex.name} tauschen`}
-                    className="ml-auto flex items-center gap-1 rounded-pill bg-surface-2 px-2.5 py-1.5 text-xs font-medium text-fg focus:outline-none"
+                    className="ml-auto flex min-h-10 items-center gap-1.5 rounded-pill border border-line px-3 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                   >
-                    <Repeat size={12} /> Tauschen
+                    <ArrowLeftRight size={15} aria-hidden /> Tauschen
                   </Pressable>
                   <Pressable
                     onClick={() => onChange(removeItem(session, it.id))}
                     disabled={session.items.length <= 1}
                     aria-label={`${ex.name} entfernen`}
-                    className="rounded-full p-1.5 text-status-danger focus:outline-none disabled:opacity-30"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill text-gefahr focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={18} />
                   </Pressable>
                 </div>
               </div>
@@ -141,11 +146,11 @@ export function SessionEditSheet({
 
         <Pressable
           onClick={() => setAdding(true)}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+          className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-pill border border-line text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
-          <Plus size={15} /> Übung hinzufügen
+          <Plus size={18} aria-hidden /> Übung hinzufügen
         </Pressable>
-        <p className="mt-2 text-xs leading-relaxed text-faint">
+        <p className="mt-2 text-sm leading-relaxed text-muted">
           Zur Auswahl steht der komplette Katalog, gefiltert auf deine Geräte.
         </p>
       </Sheet>

@@ -573,14 +573,14 @@ export function sessionDebrief(opts: {
     : summary.prs > 0
       ? pick(
           [
-            `${saetze}, ${t} Tonnen — und ${summary.prs === 1 ? "ein Rekord" : `${summary.prs} Rekorde`}. Starker Auftritt.`,
+            `${saetze}, ${t} ${t === "1" ? "Tonne" : "Tonnen"} — und ${summary.prs === 1 ? "ein Rekord" : `${summary.prs} Rekorde`}. Starker Auftritt.`,
             `${summary.prs === 1 ? "Rekord gefallen" : `${summary.prs} Rekorde gefallen`} — dazu ${saetze}, ${t} t bewegt.`,
           ],
           seed,
         )
       : pick(
           [
-            `Geliefert: ${saetze}, ${t} Tonnen bewegtes Eisen.`,
+            `Geliefert: ${saetze}, ${t} ${t === "1" ? "Tonne" : "Tonnen"} bewegtes Eisen.`,
             `${saetze} im Buch, ${t} t Eisen — solide Schicht.`,
           ],
           seed,

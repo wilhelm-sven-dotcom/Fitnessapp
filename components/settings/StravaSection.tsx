@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { buildAuthorizeUrl } from "@/lib/strava";
+import { Kicker } from "@/components/ui/Kicker";
 
 export function StravaSection() {
   const { strava, cardio } = useTraining();
@@ -30,9 +31,9 @@ export function StravaSection() {
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
-        <Activity size={13} /> Strava
-      </p>
+      <Kicker as="h2" className="mb-3">
+        Strava
+      </Kicker>
 
       {!configured ? (
         <p className="text-xs leading-relaxed text-muted">
@@ -46,7 +47,7 @@ export function StravaSection() {
       ) : strava.connected ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm text-fg">
-            <Activity size={16} className="shrink-0 text-accent-volume" />
+            <Activity size={16} className="shrink-0 text-info" />
             <span className="min-w-0 truncate">
               Verbunden{strava.athlete ? ` als ${strava.athlete}` : ""} · {rides} Einheiten
             </span>

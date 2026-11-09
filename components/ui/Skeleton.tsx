@@ -17,8 +17,8 @@ export function Skeleton({
   return (
     <div
       aria-hidden
-      className={cn("rounded-xs bg-muted", pulse && "skel-blink", className)}
-      style={pulse ? undefined : { opacity: 0.35 }}
+      className={cn("rounded-xs bg-surface-2", pulse && "skel-blink", className)}
+      style={pulse ? undefined : { opacity: 1 }}
     />
   );
 }

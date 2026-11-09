@@ -3,16 +3,20 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, Minus, Plus, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { INTENSITY_OPTIONS, RIR_OPTIONS, Scale } from "./Scale";
 import { TimedSet } from "./TimedSet";
+import { useDockSlot } from "@/components/session/DockSlot";
 import { Button } from "@/components/ui/Button";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
+import { fmtSatz } from "@/lib/format";
 import { tick } from "@/lib/haptics";
 import { SPRING } from "@/lib/motion";
+import { REGION_AUF, REGION_FLAECHE, REGION_VAR, type Region } from "@/lib/phasen/band";
 import type { SetEntry, Unit } from "@/lib/types";
 
-/** Stepper-Taste des Apparats — 44 × 44, Faden-Rahmen, harte Zustände. */
+/** Stepper-Taste in der Kachel — 44 px hoch, weiße Fläche auf der Spur. */
 function StepBtn({
   dir,
   label,
@@ -26,9 +30,9 @@ function StepBtn({
     <Pressable
       onClick={onStep}
       aria-label={label}
-      className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-pill border border-line-card bg-transparent text-fg focus:outline-none"
+      className="flex h-11 touch-manipulation items-center justify-center rounded-inner bg-surface-1 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
-      {dir === 1 ? <Plus size={18} strokeWidth={2.5} /> : <Minus size={18} strokeWidth={2.5} />}
+      {dir === 1 ? <Plus size={20} strokeWidth={2.5} /> : <Minus size={20} strokeWidth={2.5} />}
     </Pressable>
   );
 }
@@ -36,12 +40,15 @@ function StepBtn({
 export type SetState = "done" | "active" | "upcoming";
 
 const inputClass =
-  "min-w-0 flex-1 rounded-pill bg-transparent py-1 text-center font-mono text-readout font-bold leading-none tabular-nums text-fg placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie";
+  "mt-0.5 w-full min-w-0 rounded-inner bg-transparent text-center font-display text-4xl font-extrabold leading-tight tabular-nums text-fg placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
-/** One logged set in three states — das Kader-Logbuch: ein belichteter Kader
- *  ist eine kompakte Registerzeile (Anstrengung bleibt editierbar), der
- *  OFFENE KADER ist das Instrument mit Siegellack-Rahmen (Fokus.dc), ein
- *  kommender Kader eine stille Geisterzeile. */
+/** Ein Satz in drei Zuständen: eingetragen (Zeile mit gefülltem Kreis in der
+ *  Regionsfarbe, Antippen = korrigieren), offen (die Satzkarte mit Kacheln
+ *  für Gewicht und Wiederholungen), kommend (Zeile mit leerem Kreis).
+ *
+ *  „Wie schwer war's?“ fragt EINMAL: im Pausenfeld direkt nach dem Satz. Hier
+ *  erscheint die Skala nur, wenn ein schon eingetragener Satz korrigiert wird.
+ *  „Satz eintragen“ wandert per Portal ins Dock des Trainings. */
 export function SetRow({
   label,
   isWarmup,
@@ -49,12 +56,13 @@ export function SetRow({
   set,
   isDumbbell,
   state,
+  region,
   ghostWeight,
   ghostReps,
   weightStep = 2.5,
   zielLabel,
   lastLabel,
-  prescLine,
+  vorschlag,
   onWeight,
   onReps,
   onRir,
@@ -70,45 +78,50 @@ export function SetRow({
   set: SetEntry;
   isDumbbell?: boolean;
   state: SetState;
-  /** All-time best to beat ("60 × 8") — Messing-Zeile im offenen Kader. */
+  /** Körperregion der Übung — färbt Kreis, Satz-Marke und Kartenrand. */
+  region: Region;
+  /** Bisheriger Bestwert („20 kg × 8“) — Rekord-Zeile in der offenen Karte. */
   recordLabel?: string;
-  /** This logged set beats the all-time best → „Neues Maximum". */
+  /** Dieser Satz schlägt den Bestwert → „Rekord“. */
   isRecord?: boolean;
-  /** Suggested weight (autoregulation / carried from the last set) — ghosted in. */
+  /** Vorgeschlagenes Gewicht (Tagesform / zuletzt bewegt) — als Platzhalter. */
   ghostWeight?: string;
-  /** Target reps / hold — ghosted in. */
+  /** Ziel-Wiederholungen / Haltezeit — als Platzhalter. */
   ghostReps?: string;
   /** Schrittweite der Gewichts-Stepper (settings.weightStep, z. B. 1,25/2,5/5). */
   weightStep?: number;
-  /** Kicker rechts im offenen Kader: „Ziel 4 × 6". */
+  /** Plan-Bereich rechts oben in der Karte: „Ziel 10–15 Wdh“. */
   zielLabel?: string;
-  /** Inline-Referenz „Letztes Mal 80,0 × 6 · RIR 2" (ersetzt die alte Karte). */
+  /** „20 kg × 12 · RIR 2“ — bester Satz vom letzten Mal. */
   lastLabel?: string | null;
-  /** Verordnungszeile der Progression („Heute: 3 × 10 @ 20 kg — hoch!"). */
-  prescLine?: string;
+  /** Vorschlag mit Grund („Vorschlag 22,5 kg × 9 · mehr als letztes Mal“). */
+  vorschlag?: string;
   onWeight: (val: string) => void;
   onReps: (oldVal: string, val: string) => void;
   onRir: (val: number) => void;
   onIntensity: (val: number) => void;
-  /** Focus this set (tap a collapsed line, or focus the active inputs). */
+  /** Diesen Satz öffnen (Zeile antippen oder Feld fokussieren). */
   onActivate: () => void;
-  /** Commit-Release: Blur auf einem GEFÜLLTEN Satz löst den Fokus-Pin, damit
-   *  der nächste leere Satz automatisch aktiv wird (Auto-Advance). */
+  /** Blur auf einem EINGETRAGENEN Satz löst den Fokus-Pin, damit der nächste
+   *  offene Satz automatisch aktiv wird. */
   onDeactivate?: () => void;
 }) {
   const reduce = useReducedMotion();
+  const slot = useDockSlot();
   const timed = unit === "Sek";
+  const mark = REGION_VAR[region];
+  const flaeche = REGION_FLAECHE[region];
+  const auf = REGION_AUF[region];
 
   // Eingaben sind LOKAL gepuffert und werden erst beim Verlassen des Felds
-  // (Blur/Enter) in den Provider committet. Vorher löste jeder einzelne
-  // Tastendruck einen App-weiten Re-Render samt Gewichts-Kaskade aus — das
-  // war der „Ladebildschirm nach jedem Tastendruck".
+  // (Blur/Enter) in den Provider committet — sonst löste jeder Tastendruck
+  // einen App-weiten Re-Render samt Gewichts-Kaskade aus.
   const [w, setW] = useState(set.weight);
   const [r, setR] = useState(set.reps);
   useEffect(() => setW(set.weight), [set.weight]);
   useEffect(() => setR(set.reps), [set.reps]);
-  // Stepper-Ticks werden lokal gesammelt und erst nach kurzer Ruhe committet —
-  // schnelles Durchsteppen erzeugt so EINEN Storage-Write statt vieler.
+  // Stepper-Ticks sammeln und erst nach kurzer Ruhe committen — schnelles
+  // Durchsteppen erzeugt so EINEN Storage-Write statt vieler.
   const commitTimerW = useRef<number | undefined>(undefined);
   const commitTimerR = useRef<number | undefined>(undefined);
   useEffect(
@@ -155,7 +168,7 @@ export function SetRow({
     }, 350);
   };
   // Ein-Tap-Commit: übernimmt Vorschlag (bzw. bereits Getipptes) und löst den
-  // bestehenden Erst-Fill-Pfad aus (Pause, Feier, Coach) — 1 Berührung statt 5.
+  // bestehenden Erst-Eintrag aus (Pause, Feier, ATLAS) — 1 Berührung statt 5.
   const oneTapValues = (): { weight: string; reps: string } | null => {
     const reps = r !== "" && r != null ? r : (ghostReps ?? "");
     if (reps === "") return null;
@@ -172,193 +185,213 @@ export function SetRow({
     onReps(set.reps, v.reps);
   };
 
-  // ── DONE — belichteter Kader: kompakte Registerzeile. ──
-  if (state === "done") {
-    const summary = timed
-      ? `${set.reps} s`
-      : set.weight !== "" && set.weight != null
-        ? `${set.weight} kg × ${set.reps}`
-        : `${set.reps} Wdh`;
-    return (
-      <div>
-        <Pressable
-          onClick={onActivate}
-          aria-label={`${label} bearbeiten`}
-          className="flex w-full items-center gap-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
-        >
-          <Check size={15} strokeWidth={2.5} className="shrink-0 text-cyanotypie" />
-          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-            {label}
-          </span>
-          <span className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-fg">
-            {summary}
-          </span>
-          {isRecord && (
-            <motion.span
-              initial={reduce ? false : { scale: 0.7, opacity: 0 }}
-              animate={reduce ? undefined : { scale: [0.7, 1.2, 1], opacity: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex shrink-0 items-center gap-1 rounded-pill border border-messing px-1.5 py-0.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
-            >
-              <Trophy size={11} strokeWidth={2.5} /> Rekord
-            </motion.span>
-          )}
-        </Pressable>
-        {!isWarmup &&
-          (timed ? (
-            <Scale className="pl-12" label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
-          ) : (
-            <Scale className="pl-12" label="RIR" options={RIR_OPTIONS} value={set.rir} onPick={onRir} />
-          ))}
-      </div>
-    );
-  }
+  const zeile =
+    "flex min-h-12 w-full items-center gap-3 rounded-inner bg-surface-1 px-3 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
-  // ── UPCOMING — stille Geisterzeile; Tipp springt hierher. ──
-  if (state === "upcoming") {
-    const ghost = timed
-      ? ghostReps
-        ? `${ghostReps} s`
-        : "—"
-      : ghostWeight
-        ? `${ghostWeight} × ${ghostReps ?? ""}`.trim()
-        : (ghostReps ?? "—");
+  // ── Eingetragen: Zeile mit gefülltem Kreis in der Regionsfarbe. ──
+  if (state === "done") {
+    const summary = fmtSatz(set.weight, set.reps, timed);
+    const anstrengung = isWarmup
+      ? null
+      : timed
+        ? set.intensity != null
+          ? `Int ${set.intensity}`
+          : null
+        : set.rir != null
+          ? `RIR ${set.rir}`
+          : null;
     return (
-      <Pressable
-        onClick={onActivate}
-        aria-label={`${label} starten`}
-        className="flex w-full items-center gap-2 py-1.5 text-left text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
-      >
-        <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-xs border border-line" />
-        <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt">
-          {label}
+      <Pressable onClick={onActivate} aria-label={`${label} bearbeiten`} className={zeile}>
+        <span
+          aria-hidden
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-pill"
+          style={{ backgroundColor: flaeche, color: auf }}
+        >
+          <Check size={14} strokeWidth={3} />
         </span>
-        <span className="flex-1 truncate font-mono text-sm tabular-nums">{ghost}</span>
+        <span className="shrink-0 text-sm text-muted">{label}</span>
+        <span className="min-w-0 flex-1 truncate text-right text-base font-semibold tabular-nums text-fg">
+          {summary}
+          {anstrengung && <span className="font-normal text-muted"> · {anstrengung}</span>}
+        </span>
+        {isRecord && (
+          <motion.span
+            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            animate={reduce ? undefined : { scale: [0.7, 1.15, 1], opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex shrink-0 items-center gap-1 rounded-pill border border-rekord px-2 py-0.5 text-3xs font-semibold text-rekord"
+          >
+            <Trophy size={12} strokeWidth={2.5} aria-hidden /> Rekord
+          </motion.span>
+        )}
       </Pressable>
     );
   }
 
-  // ── ACTIVE — der OFFENE KADER: das Instrument (Fokus.dc). ──
+  // ── Kommend: Zeile mit leerem Kreis; Antippen öffnet den Satz. ──
+  if (state === "upcoming") {
+    const ghost =
+      fmtSatz(set.weight || ghostWeight, ghostReps, timed) || (ghostReps ?? "–");
+    return (
+      <Pressable onClick={onActivate} aria-label={`${label} starten`} className={zeile}>
+        <span aria-hidden className="h-6 w-6 shrink-0 rounded-pill border-2 border-line" />
+        <span className="shrink-0 text-sm text-muted">{label}</span>
+        <span className="min-w-0 flex-1 truncate text-right text-base font-semibold tabular-nums text-muted">
+          {ghost}
+        </span>
+      </Pressable>
+    );
+  }
+
+  // ── Offen: die Satzkarte. ──
   const dbHint = isDumbbell && !timed ? dumbbellHint(Number(w) || 0) : null;
   const oneTapReady = !timed && oneTapValues() != null && (set.reps === "" || set.reps == null);
+  const v = oneTapValues();
+  const knopf =
+    oneTapReady && v ? (
+      <Button
+        data-testid="satz-protokollieren"
+        size="lg"
+        full
+        onClick={oneTap}
+        className="touch-manipulation whitespace-nowrap"
+      >
+        <Check size={20} strokeWidth={2.5} className="shrink-0" aria-hidden />
+        {/* Wird es eng, kürzt sich das Wort, nie die Werte. */}
+        <span className="min-w-0 truncate">Satz eintragen</span>
+        <span className="shrink-0 tabular-nums">· {fmtSatz(v.weight, v.reps, false)}</span>
+      </Button>
+    ) : null;
+
   return (
     <motion.div
-      className="set-active space-y-3 rounded-card p-3.5"
+      data-testid="satz-aktiv"
+      className="set-active space-y-3 rounded-card p-4"
+      style={{ boxShadow: `inset 0 0 0 2px ${mark}` }}
       initial={reduce ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}
     >
-      <div className="flex justify-between gap-2 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-accent-ink">
-        <span>{isWarmup ? `Aufwärmen · ${label}` : `Jetzt · ${label}`}</span>
-        {zielLabel && <span className="tabular-nums">{zielLabel}</span>}
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className="rounded-pill px-3 py-1 text-sm font-bold"
+          style={{ backgroundColor: flaeche, color: auf }}
+        >
+          {label}
+        </span>
+        {zielLabel && !isWarmup && (
+          <span className="text-sm tabular-nums text-muted">{zielLabel}</span>
+        )}
       </div>
       {isRecord && !isWarmup && (
         <motion.p
           initial={reduce ? false : { scale: 0.9, opacity: 0 }}
-          animate={reduce ? undefined : { scale: [0.9, 1.08, 1], opacity: 1 }}
-          transition={{ duration: 0.45, ease: "easeOut" }}
-          className="flex items-center gap-1.5 font-mono text-3xs font-semibold uppercase tracking-gesperrt text-messing"
+          animate={reduce ? undefined : { scale: [0.9, 1.06, 1], opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="flex items-center gap-1.5 text-sm font-semibold text-rekord"
         >
-          <Trophy size={12} className="shrink-0" /> Neuer Rekord
+          <Trophy size={14} className="shrink-0" aria-hidden /> Neuer Rekord
         </motion.p>
       )}
       {timed ? (
-        <div className="flex items-center gap-2">
-          <span className="w-14 shrink-0 font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-            {label}
-          </span>
-          <TimedSet value={set.reps} onChange={(val) => onReps(set.reps, val)} />
-        </div>
+        <TimedSet value={set.reps} onChange={(val) => onReps(set.reps, val)} />
       ) : (
-        <>
-          {/* Gewicht: ±Stepper in weightStep-Schritten — Tastatur nur bei
-              direktem Tap ins Feld (Fokus selektiert den Inhalt komplett). */}
-          <div>
-            <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-              Last kg
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Gewicht: ± in weightStep-Schritten — Tastatur nur bei direktem
+              Tipp ins Feld (Fokus markiert den Inhalt komplett). */}
+          <div className="rounded-inner bg-surface-2 p-2.5">
+            <p className="text-center text-3xs font-semibold uppercase tracking-label text-muted">
+              Gewicht kg
             </p>
-            <div className="mt-1.5 flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="decimal"
+              step={String(weightStep)}
+              value={w}
+              onFocus={(e) => {
+                onActivate();
+                e.currentTarget.select();
+              }}
+              onBlur={() => {
+                commitWeight();
+                if (r !== "" && r != null) onDeactivate?.();
+              }}
+              onKeyDown={blurOnEnter}
+              onChange={(e) => setW(e.target.value)}
+              placeholder={ghostWeight ?? "–"}
+              aria-label="Gewicht in kg"
+              className={inputClass}
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <StepBtn dir={-1} label={`Gewicht ${weightStep} kg weniger`} onStep={() => stepWeight(-1)} />
-              <input
-                type="number"
-                inputMode="decimal"
-                step={String(weightStep)}
-                value={w}
-                onFocus={(e) => {
-                  onActivate();
-                  e.currentTarget.select();
-                }}
-                onBlur={() => {
-                  commitWeight();
-                  if (r !== "" && r != null) onDeactivate?.();
-                }}
-                onKeyDown={blurOnEnter}
-                onChange={(e) => setW(e.target.value)}
-                placeholder={ghostWeight ?? "kg"}
-                aria-label="Gewicht in kg"
-                className={inputClass}
-              />
               <StepBtn dir={1} label={`Gewicht ${weightStep} kg mehr`} onStep={() => stepWeight(1)} />
             </div>
           </div>
-          {/* Wiederholungen: ±1-Stepper, Basis ist die Zielvorgabe. */}
-          <div>
-            <p className="font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
+          {/* Wiederholungen: ±1, Basis ist der Vorschlag. */}
+          <div className="rounded-inner bg-surface-2 p-2.5">
+            <p className="text-center text-3xs font-semibold uppercase tracking-label text-muted">
               Wiederholungen
             </p>
-            <div className="mt-1.5 flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              value={r}
+              onFocus={(e) => {
+                onActivate();
+                e.currentTarget.select();
+              }}
+              onBlur={() => {
+                commitReps();
+                if (r !== "" && r != null) onDeactivate?.();
+              }}
+              onKeyDown={blurOnEnter}
+              onChange={(e) => setR(e.target.value)}
+              placeholder={ghostReps ?? "–"}
+              aria-label="Wiederholungen"
+              className={inputClass}
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <StepBtn dir={-1} label="Eine Wiederholung weniger" onStep={() => stepReps(-1)} />
-              <input
-                type="number"
-                inputMode="numeric"
-                value={r}
-                onFocus={(e) => {
-                  onActivate();
-                  e.currentTarget.select();
-                }}
-                onBlur={() => {
-                  commitReps();
-                  if (r !== "" && r != null) onDeactivate?.();
-                }}
-                onKeyDown={blurOnEnter}
-                onChange={(e) => setR(e.target.value)}
-                placeholder={ghostReps ?? "Wdh"}
-                aria-label="Wiederholungen"
-                className={inputClass}
-              />
               <StepBtn dir={1} label="Eine Wiederholung mehr" onStep={() => stepReps(1)} />
             </div>
           </div>
-        </>
+        </div>
       )}
-      {/* Referenzzeile: Letztes Mal (Schleier) · Rekord (Messing). */}
+      {/* Bezug: Letztes Mal · Rekord. */}
       {!isWarmup && (lastLabel || recordLabel) && (
-        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 font-mono text-3xs font-medium uppercase tracking-gesperrt">
+        <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm">
           <span className="text-muted">
-            {lastLabel ? `Letztes Mal ${lastLabel}` : "Erstes Mal"}
+            {lastLabel ? (
+              <>
+                Letztes Mal{" "}
+                <span className="font-semibold tabular-nums text-fg">{lastLabel}</span>
+              </>
+            ) : (
+              "Erstes Mal"
+            )}
           </span>
           {recordLabel && !isRecord && (
-            <span className="text-messing">Rekord {recordLabel}</span>
+            <span className="text-rekord">
+              Rekord <span className="font-semibold tabular-nums">{recordLabel}</span>
+            </span>
           )}
         </div>
       )}
-      {prescLine && !isWarmup && (
-        <p className="font-mono text-3xs leading-relaxed text-muted">{prescLine}</p>
+      {vorschlag && !isWarmup && (
+        <p className="text-sm leading-snug text-muted">{vorschlag}</p>
       )}
-      {dbHint && <p className="font-mono text-3xs text-muted">{dbHint}</p>}
-      {oneTapReady && (
-        <Button size="sm" full onClick={oneTap} className="min-h-11 touch-manipulation tracking-gesperrt-3">
-          <Check size={16} strokeWidth={2.5} />
-          {(() => {
-            const v = oneTapValues();
-            if (!v) return null;
-            return v.weight
-              ? `Satz protokollieren · ${v.weight} kg × ${v.reps}`
-              : `Satz protokollieren · ${v.reps} Wdh`;
-          })()}
-        </Button>
-      )}
+      {dbHint && <p className="text-sm text-muted">{dbHint}</p>}
+      {/* Satz-Knopf: im Dock, solange der Trainings-Wirt eins anbietet. */}
+      {slot === undefined
+        ? knopf
+        : slot && knopf
+          ? createPortal(<div className="mx-auto max-w-md">{knopf}</div>, slot)
+          : null}
+      {/* Skala nur beim KORRIGIEREN eines eingetragenen Satzes — frische
+          Sätze bewertet das Pausenfeld (eine Frage, eine Stelle). */}
       {!isWarmup &&
+        set.reps !== "" &&
+        set.reps != null &&
         (timed ? (
           <Scale label="Int" options={INTENSITY_OPTIONS} value={set.intensity} onPick={onIntensity} />
         ) : (

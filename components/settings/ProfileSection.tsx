@@ -1,7 +1,9 @@
 "use client";
 
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { Pressable } from "@/components/ui/pressable";
+import { ChipToggle } from "@/components/ui/ChipToggle";
+import { Kicker } from "@/components/ui/Kicker";
+import { Segment } from "@/components/ui/Segment";
 import { effectiveProfile, INJURY_LABEL } from "@/lib/athlete";
 import type { Experience, InjuryArea, TrainingGoal } from "@/lib/types";
 
@@ -12,22 +14,18 @@ const SEX: { v: "m" | "w" | "divers"; label: string }[] = [
 ];
 const EXP: { v: Experience; label: string }[] = [
   { v: "anfänger", label: "Anfänger" },
-  { v: "fortgeschritten", label: "Fortgeschr." },
+  { v: "fortgeschritten", label: "Mittel" },
   { v: "erfahren", label: "Erfahren" },
 ];
 const GOALS: { v: TrainingGoal; label: string }[] = [
   { v: "aufbau", label: "Muskelaufbau" },
-  { v: "optik", label: "Optik/Definition" },
+  { v: "optik", label: "Optik" },
   { v: "kraft", label: "Kraft" },
 ];
 const INJURIES: InjuryArea[] = ["rücken", "knie", "schulter", "ellbogen", "handgelenk"];
 
-const segBtn = (active: boolean) =>
-  "flex-1 rounded-card py-2 text-sm font-medium tabular-nums focus:outline-none " +
-  (active ? "bg-strong text-on-strong" : "text-muted");
-const pill = (active: boolean) =>
-  "rounded-full px-3 py-1.5 text-sm font-medium focus:outline-none " +
-  (active ? "bg-strong text-on-strong" : "bg-surface-2 text-muted");
+const zahlFeld =
+  "w-24 rounded-pill border border-line bg-transparent px-3 py-2 text-center font-mono text-base tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 /** Editable athlete profile — drives the coach/builder prompts and the engine. */
 export function ProfileSection() {
@@ -40,9 +38,9 @@ export function ProfileSection() {
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted">
+      <Kicker as="h2" className="mb-1">
         Profil · über mich
-      </p>
+      </Kicker>
       <p className="mb-4 text-xs leading-relaxed text-muted">
         Je mehr du angibst, desto genauer plant ATLAS für dich. Leere
         Felder nutzen sinnvolle Standardwerte.
@@ -51,17 +49,12 @@ export function ProfileSection() {
       <div className="space-y-4">
         <div>
           <p className="mb-1.5 text-sm font-medium text-fg">Geschlecht</p>
-          <div className="flex gap-1 rounded-card bg-surface-2 p-1">
-            {SEX.map((s) => (
-              <Pressable
-                key={s.v}
-                onClick={() => setAthleteProfile({ sex: s.v })}
-                className={segBtn(p.sex === s.v)}
-              >
-                {s.label}
-              </Pressable>
-            ))}
-          </div>
+          <Segment
+            label="Geschlecht"
+            options={SEX.map((s) => ({ value: s.v, label: s.label }))}
+            value={p.sex}
+            onChange={(v) => setAthleteProfile({ sex: v })}
+          />
         </div>
 
         <div className="space-y-2">
@@ -75,7 +68,7 @@ export function ProfileSection() {
               onChange={(e) =>
                 setAthleteProfile({ age: e.target.value ? Number(e.target.value) : undefined })
               }
-              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              className={zahlFeld}
             />
           </label>
           <label className="flex items-center justify-between gap-3">
@@ -88,7 +81,7 @@ export function ProfileSection() {
               onChange={(e) =>
                 setAthleteProfile({ heightCm: e.target.value ? Number(e.target.value) : undefined })
               }
-              className="w-24 rounded-card bg-surface-2 px-3 py-2 text-center font-mono tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+              className={zahlFeld}
             />
           </label>
           <p className="text-xs leading-relaxed text-muted">
@@ -99,17 +92,12 @@ export function ProfileSection() {
 
         <div>
           <p className="mb-1.5 text-sm font-medium text-fg">Trainingserfahrung</p>
-          <div className="flex gap-1 rounded-card bg-surface-2 p-1">
-            {EXP.map((x) => (
-              <Pressable
-                key={x.v}
-                onClick={() => setAthleteProfile({ experience: x.v })}
-                className={segBtn((p.experience ?? eff.experience) === x.v)}
-              >
-                {x.label}
-              </Pressable>
-            ))}
-          </div>
+          <Segment
+            label="Trainingserfahrung"
+            options={EXP.map((x) => ({ value: x.v, label: x.label }))}
+            value={p.experience ?? eff.experience}
+            onChange={(v) => setAthleteProfile({ experience: v })}
+          />
         </div>
 
         <div>
@@ -118,13 +106,13 @@ export function ProfileSection() {
             {GOALS.map((g) => {
               const cur = p.goals ?? eff.goals;
               return (
-                <Pressable
+                <ChipToggle
                   key={g.v}
                   onClick={() => setAthleteProfile({ goals: toggle(cur, g.v) })}
-                  className={pill(cur.includes(g.v))}
+                  active={cur.includes(g.v)}
                 >
                   {g.label}
-                </Pressable>
+                </ChipToggle>
               );
             })}
           </div>
@@ -136,13 +124,13 @@ export function ProfileSection() {
             {INJURIES.map((i) => {
               const cur = p.injuries ?? eff.injuries;
               return (
-                <Pressable
+                <ChipToggle
                   key={i}
                   onClick={() => setAthleteProfile({ injuries: toggle(cur, i) })}
-                  className={pill(cur.includes(i))}
+                  active={cur.includes(i)}
                 >
                   {INJURY_LABEL[i]}
-                </Pressable>
+                </ChipToggle>
               );
             })}
           </div>

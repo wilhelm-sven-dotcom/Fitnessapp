@@ -2,29 +2,43 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import { MareySpur } from "@/components/brand/MareySpur";
+import { Marke } from "@/components/brand/Marke";
 import { Button } from "@/components/ui/Button";
-import { Pressable } from "@/components/ui/pressable";
+import { ChipToggle } from "@/components/ui/ChipToggle";
+import { Segment } from "@/components/ui/Segment";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
 import type { Experience, TrainingGoal } from "@/lib/types";
+import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
 
-const EXP: { v: Experience; label: string }[] = [
-  { v: "anfänger", label: "Anfänger" },
-  { v: "fortgeschritten", label: "Mittel" },
-  { v: "erfahren", label: "Erfahren" },
+// Die Stufe steuert die Startgewichte (lib/start-weight.ts, EXP_MULT 0,7 ·
+// 1,0 · 1,25) und steht im Profil, das ATLAS bekommt.
+const EXP: { v: Experience; label: string; satz: string }[] = [
+  {
+    v: "anfänger",
+    label: "Anfänger",
+    satz: "Neu im Krafttraining oder nach langer Pause. Startgewichte rund 30 % leichter.",
+  },
+  {
+    v: "fortgeschritten",
+    label: "Mittel",
+    satz: "Du trainierst regelmäßig und kennst die Grundübungen. Startgewichte normal.",
+  },
+  {
+    v: "erfahren",
+    label: "Erfahren",
+    satz: "Jahre am Eisen, saubere Technik auch bei schweren Sätzen. Startgewichte rund 25 % höher.",
+  },
 ];
 const GOALS: { v: TrainingGoal; label: string }[] = [
-  { v: "aufbau", label: "Aufbau" },
+  { v: "aufbau", label: "Muskelaufbau" },
   { v: "optik", label: "Optik" },
   { v: "kraft", label: "Kraft" },
 ];
 
 /**
- * Erster Start — das Frontispiz des Labors (Onboarding.dc): Icon-Platte,
- * Muybridge-Buchsatz, Name des Athleten + Level/Ziel, dann ist die
- * Apparatur eingerichtet. Der Eintritts-Stagger bleibt als dokumentierte
- * Bestands-Ausnahme neben dem Filmtransport.
+ * Erster Start: App-Zeichen, ein Absatz, was die App tut, dann Name,
+ * Erfahrung (mit einem erklärenden Satz je Stufe) und Ziel.
  */
 export function Welcome() {
   const { completeOnboarding } = useTraining();
@@ -35,8 +49,7 @@ export function Welcome() {
   const toggleGoal = (v: TrainingGoal) =>
     setGoals((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
 
-  const fieldLabel =
-    "font-mono text-3xs font-medium uppercase tracking-gesperrt-2 text-muted";
+  const fieldLabel = "text-3xs font-semibold uppercase tracking-label text-muted";
 
   return (
     <motion.div
@@ -56,10 +69,9 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          {/* Icon-Platte: die Nachbildung des App-Icons (I1 „Marey-Spur") —
-              Kollodium-dunkel auch im Archiv, deshalb die feste Farbe und der
-              weiche Icon-Radius. Die Hairline fasst die Platte, im Atelier
-              wäre sie sonst grundgleich. Raster und Signatur führt I1 nicht. */}
+          {/* Nachbildung des App-Icons: warmes Dunkel auch im hellen Modus,
+              deshalb die festen Farben und der Icon-Radius; die Linie fasst
+              das Feld im dunklen Modus, dort wäre es sonst grundgleich. */}
           <span
             aria-hidden
             className="relative block overflow-hidden border border-line"
@@ -67,21 +79,21 @@ export function Welcome() {
               width: 84,
               height: 84,
               borderRadius: 18,
-              backgroundColor: "#141210",
-              color: "#e9e1ce",
+              backgroundColor: GRUND_DUNKEL,
+              color: TINTE_DUNKEL,
             }}
           >
-            <MareySpur size={84} />
+            <Marke size={84} />
           </span>
 
-          <p className="mt-7 font-mono text-3xs font-semibold uppercase tracking-gesperrt-4 text-muted">
-            Das Bewegungslabor
+          <p className="mt-7 text-3xs font-semibold uppercase tracking-label text-muted">
+            Krafttraining mit ATLAS
           </p>
-          <h1 className="mt-2 font-display text-4xl italic text-fg">Platte 311</h1>
-          <p className="mt-4 max-w-xs font-display text-base leading-relaxed text-fg">
-            1887 zerlegte Muybridge Bewegung in Einzelbilder — Platte 311 zeigt
-            einen Gewichtheber. Diese App führt die Reihe fort: Du trainierst,
-            ATLAS schaut zu und stellt die nächste Einheit zusammen.
+          <h1 className="mt-2 font-display text-4xl font-extrabold text-fg">Platte 311</h1>
+          <p className="mt-4 max-w-xs text-base leading-relaxed text-fg">
+            Du trainierst, ATLAS schaut auf deine Sätze und stellt die nächste
+            Einheit zusammen. Jede Körperregion hat ihre Farbe: Beine Rot, Druck
+            Blau, Zug Gelb, Rumpf Grün.
           </p>
         </motion.div>
 
@@ -91,48 +103,36 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25, ease: EASE_OUT }}
         >
-          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Name des Athleten</p>
+          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Dein Name</p>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="z. B. J. Weber"
-            className="mb-4 w-full rounded-pill border border-line bg-transparent px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie"
+            className="mb-4 min-h-12 w-full rounded-inner border border-line bg-surface-1 px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
 
-          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Level</p>
-          <div className="mb-4 flex gap-1 rounded-pill border border-line-card bg-surface-1 p-1">
-            {EXP.map((x) => (
-              <Pressable
-                key={x.v}
-                onClick={() => setExp(x.v)}
-                aria-pressed={exp === x.v}
-                className={
-                  "flex-1 rounded-pill py-2 font-mono text-3xs uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie " +
-                  (exp === x.v ? "bg-strong text-on-strong" : "text-muted")
-                }
-              >
-                {x.label}
-              </Pressable>
-            ))}
-          </div>
+          <p className={`mb-1.5 px-1 ${fieldLabel}`}>Erfahrung</p>
+          <Segment
+            label="Erfahrung"
+            options={EXP.map((x) => ({ value: x.v, label: x.label }))}
+            value={exp}
+            onChange={setExp}
+          />
+          {/* Eine Zeile zur gewählten Stufe — vorher standen die Stufen ohne
+              Erklärung da. */}
+          <p className="mb-4 mt-2 min-h-10 px-1 text-sm leading-snug text-muted" aria-live="polite">
+            {exp
+              ? EXP.find((x) => x.v === exp)?.satz
+              : "Ohne Wahl rechnet die App mit „Mittel“."}
+          </p>
 
           <p className={`mb-1.5 px-1 ${fieldLabel}`}>Ziel</p>
           <div className="mb-6 flex flex-wrap gap-2">
             {GOALS.map((g) => (
-              <Pressable
-                key={g.v}
-                onClick={() => toggleGoal(g.v)}
-                aria-pressed={goals.includes(g.v)}
-                className={
-                  "rounded-pill border px-3.5 py-1.5 font-mono text-3xs uppercase tracking-gesperrt focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanotypie " +
-                  (goals.includes(g.v)
-                    ? "border-strong bg-strong text-on-strong"
-                    : "border-line text-muted")
-                }
-              >
+              <ChipToggle key={g.v} onClick={() => toggleGoal(g.v)} active={goals.includes(g.v)}>
                 {g.label}
-              </Pressable>
+              </ChipToggle>
             ))}
           </div>
 
@@ -140,12 +140,12 @@ export function Welcome() {
             onClick={() => completeOnboarding(name, { experience: exp, goals })}
             size="lg"
             full
-            className="tracking-gesperrt-3"
+            className=""
           >
             Los geht&apos;s
           </Button>
-          <p className="mt-3 text-center font-mono text-4xs font-medium uppercase tracking-gesperrt-2 text-muted">
-            Alles bleibt auf dem Gerät · Kein Konto nötig
+          <p className="mt-3 text-center text-sm text-muted">
+            Alles bleibt auf dem Gerät, kein Konto nötig.
           </p>
         </motion.div>
       </div>

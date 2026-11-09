@@ -73,23 +73,3 @@ export function athletePersona(p: EffectiveProfile, name?: string): string {
     : "";
   return `${lead}${who.join(", ")}; Trainingserfahrung ${EXP_LABEL[p.experience]}; Ziel ${goals}.${inj}`;
 }
-
-export interface ProfileKnobs {
-  /** Multiplier on weekly volume targets / builder item ceiling. */
-  volumeScale: number;
-  /** Rep-target shift: negative leans toward strength (lower reps). */
-  repBias: number;
-  /** Goal leans toward strength (heavier, fewer reps) rather than hypertrophy. */
-  strengthLean: boolean;
-}
-
-/**
- * Engine knobs derived from experience + goal. Defaults (fortgeschritten,
- * Aufbau/Optik) are neutral (scale 1, no bias) so today's behaviour is preserved.
- */
-export function profileKnobs(p: EffectiveProfile): ProfileKnobs {
-  const volumeScale =
-    p.experience === "anfänger" ? 0.85 : p.experience === "erfahren" ? 1.15 : 1;
-  const strengthLean = p.goals.includes("kraft");
-  return { volumeScale, repBias: strengthLean ? -1 : 0, strengthLean };
-}

@@ -34,14 +34,14 @@ export function ProtokollBubble({ text, busy }: { text: string; busy?: boolean }
   return (
     <div className="mr-4 rounded-card border border-line-card bg-surface-1 px-3.5 py-3">
       {bloecke.length === 0 && (
-        <p className="font-display text-base leading-relaxed text-faint">
+        <p className="text-base leading-relaxed text-faint">
           {busy ? "…" : ""}
         </p>
       )}
       {bloecke.map((b, i) => (
         <div key={i} className={cn(i > 0 && "mt-2.5")}>
           {b.label && (
-            <p className="font-mono text-3xs font-semibold uppercase tracking-gesperrt text-cyanotypie">
+            <p className="font-mono text-3xs font-semibold uppercase tracking-label text-info">
               {b.label}
             </p>
           )}
@@ -49,7 +49,7 @@ export function ProtokollBubble({ text, busy }: { text: string; busy?: boolean }
             className={cn(
               b.label === "PLAN" && ANORDNUNG_RE.test(b.text)
                 ? "font-mono text-sm font-bold tabular-nums text-fg"
-                : "font-display text-base leading-relaxed text-fg",
+                : "text-base leading-relaxed text-fg",
               b.label && "mt-0.5",
             )}
           >

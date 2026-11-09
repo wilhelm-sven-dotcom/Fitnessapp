@@ -35,13 +35,13 @@ export function WishBar({
         disabled={disabled}
         placeholder="Wunsch für heute? (z. B. „Fokus Schultern”)"
         aria-label="Wunsch für die heutige Einheit"
-        className="min-w-0 flex-1 rounded-pill bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions disabled:opacity-50"
+        className="min-w-0 flex-1 rounded-pill bg-surface-2 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-50"
       />
       <Pressable
         onClick={submit}
         disabled={disabled || !wish.trim()}
         aria-label="Wunsch an ATLAS senden"
-        className="shrink-0 rounded-pill bg-surface-2 px-3 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions disabled:opacity-40"
+        className="shrink-0 rounded-pill bg-surface-2 px-3 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
       >
         <CornerDownLeft size={16} />
       </Pressable>

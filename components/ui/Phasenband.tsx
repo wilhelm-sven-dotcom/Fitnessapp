@@ -1,20 +1,20 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import type { Kader, KaderGruppe } from "@/lib/phasen/band";
 import { cn } from "@/lib/utils";
 
 /**
- * Das Phasenband — der Filmstreifen der Einheit (Signatur, ersetzt das
- * Etappen-Profil). Jeder Arbeitssatz ein Kader: Breite ∝ Wiederholungen
- * (flex-grow), belichtet = Tintenfüllung (Höhe = Leistung/Rekord) mit
- * eingefrorener Silhouette in Kartonfarbe (nur hero), aktiv = Siegellack-
- * Rahmen + Zoetrop-Figur, offen = Fadenraster + Basislinie (IWF-Farbe der
- * Last, sonst Tinte, 45 %). Gruppen trennt eine Fuge.
+ * Das Phasenband — die Einheit als Streifen (Signatur). Jeder Arbeitssatz
+ * ein Segment: Breite ∝ Wiederholungen (flex-grow), erledigt = Füllung in der
+ * Regionsfarbe (Höhe = Leistung/Rekord, im hero mit Figur), aktiv = Rand +
+ * Figur, offen = Raster + Tönung der Region und Basislinie (Scheibenfarbe der
+ * geplanten Last). Gruppen trennt eine Fuge; Nummern nur ab Mindestbreite.
  *
- * Motion (Filmtransport): die Füllung KRIECHT NICHT — sie steht hart im
- * Commit-Moment (steps(1)); dieses Band rendert reine Zustände. live/punkt
- * sind konstante Vollbalken (Fokus-Kopf bzw. Kompakt-Anzeigen).
+ * Motion: die Füllung kriecht nicht — sie steht hart im Moment des Eintrags;
+ * dieses Band rendert reine Zustände. live/punkt sind konstante Segmente
+ * (Trainingskopf bzw. Kompakt-Anzeigen).
  */
 
 export type PhasenbandGroesse = "hero" | "zeile" | "mini" | "live" | "punkt";
@@ -42,18 +42,24 @@ const IWF_VAR: Record<string, string> = {
   gruen: "var(--iwf-gruen)",
 };
 
+/** Ab dieser Kaderbreite (px) passt die Nummer „01“ ohne Anschnitt. */
+const NUMMER_AB_PX = 20;
+
 function KaderZelle({
   kader,
   gruppe,
   nummer,
   groesse,
   zoetropOn,
+  mitNummer,
 }: {
   kader: Kader;
   gruppe: KaderGruppe;
   nummer: number;
   groesse: PhasenbandGroesse;
   zoetropOn?: boolean;
+  /** Nummern nur, wenn der schmalste Kader breit genug ist. */
+  mitNummer?: boolean;
 }) {
   const h = HOEHE[groesse];
   const hero = groesse === "hero";
@@ -61,19 +67,24 @@ function KaderZelle({
   const aktiv = kader.status === "aktiv";
   const belichtet = kader.status === "belichtet";
 
-  // Kompakt (Fokus-Kopf): konstante Vollbalken — nur der Status spricht.
+  // Kompakt (Trainingskopf): konstante Segmente in der Regionsfarbe —
+  // erledigt gefüllt, der offene Satz als kräftiger Rand, der Rest als Linie.
   if (kompakt) {
     return (
       <div
         className={cn(
-          "rounded-xs border",
-          belichtet
-            ? "border-transparent bg-fg"
-            : aktiv
-              ? "border-transparent bg-accent-sessions"
-              : "border-line-card bg-transparent",
+          "rounded-xs",
+          belichtet ? "" : aktiv ? "border-2" : "border border-line",
         )}
-        style={{ flex: `${kader.widthReps} 1 0%`, height: h }}
+        style={{
+          flex: `${kader.widthReps} 1 0%`,
+          height: h,
+          ...(belichtet
+            ? { backgroundColor: gruppe.tintVar }
+            : aktiv
+              ? { borderColor: gruppe.tintVar }
+              : undefined),
+        }}
       />
     );
   }
@@ -81,7 +92,10 @@ function KaderZelle({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-pill border",
+        // Kader sind Filmbilder: kleine Ecke (xs), nie Pille — bei 64 px Höhe
+        // und schmalen Kadern würde der Pillen-Radius aus jedem Bild ein
+        // Stadion machen.
+        "relative overflow-hidden rounded-xs border",
         aktiv ? "border-accent-ink" : "border-line-card",
       )}
       style={{
@@ -93,8 +107,11 @@ function KaderZelle({
       {belichtet && (
         <>
           <div
-            className="absolute inset-x-0 bottom-0 bg-fg"
-            style={{ height: `${Math.round(kader.fillRatio * 100)}%` }}
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: `${Math.round(kader.fillRatio * 100)}%`,
+              backgroundColor: gruppe.tintVar,
+            }}
           />
           {hero && (
             <div className="absolute inset-x-0" style={{ bottom: 2, height: "56%" }}>
@@ -146,7 +163,7 @@ function KaderZelle({
           />
         </>
       )}
-      {hero && (
+      {hero && mitNummer && (
         <span
           className={cn(
             "absolute font-mono text-5xs tabular-nums",
@@ -174,9 +191,31 @@ export function Phasenband({
   className?: string;
 }) {
   const kompakt = groesse === "live" || groesse === "punkt";
+  const hero = groesse === "hero";
+  // Kadernummern nur ab Mindestbreite: Breite messen, schmalsten Kader
+  // ausrechnen (flex-grow ∝ widthReps, abzüglich Fugen) — sonst stehen
+  // angeschnittene „0“ in jedem Bild.
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [breite, setBreite] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !hero) return;
+    const melde = () => setBreite(el.getBoundingClientRect().width);
+    melde();
+    const ro = new ResizeObserver(melde);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [hero]);
+  const alle = gruppen.flatMap((g) => g.kader);
+  const summe = alle.reduce((a, k) => a + k.widthReps, 0);
+  const schmalster = alle.reduce((a, k) => Math.min(a, k.widthReps), Infinity);
+  const fugen = Math.max(0, alle.length - 1) * 4 + Math.max(0, gruppen.length - 1) * 5;
+  const mitNummer =
+    hero && breite > 0 && summe > 0 && ((breite - fugen) * schmalster) / summe >= NUMMER_AB_PX;
   let nummer = 0;
   return (
     <div
+      ref={ref}
       className={cn("flex items-stretch", kompakt ? "gap-0.5" : "gap-1", className)}
       aria-hidden="true"
     >
@@ -198,6 +237,7 @@ export function Phasenband({
                 nummer={nummer}
                 groesse={groesse}
                 zoetropOn={zoetropOn}
+                mitNummer={mitNummer}
               />
             );
           })}

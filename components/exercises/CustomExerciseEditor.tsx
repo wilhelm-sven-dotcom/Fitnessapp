@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ChipToggle } from "@/components/ui/ChipToggle";
 import { Pressable } from "@/components/ui/pressable";
 import { Sheet } from "@/components/ui/sheet";
 import { Toggle } from "@/components/ui/Toggle";
@@ -18,36 +19,15 @@ const PATTERNS: Pattern[] = [
   "squat", "lunge", "hinge", "hpush", "vpush", "hpull", "vpull", "arm", "lateral", "core", "calf",
 ];
 
+// Feld-Rezept (ui-style): ≥ 16 px Schrift, sonst zoomt iOS beim Fokus.
 const inputClass =
-  "w-full rounded-card bg-surface-2 px-3 py-2.5 text-sm text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions";
+  "min-h-11 w-full rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1.5 mt-4 font-mono text-xs uppercase tracking-widest text-muted">
+    <p className="mb-1.5 mt-4 text-3xs font-semibold uppercase tracking-label text-muted">
       {children}
     </p>
-  );
-}
-
-function ChipButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Pressable
-      onClick={onClick}
-      className={cn(
-        "rounded-pill px-3 py-1.5 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
-        active ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
-      )}
-    >
-      {children}
-    </Pressable>
   );
 }
 
@@ -168,22 +148,22 @@ export function CustomExerciseEditor({
       <FieldLabel>Bewegungsmuster</FieldLabel>
       <div className="flex flex-wrap gap-1.5">
         {PATTERNS.map((p) => (
-          <ChipButton key={p} active={pattern === p} onClick={() => setPattern(p)}>
+          <ChipToggle key={p} active={pattern === p} onClick={() => setPattern(p)}>
             {PATTERN_LABEL[p]}
-          </ChipButton>
+          </ChipToggle>
         ))}
       </div>
 
       <FieldLabel>Hauptmuskel</FieldLabel>
       <div className="flex flex-wrap gap-1.5">
         {MUSCLE_ORDER.map((m) => (
-          <ChipButton
+          <ChipToggle
             key={m}
             active={muscle === m}
             onClick={() => setMuscle((cur) => (cur === m ? undefined : m))}
           >
             {MUSCLE_LABEL[m]}
-          </ChipButton>
+          </ChipToggle>
         ))}
       </div>
       <p className="mt-1 text-xs text-faint">
@@ -195,13 +175,13 @@ export function CustomExerciseEditor({
           <FieldLabel>Zweitmuskel (zählt halb)</FieldLabel>
           <div className="flex flex-wrap gap-1.5">
             {MUSCLE_ORDER.filter((m) => m !== muscle).map((m) => (
-              <ChipButton
+              <ChipToggle
                 key={m}
                 active={muscle2 === m}
                 onClick={() => setMuscle2((cur) => (cur === m ? undefined : m))}
               >
                 {MUSCLE_LABEL[m]}
-              </ChipButton>
+              </ChipToggle>
             ))}
           </div>
         </>
@@ -210,13 +190,13 @@ export function CustomExerciseEditor({
       <FieldLabel>Benötigtes Equipment</FieldLabel>
       <div className="flex flex-wrap gap-1.5">
         {EQUIP_LIST.filter((e) => e.key !== "bike").map((e) => (
-          <ChipButton
+          <ChipToggle
             key={e.key}
             active={req.includes(e.key)}
             onClick={() => toggleReq(e.key)}
           >
             {e.label}
-          </ChipButton>
+          </ChipToggle>
         ))}
       </div>
       <p className="mt-1 text-xs text-faint">
@@ -232,7 +212,7 @@ export function CustomExerciseEditor({
               onClick={() => setUnit(u)}
               className={cn(
                 "px-3 py-1.5 text-xs font-medium focus:outline-none",
-                unit === u ? "bg-accent-sessions text-on-accent" : "text-muted",
+                unit === u ? "bg-accent text-on-accent" : "text-muted",
               )}
             >
               {u === "Wdh" ? "Wiederholungen" : "Sekunden"}
@@ -243,9 +223,9 @@ export function CustomExerciseEditor({
       <div className="mt-2 flex items-center gap-2">
         <span className="font-mono text-xs text-faint">Sätze</span>
         {[1, 2, 3, 4, 5].map((n) => (
-          <ChipButton key={n} active={sets === n} onClick={() => setSets(n)}>
+          <ChipToggle key={n} active={sets === n} onClick={() => setSets(n)}>
             {n}
-          </ChipButton>
+          </ChipToggle>
         ))}
       </div>
       <div className="mt-2 flex items-center gap-2">
@@ -320,7 +300,7 @@ export function CustomExerciseEditor({
       <Pressable
         onClick={save}
         disabled={!name.trim()}
-        className="mt-5 w-full rounded-card bg-strong py-3.5 text-base font-semibold text-on-strong focus:outline-none disabled:opacity-40"
+        className="mt-5 flex min-h-14 w-full items-center justify-center rounded-pill bg-accent text-lg font-bold text-on-accent active:bg-accent-press focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
       >
         {initial ? "Änderungen speichern" : "Übung anlegen"}
       </Pressable>
@@ -332,14 +312,14 @@ export function CustomExerciseEditor({
               removeCustom(initial.id);
               onClose();
             }}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-card py-2.5 text-sm font-medium text-status-danger focus:outline-none"
+            className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-pill border border-gefahr text-base font-bold text-gefahr focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
-            <Trash2 size={14} /> Wirklich löschen?
+            <Trash2 size={16} aria-hidden /> Wirklich löschen?
           </Pressable>
         ) : (
           <Pressable
             onClick={() => setConfirmDelete(true)}
-            className="mt-2 w-full rounded-card py-2.5 text-sm text-muted focus:outline-none"
+            className="mt-2 min-h-11 w-full rounded-pill text-base font-semibold text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             Übung löschen…
           </Pressable>

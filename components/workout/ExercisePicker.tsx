@@ -36,7 +36,9 @@ export function ExercisePicker({
                 active ? "bg-surface-2" : "bg-surface-2",
               )}
             >
-              <span className="text-sm text-fg">{opt.name}</span>
+              <span data-testid="picker-row-name" className="text-sm text-fg">
+                {opt.name}
+              </span>
               {active ? (
                 <Check size={16} className="shrink-0 text-accent-ink" />
               ) : (

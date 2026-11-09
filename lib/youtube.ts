@@ -80,8 +80,3 @@ export function youtubeEmbedUrl(
   if (opts?.loop) url += `&loop=1&playlist=${id}`;
   return url;
 }
-
-/** Whether a raw string parses as a YouTube link. */
-export function isYoutubeUrl(raw: string | null | undefined): boolean {
-  return youtubeVideoId(raw) != null;
-}

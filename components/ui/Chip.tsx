@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import type { ChipTone } from "@/lib/coaching";
 
-// Hinweis-Chip Platte 311: Katalogschild-Optik — 1 px Faden, Versal-Mono,
-// Ton nur als Schriftfarbe (Messing = über Ziel, Cyanotypie = im Ziel).
+// Hinweis-Chip: Pille mit Rand `border-line`, Ton nur als Schriftfarbe
+// (Warnung = über Ziel, Erfolg = im Ziel).
 const toneClass: Record<ChipTone, string> = {
   amber: "text-status-over",
   emerald: "text-status-in",
@@ -20,7 +20,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-block rounded-pill border border-line bg-surface-1 px-2.5 py-1 font-mono text-3xs font-semibold uppercase tracking-gesperrt",
+        "inline-block rounded-pill border border-line bg-surface-1 px-2.5 py-1 text-3xs font-semibold",
         toneClass[tone],
       )}
     >

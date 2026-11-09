@@ -289,6 +289,120 @@ export function itemDone(ex: Exercise, sets: SetEntry[] | undefined): boolean {
   return work.length > 0 && work.every(filledSet);
 }
 
+/** Index des ersten offenen Arbeitssatzes (−1: alle eingetragen) — dieselbe
+ *  Regel, nach der die Bühne den aktiven Satz wählt. */
+export function firstOpenWorkSet(sets: SetEntry[] | undefined): number {
+  return (sets ?? []).findIndex((s) => !s.warmup && !filledSet(s));
+}
+
+/** Laufende Nummer eines Arbeitssatzes (Aufwärmsätze zählen nicht mit). */
+export function workSetNo(sets: SetEntry[], idx: number): number {
+  return sets.slice(0, idx + 1).filter((s) => !s.warmup).length;
+}
+
+/** Nächstes noch offenes Item nach `from` (zyklisch, `from` selbst zuletzt) —
+ *  wohin „Weiter“ springt; null, wenn alles erledigt ist. */
+export function nextOpenItemIndex(
+  st: Pick<ActiveSessionState, "session" | "entries">,
+  from: number,
+  byId: Map<string, Exercise>,
+): number | null {
+  const its = st.session.items;
+  for (let off = 1; off <= its.length; off++) {
+    const i = (from + off) % its.length;
+    const ex = byId.get(its[i].exerciseId);
+    if (ex && !itemDone(ex, st.entries[its[i].id])) return i;
+  }
+  return null;
+}
+
+/** Übung mit den Plan-Werten des Items (Sätze, Wiederholungsbereich). */
+export function itemExercise(base: Exercise, item: PlannedExercise): Exercise {
+  return { ...base, sets: item.sets, repLow: item.repLow, repHigh: item.repHigh };
+}
+
+export interface PrescCtx {
+  lastPerf: (id: string) => LastPerf | null;
+  profile?: EffectiveProfile;
+  /** Lange Pause (> 5 Tage) → ruhiger Einstieg. */
+  lighter: boolean;
+  scale: ReadinessScale;
+  weightStep?: number;
+}
+
+/** Vorschlag für ein Item — dieselbe Rechnung wie die Bühne (ohne Historie
+ *  liefert die Startgewichts-Schätzung den Anker). `ex` = `itemExercise(…)`. */
+export function prescForItem(ex: Exercise, ctx: PrescCtx, lp = ctx.lastPerf(ex.id)) {
+  const startW =
+    lp || !ex.weighted || !ctx.profile
+      ? undefined
+      : startWeight(ex, ctx.profile, { step: ctx.weightStep })?.w;
+  return presc(ex, lp, {
+    lighter: ctx.lighter,
+    loadMult: ctx.scale.loadMult,
+    cap: ctx.scale.cap,
+    step: ctx.weightStep,
+    startW,
+  });
+}
+
+/** Was nach der laufenden Pause kommt — fürs Pausen-Dock. */
+export type NextSetPreview =
+  | {
+      kind: "satz";
+      /** Gleiche Übung wie der eben eingetragene Satz? */
+      gleich: boolean;
+      exName: string;
+      setNo: number;
+      /** Gewicht als Eingabe-String („22.5“), leer ohne Gewicht. */
+      weight: string;
+      reps: string;
+      timed: boolean;
+    }
+  | { kind: "cardio"; exName: string; minLow: number; minHigh: number }
+  | { kind: "abschluss" };
+
+/**
+ * Nächster Satz nach einem Eintrag in `itemId`: offener Satz derselben Übung
+ * (Gewicht aus dem Protokoll, Wdh aus dem Vorschlag), sonst der erste offene
+ * Arbeitssatz der nächsten offenen Übung, Cardio in Minuten, sonst Abschluss.
+ */
+export function nextSetPreview(
+  st: Pick<ActiveSessionState, "session" | "entries">,
+  itemId: string,
+  byId: Map<string, Exercise>,
+  ctx: PrescCtx,
+): NextSetPreview {
+  const its = st.session.items;
+  const from = its.findIndex((it) => it.id === itemId);
+  if (from < 0) return { kind: "abschluss" };
+  const preview = (idx: number, gleich: boolean): NextSetPreview | null => {
+    const it = its[idx];
+    const base = byId.get(it.exerciseId);
+    if (!base) return null;
+    const ex = itemExercise(base, it);
+    if (ex.pattern === "cardio")
+      return { kind: "cardio", exName: ex.name, minLow: ex.repLow, minHigh: ex.repHigh };
+    const sets = st.entries[it.id] ?? [];
+    const k = firstOpenWorkSet(sets);
+    if (k < 0) return null;
+    const p = prescForItem(ex, ctx);
+    return {
+      kind: "satz",
+      gleich,
+      exName: ex.name,
+      setNo: workSetNo(sets, k),
+      weight: sets[k].weight ?? "",
+      reps: p.r || String(ex.repHigh),
+      timed: ex.unit === "Sek",
+    };
+  };
+  const same = preview(from, true);
+  if (same) return same;
+  const n = nextOpenItemIndex(st, from, byId);
+  return (n != null && preview(n, false)) || { kind: "abschluss" };
+}
+
 /** Erledigte Arbeitssätze über die ganze Einheit. */
 export function doneWorkSets(entries: Record<string, SetEntry[]>): number {
   return Object.values(entries)

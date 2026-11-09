@@ -1,4 +1,4 @@
-import type { Exercise, ResolvedSlot, Template } from "@/lib/types";
+import type { Exercise, ResolvedSlot } from "@/lib/types";
 import { poolFor } from "@/lib/progression";
 import { fitToBudget } from "@/lib/session-time";
 
@@ -28,6 +28,15 @@ export interface PlannedExercise {
 export type SessionSource = "atlas" | "fallback" | "manuell";
 export type SessionVariant = "normal" | "reset" | "exam";
 
+/** Für welchen Trainingsort die Einheit komponiert wurde. `sig` (Ort-Id +
+ *  Geräte, lib/orte.ts `ortSignatur`) erkennt Ortswechsel UND geänderte
+ *  Geräte — dann passt die Einheit nicht mehr und Heute stellt neu zusammen. */
+export interface SessionOrt {
+  id: string;
+  name: string;
+  sig: string;
+}
+
 export interface DailySession {
   /** Stabil pro Komposition (z. B. "today-2026-08-08-1"). */
   id: string;
@@ -48,6 +57,8 @@ export interface DailySession {
   /** Nutzer hat manuell eingegriffen — eine später eintreffende KI-Antwort
    *  darf diese Fassung nicht mehr ersetzen. */
   edited?: boolean;
+  /** Trainingsort der Komposition (fehlt bei Einheiten von vor den Orten). */
+  ort?: SessionOrt;
   schemaVersion: 1;
 }
 
@@ -208,17 +219,4 @@ export function passeZeitAn(
   // Nie alles wegkürzen: eine leere Einheit wäre schlechter als eine zu lange.
   if (!items.length) return s;
   return { ...s, items };
-}
-
-/** Synthetisches Template (Name/Fokus/Muster) für Warmup & Save-Pfad. */
-export function dailyToTemplate(s: DailySession, allLib: Exercise[]): Template {
-  const byId = new Map(allLib.map((e) => [e.id, e]));
-  return {
-    key: "today",
-    name: s.name,
-    focus: s.focus,
-    slots: s.items
-      .map((it) => byId.get(it.exerciseId)?.pattern)
-      .filter((p): p is Exercise["pattern"] => !!p),
-  };
 }

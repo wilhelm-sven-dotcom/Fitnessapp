@@ -35,7 +35,7 @@ export function BeforeAfter({
   return (
     <div
       ref={ref}
-      className="relative w-full touch-none select-none overflow-hidden rounded-card border border-line bg-surface-2 shadow-card"
+      className="relative w-full touch-none select-none overflow-hidden rounded-card border border-line bg-surface-2"
       style={{ paddingTop: "125%" }}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -69,7 +69,7 @@ export function BeforeAfter({
       >
         <div className="h-full w-0.5 bg-strong opacity-90" />
         <div
-          className="absolute top-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-strong shadow-card"
+          className="absolute top-1/2 flex h-8 w-8 items-center justify-center rounded-pill bg-strong"
           style={{ left: "50%", transform: "translate(-50%, -50%)" }}
         >
           <span className="font-mono text-xs font-bold text-on-strong">⇄</span>

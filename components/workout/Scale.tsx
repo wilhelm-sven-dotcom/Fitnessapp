@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils";
 export const RIR_OPTIONS = [0, 1, 2, 3, 4];
 export const INTENSITY_OPTIONS = [1, 2, 3, 4, 5];
 
-/** Slim effort selector — RIR (0–4) oder gefühlte Intensität (1–5), nach dem
- *  Satz bewertet. Genutzt in der Satz-Zeile und im Pausen-Timer. */
+/** Anstrengung eines Satzes — RIR (0–4) oder gefühlte Intensität (1–5).
+ *  Genutzt im Pausen-Dock und beim Korrigieren eines Satzes. Ohne `label`
+ *  (leer) entfällt die Beschriftung links. */
 export function Scale({
   label,
   options,
@@ -23,10 +24,12 @@ export function Scale({
 }) {
   return (
     <div className={cn("mt-1.5 flex items-center gap-2", className)}>
-      <span className="shrink-0 font-mono text-xs uppercase tracking-widest text-faint">
-        {label}
-      </span>
-      <div className="flex flex-1 gap-1">
+      {label && (
+        <span className="shrink-0 text-3xs font-semibold uppercase tracking-label text-muted">
+          {label}
+        </span>
+      )}
+      <div className="flex flex-1 gap-1.5">
         {options.map((o) => (
           <Pressable
             key={o}
@@ -35,8 +38,8 @@ export function Scale({
             className={cn(
               // 44-px-Ziel: der meistgetippte Control im Training — mit
               // Schweiß an den Händen zählt jede Zielfläche.
-              "flex h-11 flex-1 items-center justify-center rounded-pill text-sm font-medium tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions",
-              value === o ? "bg-accent-sessions text-on-accent" : "bg-surface-2 text-muted",
+              "flex h-11 flex-1 items-center justify-center rounded-inner text-base font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+              value === o ? "bg-accent text-on-accent" : "bg-surface-2 text-fg",
             )}
           >
             {o}

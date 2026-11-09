@@ -12,10 +12,10 @@ import type { WarmupDrill } from "@/lib/warmup";
 /** RAMP-Badge — dasselbe Farbmapping wie im Aufwärm-Player. */
 function phaseBadge(phase: WarmupDrill["phase"]) {
   return phase === "raise"
-    ? { label: "Puls", cls: "bg-accent-sessions text-on-accent" }
+    ? { label: "Puls", cls: "bg-accent text-on-accent" }
     : phase === "mobilise"
-      ? { label: "Mobilität", cls: "bg-accent-coverage text-on-strong" }
-      : { label: "Aktivierung", cls: "bg-accent-volume text-on-strong" };
+      ? { label: "Mobilität", cls: "bg-info text-on-strong" }
+      : { label: "Aktivierung", cls: "bg-info text-on-strong" };
 }
 
 /**
@@ -43,7 +43,7 @@ export function WarmupDrillSheet({
           {badge && (
             <span
               className={cn(
-                "mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium",
+                "mb-3 inline-block rounded-pill px-3 py-1 text-xs font-medium",
                 badge.cls,
               )}
             >

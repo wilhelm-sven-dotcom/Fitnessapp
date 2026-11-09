@@ -1,6 +1,5 @@
 "use client";
 
-import { Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { beep, beepEnd, primeAudio } from "@/lib/beep";
@@ -16,7 +15,7 @@ interface DeviceMotionCtor {
 }
 
 /**
- * Der Zünd-Check im Tagesform-Sheet: iPhone an die Brust, ein Strecksprung —
+ * Der Sprungtest im Tagesform-Sheet: iPhone an die Brust, ein Strecksprung —
  * 6-Sekunden-Messfenster, Freifall-Detektion, Sprunghöhe gegen den eigenen
  * 7-Tage-Schnitt. Meldet das Ergebnis nach oben (Persistenz + Energie-Ampel
  * übernimmt das Gate).
@@ -105,7 +104,7 @@ export function JumpCheck({
 
   const bandText =
     result?.band === "high"
-      ? "über deinem Schnitt — Zündung stark"
+      ? "über deinem Schnitt — heute viel Kraft"
       : result?.band === "low"
         ? "unter deinem Schnitt — heute eher schonen"
         : result?.band === "mid"
@@ -115,13 +114,13 @@ export function JumpCheck({
   return (
     <div className="mb-4 rounded-card bg-surface-2 p-3" data-testid="jump-check">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent-2">
-          <Zap size={13} className="text-accent-ink" /> Zünd-Check
+        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          Sprungtest
         </p>
         {phase !== "measuring" && (
           <Pressable
             onClick={() => void start()}
-            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-sessions"
+            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             {phase === "done" || phase === "failed" ? "Nochmal" : "Messen"}
           </Pressable>
@@ -145,7 +144,7 @@ export function JumpCheck({
         <p className="mt-1.5 text-sm text-fg">
           <span
             className={cn(
-              "font-display text-2xl font-bold tabular-nums",
+              "font-mono text-2xl font-bold tabular-nums",
               result.band === "low" ? "text-status-danger" : "text-accent-ink",
             )}
           >

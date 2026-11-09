@@ -1,5 +1,5 @@
 import { isFilled, oneRm, workSets } from "@/lib/stats";
-import type { BodyMetric, Exercise, LoggedSession } from "@/lib/types";
+import type { Exercise, LoggedSession } from "@/lib/types";
 
 export interface SeriesPoint {
   date: string;
@@ -57,15 +57,6 @@ export function exercise1RMHistory(
     if (best > 0) out.push({ date: s.date, value: Math.round(best * 10) / 10 });
   });
   return out;
-}
-
-export function bodyTrend(
-  body: BodyMetric[],
-  field: "weightKg" | "waistCm",
-): SeriesPoint[] {
-  return body
-    .filter((b) => b[field] != null)
-    .map((b) => ({ date: b.date, value: b[field] as number }));
 }
 
 export interface Projection {

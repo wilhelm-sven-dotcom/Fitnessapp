@@ -17,7 +17,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const SHOTS = process.argv[2] ?? null;
 const exe = process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium";
 
-const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
   stdio: "ignore",
   env: { ...process.env, PORT: String(PORT) },
 });
@@ -51,6 +51,8 @@ await page.addInitScript(() => {
       benchMigrated: true,
       themeMigratedM72: true,
       splash: "aus",
+      // Ein Ort (nur „Zuhause“) → keine Ortsfrage; die prüft pruefe-ort.mjs.
+      orteM1: true,
     }),
   );
 });
@@ -102,7 +104,7 @@ pruefe(
 );
 // Der Inhalt muss so weit auslaufen, dass man bis unter das Dock scrollen kann.
 const auslauf = await page.evaluate(() => {
-  const el = document.querySelector('[data-testid="stage-order"]')?.parentElement;
+  const el = document.querySelector('[data-testid="session-root"]');
   return el ? parseFloat(getComputedStyle(el).paddingBottom) : 0;
 });
 pruefe(

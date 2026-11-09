@@ -91,7 +91,11 @@ export function buildSessionTranscript(opts: {
       `${i + 1}. ${ex.name} (${PATTERN_LABEL[ex.pattern]}) — geplant ${it.sets} Sätze à ${it.repLow}–${it.repHigh}${ex.unit === "Sek" ? " s" : " Wdh"}.`,
       doneStr ? `Geschaffte Sätze: ${doneStr}.` : "Noch kein Satz.",
       open > 0 ? `Offen: ${open}.` : "Fertig.",
-      rec ? `Bestwert: ${rec.label}.` : "",
+      // Der Rekord-Text der Oberfläche („82,5 × 8“) trägt keine Einheiten —
+      // fürs Modell ausschreiben, sonst gilt die Regel oben nur halb.
+      rec
+        ? `Bestwert: ${rec.kind === "weight" ? `${rec.label.replace(" × ", " kg × ")} Wdh` : rec.label}.`
+        : "",
       note ? `Hilfsmittel: ${note} (assistierte/leichtere Ausführung).` : "",
     ]
       .filter(Boolean)

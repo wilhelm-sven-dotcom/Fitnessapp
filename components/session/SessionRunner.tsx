@@ -7,6 +7,7 @@ import { ExerciseStage } from "@/components/session/ExerciseStage";
 import { FinishFlow } from "@/components/session/FinishFlow";
 import { OverviewSheet } from "@/components/session/OverviewSheet";
 import { ProgressHeader } from "@/components/session/ProgressHeader";
+import { DockSlotContext } from "@/components/session/DockSlot";
 import { RestPanel } from "@/components/session/RestPanel";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
@@ -16,7 +17,7 @@ import { GuideSheet } from "@/components/workout/GuideSheet";
 import { ReadinessGate } from "@/components/workout/ReadinessGate";
 import { SessionComplete, type SiegerTafel } from "@/components/workout/SessionComplete";
 import { WarmupPlayer } from "@/components/warmup/WarmupPlayer";
-import { Pressable } from "@/components/ui/pressable";
+import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
@@ -29,30 +30,36 @@ import {
   clearActiveState,
   doneWorkSets,
   itemDone,
+  itemExercise,
   loadActiveState,
+  nextOpenItemIndex,
+  nextSetPreview,
   persistActiveState,
   prefillEntries,
+  prescForItem,
   reconcileEntries,
   startScale,
+  workSetNo,
   type ActiveSessionState,
   type PrefillOpts,
+  type PrescCtx,
 } from "@/lib/active-session";
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { bandOfActive } from "@/lib/phasen/band";
-import { plattenNummer, plattenNummern } from "@/lib/platte";
+import { bandOfActive, REGION_VAR, regionOf, type Region } from "@/lib/phasen/band";
+import { plattenNummern } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
-import { presc, roundStep } from "@/lib/progression";
+import { roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
 import { beep, beepEnd, primeAudio } from "@/lib/beep";
-import { startWeight } from "@/lib/start-weight";
 import { swapPoolFor } from "@/lib/swap-pool";
 import { toast } from "@/lib/toast";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
+import { fmtSatz } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { warmupFor } from "@/lib/warmup";
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
@@ -73,6 +80,11 @@ interface LiveCoachCall {
   say: string;
   adjustment?: CoachReactAdjustment;
 }
+
+/** Textfeld mit Tastatur (Satzkarte, Notiz) — solange eins den Fokus hat,
+ *  bleibt das Dock unsichtbar. */
+const istFeld = (t: EventTarget | null) =>
+  t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement;
 
 /** Kosten-Deckel: mehr Live-Reaktionen braucht keine Einheit. */
 const COACH_CALL_CAP = 40;
@@ -113,12 +125,34 @@ export function SessionRunner() {
   const [complete, setComplete] = useState<SessionSummary | null>(null);
   // Piktogramm-Pose der Einheit — VOR dem Save berechnet (danach ist active weg).
   const [completeFigur, setCompleteFigur] = useState<PhasenFigurDef | null>(null);
+  const [completeRegion, setCompleteRegion] = useState<Region | undefined>(undefined);
   // Rekord-Tafel des Sieger-Moments — ebenfalls VOR dem Save (recordMap kennt
   // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
   const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
   const [rest, setRest] = useState<RestState | null>(null);
-  /** Gemessene Höhe des Pausen-Docks (0 = kein Dock) — siehe Container unten. */
+  /** Gemessene Höhe des Docks (0 = leer) — siehe Wirt unten. */
   const [dockH, setDockH] = useState(0);
+  /** Ziel für „Satz eintragen“ (Portal aus der Satzkarte). */
+  const [slotEl, setSlotEl] = useState<HTMLDivElement | null>(null);
+  /** Ein Eingabefeld hat den Fokus → Dock ausblenden (iOS-Tastatur). */
+  const [tippt, setTippt] = useState(false);
+  const dockObs = useRef<ResizeObserver | null>(null);
+  // Der Wirt existiert nur in der Übungs-Phase: Callback-Ref misst bei jedem
+  // (Re-)Mount neu und räumt beim Abbau auf — der Inhalt darüber bekommt so
+  // immer genau die Dock-Höhe als Auslauf.
+  const dockRef = useCallback((el: HTMLDivElement | null) => {
+    dockObs.current?.disconnect();
+    dockObs.current = null;
+    if (!el) {
+      setDockH(0);
+      return;
+    }
+    const melde = () => setDockH(Math.round(el.getBoundingClientRect().height));
+    melde();
+    const ro = new ResizeObserver(melde);
+    ro.observe(el);
+    dockObs.current = ro;
+  }, []);
   // Kopf-Kondensation: erst wenn der Sentinel überscrollt ist, bekommt der
   // haftende Fortschrittskopf Glass + Hairline (sonst nackte Zeile im Inhalt).
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -193,14 +227,32 @@ export function SessionRunner() {
     () => (curExId && !curLp ? lastPerfRelated(curExId) : null),
     [lastPerfRelated, curExId, curLp],
   );
-  // Name der nächsten Übung für den Abschluss-Knopf der Bühne — null beim
-  // letzten Eintrag, dann führt der Knopf zum Abschluss.
+  // Name der nächsten OFFENEN Übung für den Knopf der Bühne — genau dorthin
+  // springt „Weiter“; null, wenn danach der Abschluss kommt.
   const nextExName = useMemo(() => {
     if (!active) return null;
-    const next = active.session.items[active.currentIndex + 1];
-    if (!next) return null;
-    return allLib.find((e) => e.id === next.exerciseId)?.name ?? null;
-  }, [active, allLib]);
+    const n = nextOpenItemIndex(active, active.currentIndex, byId);
+    if (n == null || n === active.currentIndex) return null;
+    return byId.get(active.session.items[n].exerciseId)?.name ?? null;
+  }, [active, byId]);
+
+  // Eine Rechenvorschrift für Vorschläge: Bühne und Pausen-Vorschau.
+  const prescCtx = useMemo<PrescCtx>(
+    () => ({ lastPerf, profile, lighter, scale, weightStep: settings.weightStep }),
+    [lastPerf, profile, lighter, scale, settings.weightStep],
+  );
+  // Was nach der Pause kommt — neu nur bei neuem Satz oder geändertem
+  // Protokoll, nicht jede Sekunde des Countdowns.
+  const restItemId = rest?.itemId;
+  const restSetIdx = rest?.setIdx;
+  const restNext = useMemo(
+    () =>
+      active && restItemId != null
+        ? nextSetPreview(active, restItemId, byId, prescCtx)
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [restItemId, restSetIdx, active?.entries, active?.session, byId, prescCtx],
+  );
 
   // Schnell-Tausch: Pool für das aktuelle Item (geteilte Politik mit dem
   // Edit-Sheet — same-pattern zuerst, deaktivierte Übungen raus).
@@ -347,6 +399,13 @@ export function SessionRunner() {
     obs.observe(el);
     return () => obs.disconnect();
   }, [boot, complete, active?.phase]);
+
+  // Fällt ein fokussiertes Feld weg (Satz eingetragen → nächste Karte), feuert
+  // nicht jeder Browser ein Blur — nach jedem Zustandswechsel nachsehen,
+  // sonst bliebe das Dock unsichtbar.
+  useEffect(() => {
+    setTippt(istFeld(document.activeElement));
+  }, [active, rest]);
 
   // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
   // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
@@ -591,14 +650,7 @@ export function SessionRunner() {
 
   const nextOpenIndex = (): number | null => {
     const st = activeRef.current;
-    if (!st) return null;
-    const its = st.session.items;
-    for (let off = 1; off <= its.length; off++) {
-      const i = (st.currentIndex + off) % its.length;
-      const ex = byId.get(its[i].exerciseId);
-      if (ex && !itemDone(ex, st.entries[its[i].id])) return i;
-    }
-    return null;
+    return st ? nextOpenItemIndex(st, st.currentIndex, byId) : null;
   };
 
   const goNext = () => {
@@ -708,6 +760,7 @@ export function SessionRunner() {
       ? byId.get(final.session.items[0].exerciseId)
       : undefined;
     setCompleteFigur(hauptEx ? figurFor(hauptEx) : null);
+    setCompleteRegion(hauptEx ? regionOf(hauptEx) : undefined);
     // Tafel des Maximums: bester rekordschlagender Arbeitssatz der Studie.
     // recordMap kennt nur das Archiv — die laufende Studie ist noch nicht im
     // Log, `best` ist also genau die Marke, die es zu schlagen galt. Bei
@@ -721,10 +774,14 @@ export function SessionRunner() {
       const best = recordMap.get(it.exerciseId);
       if (!ex || !best) continue;
       let wert = 0;
+      let satz: SetEntry | null = null;
       for (const set of final.entries[it.id] ?? []) {
         if (!beatsRecord(ex, set, best)) continue;
         const m = setMetric(ex, set);
-        if (m > wert) wert = m;
+        if (m > wert) {
+          wert = m;
+          satz = set;
+        }
       }
       if (wert <= 0) continue;
       const sprung = (wert - best.best) / best.best;
@@ -732,9 +789,12 @@ export function SessionRunner() {
       const prevSession = log.find((s) => s.date === best.date);
       sieger = {
         figur: figurFor(ex),
+        region: regionOf(ex),
         exName: ex.name,
         wert,
         einheit: recordUnit(best.kind),
+        kind: best.kind,
+        satz: satz ? fmtSatz(satz.weight, satz.reps, ex.unit === "Sek") : undefined,
         delta: wert - best.best,
         prevPlattenNr: prevSession ? nummern.get(prevSession) : undefined,
       };
@@ -767,6 +827,7 @@ export function SessionRunner() {
         summary={complete}
         name={todaySession?.name}
         figur={completeFigur ?? undefined}
+        region={completeRegion}
         sieger={completeSieger ?? undefined}
         onDone={() => router.replace("/")}
       />
@@ -781,7 +842,7 @@ export function SessionRunner() {
       <div aria-busy="true" className="mx-auto max-w-md px-5 pt-5">
         <div className="flex items-center justify-between">
           <Skeleton pulse className="h-8 w-24" />
-          <Skeleton pulse className="h-8 w-8 rounded-full" />
+          <Skeleton pulse className="h-8 w-8 rounded-pill" />
         </div>
         <Skeleton pulse className="mt-6 h-7 w-2/3" />
         <Skeleton pulse className="mt-4 h-64 w-full" />
@@ -793,10 +854,10 @@ export function SessionRunner() {
     return (
       <>
         <div className="pt-10 text-center">
-          <p className="font-mono text-xs uppercase tracking-widest text-accent-2">
+          <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
             Gleich geht&apos;s los
           </p>
-          <h1 className="mt-1 font-display text-2xl italic tracking-tight text-fg">
+          <h1 className="mt-1 font-display font-bold text-2xl text-fg">
             {todaySession?.name ?? "Deine Einheit"}
           </h1>
         </div>
@@ -837,6 +898,7 @@ export function SessionRunner() {
     return (
       <FinishFlow
         state={st}
+        allLib={allLib}
         saving={saving}
         onBack={() => patch((s) => ({ ...s, phase: "exercise" }))}
         onSave={(b, n) => void doSave(b, n)}
@@ -848,27 +910,11 @@ export function SessionRunner() {
   const item = items[st.currentIndex];
   const baseEx = item ? byId.get(item.exerciseId) : undefined;
   if (!item || !baseEx) return null;
-  const ex = {
-    ...baseEx,
-    sets: item.sets,
-    repLow: item.repLow,
-    repHigh: item.repHigh,
-  };
+  const ex = itemExercise(baseEx, item);
   const sets = st.entries[item.id] ?? [];
   // Ohne Historie liefert die Startgewichts-Engine den Anker — presc macht
-  // daraus Vorschlag, Ghost und Ein-Tap-Commit.
-  const startW = curLp
-    ? undefined
-    : ex.weighted
-      ? startWeight(ex, profile, { step: settings.weightStep })?.w
-      : undefined;
-  const p = presc(ex, curLp, {
-    lighter,
-    loadMult: scale.loadMult,
-    cap: scale.cap,
-    step: settings.weightStep,
-    startW,
-  });
+  // daraus Vorschlag, Platzhalter und Ein-Tap-Eintrag.
+  const p = prescForItem(ex, prescCtx, curLp);
   const isExam = st.session.variant === "exam";
 
   // Live-Phasenband für den Kopf: belichtet sich Kader für Kader.
@@ -892,46 +938,41 @@ export function SessionRunner() {
     : undefined;
   const restEx = restItem ? byId.get(restItem.exerciseId) : undefined;
 
+  const restMark = restEx ? REGION_VAR[regionOf(restEx)] : "var(--fg)";
+
   return (
-    // Solange das Pausen-Dock unten steht, bekommt der Inhalt Auslauf, damit
-    // Logbuch und Weiter-Knopf nicht darunter verschwinden. Der Wert wird
-    // GEMESSEN (RestPanel meldet seine Höhe): ein fester Abstand lag daneben,
-    // sobald das Dock durch RIR-Regler oder eine ATLAS-Zeile wuchs — dann
-    // verdeckte es die Satzliste, und man sah nicht mehr, wie viele Sätze
-    // noch offen sind.
+    <DockSlotContext.Provider value={rest ? null : slotEl}>
+    {/* Der Inhalt bekommt so viel Auslauf, wie das Dock GEMESSEN hoch ist —
+        ein fester Abstand lag daneben, sobald das Dock wuchs (Bewertung,
+        „Als Nächstes“), und verdeckte dann die Satzliste. */}
     <div
+      data-testid="session-root"
       className="space-y-3"
       style={dockH > 0 ? { paddingBottom: dockH + 12 } : undefined}
+      onFocus={(e) => {
+        if (istFeld(e.target)) setTippt(true);
+      }}
+      onBlur={(e) => {
+        if (istFeld(e.target)) setTippt(false);
+      }}
     >
       <div ref={sentinelRef} aria-hidden className="-mb-3 h-px" />
       {/* Der Kopf haftet beim Scrollen: Full-bleed über -mx-5 (AppShell wrappt
-          in px-5), z-20 unter Pausen-Dock (30) und Sheets (50). */}
+          in px-5), z-20 unter dem Dock (30) und Sheets (50). */}
       <div
         className={cn(
-          "sticky top-0 z-20 -mx-5 px-5 pb-2",
-          condensed && "glass border-b border-line",
+          "sticky top-0 z-20 -mx-5 bg-surface-0 px-5 pb-2",
+          condensed && "border-b border-line",
         )}
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
       >
         <ProgressHeader
           gruppen={headerGruppen}
-          plattenNr={plattenNummer(log)}
           currentIndex={st.currentIndex}
           remainMin={remainMin}
           onExit={() => setExitOpen(true)}
           onOverview={() => setOverviewOpen(true)}
         />
-      </div>
-
-      <div className="px-1">
-        <p className="truncate font-mono text-3xs font-medium uppercase tracking-gesperrt text-muted">
-          {/* Der Fokus steckt oft schon im Namen („Ganzkörper · Brust & Rücken") —
-              dann nicht doppelt anhängen. */}
-          {st.session.name}
-          {st.session.focus && !st.session.name.includes(st.session.focus)
-            ? ` · ${st.session.focus}`
-            : ""}
-        </p>
       </div>
 
       <SpotifyNowPlaying />
@@ -940,8 +981,6 @@ export function SessionRunner() {
         key={item.id}
         ex={ex}
         item={item}
-        index={st.currentIndex}
-        total={items.length}
         sets={sets}
         presc={p}
         lastPerf={curLp}
@@ -951,6 +990,7 @@ export function SessionRunner() {
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
         weightStep={settings.weightStep ?? 2.5}
+        zoetropOn={settings.zoetrope !== false}
         onOpenGuide={() => setGuideOpen(true)}
         onSwap={
           !isExam && ex.pattern !== "cardio" && stagePool.some((e) => e.id !== ex.id)
@@ -995,52 +1035,65 @@ export function SessionRunner() {
       />
 
       <div className="flex items-center gap-2 pt-1">
-        <Pressable
+        <Button
+          variant="secondary"
           onClick={goPrev}
           disabled={st.currentIndex === 0}
           aria-label="Vorherige Übung"
-          className="flex shrink-0 items-center justify-center rounded-card bg-surface-2 px-4 py-3.5 text-fg focus:outline-none disabled:opacity-30"
+          className="shrink-0 px-4"
         >
-          <ChevronLeft size={18} />
-        </Pressable>
-        <Pressable
-          onClick={goNext}
-          className="flex flex-1 items-center justify-center gap-2 rounded-card bg-strong py-3.5 text-sm font-semibold text-on-strong focus:outline-none"
-        >
+          <ChevronLeft size={20} aria-hidden />
+        </Button>
+        <Button variant="secondary" onClick={goNext} className="flex-1">
           {openLeft === 0 ? (
             <>
-              <Flag size={16} /> Zum Abschluss
+              <Flag size={18} aria-hidden /> Zum Abschluss
             </>
           ) : (
             <>
-              Weiter <ChevronRight size={16} strokeWidth={2.5} />
+              Weiter <ChevronRight size={18} strokeWidth={2.5} aria-hidden />
             </>
           )}
-        </Pressable>
+        </Button>
       </div>
 
-      {rest && (
-        <RestPanel
-          onHeight={setDockH}
-          left={rest.left}
-          total={rest.total}
-          set={restSet}
-          timed={restEx?.unit === "Sek"}
-          setNo={
-            restSet
-              ? (st.entries[rest.itemId] ?? [])
-                  .slice(0, rest.setIdx + 1)
-                  .filter((s) => !s.warmup).length
-              : 0
-          }
-          onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
-          onIntensity={(v) =>
-            rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
-          }
-          onAdd={() => setRest((r) => (r ? { ...r, left: r.left + 15 } : r))}
-          onSkip={() => setRest(null)}
-        />
-      )}
+      {/* Das Dock: EIN Wirt unten — Pause ODER „Satz eintragen“ (kommt
+          per Portal aus der Satzkarte). Beim Tippen in ein Feld unsichtbar:
+          die iOS-Tastatur schiebt feste Elemente sonst mitten ins Bild. */}
+      <div ref={dockRef} className={cn("fixed inset-x-0 bottom-0 z-30", tippt && "invisible")}>
+        {rest ? (
+          <RestPanel
+            left={rest.left}
+            total={rest.total}
+            set={restSet}
+            timed={restEx?.unit === "Sek"}
+            setNo={restSet ? workSetNo(st.entries[rest.itemId] ?? [], rest.setIdx) : 0}
+            next={restNext}
+            markVar={restMark}
+            onRir={(v) => rest && setFieldEffort(rest.itemId, rest.setIdx, "rir", v)}
+            onIntensity={(v) =>
+              rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
+            }
+            onAdd={() =>
+              setRest((r) => (r ? { ...r, left: r.left + 15, total: r.total + 15 } : r))
+            }
+            onSub={() =>
+              setRest((r) =>
+                r
+                  ? { ...r, left: Math.max(0, r.left - 15), total: Math.max(15, r.total - 15) }
+                  : r,
+              )
+            }
+            onSkip={() => setRest(null)}
+          />
+        ) : (
+          <div
+            ref={setSlotEl}
+            className="border-t border-line bg-surface-0 px-5 pt-3 empty:hidden"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+          />
+        )}
+      </div>
 
       <OverviewSheet
         open={overviewOpen}
@@ -1081,27 +1134,22 @@ export function SessionRunner() {
               Beenden speichert diese — der Rest wird verworfen.
             </p>
             <div className="flex flex-col gap-2">
-              <Pressable
+              <Button
+                variant="strong"
+                full
                 onClick={() => {
                   setExitOpen(false);
                   patch((s) => ({ ...s, phase: "finish" }));
                 }}
-                className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
               >
                 Zum Abschluss
-              </Pressable>
-              <Pressable
-                onClick={() => setExitOpen(false)}
-                className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
+              </Button>
+              <Button variant="secondary" full onClick={() => setExitOpen(false)}>
                 Weiter trainieren
-              </Pressable>
-              <Pressable
-                onClick={doDiscard}
-                className="rounded-card py-2 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
+              </Button>
+              <Button variant="danger" full onClick={doDiscard}>
                 Ohne Speichern verwerfen
-              </Pressable>
+              </Button>
             </div>
           </>
         ) : (
@@ -1111,22 +1159,17 @@ export function SessionRunner() {
               nichts gespeichert.
             </p>
             <div className="flex flex-col gap-2">
-              <Pressable
-                onClick={doDiscard}
-                className="rounded-card bg-strong py-3 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
-                Studie verlassen
-              </Pressable>
-              <Pressable
-                onClick={() => setExitOpen(false)}
-                className="rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
-              >
+              <Button variant="strong" full onClick={doDiscard}>
+                Training verlassen
+              </Button>
+              <Button variant="secondary" full onClick={() => setExitOpen(false)}>
                 Weiter trainieren
-              </Pressable>
+              </Button>
             </div>
           </>
         )}
       </Sheet>
     </div>
+    </DockSlotContext.Provider>
   );
 }

@@ -21,7 +21,7 @@ const PORT = 3199;
 const BASE = `http://127.0.0.1:${PORT}`;
 const exe = process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium";
 
-const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
   stdio: "ignore",
   env: { ...process.env, PORT: String(PORT) },
 });
@@ -51,6 +51,8 @@ const SEED = {
   benchMigrated: true,
   themeMigratedM72: true,
   splash: "aus",
+  // Ein Ort (nur „Zuhause“) → keine Ortsfrage; die prüft pruefe-ort.mjs.
+  orteM1: true,
 };
 
 /** Seite mit gesetztem Seed öffnen; `route` bedient /api/atlas/session. */
@@ -82,7 +84,7 @@ const zeitKlick = async (pg, min) =>
   });
   await pg.waitForTimeout(2500); // Start-Compose abwarten
   const nachStart = anfragen;
-  for (const min of [30, 45, 60, 75, 90]) {
+  for (const min of [20, 30, 45, 60, 90]) {
     await zeitKlick(pg, min);
     await pg.waitForTimeout(800); // normales Tipptempo
   }
@@ -149,12 +151,12 @@ const zeitKlick = async (pg, min) =>
   await pg.getByText("Bearbeiten", { exact: false }).first().click();
   await pg.getByText("Einheit bearbeiten").waitFor({ timeout: 8000 });
   const ersterName = (
-    await pg.locator(".rounded-card .truncate.text-sm.font-medium").first().textContent()
+    await pg.getByTestId("edit-row-name").first().textContent()
   )?.trim();
   await pg.getByLabel(/tauschen$/).first().click();
-  const picker = pg.locator("div.fixed").filter({ hasText: "Übung wählen" }).last();
+  const picker = pg.locator('[data-sheet="Übung wählen"]').last();
   await picker.waitFor({ timeout: 8000 });
-  const rows = picker.locator("span.text-sm.text-fg");
+  const rows = picker.getByTestId("picker-row-name");
   const ziel =
     (await rows.nth(0).textContent())?.trim() === ersterName ? rows.nth(1) : rows.nth(0);
   const zielName = (await ziel.textContent())?.trim();
@@ -162,14 +164,14 @@ const zeitKlick = async (pg, min) =>
   await pg.waitForTimeout(600);
   await pg.keyboard.press("Escape");
   await pg.waitForTimeout(600);
-  const vorher = (await pg.locator("body").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
+  const vorher = (await pg.getByTestId("heute-bestand").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
   // innerText liefert die per CSS versalisierte Fassung — also ohne Rücksicht
   // auf Groß-/Kleinschreibung prüfen.
   const angepasst = /angepasst/i.test(await pg.locator("body").innerText());
   anfragen = 0;
   await zeitKlick(pg, 20);
   await pg.waitForTimeout(2500);
-  const nachher = (await pg.locator("body").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
+  const nachher = (await pg.getByTestId("heute-bestand").innerText()).match(/(\d+)\s*SÄTZE/i)?.[1];
   pruefe(angepasst, "D · Einheit gilt als bearbeitet");
   pruefe(anfragen === 0, `D · keine ATLAS-Anfrage bei bearbeiteter Einheit (${anfragen})`);
   pruefe(

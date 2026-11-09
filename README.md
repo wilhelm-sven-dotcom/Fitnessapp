@@ -9,7 +9,11 @@ Rücken.
 
 ## Wie die App funktioniert
 
-**Heute (`/`)** — ATLAS stellt jeden Tag eine neue Einheit aus dem gesamten
+**Heute (`/`)** — Zuerst die Frage „Wo trainierst du heute?“ (Zuhause,
+Studio oder eigene Orte, jeweils mit eigener Geräteliste), danach stellt
+ATLAS die Einheit aus genau den Übungen zusammen, die der Ort hergibt. Der Ort
+ist oben jederzeit umschaltbar; eine unberührte Einheit wird dann neu
+zusammengestellt. ATLAS stellt jeden Tag eine neue Einheit aus dem gesamten
 Katalog zusammen: bedarfsgerecht (Wochen-Volumen-Defizit + Tage seit letztem
 Reiz je Muskel), abwechslungsreich (am längsten nicht verwendete Übung je
 Muster) und passend zum Zeitbudget. Keine festen Pläne, keine Vorlagen. Die
@@ -34,7 +38,7 @@ seinen eigenen Moment samt teilbarem Poster.
 persistiertem Verlauf — Antworten rendern strukturiert
 (Beobachtung/Einschätzung/Plan).
 
-**Katalog (`/uebungen`)** — 114 Übungen mit deutschem Voll-Content (Ausführung, Rücken-Hinweis, leichtere Variante,
+**Katalog (`/uebungen`)** — 115 Übungen mit deutschem Voll-Content (Ausführung, Rücken-Hinweis, leichtere Variante,
 Phasenfigur-Piktogramm), filterbar nach Muster, Muskel und vorhandenen
 Geräten. Eigene Übungen sind erstklassig: voller Editor (Muskeln, Equipment,
 Schema, Cues) — sie fließen automatisch in Pools, Wochenvolumen und ATLAS'
@@ -66,7 +70,8 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 „Platte 311" — fotografisches Systemdesign: helles Albumin-Papier
 („Archiv") und Kollodium-Dunkelkammer („Atelier"), Siegellack-Akzent,
 Cyanotypie und Messing, Old Standard TT (Kursive) + IBM Plex Mono (trägt
-den Body), Radius 3/2/1 px, null Schatten, „Filmtransport"-Motion (harte
+den Body), weiche Ecken (Karten 14 px, Bedienelemente als Pille), null
+Schatten, „Filmtransport"-Motion (harte
 Rucks, Kreide-Blitz, Zoetrop mit 8 B/s). Das App-Icon ist die Marey-Spur:
 die Referenzfigur dreimal überlagert, Kreide auf Kollodium. Beim Kaltstart
 läuft ein Startbild (Vorgabe „311", dazu zwei Alternativen) — immer dunkel,
@@ -90,6 +95,12 @@ npm run build    # Produktions-Build
 npm run smoke    # End-to-End-Smoke gegen den Build (ohne API-Key = Fallback-Pfade)
 npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
 npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingszeit
+npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
+npm run pruefe            # alle vier Prüfungen nacheinander (gemeinsamer Port 3199)
+npm run fotos -- --klein  # Bildschirmfotos nach .fotos/, mit --klein auch 375 × 667
+npm run messen            # wo Start-, Satz- und ATLAS-Eingabe liegen (JSON)
+npm run kontrast          # WCAG-Kontrast der Farb-Tokens, hell und dunkel
+npm run pruefe:tokens     # Fundstellen alter Token-Namen (Look-Wechsel)
 ```
 
 ## Umgebungsvariablen

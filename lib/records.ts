@@ -1,3 +1,4 @@
+import { fmtGewicht } from "@/lib/format";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import type { Exercise, LoggedSession, SetEntry } from "@/lib/types";
 
@@ -36,7 +37,7 @@ export interface ExRecord {
  * "Neuer Rekord" included). Once any session was weighted, the exercise
  * counts as "weight" for good; weightless sessions of it score 0 and drop out.
  */
-function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
+export function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
   const kinds: Record<string, RecordKind> = {};
   for (const s of log) {
     for (const ex of s.exercises || []) {
@@ -57,7 +58,7 @@ function kindsAcross(log: LoggedSession[]): Record<string, RecordKind> {
 }
 
 /** Best metric (and its label) of one session's working, filled sets. */
-function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label: string } {
+export function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label: string } {
   let best = 0;
   let label = "";
   for (const st of sets) {
@@ -66,7 +67,7 @@ function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label
     const m = kind === "weight" ? oneRm(w, r) : r;
     if (m > best) {
       best = m;
-      label = kind === "weight" ? `${w} × ${r}` : kind === "time" ? `${r} s` : `${r} Wdh`;
+      label = kind === "weight" ? `${fmtGewicht(w)} × ${r}` : kind === "time" ? `${r} s` : `${r} Wdh`;
     }
   }
   return { value: kind === "weight" ? Math.round(best) : best, label };

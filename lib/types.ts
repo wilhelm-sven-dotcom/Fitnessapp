@@ -100,7 +100,8 @@ export interface WorkoutDay {
   createdAt: string;
 }
 
-/** A named equipment preset (gym profile) — e.g. Studio, Zuhause, Reise. */
+/** Ein Trainingsort mit seinen Geräten — z. B. Zuhause, Studio, Reise.
+ *  Die Oberfläche sagt „Ort“, der Code bleibt bei GymProfile. */
 export interface GymProfile {
   id: string;
   name: string;
@@ -152,6 +153,9 @@ export interface LoggedSession {
   note?: string;
   /** Estimated session length at start (minutes). */
   estimatedMin?: number;
+  /** Tatsächliche Dauer in Minuten (Speichern − Start, 1–360). Ältere
+   *  Einheiten haben keine — Anzeigen lassen den Wert dann einfach weg. */
+  durationMin?: number;
   /** Marked as a deload session (reduced load/volume). */
   isDeload?: boolean;
   /** Session was the guided max-strength test day („Die Prüfung"). */
@@ -162,6 +166,8 @@ export interface LoggedSession {
   readiness?: Readiness;
   /** ATLAS-Debrief: three verdict lines, generated at save time (stable). */
   debrief?: string[];
+  /** Trainingsort beim Speichern (Namens-Snapshot, z. B. „Studio“). */
+  ort?: string;
 }
 
 export interface BodyMetric {
@@ -230,8 +236,6 @@ export interface AppSettings {
   /** Lautstärke der Signaltöne (Countdown/Ende) als Multiplikator 0.5–3;
    *  1 = Standard. Lauter stellen, wenn nebenbei Musik läuft. Default 1. */
   cueVolume?: number;
-  /** Pair the last two accessory slots as a superset — saves rest time. */
-  superset?: boolean;
   /** Darstellung: „Archiv" (light, Default) · „Atelier" (dark) · Auto. */
   theme?: "dark" | "light" | "system";
   /** Zoetrop-Animationen der Phasenfiguren (Default an). */
@@ -252,14 +256,16 @@ export interface AppSettings {
   userName?: string;
   /** Set once the first-run welcome screen has been completed. */
   onboarded?: boolean;
-  /** Active gym profile id (equipment preset). */
+  /** Aktiver Trainingsort (GymProfile-Id) — „wo trainierst du heute?“. Seine
+   *  Geräte SIND die Geräteliste der App (lib/orte.ts). */
   activeGymId?: string;
+  /** Einmal-Migration gelaufen: Orte „Zuhause“/„Studio“ angelegt (lib/orte.ts).
+   *  Danach kommt ein gelöschtes Studio nicht wieder. */
+  orteM1?: boolean;
   /** Smallest available weight increment — suggestions snap to it (default 2.5). */
   weightStep?: number;
   /** Warm up with an easy bike spin before every session. */
   bikeWarmup?: boolean;
-  /** Append a short Peloton finisher to the A/B/C templates. */
-  cardioFinisher?: boolean;
   /** Show short motivational coach lines between sets during a workout (default on). */
   coachMotivation?: boolean;
   /** Keep the screen awake while a session is running (Screen Wake Lock, default on). */

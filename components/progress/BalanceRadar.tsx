@@ -8,7 +8,7 @@ const SIZE = 220;
 const C = SIZE / 2;
 const R = 92; // Netz füllt die viewBox — Labels sitzen bei R+12
 const GRID = "var(--line)";
-const GREEN = "var(--gruen)"; // Fortschritts-Grün, theme-korrekt in hell & dunkel
+const GREEN = "var(--erfolg)"; // Fortschritts-Grün, theme-korrekt in hell & dunkel
 
 /** Zahl ohne unnötige Dezimale, de-DE (7.5 → „7,5", 3 → „3"). */
 const fmt = (n: number) =>

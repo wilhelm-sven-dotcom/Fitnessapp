@@ -56,9 +56,9 @@ export function OverviewSheet({
                 onClose();
               }}
               className={cn(
-                "flex w-full items-center gap-2 rounded-card border px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink",
+                "flex w-full items-center gap-2 rounded-card border px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                 isCurrent
-                  ? "border-accent-sessions bg-surface-2"
+                  ? "border-accent bg-surface-2"
                   : "border-line bg-surface-1",
               )}
             >
@@ -98,7 +98,7 @@ export function OverviewSheet({
           onClose();
           onEdit();
         }}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card bg-surface-2 py-3 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
         <Pencil size={14} /> Einheit umbauen
       </Pressable>

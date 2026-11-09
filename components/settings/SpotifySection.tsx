@@ -1,12 +1,14 @@
 "use client";
 
 import { LogOut, Music } from "lucide-react";
-import { Pressable } from "@/components/ui/pressable";
+import { Button } from "@/components/ui/Button";
+import { Kicker } from "@/components/ui/Kicker";
+import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { authorizeUrl, challengeFor, randomVerifier } from "@/lib/spotify";
 
 export function SpotifySection() {
-  const { spotify } = useTraining();
+  const { spotify, settings, setDuckSpotify } = useTraining();
   const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
   const configured = spotify.configured;
   const connected = configured && !!spotify.auth;
@@ -32,9 +34,9 @@ export function SpotifySection() {
 
   return (
     <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
-      <p className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted">
-        <Music size={13} /> Spotify
-      </p>
+      <Kicker as="h2" className="mb-3">
+        Spotify
+      </Kicker>
 
       {!configured ? (
         <p className="text-xs leading-relaxed text-muted">
@@ -46,18 +48,19 @@ export function SpotifySection() {
           Training. Ein Server-Secret ist nicht nötig (PKCE).
         </p>
       ) : connected ? (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-fg">
-            <Music size={16} className="shrink-0 text-accent-volume" />
-            <span className="min-w-0 truncate">Verbunden — Steuerung im Training aktiv.</span>
-          </div>
-          <Pressable
-            onClick={() => void spotify.disconnect()}
-            aria-label="Spotify trennen"
-            className="flex items-center justify-center gap-2 rounded-card bg-surface-2 px-3 py-2.5 text-sm text-muted focus:outline-none"
-          >
-            <LogOut size={15} /> Trennen
-          </Pressable>
+        <div className="space-y-4">
+          <p className="text-sm text-fg">Verbunden — Steuerung im Training aktiv.</p>
+          {/* Gehört zu Spotify, nicht zum Gym-Modus: ohne Verbindung gibt es
+              nichts abzusenken. */}
+          <Toggle
+            checked={settings.duckSpotify !== false}
+            onChange={setDuckSpotify}
+            label="Musik leiser bei Countdown"
+            hint="Senkt Spotify in den letzten Sekunden kurz ab und stellt danach zurück — braucht Premium und ein aktives Gerät."
+          />
+          <Button variant="secondary" onClick={() => void spotify.disconnect()} aria-label="Spotify trennen">
+            <LogOut size={16} aria-hidden /> Trennen
+          </Button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -66,12 +69,9 @@ export function SpotifySection() {
             Play/Pause/Skip). Steuern braucht Spotify Premium; der aktuelle Titel wird auch ohne
             angezeigt.
           </p>
-          <Pressable
-            onClick={() => void connect()}
-            className="flex w-full items-center justify-center gap-2 rounded-card bg-strong py-2.5 text-sm font-medium text-on-strong focus:outline-none"
-          >
-            <Music size={16} /> Mit Spotify verbinden
-          </Pressable>
+          <Button variant="strong" full onClick={() => void connect()}>
+            <Music size={16} aria-hidden /> Mit Spotify verbinden
+          </Button>
         </div>
       )}
     </section>

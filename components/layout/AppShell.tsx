@@ -2,8 +2,10 @@
 
 import { Cloud, CloudOff, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useCallback, useRef, useState } from "react";
+import { NavSlotContext } from "./NavSlot";
 import { PressableLink } from "@/components/ui/PressableLink";
-import { LiftMark } from "@/components/brand/LiftMark";
+import { Marke } from "@/components/brand/Marke";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -21,6 +23,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useWakeLock(settings.keepAwake !== false);
 
   const hideChrome = pathname?.startsWith("/workout") || false;
+
+  // Tab-Leiste + Platz darüber sind fest unten; der Inhalt bekommt GEMESSEN
+  // so viel Auslauf (feste Abstände zu festen Docks sind verboten).
+  const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
+  const [navH, setNavH] = useState(0);
+  const navObs = useRef<ResizeObserver | null>(null);
+  const navRef = useCallback((el: HTMLElement | null) => {
+    navObs.current?.disconnect();
+    navObs.current = null;
+    if (!el) {
+      setNavH(0);
+      return;
+    }
+    const melde = () => setNavH(Math.round(el.getBoundingClientRect().height));
+    melde();
+    const ro = new ResizeObserver(melde);
+    ro.observe(el);
+    navObs.current = ro;
+  }, []);
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
 
@@ -52,10 +73,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2 text-fg">
-                  <LiftMark size={17} />
-                  <span className="font-mono text-2xs font-semibold uppercase tracking-gesperrt-3">
-                    Platte 311
-                  </span>
+                  <Marke size={24} />
+                  <span className="font-display text-lg font-extrabold">Platte 311</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {cloud.configured &&
@@ -63,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <PressableLink
                         href="/settings?seg=verbindungen"
                         aria-label="Cloud-Sync aktiv"
-                        className="flex h-11 w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="flex h-11 w-11 items-center justify-center rounded-pill focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                         style={{ color: "var(--accent-ink)" }}
                       >
                         <Cloud size={20} />
@@ -72,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <PressableLink
                         href="/settings?seg=verbindungen"
                         aria-label="Anmelden für Cloud-Sync"
-                        className="flex h-11 w-11 items-center justify-center rounded-full text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                        className="flex h-11 w-11 items-center justify-center rounded-pill text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                       >
                         <CloudOff size={20} />
                       </PressableLink>
@@ -80,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <PressableLink
                     href="/settings"
                     aria-label="Einstellungen"
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-ink"
+                    className="flex h-11 w-11 items-center justify-center rounded-pill text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                   >
                     <Settings size={20} />
                   </PressableLink>
@@ -88,10 +107,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </header>
           )}
-          <div className="mx-auto max-w-md px-5 pb-28 pt-5">
-            <PageTransition>{children}</PageTransition>
-          </div>
-          {!hideChrome && <BottomNav />}
+          <NavSlotContext.Provider value={hideChrome ? null : navSlot}>
+            <div
+              className="mx-auto max-w-md px-5 pb-28 pt-5"
+              style={
+                !hideChrome && navH > 0
+                  ? ({ paddingBottom: navH + 24, "--nav-h": `${navH}px` } as React.CSSProperties)
+                  : undefined
+              }
+            >
+              <PageTransition>{children}</PageTransition>
+            </div>
+          </NavSlotContext.Provider>
+          {!hideChrome && <BottomNav navRef={navRef} slotRef={setNavSlot} />}
         </div>
       )}
     </>

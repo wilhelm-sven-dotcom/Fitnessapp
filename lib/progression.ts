@@ -4,13 +4,9 @@ import type {
   LastPerf,
   Prescription,
   PrescReason,
-  ResolvedSlot,
   SetEntry,
-  Template,
-  WorkoutDay,
 } from "@/lib/types";
-import { pickPreferred } from "@/lib/affinity";
-import { fmtKg } from "@/lib/format";
+import { fmtGewicht } from "@/lib/format";
 
 /** Round a weight suggestion to the nearest 2.5 kg step. */
 export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
@@ -79,188 +75,6 @@ export function stressesInjury(ex: Exercise, injury: InjuryArea): boolean {
     default:
       return false;
   }
-}
-
-export function resolveSession(
-  tpl: Template,
-  sessIdx: number,
-  choices: Record<string, string>,
-  has: (k: string) => boolean,
-  allLib: Exercise[],
-  opts: { backSafe?: boolean; injuries?: InjuryArea[]; affinity?: Map<string, number> } = {},
-): ResolvedSlot[] {
-  const backSafe = opts.backSafe ?? false;
-  const injuries = opts.injuries ?? [];
-  const affinity = opts.affinity;
-  return tpl.slots
-    .map((pat, slotIdx): ResolvedSlot | null => {
-      const pool = poolFor(pat, has, allLib);
-      if (!pool.length) return null;
-      const slotKey = tpl.key + ":" + slotIdx;
-      const explicit = choices[slotKey]
-        ? pool.find((e) => e.id === choices[slotKey])
-        : undefined;
-      let ex =
-        explicit ||
-        (affinity
-          ? pickPreferred(pool, affinity, sessIdx + slotIdx)
-          : pool[(sessIdx + slotIdx) % pool.length]);
-
-      // Back-safe adaptation (after a red back signal) — only when the user
-      // has not explicitly chosen this slot, so manual swaps always win.
-      if (backSafe && !explicit) {
-        if (pat === "core") {
-          const stabs = pool.filter((e) => e.backStabilizer);
-          if (stabs.length) ex = stabs[(sessIdx + slotIdx) % stabs.length];
-        } else if (pat === "hinge" || pat === "squat") {
-          if (ex.backCaution || HEAVY_HINGE.has(ex.id)) {
-            const gentle = pool.filter(
-              (e) => !e.backCaution && !HEAVY_HINGE.has(e.id),
-            );
-            if (gentle.length) ex = gentle[(sessIdx + slotIdx) % gentle.length];
-          }
-        }
-      }
-
-      // Persistent profile-injury sparing: prefer a same-pattern option that
-      // doesn't load an injured area (again, manual choices always win).
-      if (injuries.length && !explicit) {
-        const stressed = (e: Exercise) => injuries.some((inj) => stressesInjury(e, inj));
-        if (stressed(ex)) {
-          const safe = pool.filter((e) => !stressed(e));
-          if (safe.length) ex = safe[(sessIdx + slotIdx) % safe.length];
-        }
-      }
-      return { ex, slotKey, pool };
-    })
-    .filter((s): s is ResolvedSlot => s !== null);
-}
-
-/**
- * The single best same-pattern alternative for a slot — the "ideal replacement"
- * shown when the user removes an exercise. Reuses the session engine's ranking:
- * an equipment-filtered pool (minus `excludeIds`, e.g. the removed exercise and
- * the others already in the day so we never suggest a duplicate), learned
- * affinity, then the back-safe and injury-sparing overrides. Returns `null` when
- * nothing else fits the pattern + equipment.
- */
-export function bestAlternativeForPattern(
-  pattern: string,
-  has: (k: string) => boolean,
-  allLib: Exercise[],
-  opts: {
-    excludeIds?: string[];
-    affinity?: Map<string, number>;
-    backSafe?: boolean;
-    injuries?: InjuryArea[];
-    seed?: number;
-  } = {},
-): Exercise | null {
-  const exclude = new Set(opts.excludeIds ?? []);
-  const pool = poolFor(pattern, has, allLib).filter((e) => !exclude.has(e.id));
-  if (!pool.length) return null;
-  const seed = opts.seed ?? 0;
-  const rot = ((seed % pool.length) + pool.length) % pool.length;
-  let ex = opts.affinity ? pickPreferred(pool, opts.affinity, seed) : pool[rot];
-
-  if (opts.backSafe) {
-    if (pattern === "core") {
-      const stabs = pool.filter((e) => e.backStabilizer);
-      if (stabs.length) ex = stabs[seed % stabs.length];
-    } else if (pattern === "hinge" || pattern === "squat") {
-      if (ex.backCaution || HEAVY_HINGE.has(ex.id)) {
-        const gentle = pool.filter((e) => !e.backCaution && !HEAVY_HINGE.has(e.id));
-        if (gentle.length) ex = gentle[seed % gentle.length];
-      }
-    }
-  }
-  const injuries = opts.injuries ?? [];
-  if (injuries.length) {
-    const stressed = (e: Exercise) => injuries.some((inj) => stressesInjury(e, inj));
-    if (stressed(ex)) {
-      const safe = pool.filter((e) => !stressed(e));
-      if (safe.length) ex = safe[seed % safe.length];
-    }
-  }
-  return ex;
-}
-
-/**
- * Wendet die explizite Nutzer-Wahl für einen Slot an (aus `choices[slotKey]`).
- * Der Pool ist bereits `reqOk`/musterrein gefiltert — eine Wahl, deren Equipment
- * weggefallen ist, degradiert still zur Slot-Vorgabe (tote Keys crashen nie).
- * Die Slot-Satzzahl (KI-Plan / Tages-Override) bleibt erhalten, damit „manuelle
- * Wahl gewinnt" in ALLEN Auflösungspfaden gilt — nicht nur in `resolveSession`.
- */
-export function applyChoice(
-  slot: ResolvedSlot,
-  choices: Record<string, string>,
-): ResolvedSlot {
-  const id = choices[slot.slotKey];
-  if (!id || id === slot.ex.id) return slot;
-  const chosen = slot.pool.find((e) => e.id === id);
-  return chosen ? { ...slot, ex: { ...chosen, sets: slot.ex.sets } } : slot;
-}
-
-/**
- * Resolve a user-built day into ResolvedSlot[]. A per-exercise scheme override
- * becomes a cloned Exercise (so presc / estimateSessionMin read it automatically);
- * items whose exercise no longer exists are skipped. `pool` is the same-pattern,
- * equipment-filtered swap pool for in-workout swaps. `choices` overlays explicit
- * in-workout swaps (slotKey `day:<id>:<i>`).
- */
-export function resolveDay(
-  day: WorkoutDay,
-  allLib: Exercise[],
-  has: (k: string) => boolean,
-  choices: Record<string, string> = {},
-): ResolvedSlot[] {
-  const byId = new Map(allLib.map((e) => [e.id, e]));
-  return day.items
-    .map((it, i): ResolvedSlot | null => {
-      const base = byId.get(it.exerciseId);
-      if (!base) return null;
-      const ex: Exercise = {
-        ...base,
-        sets: it.sets ?? base.sets,
-        repLow: it.repLow ?? base.repLow,
-        repHigh: it.repHigh ?? base.repHigh,
-      };
-      return applyChoice(
-        {
-          ex,
-          slotKey: "day:" + day.id + ":" + i,
-          pool: poolFor(base.pattern, has, allLib),
-        },
-        choices,
-      );
-    })
-    .filter((s): s is ResolvedSlot => s !== null);
-}
-
-/**
- * „Rücken-Reset": kuratierte, gewichtsfreie Stabi-Einheit — feste Reihenfolge
- * statt Muster-Rotation. Basis braucht KEIN Equipment; ein Zug-Muster wird
- * eingefügt, wenn Band/Ringe/Stange da sind (Druck ohne Zug bliebe einseitig).
- */
-export function resolveResetSession(
-  has: (k: string) => boolean,
-  allLib: Exercise[],
-  choices: Record<string, string> = {},
-): ResolvedSlot[] {
-  const byId = new Map(allLib.map((e) => [e.id, e]));
-  const pullId = has("bands") ? "band_row" : has("rings") ? "ringrow" : has("pullup") ? "pullup" : null;
-  const ids = ["birddog", "pushup", ...(pullId ? [pullId] : []), "deadbug", "squat_bw", "sideplank", "gb_march"];
-  return ids
-    .map((id, i): ResolvedSlot | null => {
-      const ex = byId.get(id);
-      if (!ex || !reqOk(ex, has)) return null;
-      return applyChoice(
-        { ex, slotKey: `reset:${i}`, pool: poolFor(ex.pattern, has, allLib) },
-        choices,
-      );
-    })
-    .filter((s): s is ResolvedSlot => s !== null);
 }
 
 interface RirResult {
@@ -381,7 +195,7 @@ export function presc(
           r: String(r),
           suggestedWeight: w,
           reason: "start",
-          line: `Heute: ${ex.sets} × ${ex.repLow}–${ex.repHigh} · Vorschlag ${fmtKg(w)} kg — Startgewicht, 2–3 Wdh im Tank`,
+          line: `Heute: ${ex.sets} × ${ex.repLow}–${ex.repHigh} · Vorschlag ${fmtGewicht(w)} kg — Startgewicht, 2–3 Wdh im Tank`,
         };
       }
     }
@@ -415,7 +229,7 @@ export function presc(
         r: String(ex.repLow),
         suggestedWeight: lastW ? w : undefined,
         reason: "lighter",
-        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW ? w : "?"} kg`,
+        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW ? fmtGewicht(w) : "?"} kg`,
       };
     }
     return {
@@ -454,7 +268,7 @@ export function presc(
         r: String(r),
         suggestedWeight: w,
         reason: adj.reason,
-        line: `Heute: ${ex.sets} × ${r} @ ${w} kg${note}`,
+        line: `Heute: ${ex.sets} × ${r} @ ${fmtGewicht(w)} kg${note}`,
       };
     }
     const r = repOf(adj.repTarget);
@@ -496,7 +310,7 @@ export function presc(
         r: String(r),
         suggestedWeight: w,
         reason: "up",
-        line: `Heute: ${ex.sets} × ${r} @ ${w} kg${opts.cap ? "" : " — hoch!"}`,
+        line: `Heute: ${ex.sets} × ${r} @ ${fmtGewicht(w)} kg${opts.cap ? "" : " — hoch!"}`,
       };
     }
     const tr = repOf(Math.min(ex.repHigh, maxReps + 1));
@@ -506,7 +320,7 @@ export function presc(
       r: String(tr),
       suggestedWeight: lastW ? w : undefined,
       reason: "rep",
-      line: `Heute: ${ex.sets} × ${tr} @ ${lastW ? w : "?"} kg`,
+      line: `Heute: ${ex.sets} × ${tr} @ ${lastW ? fmtGewicht(w) : "?"} kg`,
     };
   }
   const tr = opts.cap

@@ -1,43 +1,61 @@
 import type { PhasenFigurDef, PhasenPrimitive } from "@/lib/phasen/figuren";
+import type { Region } from "@/lib/phasen/band";
+import type { RecordKind } from "@/lib/records";
+import {
+  GRUND_DUNKEL,
+  KARTE_DUNKEL,
+  NEBEN_DUNKEL,
+  SCHEIBE,
+  TINTE_DUNKEL,
+  TINTE_HELL,
+} from "@/lib/grundfarben";
 
 /**
- * Share-Poster „Platte 311" — die Cyanotypie (Poster.dc): 1080 × 1350 (4:5),
- * kompletter Blaudruck mit FESTEN Farben (modusunabhängig — ein physischer
- * Abzug kennt kein Theme, deshalb kein getComputedStyle für Farben):
- * Grund Blaupause #1F5C86, Figur/Raster/Schrift Kreide #F4F9FC,
- * Plattennummer Messing #D4A649. Die Phasenfigur wird direkt aus den
- * Primitiven auf den Canvas gezeichnet (Endphase). Schriften kommen aus den
- * next/font-Variablen (document.fonts.load, System-Fallback zeichnet
- * trotzdem); Zahlen de-DE; rounded-rect unnötig — das Poster ist randlos.
+ * Teilen-Poster im Look „Regionen“: 1080 × 1350 (4:5), immer auf warmem
+ * Dunkel (ein Bild kennt keinen App-Modus, deshalb feste Farben aus
+ * `lib/grundfarben.ts`). In der Mitte eine Karte in der Regionsfarbe der
+ * Übung mit der Figur (Endphase), darunter der gehobene Satz groß und — bei
+ * Gewichtsrekorden — das geschätzte 1RM beschriftet darunter, nie als nackte
+ * Zahl. Schriften aus den next/font-Variablen (document.fonts.load; der
+ * System-Fallback zeichnet trotzdem); Zahlen de-DE.
  */
 
 export interface ShareCardData {
   kind: "maximum" | "studie";
-  /** Plattennummer fürs Messing-Schild („PLATTE Nr. 132"). */
+  /** Laufende Nummer der Einheit („Einheit 132“). */
   plattenNr: number;
   dateISO: string;
   /** Figur der Übung (maximum) bzw. der Hauptübung (studie). */
   figur?: PhasenFigurDef;
-  /** maximum: Übungsname + Bestwert. */
+  /** Region der Übung → Farbe der Karte. */
+  region?: Region;
+  /** maximum: Übungsname, Kennzahl, Art, gehobener Satz, Sprung. */
   exName?: string;
   wert?: number;
   einheit?: string;
-  /** studie: Studien-Titel + Kennzahlen. */
+  rekordArt?: RecordKind;
+  satz?: string;
+  delta?: number;
+  prevNr?: number;
+  /** studie: Titel und Kennzahlen. */
   titel?: string;
   kaderZahl?: number;
   tonnage?: number;
-  /** Körpermasse fürs Fußzeilen-Etikett („82,4 KG KM"), optional. */
+  dauerMin?: number;
+  /** Körpergewicht für die Fußzeile, optional. */
   koerperKg?: number;
 }
 
 const W = 1080;
 const H = 1350;
-/** Referenzlayout 400×500 (Poster.dc) → Export-Skala. */
-const S = W / 400;
 
-const BLAUPAUSE = "#1f5c86";
-const KREIDE = "#f4f9fc";
-const MESSING = "#d4a649";
+const KARTE: Record<Region, { flaeche: string; schrift: string }> = {
+  unterkoerper: { flaeche: SCHEIBE.rot, schrift: "#ffffff" },
+  push: { flaeche: SCHEIBE.blau, schrift: "#ffffff" },
+  pull: { flaeche: SCHEIBE.gelb, schrift: TINTE_HELL },
+  core: { flaeche: SCHEIBE.gruen, schrift: "#ffffff" },
+  cardio: { flaeche: KARTE_DUNKEL, schrift: TINTE_DUNKEL },
+};
 
 function cssVar(name: string, fallback: string): string {
   if (typeof document === "undefined") return fallback;
@@ -46,7 +64,7 @@ function cssVar(name: string, fallback: string): string {
 }
 
 const fmtDe = (n: number, digits = 1) =>
-  n.toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  n.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: digits });
 
 /** Endphase einer Phasenfigur direkt auf den Canvas (Primitive → Striche). */
 function drawFigur(
@@ -111,17 +129,74 @@ function drawFigur(
   ctx.restore();
 }
 
-export async function renderShareCard(data: ShareCardData): Promise<Blob> {
-  const display = cssVar("--font-oldstandard", "'Old Standard TT', Georgia, serif");
-  const mono = cssVar("--font-plexmono", "'IBM Plex Mono', ui-monospace, monospace");
+/** Das Zeichen (Scheiben auf der Stange) klein in die Kopfzeile. */
+function drawMarke(ctx: CanvasRenderingContext2D, x: number, y: number, groesse: number) {
+  const s = groesse / 48;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.lineCap = "round";
+  const strich = (x1: number, y1: number, x2: number, y2: number, w: number, farbe: string) => {
+    ctx.strokeStyle = farbe;
+    ctx.lineWidth = w * s;
+    ctx.beginPath();
+    ctx.moveTo(x1 * s, y1 * s);
+    ctx.lineTo(x2 * s, y2 * s);
+    ctx.stroke();
+  };
+  strich(6.5, 24, 41.5, 24, 2.6, TINTE_DUNKEL);
+  strich(13.5, 18.5, 13.5, 29.5, 2.6, TINTE_DUNKEL);
+  (
+    [
+      [18.5, 13, 5.2, SCHEIBE.rot],
+      [24.6, 11, 5.2, SCHEIBE.blau],
+      [30.4, 8.8, 4.6, SCHEIBE.gelb],
+      [35.6, 6.4, 4.2, SCHEIBE.gruen],
+    ] as const
+  ).forEach(([sx, h, w, f]) => strich(sx, 24 - h, sx, 24 + h, w, f));
+  ctx.restore();
+}
 
-  // Schriften anwärmen (best effort) — load() akzeptiert die Familien-Stacks.
+/** Text auf höchstens zwei Zeilen umbrechen; Schrift wird kleiner, bis es passt. */
+function zweiZeilen(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxBreite: number,
+  font: (px: number) => string,
+  start: number,
+  min: number,
+): { zeilen: string[]; px: number } {
+  for (let px = start; px >= min; px -= 4) {
+    ctx.font = font(px);
+    const woerter = text.split(/\s+/);
+    const zeilen: string[] = [];
+    let akt = "";
+    for (const w of woerter) {
+      const probe = akt ? `${akt} ${w}` : w;
+      if (ctx.measureText(probe).width <= maxBreite) akt = probe;
+      else {
+        if (akt) zeilen.push(akt);
+        akt = w;
+      }
+    }
+    if (akt) zeilen.push(akt);
+    if (zeilen.length <= 2 && zeilen.every((z) => ctx.measureText(z).width <= maxBreite))
+      return { zeilen, px };
+  }
+  ctx.font = font(min);
+  return { zeilen: [text], px: min };
+}
+
+export async function renderShareCard(data: ShareCardData): Promise<Blob> {
+  const display = cssVar("--font-display", "Archivo, system-ui, sans-serif");
+  const body = cssVar("--font-body", "Archivo, system-ui, sans-serif");
+
+  // Schriften anwärmen (best effort).
   if (typeof document !== "undefined" && document.fonts?.load) {
     try {
       await Promise.all([
-        document.fonts.load(`italic 400 92px ${display}`),
-        document.fonts.load(`700 151px ${mono}`),
-        document.fonts.load(`600 30px ${mono}`),
+        document.fonts.load(`800 120px ${display}`),
+        document.fonts.load(`600 32px ${body}`),
+        document.fonts.load(`500 36px ${body}`),
       ]);
     } catch {
       /* Systemfallback zeichnet trotzdem */
@@ -133,128 +208,132 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("no canvas");
-
-  // Blaudruck-Grund + Kreide-Raster (0,5 px alle 40 im Referenzmaß).
-  ctx.fillStyle = BLAUPAUSE;
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = "rgba(244, 249, 252, 0.22)";
-  ctx.lineWidth = 0.5 * S;
-  for (let x = 40 * S; x < W; x += 40 * S) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, H);
-    ctx.stroke();
-  }
-  for (let y = 40 * S; y < H; y += 40 * S) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
-
-  const padX = 22 * S;
-  ctx.textBaseline = "alphabetic";
-
-  // Kopfzeile: PLATTE 311 | CYANOTYPIE (gesperrt via manuellem Spacing
-  // unnötig — Canvas kennt letterSpacing als ctx-Property in neuen Browsern,
-  // Fallback: einfach setzen, sonst normal zeichnen).
-  const setSpacing = (em: number, px: number) => {
+  // Die breite Schnittbreite der Titelschrift (wo der Browser sie kennt).
+  const breit = (on: boolean) => {
     try {
-      (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing =
-        `${Math.round(em * px)}px`;
+      (ctx as CanvasRenderingContext2D & { fontStretch?: string }).fontStretch = on
+        ? "expanded"
+        : "normal";
+    } catch {
+      /* ältere Engines: normale Breite */
+    }
+  };
+  const sperren = (px: number) => {
+    try {
+      (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${px}px`;
     } catch {
       /* ältere Engines: ohne Sperrung */
     }
   };
-  ctx.fillStyle = "rgba(244, 249, 252, 0.85)";
-  ctx.font = `600 ${9 * S}px ${mono}`;
-  setSpacing(0.24, 9 * S);
-  ctx.textAlign = "left";
-  ctx.fillText("PLATTE 311", padX, 26 * S + 9 * S);
-  ctx.textAlign = "right";
-  ctx.fillText("CYANOTYPIE", W - padX, 26 * S + 9 * S);
 
-  // Tafel-Kicker + Messlinie.
-  ctx.fillStyle = KREIDE;
-  ctx.textAlign = "center";
-  ctx.font = `600 ${11 * S}px ${mono}`;
-  setSpacing(0.34, 11 * S);
+  ctx.fillStyle = GRUND_DUNKEL;
+  ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = "alphabetic";
+
+  // Kopfzeile: Zeichen + Wortmarke links, Datum rechts.
+  drawMarke(ctx, 60, 64, 76);
+  ctx.fillStyle = TINTE_DUNKEL;
+  ctx.textAlign = "left";
+  breit(true);
+  ctx.font = `800 40px ${display}`;
+  ctx.fillText("Platte 311", 150, 116);
+  breit(false);
+  const datum = new Date(data.dateISO).toLocaleDateString("de-DE", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  ctx.fillStyle = NEBEN_DUNKEL;
+  ctx.textAlign = "right";
+  ctx.font = `500 32px ${body}`;
+  ctx.fillText(datum, W - 60, 114);
+
+  // Karte in der Regionsfarbe.
+  const farbe = KARTE[data.region ?? "cardio"];
+  const kx = 60;
+  const ky = 180;
+  const kw = W - 120;
+  const kh = 700;
+  ctx.fillStyle = farbe.flaeche;
+  ctx.beginPath();
+  if (typeof ctx.roundRect === "function") ctx.roundRect(kx, ky, kw, kh, 56);
+  else ctx.rect(kx, ky, kw, kh);
+  ctx.fill();
+
+  ctx.fillStyle = farbe.schrift;
+  ctx.textAlign = "left";
+  ctx.font = `600 30px ${body}`;
+  sperren(5);
   ctx.fillText(
     data.kind === "maximum" ? "PERSÖNLICHER REKORD" : "TRAINING ERLEDIGT",
-    W / 2,
-    64 * S,
+    kx + 56,
+    ky + 86,
   );
-  setSpacing(0, 0);
-  ctx.strokeStyle = "rgba(244, 249, 252, 0.7)";
-  ctx.lineWidth = 1 * S;
-  ctx.beginPath();
-  ctx.moveTo(W / 2 - 55 * S, 74 * S);
-  ctx.lineTo(W / 2 + 55 * S, 74 * S);
-  ctx.stroke();
+  sperren(0);
 
-  // Figur (Endphase) in Kreide.
   if (data.figur) {
-    const fw = 170 * S;
-    drawFigur(ctx, data.figur, (W - fw) / 2, 88 * S, fw, KREIDE);
+    const fw = 360;
+    drawFigur(ctx, data.figur, (W - fw) / 2, ky + 120, fw, farbe.schrift);
   }
 
-  // Name / Titel in Old-Standard-Kursive — lange Studien-Titel werden auf
-  // Plattenbreite eingepasst (Canvas kennt keinen Zeilenumbruch).
-  ctx.fillStyle = KREIDE;
-  const name = data.kind === "maximum" ? (data.exName ?? "") : (data.titel ?? "");
-  let nameGrad = 34;
-  ctx.font = `italic 400 ${nameGrad * S}px ${display}`;
-  while (nameGrad > 18 && ctx.measureText(name).width > W - 2 * padX) {
-    nameGrad -= 2;
-    ctx.font = `italic 400 ${nameGrad * S}px ${display}`;
-  }
-  ctx.fillText(name, W / 2, 300 * S);
+  const name = data.kind === "maximum" ? (data.exName ?? "") : (data.titel ?? "Einheit");
+  breit(true);
+  const { zeilen, px } = zweiZeilen(ctx, name, kw - 112, (p) => `800 ${p}px ${display}`, 68, 40);
+  ctx.fillStyle = farbe.schrift;
+  ctx.textAlign = "left";
+  zeilen.forEach((z, i) => {
+    ctx.fillText(z, kx + 56, ky + kh - 56 - (zeilen.length - 1 - i) * (px * 1.12));
+  });
 
-  // Der große Wert (Plex bold) + Einheit — ganze Zahlen ohne Dezimalstelle
-  // (e1RM ist gerundet; „127,0" gaukelt Präzision vor, die es nicht gibt).
-  const wertText =
+  // Der große Wert unter der Karte.
+  const gross =
     data.kind === "maximum"
-      ? fmtDe(data.wert ?? 0, (data.wert ?? 0) % 1 === 0 ? 0 : 1)
-      : fmtDe((data.tonnage ?? 0) / 1000, 1);
-  const einheit = data.kind === "maximum" ? (data.einheit ?? "kg").toUpperCase() : "T";
-  ctx.font = `700 ${56 * S}px ${mono}`;
-  const wertBreite = ctx.measureText(wertText).width;
+      ? data.rekordArt === "weight" && data.satz
+        ? data.satz
+        : `${fmtDe(data.wert ?? 0)} ${data.einheit ?? ""}`.trim()
+      : `${data.kaderZahl ?? 0} ${(data.kaderZahl ?? 0) === 1 ? "Satz" : "Sätze"} · ${fmtDe(
+          (data.tonnage ?? 0) / 1000,
+        )} t`;
+  ctx.fillStyle = TINTE_DUNKEL;
   ctx.textAlign = "left";
-  const wertX = (W - wertBreite) / 2 - 10 * S;
-  ctx.fillText(wertText, wertX, 356 * S);
-  ctx.font = `500 ${13 * S}px ${mono}`;
-  ctx.fillText(einheit, wertX + wertBreite + 6 * S, 356 * S);
+  let grad = 120;
+  ctx.font = `800 ${grad}px ${display}`;
+  while (grad > 60 && ctx.measureText(gross).width > W - 120) {
+    grad -= 6;
+    ctx.font = `800 ${grad}px ${display}`;
+  }
+  ctx.fillText(gross, 60, ky + kh + 40 + grad);
+  breit(false);
 
-  // studie: Kader-Zeile unter dem Wert.
-  if (data.kind === "studie" && data.kaderZahl != null) {
-    ctx.textAlign = "center";
-    ctx.font = `500 ${10 * S}px ${mono}`;
-    setSpacing(0.2, 10 * S);
-    ctx.fillStyle = "rgba(244, 249, 252, 0.85)";
-    ctx.fillText(`${data.kaderZahl} SÄTZE · ERLEDIGT`, W / 2, 382 * S);
-    setSpacing(0, 0);
+  // Zeile darunter: 1RM beschriftet bzw. Dauer/Sprung.
+  const teile: string[] = [];
+  if (data.kind === "maximum") {
+    if (data.rekordArt === "weight" && data.satz)
+      teile.push(`Geschätztes 1RM ${fmtDe(data.wert ?? 0)} kg`);
+    if (data.delta != null && data.delta > 0)
+      teile.push(
+        `+${fmtDe(data.delta)} ${data.einheit ?? ""} über ${
+          data.prevNr != null ? `Einheit ${data.prevNr}` : "dem Bestwert"
+        }`,
+      );
+  } else if (data.dauerMin) {
+    teile.push(`${data.dauerMin} Min`);
+  }
+  if (teile.length) {
+    ctx.fillStyle = NEBEN_DUNKEL;
+    ctx.font = `500 38px ${body}`;
+    ctx.fillText(teile.join(" · "), 60, ky + kh + 40 + grad + 64);
   }
 
-  // Fußzeile: Messing-Plattenschild links, Datum (+ Körpermasse) rechts.
-  const datum = new Date(data.dateISO)
-    .toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })
-    .replace(".", "")
-    .toUpperCase();
+  // Fußzeile: Einheit links, Körpergewicht rechts.
+  ctx.fillStyle = NEBEN_DUNKEL;
+  ctx.font = `600 30px ${body}`;
   ctx.textAlign = "left";
-  ctx.fillStyle = MESSING;
-  ctx.font = `600 ${10 * S}px ${mono}`;
-  setSpacing(0.2, 10 * S);
-  ctx.fillText(`EINHEIT ${data.plattenNr}`, padX, H - 26 * S);
-  ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(244, 249, 252, 0.85)";
-  ctx.font = `500 ${9 * S}px ${mono}`;
-  setSpacing(0.2, 9 * S);
-  ctx.fillText(
-    data.koerperKg != null ? `${datum} · ${fmtDe(data.koerperKg)} KG KM` : datum,
-    W - padX,
-    H - 26 * S,
-  );
-  setSpacing(0, 0);
+  ctx.fillText(`Einheit ${data.plattenNr}`, 60, H - 64);
+  if (data.koerperKg != null) {
+    ctx.textAlign = "right";
+    ctx.fillText(`${fmtDe(data.koerperKg)} kg Körpergewicht`, W - 60, H - 64);
+  }
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no blob"))), "image/png");
