@@ -1,7 +1,7 @@
 import { MARKE, TINTE_HELL } from "@/lib/grundfarben";
 
 /**
- * Das Zeichen von Kumpel im Look „spotter“: eine Sprechblase (der Kumpel, der
+ * Das Zeichen von „spotter“: eine Sprechblase (der Kumpel an der Bank, der
  * redet) mit einer Hantel darin. Die EINE Stelle, an der das Zeichen als SVG
  * entsteht:
  *

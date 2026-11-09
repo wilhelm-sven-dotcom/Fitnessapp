@@ -2,7 +2,7 @@ import { markeArt } from "@/lib/marke-art";
 import { MARKE } from "@/lib/grundfarben";
 
 /**
- * App-Icon „Kumpel“ im Look „spotter“: die weiße Sprechblase mit der Hantel
+ * App-Icon „spotter“: die weiße Sprechblase mit der Hantel
  * (orange Scheiben) auf Elektroblau (`lib/marke-art.tsx`). Die Zeichnung liegt
  * im Maskable-Sicherheitskreis (r 0,4 der Kante; die weiteste Blasen-Ecke
  * liegt bei rund 0,38 nach Abzug der Rundung), deshalb dieselbe Zeichnung in
@@ -20,7 +20,7 @@ import { MARKE } from "@/lib/grundfarben";
  * müssen ZUSÄTZLICH mit (Next hasht dort die Route-Datei, nicht diese hier).
  *  1 = ob-lift + Raster + „311“ · 2 = Marey-Spur · 3 = Marey-Spur lesbar ·
  *  4 = Scheiben in Regionsfarben (Look „Regionen“) ·
- *  5 = Sprechblase mit Hantel auf Blau (Look „spotter“, Name „Kumpel“)
+ *  5 = Sprechblase mit Hantel auf Blau (Look und Name „spotter“)
  */
 export const ICON_VERSION = 5;
 

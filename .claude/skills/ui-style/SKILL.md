@@ -20,7 +20,7 @@ Stack: **Next.js 14 App Router · React 18 · TypeScript strict · Tailwind 3.4 
 Framer Motion 11 · lucide-react · `cn()` (clsx + tailwind-merge)**. Mobile-first
 PWA, Container `max-w-md`, Touch-/Press-zentriert.
 
-Die App heißt **Kumpel** (`lib/marke.ts`: `APP_NAME`, `APP_SLUG`, `CLAIM`
+Die App heißt **spotter**, klein geschrieben (`lib/marke.ts`: `APP_NAME`, `APP_SLUG`, `CLAIM`
 „Ich hab dich.“ — Name nur dort ändern), der Coach **ATLAS**. Der Look heißt
 „spotter“ (Nutzer-Entscheid Nov 2026, eine von vier Richtungen; vorher
 „Regionen“ und davor „Platte 311“).
@@ -354,7 +354,7 @@ wählen nur den BEARBEITETEN Ort.
 
 ## Marke
 
-- **Name:** `APP_NAME` = „Kumpel“, `APP_SLUG` = „kumpel“, `CLAIM` = „Ich hab
+- **Name:** `APP_NAME` = „spotter“, `APP_SLUG` = „spotter“, `CLAIM` = „Ich hab
   dich.“, `BESCHREIBUNG` — alles in `lib/marke.ts`, nirgends sonst als Text.
 - **Zeichen:** weiße Sprechblase (Spitze unten links) mit einer Hantel,
   Tinte-Rand 4 im 64er-Feld (`MARKE_VIEWBOX`), eine Zeichnung für alles:

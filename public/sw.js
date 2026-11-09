@@ -26,7 +26,7 @@
 // v36: neues App-Zeichen (Scheiben in Regionsfarben, ICON_VERSION 4), neues
 // Startbild — Icon-Routen und Manifest liegen cache-first, ohne Bump bliebe
 // das alte Icon auf installierten Geräten.
-// v37: Look „spotter“ und neuer Name „Kumpel“ — neues App-Zeichen
+// v37: Look und neuer Name „spotter“ — neues App-Zeichen
 // (Sprechblase mit Hantel, ICON_VERSION 5), Startbild auf Blau, Manifest mit
 // neuem Namen und neuer background_color. Icon-Routen und Manifest liegen
 // cache-first; ohne Bump bliebe auf installierten Geräten das alte Zeichen.
