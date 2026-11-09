@@ -3,10 +3,13 @@
 import { Pencil, Trash2, Wrench, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { MyologieFigur } from "@/components/phasen/MyologieFigur";
+import { GeraetBild } from "@/components/geraete/GeraetBild";
+import { GeraetFotoAktionen } from "@/components/geraete/GeraetFotoAktionen";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import type { MyologieStufe } from "@/lib/heat";
+import { geraetVon } from "@/lib/geraete";
 import { figurFor } from "@/lib/phasen/figuren";
 import { MUSCLE_LABEL, muscleOf } from "@/lib/volume";
 import { GuideVerlauf } from "@/components/workout/GuideVerlauf";
@@ -111,10 +114,22 @@ export function GuideSheet({
     setNoteEditing(false);
   };
 
+  const geraet = geraetVon(ex);
+
   return (
     <Sheet open={open} onClose={onClose} title={ex?.name}>
       {ex && (
         <>
+          {/* Übung an einem Gerät: das Gerät groß oben — eigenes Foto aus dem
+              Studio, sonst die Zeichnung. */}
+          {geraet && (
+            <div className="mb-4 space-y-2.5">
+              <div className="h-44 overflow-hidden rounded-card border-dick border-rand bg-surface-1">
+                <GeraetBild geraet={geraet} className="h-full w-full" />
+              </div>
+              <GeraetFotoAktionen geraet={geraet} />
+            </div>
+          )}
           <div className="mb-3 flex items-center gap-3">
             <div className="w-20 shrink-0" aria-hidden>
               <PhasenFigur
