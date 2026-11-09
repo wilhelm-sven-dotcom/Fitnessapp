@@ -13,6 +13,7 @@ import type { RecordKind } from "@/lib/records";
 import type { Region } from "@/lib/phasen/band";
 import { renderShareCard } from "@/lib/share-card";
 import { speak } from "@/lib/voice";
+import { APP_SLUG } from "@/lib/marke";
 
 /** Die Rekord-Tafel des Sieger-Moments — der Runner rechnet sie VOR dem Save. */
 export interface SiegerTafel {
@@ -104,7 +105,7 @@ export function SessionComplete({
       .then((blob) => {
         if (!alive) return;
         const day = new Date().toISOString().slice(0, 10);
-        setShareFile(new File([blob], `platte-${plattenNr}-${day}.png`, { type: "image/png" }));
+        setShareFile(new File([blob], `${APP_SLUG}-${plattenNr}-${day}.png`, { type: "image/png" }));
       })
       .catch(() => {
         /* ohne Poster einfach kein Teilen-Knopf */

@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import { NavSlotContext } from "./NavSlot";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { Marke } from "@/components/brand/Marke";
+import { APP_NAME } from "@/lib/marke";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -73,8 +74,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2 text-fg">
-                  <Marke size={24} />
-                  <span className="font-display text-lg font-extrabold">Platte 311</span>
+                  <Marke size={30} />
+                  <span className="font-display text-2xl font-extrabold">{APP_NAME}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {cloud.configured &&

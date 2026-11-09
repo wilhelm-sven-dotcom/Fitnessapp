@@ -1,12 +1,14 @@
 import { SPLASH_CSS } from "@/components/start/splash-css";
-import { SCHEIBEN } from "@/lib/marke-art";
-import { TINTE_DUNKEL } from "@/lib/grundfarben";
+import { BLASE_D, MARKE_VIEWBOX, SCHEIBEN_SPOTTER } from "@/lib/marke-art";
+import { MARKE, TINTE_HELL } from "@/lib/grundfarben";
+import { APP_NAME, CLAIM } from "@/lib/marke";
 
 /**
- * Das Startbild im Look „Regionen“: die Stange zieht ein, die vier Scheiben
- * (Rot, Blau, Gelb, Grün — die Regionsfarben) rasten nacheinander auf, dann
- * steht die Wortmarke. Zeichnung wie Icon und iOS-Startbild
- * (`lib/marke-art.tsx`), damit an der Naht nichts springt.
+ * Das Startbild im Look „spotter“: Elektroblau, in der Mitte die Sprechblase
+ * mit der Hantel (wie Icon und iOS-Startbild, `lib/marke-art.tsx`), darunter
+ * die Wortmarke und der Sticker „Ich hab dich.“. Die Blase steht von Anfang
+ * an da (an der Naht zum iOS-Startbild springt nichts); sie nickt einmal, die
+ * Scheiben pumpen, dann kommen Wortmarke und Sticker.
  *
  * Warum statisches Markup im initialen HTML statt einer React-Komponente:
  * Der Splash soll GENAU die Lücke überbrücken, die React noch nicht sieht —
@@ -18,9 +20,9 @@ import { TINTE_DUNKEL } from "@/lib/grundfarben";
  *
  * Der Abgang gehört `SplashGate`; die Gestaltung steht als kritisches
  * Inline-Stylesheet in `splash-css.ts` (dort steht, warum nicht in
- * globals.css). Der Splash liegt IMMER im Dunkel (GRUND_DUNKEL): das
- * Manifest kennt nur eine background_color — modusgleich gäbe es an der
- * Naht zum OS-Splash einen Farbsprung.
+ * globals.css). Der Splash liegt IMMER auf Blau (Markenfarbe): das Manifest
+ * kennt nur eine background_color, an der Naht zum OS-Splash darf nichts
+ * springen.
  */
 export function Splash() {
   return (
@@ -29,44 +31,28 @@ export function Splash() {
       <style dangerouslySetInnerHTML={{ __html: SPLASH_CSS }} />
       <div id="splash" aria-hidden="true">
         <div className="sp-buehne">
-          <svg className="sp-marke" viewBox="0 0 48 48">
-            <g strokeLinecap="round" fill="none">
-              <line
-                className="sp-stange"
-                x1={6.5}
-                y1={24}
-                x2={41.5}
-                y2={24}
-                stroke={TINTE_DUNKEL}
-                strokeWidth={2.6}
+          <svg className="sp-marke" viewBox={MARKE_VIEWBOX}>
+            <path d={BLASE_D} fill="#ffffff" stroke={TINTE_HELL} strokeWidth={4} strokeLinejoin="round" />
+            <path d="M14 29h36" fill="none" stroke={TINTE_HELL} strokeWidth={4} strokeLinecap="round" />
+            {SCHEIBEN_SPOTTER.map(([x, y, w, h], i) => (
+              <rect
+                key={x}
+                className="sp-scheibe"
+                data-i={i}
+                x={x}
+                y={y}
+                width={w}
+                height={h}
+                rx={2.5}
+                fill={MARKE.blau}
+                stroke={TINTE_HELL}
+                strokeWidth={3}
               />
-              <line
-                className="sp-verschluss"
-                x1={13.5}
-                y1={18.5}
-                x2={13.5}
-                y2={29.5}
-                stroke={TINTE_DUNKEL}
-                strokeWidth={2.6}
-              />
-              {SCHEIBEN.map(([x, h, w, farbe], i) => (
-                <line
-                  key={x}
-                  className="sp-scheibe"
-                  data-i={i}
-                  x1={x}
-                  y1={24 - h}
-                  x2={x}
-                  y2={24 + h}
-                  stroke={farbe}
-                  strokeWidth={w}
-                />
-              ))}
-            </g>
+            ))}
           </svg>
           <div className="sp-wort">
-            <div className="sp-kicker">Krafttraining mit ATLAS</div>
-            <div className="sp-titel">Platte 311</div>
+            <div className="sp-titel">{APP_NAME}</div>
+            <div className="sp-sticker">{CLAIM}</div>
           </div>
         </div>
       </div>

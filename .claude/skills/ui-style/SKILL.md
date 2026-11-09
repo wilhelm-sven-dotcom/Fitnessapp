@@ -324,23 +324,29 @@ wählen nur den BEARBEITETEN Ort.
 
 ## Marke
 
-- **Zeichen:** vier Hantelscheiben (Rot, Blau, Gelb, Grün = die Regionen) auf
-  heller Stange, eine Zeichnung für alles: `lib/marke-art.tsx` (Satori-tauglich:
-  nur `<g>`/`<line>`, feste Hexwerte aus `lib/grundfarben.ts`), im DOM
-  `components/brand/Marke.tsx` (Stange in `currentColor`).
-- **Icon:** `lib/icon-art.tsx` auf `GRUND_DUNKEL`, komplett im
+- **Name:** `APP_NAME` = „Kumpel“, `APP_SLUG` = „kumpel“, `CLAIM` = „Ich hab
+  dich.“, `BESCHREIBUNG` — alles in `lib/marke.ts`, nirgends sonst als Text.
+- **Zeichen:** weiße Sprechblase (Spitze unten links) mit einer Hantel,
+  Tinte-Rand 4 im 64er-Feld (`MARKE_VIEWBOX`), eine Zeichnung für alles:
+  `lib/marke-art.tsx` (`markeArt({ blase, rand, scheibe })`, Satori-tauglich,
+  feste Hexwerte aus `lib/grundfarben.ts`), im DOM `components/brand/Marke.tsx`
+  (Scheiben Blau).
+- **Icon:** `lib/icon-art.tsx` auf Elektroblau, Scheiben Orange, Blase im
   Maskable-Kreis. Bei JEDER Änderung `ICON_VERSION` hochzählen und
-  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen,
-  dazu `CACHE` in `public/sw.js`.
-- **Startbild:** eine Choreografie (Stange, vier Scheiben rasten ein,
-  Wortmarke), kritisches Inline-CSS in `components/start/splash-css.ts`,
-  Zeichen genau mittig bei 45 vw wie im iOS-Startbild
-  (`app/apple-splash/[spec]`), Mindestzeit `MIN_MS` in `SplashGate`,
-  Notausgang 4 s im Pre-Paint-Skript, reduzierte Bewegung = Standbild.
-  Gespeicherte Werte v1/v2/v3/zufall zeigen alle dieses Startbild, „aus“ keins.
-- **Teilen-Poster** (`lib/share-card.ts`): warmes Dunkel, Karte in der
-  Regionsfarbe der Übung mit Figur, darunter der gehobene Satz groß und
-  „Geschätztes 1RM … kg“ beschriftet.
+  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen, dazu
+  `CACHE` in `public/sw.js`.
+- **Startbild:** Elektroblau, Blase genau mittig bei 45 vw wie im
+  iOS-Startbild (`app/apple-splash/[spec]`), die Blase nickt, die Scheiben
+  pumpen, dann Wortmarke (Bricolage 52 px weiß) und Sticker „Ich hab dich.“;
+  kritisches Inline-CSS in `components/start/splash-css.ts`, Mindestzeit
+  `MIN_MS` in `SplashGate`, Notausgang 4 s im Pre-Paint-Skript, reduzierte
+  Bewegung = Standbild. Gespeicherte Werte v1/v2/v3/zufall zeigen alle dieses
+  Startbild, „aus“ keins. Manifest `background_color` = Blau.
+- **Teilen-Poster** (`lib/share-card.ts`): Rekord auf Orange (Tinte-Schrift),
+  Training auf Blau (weiße Schrift); weiße gedrehte Karte mit Rand und hartem
+  Schatten („PR!“ / „Erledigt!“, Figur, Name), Sonnen-Sticker („+2 kg“ bzw.
+  Dauer), darunter der gehobene Satz groß und „Geschätztes 1RM … kg“.
+  Dateiname `‹APP_SLUG›-‹Einheit›-‹Datum›.png`.
 
 ## Test-Anker (`scripts/*.mjs`, Port 3199, Produktions-Build)
 

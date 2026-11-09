@@ -9,7 +9,8 @@ import { Segment } from "@/components/ui/Segment";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
 import type { Experience, TrainingGoal } from "@/lib/types";
-import { GRUND_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
+import { MARKE } from "@/lib/grundfarben";
+import { APP_NAME } from "@/lib/marke";
 
 // Die Stufe steuert die Startgewichte (lib/start-weight.ts, EXP_MULT 0,7 ·
 // 1,0 · 1,25) und steht im Profil, das ATLAS bekommt.
@@ -69,31 +70,30 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT }}
         >
-          {/* Nachbildung des App-Icons: warmes Dunkel auch im hellen Modus,
-              deshalb die festen Farben und der Icon-Radius; die Linie fasst
-              das Feld im dunklen Modus, dort wäre es sonst grundgleich. */}
+          {/* Nachbildung des App-Icons: Sprechblase auf Elektroblau in jedem
+              Modus, deshalb die feste Markenfarbe und der Icon-Radius; Rand
+              und harter Schatten wie jede wichtige Karte. */}
           <span
             aria-hidden
-            className="relative block overflow-hidden border border-line"
+            className="relative flex items-center justify-center overflow-hidden border-dick border-rand shadow-hart"
             style={{
-              width: 84,
-              height: 84,
-              borderRadius: 18,
-              backgroundColor: GRUND_DUNKEL,
-              color: TINTE_DUNKEL,
+              width: 88,
+              height: 88,
+              borderRadius: 20,
+              backgroundColor: MARKE.blau,
             }}
           >
-            <Marke size={84} />
+            <Marke size={62} />
           </span>
 
           <p className="mt-7 text-3xs font-bold text-muted">
             Krafttraining mit ATLAS
           </p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold text-fg">Platte 311</h1>
+          <h1 className="mt-2 font-display text-4xl font-extrabold text-fg">{APP_NAME}</h1>
           <p className="mt-4 max-w-xs text-base leading-relaxed text-fg">
-            Du trainierst, ATLAS schaut auf deine Sätze und stellt die nächste
-            Einheit zusammen. Jede Körperregion hat ihre Farbe: Beine Rot, Druck
-            Blau, Zug Gelb, Rumpf Grün.
+            Du trainierst, ATLAS steht neben dir, schaut auf deine Sätze und
+            stellt die nächste Einheit zusammen. Jede Körperregion hat ihre
+            Kachel: Beine Orange, Druck Blau, Zug Gelb, Rumpf Weiß.
           </p>
         </motion.div>
 

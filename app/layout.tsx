@@ -9,6 +9,7 @@ import { SplashGate } from "@/components/start/SplashGate";
 import { Toaster } from "@/components/ui/Toaster";
 import { GRUND_DUNKEL, GRUND_HELL } from "@/lib/grundfarben";
 import { ICON_VERSION } from "@/lib/icon-art";
+import { APP_NAME, BESCHREIBUNG } from "@/lib/marke";
 
 // „spotter“: Bricolage Grotesque (variabel, optische Größe) für Titel,
 // Zahlen, Knöpfe und Sticker; Onest für Text. Ziffern über `tabular-nums`.
@@ -27,7 +28,7 @@ const onest = Onest({
 
 // iOS baut seinen Standalone-Splash NICHT aus dem Manifest — ohne diese
 // Bilder blitzt Safari weiß auf, bevor das Startbild übernimmt. Gerätepixel
-// = CSS-Maß × DPR; die Route rendert dieselbe Marey-Spur wie das Icon.
+// = CSS-Maß × DPR; die Route rendert dasselbe Zeichen wie das Startbild.
 const IOS_SPLASH: { w: number; h: number; dw: number; dh: number; r: number }[] = [
   { w: 1290, h: 2796, dw: 430, dh: 932, r: 3 },
   { w: 1179, h: 2556, dw: 393, dh: 852, r: 3 },
@@ -40,12 +41,12 @@ const IOS_SPLASH: { w: number; h: number; dw: number; dh: number; r: number }[] 
 ];
 
 export const metadata: Metadata = {
-  title: "Platte 311",
-  description: "Krafttraining mit ATLAS als Coach.",
+  title: APP_NAME,
+  description: BESCHREIBUNG,
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Platte 311",
+    title: APP_NAME,
     startupImage: IOS_SPLASH.map((s) => ({
       url: `/apple-splash/${s.w}x${s.h}?v=${ICON_VERSION}`,
       media: `(device-width: ${s.dw}px) and (device-height: ${s.dh}px) and (-webkit-device-pixel-ratio: ${s.r}) and (orientation: portrait)`,

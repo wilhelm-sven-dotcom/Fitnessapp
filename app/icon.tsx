@@ -3,9 +3,9 @@ import { iconArt } from "@/lib/icon-art";
 
 /**
  * Favicon (ersetzt favicon.ico): 32 px, dasselbe Zeichen wie das
- * Homescreen-Icon (Scheiben in Regionsfarben).
+ * Homescreen-Icon (Sprechblase mit Hantel auf Blau).
  *
- * ICON-FASSUNG 4 — die Zahl MUSS als Text HIER stehen, nicht bloß importiert
+ * ICON-FASSUNG 5 — die Zahl MUSS als Text HIER stehen, nicht bloß importiert
  * werden: Next bildet den Cache-Buster in `<link href="/icon?…">` aus den
  * BYTES DIESER DATEI, nicht aus `lib/icon-art.tsx`. Ändert sich nur die
  * Zeichnung, bleibt die URL sonst gleich — und CDN, Service Worker und iOS

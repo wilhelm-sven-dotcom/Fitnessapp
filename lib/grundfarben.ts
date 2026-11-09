@@ -15,14 +15,6 @@ export const LINIE_DUNKEL = "#343845";
 export const NEBEN_HELL = "#535866";
 export const NEBEN_DUNKEL = "#a7acba";
 
-/** Wettkampf-Scheibenfarben = Regionsflächen (modusgleich). */
-export const SCHEIBE = {
-  rot: "#c7352b",
-  blau: "#2b5fb8",
-  gelb: "#e3a600",
-  gruen: "#257a4c",
-} as const;
-
 /** Markenfarben „spotter“ (modusgleich): Elektroblau, Signalorange, Sonne. */
 export const MARKE = {
   blau: "#2f45ff",

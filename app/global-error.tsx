@@ -11,6 +11,7 @@ import {
   NEBEN_HELL,
   TINTE_DUNKEL,
   TINTE_HELL,
+  MARKE,
 } from "@/lib/grundfarben";
 
 import { useEffect, useState } from "react";
@@ -84,7 +85,7 @@ export default function GlobalError({
 
   // Dieses Dokument ersetzt den kompletten App-Baum — globals.css und die
   // Theme-Mechanik sind hier NICHT geladen. Deshalb eigene, minimale Styles
-  // (Platte-311-Töne: Grund/Fläche/Faden/Tinte/Siegellack; muted ist der
+  // (Töne aus lib/grundfarben.ts: Grund/Fläche/Linie/Tinte; muted ist der
   // GEGENMODIGE Schleier, damit der Hinweistext hier sicher lesbar bleibt)
   // mit prefers-color-scheme-Variante und sichtbarem Tastatur-Fokus.
   // Rohe Hex sind hier die einzige Möglichkeit — bewusst.
@@ -94,18 +95,17 @@ export default function GlobalError({
         <style
           dangerouslySetInnerHTML={{
             __html: `
-:root { --ge-base:${GRUND_HELL}; --ge-card:${KARTE_HELL}; --ge-line:${LINIE_HELL}; --ge-fg:${TINTE_HELL}; --ge-muted:${NEBEN_HELL}; --ge-akzent:${TINTE_HELL}; }
+:root { --ge-base:${GRUND_HELL}; --ge-card:${KARTE_HELL}; --ge-line:${LINIE_HELL}; --ge-fg:${TINTE_HELL}; --ge-muted:${NEBEN_HELL}; --ge-akzent:${MARKE.blau}; --ge-fokus:${MARKE.blau}; }
 @media (prefers-color-scheme: dark) {
-  :root { --ge-base:${GRUND_DUNKEL}; --ge-card:${KARTE_DUNKEL}; --ge-line:${LINIE_DUNKEL}; --ge-fg:${TINTE_DUNKEL}; --ge-muted:${NEBEN_DUNKEL}; --ge-akzent:${TINTE_DUNKEL}; }
+  :root { --ge-base:${GRUND_DUNKEL}; --ge-card:${KARTE_DUNKEL}; --ge-line:${LINIE_DUNKEL}; --ge-fg:${TINTE_DUNKEL}; --ge-muted:${NEBEN_DUNKEL}; --ge-akzent:${MARKE.blau}; --ge-fokus:#8a96ff; }
 }
 .ge-body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
   background:var(--ge-base); color:var(--ge-fg); -webkit-font-smoothing:antialiased;
   font-family:system-ui,-apple-system,'Segoe UI',sans-serif; }
 .ge-btn { appearance:none; cursor:pointer; border-radius:9999px; font:inherit; }
-.ge-btn:focus-visible, .ge-btn-quiet:focus-visible { outline:2px solid var(--ge-akzent); outline-offset:2px; }
-.ge-primary { border:0; padding:13px 16px; font-size:15px; font-weight:700; color:${KARTE_HELL}; background:var(--ge-akzent); }
-@media (prefers-color-scheme: dark) { .ge-primary { color:${GRUND_DUNKEL}; } }
-.ge-quiet { border:1px solid var(--ge-fg); padding:13px 16px; font-size:14px; font-weight:500; color:var(--ge-fg); background:transparent; }
+.ge-btn:focus-visible, .ge-btn-quiet:focus-visible { outline:2px solid var(--ge-fokus); outline-offset:2px; }
+.ge-primary { border:2.5px solid var(--ge-fg); padding:13px 16px; font-size:16px; font-weight:800; color:#ffffff; background:var(--ge-akzent); }
+.ge-quiet { border:2.5px solid var(--ge-fg); padding:13px 16px; font-size:15px; font-weight:700; color:var(--ge-fg); background:var(--ge-card); }
 .ge-small { border:1px solid var(--ge-line); border-radius:9999px; margin-top:8px; padding:8px 12px; font-size:12px; font-weight:500; color:var(--ge-fg); background:transparent; }
 .ge-btn:active { transform:scale(0.985); }
 `,
@@ -118,7 +118,7 @@ export default function GlobalError({
             height="34"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="var(--ge-akzent)"
+            stroke="var(--ge-fg)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -154,9 +154,8 @@ export default function GlobalError({
             <p
               style={{
                 margin: "0 0 6px",
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
+                fontSize: 12,
+                fontWeight: 700,
                 color: "var(--ge-muted)",
               }}
             >
