@@ -151,10 +151,15 @@ try {
   }
   await schritt("katalog", async () => {
     await pg.goto(BASE + "/uebungen", { waitUntil: "networkidle" });
-    // Studio = „nur an Geräten“: Katalog nach Geräten, Detail mit Gerätebild.
+    // Studio = „nur an Geräten“: Katalog nach Geräten, Detail mit dem
+    // mitgelieferten Bild (Butterfly) und mit der Zeichnung (Beinpresse).
     await shot(pg, "16-katalog", { wait: 1000 });
-    await pg.getByRole("button", { name: /^Beinpresse/ }).first().click();
+    await pg.getByRole("button", { name: /^Butterfly/ }).first().click();
     await shot(pg, "17-guide", { wait: 1200 });
+    await pg.keyboard.press("Escape");
+    await pg.waitForTimeout(400);
+    await pg.getByRole("button", { name: /^Beinpresse/ }).first().click();
+    await shot(pg, "17b-guide-zeichnung", { wait: 1200 });
     await pg.keyboard.press("Escape");
     await pg.getByRole("button", { name: "Alle", exact: true }).first().click();
     await shot(pg, "16b-katalog-alle", { wait: 800 });

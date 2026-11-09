@@ -124,6 +124,7 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
 - **Schatten:** NUR `shadow-hart` (4 px / 4 px, Tinte) bzw. `shadow-hart-sm`
   (3 px) — an der Hauptaktion und an der EINEN wichtigen Karte. Nie weich,
   kein Verlauf, kein Blur, kein Glow.
+- **Format:** `aspect-bild` (3 / 2) für Boxen mit Gerätebild.
 
 ## Komponenten-Rezepte (`components/ui/`)
 
@@ -201,7 +202,7 @@ Anführungszeichen „…“.
   kein Blur.
 - Dynamische Werte → inline `style`, SVG `var(--…)`, Framer Motion.
 - Eine Komponente pro Datei, `cn()`, TypeScript strict. **Jedes neue
-  Größen-/Radius-/Rand-/Schatten-Token in `lib/utils.ts`
+  Größen-/Radius-/Rand-/Schatten-/Format-Token in `lib/utils.ts`
   (`extendTailwindMerge`) eintragen**, sonst verschluckt `cn()`
   Überschreibungen (`border-dick` steht dort als Randbreite).
 - Zahlen-Readouts `tabular-nums`; Gewichte in der Oberfläche über
@@ -372,10 +373,15 @@ wählen nur den BEARBEITETEN Ort.
 - **Einstellungen:** Grundausstattung als Chips, darunter „Kraftgeräte
   einzeln“ mit dem Sammelknopf „Kraftgeräte“ (alle an/aus, Test-Anker) und den
   Einzelgeräten, dann der Schalter „Nur an Geräten trainieren“.
-- **Gerätebilder** (`components/geraete/`): `GeraetZeichnung` (elf
-  Zeichnungen, Varianten `hell` und `auf-blau`), `GeraetBild` (eigenes Foto,
-  sonst Zeichnung), `GeraetFotoAktionen` („Foto vom Gerät“ / „Foto ersetzen“ /
-  „Foto entfernen“, kompakt als Kamera-Knopf). Fotos liegen in IndexedDB
+- **Gerätebilder** (`components/geraete/`): `GeraetBild` zeigt in dieser
+  Reihenfolge das eigene Foto, das mitgelieferte Bild (`public/geraete/`,
+  3:2, `geraetBildUrl(g, klein)` und Liste `MIT_BILD` in `lib/geraete.ts`,
+  README dort) und sonst `GeraetZeichnung` (elf Zeichnungen, Varianten
+  `hell` und `auf-blau`). `klein` (360 × 240) für Heute, Katalog-Kopf und
+  Trainingskarte, sonst 1200 × 800. Bildboxen ohne Beschnitt im Format
+  `aspect-bild` (Übungsdetail, Kachel auf der Trainingskarte).
+  `GeraetFotoAktionen` („Foto vom Gerät“ / „Foto ersetzen“ / „Foto
+  entfernen“, kompakt als Kamera-Knopf). Fotos liegen in IndexedDB
   (`lib/photo-store.ts`, bei Cloud-Sync gespiegelt), Zuordnung in
   `settings.geraetFotos`; NICHT im JSON-Backup. Gerät einer Übung:
   `geraetVon(ex)` (`lib/geraete.ts`). Schrift auf Fotos liegt auf
