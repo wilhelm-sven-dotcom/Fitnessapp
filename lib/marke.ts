@@ -7,7 +7,8 @@
 export const APP_NAME = "spotter";
 /** Für Dateinamen (Teilen-Bild) — klein, ohne Leerzeichen. */
 export const APP_SLUG = "spotter";
-/** Claim unter der Wortmarke (Startbild, Begrüßung). */
-export const CLAIM = "Ich hab dich.";
+/** Claim unter der Wortmarke (Startbild). Nutzer-Entscheid Nov 2026;
+ *  vorher „Ich hab dich.“ */
+export const CLAIM = "Eine geht noch.";
 /** Eine Zeile für Manifest und Metadaten. */
 export const BESCHREIBUNG = "Krafttraining mit ATLAS als Trainingspartner.";

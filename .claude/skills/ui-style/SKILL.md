@@ -21,7 +21,7 @@ Framer Motion 11 · lucide-react · `cn()` (clsx + tailwind-merge)**. Mobile-fir
 PWA, Container `max-w-md`, Touch-/Press-zentriert.
 
 Die App heißt **spotter**, klein geschrieben (`lib/marke.ts`: `APP_NAME`, `APP_SLUG`, `CLAIM`
-„Ich hab dich.“ — Name nur dort ändern), der Coach **ATLAS**. Der Look heißt
+„Eine geht noch.“ — Name nur dort ändern), der Coach **ATLAS**. Der Look heißt
 „spotter“ (Nutzer-Entscheid Nov 2026, eine von vier Richtungen; vorher
 „Regionen“ und davor „Platte 311“).
 
@@ -188,7 +188,7 @@ sonst statisch gedreht. Reduced motion: Dauern 0, kein Sprung.
 Einheit · Satz · Pause · Rekord · Aufwärmen · Übung · Abschluss · Plan ·
 ATLAS · Sprungtest · Wochen-Rückblick · Hell/Dunkel · Muskeln · Übungen.
 Freundlich und direkt, Du-Form, kurze Sätze („Los geht’s“, „Mittwoch. Brust ist
-dran.“, „Noch einer. Ich hab dich.“). Keine Laborsprache (Studie, Kader,
+dran.“, „Eine geht noch, wenn die Technik hält.“). Keine Laborsprache (Studie, Kader,
 Platte, belichtet, Verschlusszeit) in der Oberfläche; Code-Bezeichner dürfen sie
 behalten. ATLAS-Protokollzeilen `Beobachtung:` / `Einschätzung:` / `Plan:` /
 `Anpassung:` / `Hinweis:` müssen in `app/api/atlas/chat/route.ts` und
@@ -389,8 +389,8 @@ wählen nur den BEARBEITETEN Ort.
 
 ## Marke
 
-- **Name:** `APP_NAME` = „spotter“, `APP_SLUG` = „spotter“, `CLAIM` = „Ich hab
-  dich.“, `BESCHREIBUNG` — alles in `lib/marke.ts`, nirgends sonst als Text.
+- **Name:** `APP_NAME` = „spotter“, `APP_SLUG` = „spotter“, `CLAIM` = „Eine geht
+  noch.“, `BESCHREIBUNG` — alles in `lib/marke.ts`, nirgends sonst als Text.
 - **Zeichen:** weiße Sprechblase (Spitze unten links) mit einer Hantel,
   Tinte-Rand 4 im 64er-Feld (`MARKE_VIEWBOX`), eine Zeichnung für alles:
   `lib/marke-art.tsx` (`markeArt({ blase, rand, scheibe })`, Satori-tauglich,
@@ -402,7 +402,7 @@ wählen nur den BEARBEITETEN Ort.
   `CACHE` in `public/sw.js`.
 - **Startbild:** Elektroblau, Blase genau mittig bei 45 vw wie im
   iOS-Startbild (`app/apple-splash/[spec]`), die Blase nickt, die Scheiben
-  pumpen, dann Wortmarke (Bricolage 52 px weiß) und Sticker „Ich hab dich.“;
+  pumpen, dann Wortmarke (Bricolage 52 px weiß) und Sticker mit dem Claim („Eine geht noch.“);
   kritisches Inline-CSS in `components/start/splash-css.ts`, Mindestzeit
   `MIN_MS` in `SplashGate`, Notausgang 4 s im Pre-Paint-Skript, reduzierte
   Bewegung = Standbild. Gespeicherte Werte v1/v2/v3/zufall zeigen alle dieses
