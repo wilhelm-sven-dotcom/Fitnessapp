@@ -57,6 +57,8 @@ const config: Config = {
         },
         // Dicker Rand an Karten, Knöpfen, Chips und Kacheln.
         rand: "var(--rand)",
+        // Abdeckung über Gerätefotos (weiße Schrift darauf).
+        "bild-scrim": "var(--bild-scrim)",
         erfolg: "var(--erfolg)",
         warnung: "var(--warnung)",
         gefahr: "var(--gefahr)",
