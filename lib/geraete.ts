@@ -27,3 +27,27 @@ export const GERAETE_REIHENFOLGE: GeraetKey[] = [
   ...(MASCHINEN.map((m) => m.key) as GeraetKey[]),
   "cable",
 ];
+
+/**
+ * Geräte mit mitgeliefertem Bild in `public/geraete/` (3:2, je `<key>.webp`
+ * und `<key>-klein.webp`). Die übrigen zeigen die Zeichnung. Neues Bild:
+ * Dateien ablegen und den Key hier eintragen (siehe README dort).
+ */
+const MIT_BILD: ReadonlySet<GeraetKey> = new Set<GeraetKey>([
+  "cable",
+  "m_waden",
+  "m_rudern",
+  "m_schulterpresse",
+  "m_butterfly",
+]);
+
+/** Hochzählen, wenn ein Bild ersetzt wird: der Service Worker cacht die URL
+ *  dauerhaft, erst ein neuer `?v=` holt die neue Datei. */
+const GERAET_BILD_STAND = 1;
+
+/** URL des mitgelieferten Gerätebilds oder null. `klein` = 360 × 240 für
+ *  Listen und die Trainingskarte, sonst 1200 × 800. */
+export function geraetBildUrl(g: GeraetKey | null, klein = false): string | null {
+  if (!g || !MIT_BILD.has(g)) return null;
+  return `/geraete/${g}${klein ? "-klein" : ""}.webp?v=${GERAET_BILD_STAND}`;
+}

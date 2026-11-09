@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { GeraetZeichnung, type GeraetKey } from "@/components/geraete/GeraetZeichnung";
 import { useTraining } from "@/components/providers/TrainingProvider";
-import { geraetName } from "@/lib/geraete";
+import { geraetBildUrl, geraetName } from "@/lib/geraete";
 import { fetchPhoto } from "@/lib/photo-store";
 import { cn } from "@/lib/utils";
 
@@ -35,31 +35,38 @@ export function useGeraetFoto(geraet: GeraetKey | null): string | null {
 }
 
 /**
- * Bild eines Geräts: das eigene Foto aus dem Studio, sonst die Zeichnung im
- * spotter-Stil. Füllt seine Box; Abdeckung für Text darüber setzt der
- * Aufrufer (`bg-bild-scrim`).
+ * Bild eines Geräts, in dieser Reihenfolge: das eigene Foto aus dem Studio,
+ * das mitgelieferte Bild (`public/geraete/`, 3:2), sonst die Zeichnung im
+ * spotter-Stil. Füllt seine Box (ohne Beschnitt im Format `aspect-bild`);
+ * Abdeckung für Text darüber setzt der Aufrufer (`bg-bild-scrim`).
  */
 export function GeraetBild({
   geraet,
   variante = "hell",
   className,
   dekorativ,
+  klein,
 }: {
   geraet: GeraetKey;
-  /** Variante der Zeichnung (das Foto bleibt ein Foto). */
+  /** Variante der Zeichnung (Foto und Bild bleiben, wie sie sind). */
   variante?: "hell" | "auf-blau";
   className?: string;
   /** Nur Hintergrund — Screenreader überspringen das Bild. */
   dekorativ?: boolean;
+  /** Kleine Datei des mitgelieferten Bilds (Listen, Gruppenköpfe). */
+  klein?: boolean;
 }) {
   const foto = useGeraetFoto(geraet);
+  const bild = foto ?? geraetBildUrl(geraet, klein);
   const name = geraetName(geraet);
-  if (foto) {
+  if (bild) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={foto}
-        alt={dekorativ ? "" : `Foto: ${name}`}
+        src={bild}
+        alt={dekorativ ? "" : `${foto ? "Foto" : "Bild"}: ${name}`}
+        decoding="async"
+        loading={klein ? "lazy" : undefined}
         className={cn("h-full w-full object-cover", className)}
       />
     );

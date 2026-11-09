@@ -121,10 +121,11 @@ export function GuideSheet({
       {ex && (
         <>
           {/* Übung an einem Gerät: das Gerät groß oben — eigenes Foto aus dem
-              Studio, sonst die Zeichnung. */}
+              Studio, sonst das mitgelieferte Bild oder die Zeichnung. Box im
+              Format der Bilder (3:2), damit nichts abgeschnitten wird. */}
           {geraet && (
             <div className="mb-4 space-y-2.5">
-              <div className="h-44 overflow-hidden rounded-card border-dick border-rand bg-surface-1">
+              <div className="aspect-bild w-full overflow-hidden rounded-card border-dick border-rand bg-surface-1">
                 <GeraetBild geraet={geraet} className="h-full w-full" />
               </div>
               <GeraetFotoAktionen geraet={geraet} />

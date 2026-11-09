@@ -248,7 +248,7 @@ export default function ExerciseCatalogPage() {
                     aria-hidden
                     className="h-12 w-16 shrink-0 overflow-hidden rounded-kachel border-dick border-rand bg-surface-1"
                   >
-                    <GeraetBild geraet={g.geraet} dekorativ />
+                    <GeraetBild geraet={g.geraet} dekorativ klein />
                   </span>
                 ) : g.pat ? (
                   <span aria-hidden className="w-9 shrink-0">

@@ -14,7 +14,7 @@ import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { fmtSatz } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
-import { geraetVon } from "@/lib/geraete";
+import { geraetBildUrl, geraetVon } from "@/lib/geraete";
 import { figurFor } from "@/lib/phasen/figuren";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
@@ -104,6 +104,8 @@ export function ExerciseStage({
   const cardio = ex.pattern === "cardio";
   const geraet = geraetVon(ex);
   const foto = useGeraetFoto(geraet);
+  // Ohne eigenes Foto: das mitgelieferte Bild (kleine Datei) als Kachel.
+  const bild = foto ? null : geraetBildUrl(geraet, true);
   const timed = ex.unit === "Sek";
 
   const activeSetIdx = sets.findIndex((s) => !s.warmup && (s.reps === "" || s.reps == null));
@@ -182,11 +184,12 @@ export function ExerciseStage({
       >
         {/* Gerät mit eigenem Foto: das Foto füllt die Karte, eine feste
             Tinte-Abdeckung hält die weiße Schrift lesbar. Eigene Ebene mit
-            overflow-hidden, damit der Sticker über die Kante ragen darf. */}
+            overflow-hidden, damit der Sticker über die Kante ragen darf.
+            Bilder fangen keine Gesten ab (Wischen, langes Drücken). */}
         {foto && (
-          <div aria-hidden className="absolute inset-0 overflow-hidden rounded-card">
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-card">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={foto} alt="" className="h-full w-full object-cover" />
+            <img src={foto} alt="" draggable={false} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-bild-scrim" />
           </div>
         )}
@@ -214,8 +217,24 @@ export function ExerciseStage({
             {zielLabel && !alleErledigt ? ` · ${zielLabel}` : ""}
           </p>
         </div>
-        {/* Gerät ohne Foto: die Zeichnung in Weiß rechts auf Blau. */}
-        {geraet && !foto && (
+        {/* Gerät ohne eigenes Foto: das mitgelieferte Bild als Kachel
+            rechts, sonst die Zeichnung in Weiß auf Blau. */}
+        {geraet && !foto && bild && (
+          <div
+            aria-hidden
+            className="pointer-events-none relative aspect-bild w-28 shrink-0 overflow-hidden rounded-kachel border-dick border-rand bg-surface-1"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={bild}
+              alt=""
+              draggable={false}
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        )}
+        {geraet && !foto && !bild && (
           <div aria-hidden className="relative w-28 shrink-0 self-end">
             <GeraetZeichnung geraet={geraet} variante="auf-blau" />
           </div>
