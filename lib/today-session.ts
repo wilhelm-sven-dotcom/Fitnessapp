@@ -62,7 +62,7 @@ export interface AtlasSessionRequest {
   disabled?: string[];
   /** Trainingsort heute (Name + Geräte-Namen) — für Begründung und Briefing;
    *  die harte Grenze bleibt `availableIds`. */
-  ort?: { name: string; geraete: string[] };
+  ort?: { name: string; geraete: string[]; nurGeraete?: boolean };
 }
 
 /**

@@ -4,7 +4,7 @@ import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { Pressable } from "@/components/ui/pressable";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { PATTERN_FIGUR } from "@/lib/phasen/figuren";
-import { geraeteLabels, ortMuster } from "@/lib/orte";
+import { geraeteLabels, hasFuer, ortMuster } from "@/lib/orte";
 import { availableExercises } from "@/lib/today-session";
 import type { Exercise, GymProfile } from "@/lib/types";
 
@@ -33,7 +33,7 @@ export function OrtFrage({
     <div className="mb-4">
       <div className="grid grid-cols-2 gap-2">
         {gyms.map((g) => {
-          const has = (k: string) => (g.equip as string[]).includes(k);
+          const has = hasFuer(g);
           const zahl = availableExercises(allLib, has, disabled).length;
           const labels = geraeteLabels(g.equip);
           const geraete =

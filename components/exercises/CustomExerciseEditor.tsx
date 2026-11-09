@@ -189,7 +189,7 @@ export function CustomExerciseEditor({
 
       <FieldLabel>Benötigtes Equipment</FieldLabel>
       <div className="flex flex-wrap gap-1.5">
-        {EQUIP_LIST.filter((e) => e.key !== "bike").map((e) => (
+        {[...EQUIP_LIST.filter((e) => e.key !== "bike"), { key: "machine" as const, label: "Maschine" }].map((e) => (
           <ChipToggle
             key={e.key}
             active={req.includes(e.key)}

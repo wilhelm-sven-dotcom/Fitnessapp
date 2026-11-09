@@ -1,4 +1,5 @@
-import { EQUIP_LIST, STUDIO_EQUIP } from "@/lib/exercises";
+import { ALLE_GERAETE, MASCHINEN_KEYS, STUDIO_EQUIP } from "@/lib/exercises";
+import { NUR_GERAETE } from "@/lib/progression";
 import type { AppSettings, EquipKey, GymProfile, Pattern } from "@/lib/types";
 
 /**
@@ -19,36 +20,48 @@ export const ORT_STUDIO_ID = "gym_studio";
 /** Früherer Auto-Name des ersten Profils — nie vom Nutzer gewählt. */
 const ALT_NAME = "Mein Gym";
 
-const GUELTIG = new Set<string>(EQUIP_LIST.map((e) => e.key));
+const GUELTIG = new Set<string>(ALLE_GERAETE.map((e) => e.key));
 
-/** Nur bekannte Geräte-Keys, ohne Dubletten (Sync-/Import-Härtung). */
+/** Nur bekannte Geräte-Keys, ohne Dubletten (Sync-/Import-Härtung). Der alte
+ *  Sammelschalter `machine` wird zu allen Einzelgeräten — auch für Daten, die
+ *  ein Gerät mit älterem Stand per Cloud-Sync schickt. */
 export function cleanEquip(x: unknown): EquipKey[] {
   if (!Array.isArray(x)) return [];
   const out: EquipKey[] = [];
-  for (const k of x)
-    if (typeof k === "string" && GUELTIG.has(k) && !out.includes(k as EquipKey))
-      out.push(k as EquipKey);
+  const add = (k: EquipKey) => {
+    if (!out.includes(k)) out.push(k);
+  };
+  for (const k of x) {
+    if (k === "machine") MASCHINEN_KEYS.forEach(add);
+    else if (typeof k === "string" && GUELTIG.has(k)) add(k as EquipKey);
+  }
   return out;
+}
+
+/** `has()` eines Orts: seine Geräte plus die Regel „nur an Geräten“. */
+export function hasFuer(g: Pick<GymProfile, "equip" | "nurGeraete">): (k: string) => boolean {
+  return (k) => (k === NUR_GERAETE ? !!g.nurGeraete : (g.equip as string[]).includes(k));
 }
 
 export const istStudio = (g: GymProfile) => /studio/i.test(g.name);
 
 const equipKey = (equip: readonly string[]) => [...equip].sort().join(",");
 
-/** Erkennt Ortswechsel UND Geräte-Änderungen am selben Ort. */
-export function ortSignatur(g: Pick<GymProfile, "id" | "equip">): string {
-  return `${g.id}|${equipKey(g.equip)}`;
+/** Erkennt Ortswechsel UND Geräte-Änderungen am selben Ort (inkl. „nur an
+ *  Geräten“). */
+export function ortSignatur(g: Pick<GymProfile, "id" | "equip" | "nurGeraete">): string {
+  return `${g.id}|${equipKey(g.equip)}${g.nurGeraete ? "|nurGeraete" : ""}`;
 }
 
 /** Geräte-Namen in Listenreihenfolge (für Anzeige und ATLAS). */
 export function geraeteLabels(equip: readonly EquipKey[]): string[] {
-  return EQUIP_LIST.filter((e) => equip.includes(e.key)).map((e) => e.label);
+  return ALLE_GERAETE.filter((e) => equip.includes(e.key)).map((e) => e.label);
 }
 
 /** Piktogramm-Muster eines Orts: Maschinen/Kabel → Zug am Gerät, freie
  *  Gewichte → Hüftschwung, sonst Kniebeuge. */
 export function ortMuster(g: Pick<GymProfile, "equip">): Pattern {
-  if (g.equip.includes("machine") || g.equip.includes("cable")) return "vpull";
+  if (g.equip.some((k) => k.startsWith("m_")) || g.equip.includes("cable")) return "vpull";
   if (g.equip.includes("kb") || g.equip.includes("db") || g.equip.includes("bar")) return "hinge";
   return "squat";
 }
@@ -79,9 +92,15 @@ export function ensureOrte(
   settings: AppSettings,
 ): OrteErgebnis {
   const erstlauf = !settings.orteM1;
+  const geraeteErstlauf = !settings.geraeteM1;
   let gyms: GymProfile[] = gymsIn.map((g) => {
     const name = typeof g.name === "string" && g.name.trim() ? g.name.trim() : "Ort";
-    return { ...g, name: name === ALT_NAME ? "Zuhause" : name, equip: cleanEquip(g.equip) };
+    const ort: GymProfile = { ...g, name: name === ALT_NAME ? "Zuhause" : name, equip: cleanEquip(g.equip) };
+    if (ort.nurGeraete !== true) delete ort.nurGeraete;
+    // Einmalig: das Studio plant ab jetzt nur an Geräten (Nutzer-Entscheid
+    // Nov 2026); danach gilt nur noch der Schalter in den Einstellungen.
+    if (geraeteErstlauf && (g.id === ORT_STUDIO_ID || istStudio(ort))) ort.nurGeraete = true;
+    return ort;
   });
 
   const gesehen = new Set<string>();
@@ -102,10 +121,11 @@ export function ensureOrte(
   }
 
   if (erstlauf && !gyms.some(istStudio) && !gyms.some((g) => g.id === ORT_STUDIO_ID))
-    gyms = [...gyms, { id: ORT_STUDIO_ID, name: "Studio", equip: [...STUDIO_EQUIP] }];
+    gyms = [...gyms, { id: ORT_STUDIO_ID, name: "Studio", equip: [...STUDIO_EQUIP], nurGeraete: true }];
 
   let next = settings;
   if (erstlauf) next = { ...next, orteM1: true };
+  if (geraeteErstlauf) next = { ...next, geraeteM1: true };
   if (!gyms.some((g) => g.id === next.activeGymId))
     next = { ...next, activeGymId: gyms[0].id };
 

@@ -4,16 +4,17 @@
  *
  *   A  Zwei Orte → Heute fragt „Wo trainierst du heute?“, und VOR der Wahl
  *      geht keine Anfrage an ATLAS (keine Opus-Runde für den falschen Ort).
- *   B  Studio gewählt → genau eine Anfrage; sie nennt den Ort und bietet
- *      Maschinen-Übungen an.
+ *   B  Studio gewählt → genau eine Anfrage; sie nennt den Ort mit seinen
+ *      Einzelgeräten und „nur an Geräten“ und bietet NUR Maschinen- und
+ *      Kabel-Übungen an (keine Hanteln, kein Körpergewicht).
  *   C  Umschalten auf Zuhause → neu komponiert: weder Anfrage noch Liste
  *      enthalten Maschinen- oder Kabel-Übungen.
  *   D  Reload → keine Frage mehr, der gewählte Ort bleibt.
  *   E  Bearbeitete Einheit + Umschalten → Hinweis statt stiller
  *      Neukomposition (0 Anfragen); der Knopf stellt dann für den Ort neu
  *      zusammen.
- *   F  Im Studio „Kraftgeräte“ abwählen → Heute stellt die unberührte
- *      Einheit ohne Maschinen neu zusammen.
+ *   F  Im Studio „Kraftgeräte“ (Sammelknopf) abwählen → Heute stellt die
+ *      unberührte Einheit ohne Maschinen neu zusammen.
  *
  * Läuft gegen den Produktions-Build auf Port 3199 (wie scripts/smoke.mjs).
  * Aufruf: npm run build && npm run pruefe:ort
@@ -49,14 +50,15 @@ const pruefe = (ok, text) => {
 
 // Maschinen- und Kabel-Übungen direkt aus dem Katalog (eine Quelle).
 const katalog = readFileSync(new URL("../lib/exercises.ts", import.meta.url), "utf8");
-const idsMit = (geraet) =>
+// Maschinen sind die Einzelgeräte `m_*` (vorher ein Sammel-Key `machine`).
+const idsMit = (passt) =>
   new Set(
     [...katalog.matchAll(/id: "([a-z0-9_]+)"[^\n]*?req: \[([^\]]*)\]/g)]
-      .filter((m) => m[2].includes(`"${geraet}"`))
+      .filter((m) => passt(m[2]))
       .map((m) => m[1]),
   );
-const MASCHINE = idsMit("machine");
-const KABEL = idsMit("cable");
+const MASCHINE = idsMit((req) => /"m_[a-z]+"/.test(req));
+const KABEL = idsMit((req) => req.includes('"cable"'));
 pruefe(MASCHINE.size >= 5 && KABEL.size >= 5, `Katalog gelesen (${MASCHINE.size} Maschine, ${KABEL.size} Kabel)`);
 
 const browser = await chromium.launch({ executablePath: exe });
@@ -119,12 +121,18 @@ try {
   const b = anfragen[anfragen.length - 1] ?? {};
   pruefe(b.ort?.name === "Studio", `B · Anfrage nennt den Ort („${b.ort?.name}“)`);
   pruefe(
-    Array.isArray(b.ort?.geraete) && b.ort.geraete.includes("Kraftgeräte"),
-    "B · Geräte-Liste enthält Kraftgeräte",
+    Array.isArray(b.ort?.geraete) && b.ort.geraete.includes("Beinpresse"),
+    "B · Geräte-Liste nennt die Einzelgeräte (Beinpresse)",
   );
+  pruefe(b.ort?.nurGeraete === true, "B · Anfrage sagt „nur an Geräten“");
   pruefe(
     (b.availableIds ?? []).some((id) => MASCHINE.has(id)),
     "B · Maschinen-Übungen sind im Studio wählbar",
+  );
+  const frei = (b.availableIds ?? []).filter((id) => !MASCHINE.has(id) && !KABEL.has(id));
+  pruefe(
+    (b.availableIds ?? []).length > 0 && frei.length === 0,
+    `B · Studio nur an Geräten: keine freien Übungen (${frei.slice(0, 4).join(", ") || "keine"})`,
   );
 
   // ── C · Umschalten auf Zuhause → ohne Maschinen und Kabel ─────────────
