@@ -473,7 +473,7 @@ export default function HomePage() {
       )}
 
       {/* Weg zurück ins Training nur, wenn die Karte ihn nicht schon trägt
-          („Training fortsetzen“) — etwa wenn die Einheit gestern Abend
+          („Weiter geht’s“) — etwa wenn die Einheit gestern Abend
           begann und heute noch die Ortsfrage steht. */}
       {running && (frageOffen || !todaySession || !!todaySession.completedAt) && (
         <Pressable

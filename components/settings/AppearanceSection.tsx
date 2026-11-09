@@ -19,7 +19,7 @@ const THEMES: { id: ThemePref; label: string }[] = [
 export function AppearanceSection() {
   const { settings, setTheme, setUserName, setZoetrope, setSplash } = useTraining();
   const theme = settings.theme ?? "light";
-  // Ein Startbild im Look „Regionen“: alte Werte v1/v2/v3/zufall heißen „an“.
+  // Ein Startbild im Look „spotter“: alte Werte v1/v2/v3/zufall heißen „an“.
   const splashAn = (settings.splash ?? "v3") !== "aus";
   const [name, setName] = useState(settings.userName ?? "");
 

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { cn } from "@/lib/utils";
 
-/** Tab-Leiste „Regionen“: vier Reiter mit Symbol und Text. Aktiv in Tinte,
+/** Tab-Leiste „spotter“: vier Reiter mit Symbol und Text. Aktiv als blaue Pille,
  *  inaktiv als Hinweis-Schrift; kein gleitender Marker. */
 const tabs: readonly { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/", label: "Heute", Icon: CalendarDays },
