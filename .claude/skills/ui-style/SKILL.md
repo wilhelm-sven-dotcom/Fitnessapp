@@ -244,8 +244,8 @@ Sheets 50.
 
 - **Übersicht:** Kopfzeile aus drei Kacheln (Bewegt gesamt · Level → LevelSheet ·
   Woche im Block → Blatt „Phase“), Volumen mit Segment „4 Wochen · 6 Monate ·
-  1 Jahr“, Rekorde, Verläufe als Liste mit Mini-Kurve (`MiniKurve`) in der
-  Regionsfarbe. Antippen öffnet das Übungsdetail im Reiter „Verlauf“. Große
+  1 Jahr“, Rekorde, Verläufe als Liste mit Mini-Kurve (`MiniKurve`) in Blau
+  und Regions-Quadrat. Antippen öffnet das Übungsdetail im Reiter „Verlauf“. Große
   Kurven stehen nur im Übungsdetail.
 - **Eine Quelle für Verläufe:** `lib/exercise-series.ts` (Art der Kennzahl über
   die ganze Historie wie bei den Rekorden). Gewichtswerte heißen immer
@@ -255,7 +255,8 @@ Sheets 50.
   Reiter offen ist: Bestwert, letzte drei Sätze, Kurve.
 - **Muskeln:** Körperkarte, Sätze je Muskel mit Zielband und „Sätze/Ziel“,
   Muskel-Balance. Status-Farben immer mit Legende und Zahl.
-- **Verlauf:** Titel zweizeilig (`line-clamp-2`), kein Papierkorb in der Karte;
+- **Verlauf:** Karten mit Rand, das Mini-Band je Einheit in Blau (Daten),
+  Titel zweizeilig (`line-clamp-2`), kein Papierkorb in der Karte;
   Löschen als `danger`-Knopf in der aufgeklappten Einheit, mit Rückfrage.
 - Veränderungen über `fmtDelta` („−1,5 kg“, echtes Minus, Komma).
 
@@ -313,8 +314,13 @@ Sheets 50.
   bzw. „Zum Abschluss“ direkt unter der Satzliste); „Nächste Übung“ nennt die
   nächste OFFENE Übung (`nextOpenItemIndex`), genau dorthin springt „Weiter“.
 - Abschluss vor dem Speichern: Dauer · Sätze · Bewegt und je Übung eine Zeile
-  (Regions-Quadrat 16 px); danach zeigt der Sieger-Moment Rekord, Level und
-  ATLAS (keine Zahlen doppelt). Gewichtsrekorde zeigen den gehobenen Satz groß
+  (Regions-Quadrat 16 px); danach der Moment nach dem Speichern: **mit Rekord**
+  die ganze Fläche Orange (Schrift Tinte), die weiße PR-Karte (Rand, harter
+  Schatten, „PR!“ blau, Übungsname, Figur) springt EINMAL gedreht auf (Feder;
+  reduced motion steht sie still), Sonnen-Sticker „+7 kg“, darunter der Satz
+  groß, Level-Balken (weiß mit Rand, Füllung blau), ATLAS als Sprechblase,
+  „Teilen“ weiß und „Weiter“ Tinte; **ohne Rekord** Grund, Figur, blauer
+  Sticker „Erledigt!“, Name, Level, Blase, „Weiter“ blau. Keine Zahl doppelt. Gewichtsrekorde zeigen den gehobenen Satz groß
   und „Geschätztes 1RM“ beschriftet darunter, nie eine nackte e1RM-Zahl.
 - Check-in „Tagesform“: vorbelegt wie zuletzt (≤ 7 Tage), sonst mittlere Stufe;
   Knopf sofort aktiv; Rückenschonung nur über eine heute angetippte Wertung.

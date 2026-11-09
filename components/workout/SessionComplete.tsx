@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Button } from "@/components/ui/Button";
+import { Sprechblase } from "@/components/ui/Sprechblase";
+import { Sticker } from "@/components/ui/Sticker";
 import { useTraining, type SessionSummary } from "@/components/providers/TrainingProvider";
 import { success } from "@/lib/haptics";
 import { EASE_OUT } from "@/lib/motion";
@@ -14,6 +16,7 @@ import type { Region } from "@/lib/phasen/band";
 import { renderShareCard } from "@/lib/share-card";
 import { speak } from "@/lib/voice";
 import { APP_SLUG } from "@/lib/marke";
+import { cn } from "@/lib/utils";
 
 /** Die Rekord-Tafel des Sieger-Moments — der Runner rechnet sie VOR dem Save. */
 export interface SiegerTafel {
@@ -152,30 +155,26 @@ export function SessionComplete({
   const stagger = (i: number) =>
     reduce ? undefined : { duration: 0.24, delay: 0.28 + i * 0.08, ease: EASE_OUT };
 
+  // Auf der orangen Rekord-Fläche trägt alles die Schrift der Fläche (Tinte);
+  // Blau und Grautöne hätten dort zu wenig Kontrast.
+  const tonFg = sieger ? "text-rekord-auf" : "text-fg";
+  const tonMuted = sieger ? "text-rekord-auf" : "text-muted";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-surface-0 px-6 text-center"
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col items-center overflow-y-auto px-6 text-center",
+        sieger ? "bg-rekord-flaeche text-rekord-auf" : "bg-surface-0",
+      )}
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* Doppelblitz: 2 × 1 Kreide-Frame, ~80 ms Abstand (Motion-Handoff). */}
-      {sieger && !reduce && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none fixed inset-0"
-          style={{ backgroundColor: "var(--card)" }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.85, 0, 0, 0.85, 0] }}
-          transition={{ duration: 0.26, times: [0, 0.06, 0.3, 0.55, 0.6, 0.85], ease: "linear" }}
-        />
-      )}
-
       <motion.div
         initial={reduce ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={reduce ? undefined : { duration: 0.01, delay: 0.26 }}
+        transition={reduce ? undefined : { duration: 0.01, delay: 0.1 }}
         // my-auto statt justify-center am Parent: bei überlaufendem Inhalt
         // bliebe der Anfang sonst unscrollbar abgeschnitten (Flexbox-Falle).
         className="my-auto flex w-full max-w-sm flex-col items-center py-8"
@@ -184,58 +183,52 @@ export function SessionComplete({
           initial={reduce ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={stagger(0)}
-          className="flex w-full items-baseline justify-between font-mono text-2xs font-bold"
+          className={cn("flex w-full items-baseline justify-between text-sm font-bold", tonFg)}
         >
-          <span className="text-fg">
+          <span>
             Einheit <span className="tabular-nums">{plattenNr}</span>
           </span>
-          <span className={sieger ? "text-rekord" : "text-info"}>
+          <span className={sieger ? undefined : "text-info"}>
             {sieger ? "Neuer Rekord" : "Gespeichert"}
           </span>
         </motion.p>
 
         {sieger ? (
           <>
+            {/* Der EINE gefeierte Moment: die PR-Karte springt auf. */}
+            <div className="relative mt-8 w-full">
+              <motion.div
+                initial={reduce ? false : { opacity: 0, scale: 0.4, rotate: -20 }}
+                animate={{ opacity: 1, scale: 1, rotate: -6 }}
+                transition={
+                  reduce
+                    ? undefined
+                    : { type: "spring", stiffness: 380, damping: 14, delay: 0.15 }
+                }
+                className="mx-auto flex w-60 items-center gap-2 rounded-card border-dick border-rand bg-surface-1 px-4 py-4 text-left shadow-hart"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-7xl font-extrabold leading-none text-accent-ink">
+                    PR!
+                  </p>
+                  <p className="mt-1.5 text-sm font-bold leading-snug text-fg">{sieger.exName}</p>
+                </div>
+                <div aria-hidden className="w-16 shrink-0">
+                  <PhasenFigur figur={sieger.figur} mode="freeze" color="var(--fg)" />
+                </div>
+              </motion.div>
+              {sieger.delta != null && sieger.delta > 0 && (
+                <Sticker drehung={-10} className="absolute -top-4 left-2 text-base">
+                  +{fmtDe(sieger.delta)} {sieger.einheit}
+                </Sticker>
+              )}
+            </div>
+
             <motion.p
-              initial={reduce ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={stagger(1)}
-              className="mt-8 font-mono text-2xs font-bold text-rekord"
-            >
-              Persönlicher Rekord
-            </motion.p>
-            <motion.span
-              initial={reduce ? false : { opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              transition={stagger(2)}
-              aria-hidden
-              className="mt-3 block h-px w-28 bg-rekord"
-            />
-            <motion.div
-              initial={reduce ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={stagger(3)}
-              className="mt-5 w-40 text-rekord"
-            >
-              <PhasenFigur figur={sieger.figur} mode="freeze" color="var(--rekord)" />
-            </motion.div>
-            <motion.h1
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(4)}
-              className="mt-4 font-display font-bold text-3xl text-fg"
-            >
-              {sieger.exName}
-            </motion.h1>
-            <motion.p
-              initial={reduce ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={stagger(5)}
-              className={
-                sieger.kind === "weight" && sieger.satz
-                  ? "mt-2 font-display text-4xl font-extrabold leading-none tabular-nums text-rekord"
-                  : "mt-2 font-display text-readout font-extrabold leading-none tabular-nums text-rekord"
-              }
+              className="mt-10 font-display text-5xl font-extrabold leading-none tabular-nums"
             >
               {sieger.kind === "weight" && sieger.satz
                 ? sieger.satz
@@ -244,17 +237,14 @@ export function SessionComplete({
             <motion.div
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={stagger(6)}
-              className="mt-3 space-y-1 text-sm text-muted"
+              transition={stagger(5)}
+              className="mt-3 space-y-1 text-base font-semibold"
             >
               {/* Bei Gewichtsrekorden zählt die Schätzung (Epley) — sie steht
                   beschriftet unter dem echten Satz, nie als nackte Zahl. */}
               {sieger.kind === "weight" && sieger.satz && (
                 <p>
-                  Geschätztes 1RM{" "}
-                  <span className="font-semibold tabular-nums text-fg">
-                    {fmtDe(sieger.wert)} kg
-                  </span>
+                  Geschätztes 1RM <span className="tabular-nums">{fmtDe(sieger.wert)} kg</span>
                 </p>
               )}
               <p className="tabular-nums">
@@ -280,14 +270,17 @@ export function SessionComplete({
                 <PhasenFigur figur={figur} mode="freeze" color="var(--fg)" />
               </motion.div>
             )}
-            <motion.h1
+            <motion.div
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(2)}
-              className="mt-4 font-display font-bold text-3xl text-fg"
+              className="mt-4 flex flex-col items-center gap-3"
             >
-              {name || "Einheit"}
-            </motion.h1>
+              <Sticker ton="blau" drehung={-4} className="text-base">
+                Erledigt!
+              </Sticker>
+              <h1 className="font-display text-3xl font-extrabold text-fg">{name || "Einheit"}</h1>
+            </motion.div>
           </>
         )}
 
@@ -297,7 +290,7 @@ export function SessionComplete({
           transition={stagger(8)}
           className="mt-8 w-full"
         >
-          <div className="mb-1.5 flex items-center justify-between font-mono text-3xs font-medium text-muted">
+          <div className={cn("mb-1.5 flex items-center justify-between text-sm font-bold", tonFg)}>
             <span className="flex items-center gap-1.5">
               Level
               <AnimatePresence mode="popLayout" initial={false}>
@@ -307,17 +300,18 @@ export function SessionComplete({
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 1.3, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 400, damping: 22 }}
-                  className="tabular-nums text-accent-ink"
+                  className="font-display font-extrabold tabular-nums"
                 >
                   {lvl}
                 </motion.span>
               </AnimatePresence>
             </span>
-            {levelUp && lvl === summary.levelAfter && (
-              <span className="font-semibold text-accent-ink">Level up!</span>
-            )}
+            {levelUp && lvl === summary.levelAfter && <Sticker drehung={3}>Level up!</Sticker>}
           </div>
-          <div className="h-1.5 overflow-hidden rounded-xs bg-surface-2" aria-hidden>
+          <div
+            className="h-4 overflow-hidden rounded-pill border-dick border-rand bg-surface-1"
+            aria-hidden
+          >
             <div
               className="h-full bg-accent"
               style={{
@@ -326,30 +320,30 @@ export function SessionComplete({
               }}
             />
           </div>
-          <p className="mt-2 font-mono text-3xs text-muted">
+          <p className={cn("mt-2 text-sm font-semibold", tonMuted)}>
             Diese Woche: {summary.weekSets}/{summary.weekTarget} Sätze
           </p>
         </motion.div>
 
-        {/* Das Protokoll des Studienleiters — wandert mit der Platte ins Archiv. */}
+        {/* ATLAS fasst die Einheit zusammen — als Sprechblase. */}
         {summary.debrief.length > 0 && (
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={stagger(9)}
             data-testid="session-debrief"
-            className="mt-6 w-full rounded-card border-dick border-rand bg-surface-1 p-3.5 text-left"
+            className="mt-6 w-full text-left"
           >
-            <p className="mb-2 flex items-center gap-2 font-mono text-3xs font-bold text-muted">
-              <AtlasMark size={14} className="text-fg" /> ATLAS
-            </p>
-            <div className="space-y-1.5">
+            <Sprechblase blaseClassName="flex-1 space-y-1.5 font-medium">
+              <p className="flex items-center gap-1.5 text-3xs font-bold text-muted">
+                <AtlasMark size={12} /> ATLAS
+              </p>
               {summary.debrief.map((l, i) => (
-                <p key={i} className="text-base leading-relaxed text-fg">
+                <p key={i} className="text-base leading-snug text-fg">
                   {l}
                 </p>
               ))}
-            </div>
+            </Sprechblase>
           </motion.div>
         )}
 
@@ -364,7 +358,7 @@ export function SessionComplete({
               Teilen
             </Button>
           )}
-          <Button size="lg" onClick={onDone} className="flex-1">
+          <Button size="lg" variant={sieger ? "strong" : "primary"} onClick={onDone} className="flex-1">
             Weiter
           </Button>
         </motion.div>
