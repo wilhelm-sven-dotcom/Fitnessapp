@@ -46,7 +46,7 @@ export function AtlasEingabe({
               key={s}
               onClick={() => onSend(s)}
               disabled={busy}
-              className="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-pill border border-line bg-surface-1 px-3.5 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
+              className="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-pill border-dick border-rand bg-surface-1 px-3.5 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
             >
               {s}
             </Pressable>

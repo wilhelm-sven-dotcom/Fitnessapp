@@ -268,11 +268,19 @@ Sheets 50.
   wenn der Fokus darin liegt; sonst tritt sie zurück. Scroll-Ziele über dem
   Dock nutzen `scrollMarginBottom: var(--nav-h)`.
 - **Katalog:** eine Filterzeile („Muster“ und „Muskel“ öffnen je ein Blatt,
-  „Meine Geräte“ als ChipToggle), Figur einmal im Gruppenkopf, Zeilen mit
-  Regionsbalken und „Muskel · Gerät“ (`geraetText`).
+  „Meine Geräte“ als ChipToggle), Figur einmal im Gruppenkopf (Tinte), Zeilen
+  mit Regions-Quadrat (16 px, Rand) und „Muskel · Gerät“ (`geraetText`).
 - **Geräte am Ort:** ChipToggle mit Haken, Ort-Segment „Studio · 10“.
 - **Formularfelder** mit `text-base` (≥ 16 px, sonst zoomt iOS) und dem
   Feld-Rezept; Erfahrungsstufen tragen je einen erklärenden Satz.
+- **ATLAS-Seite:** Kopf „ATLAS · dein Trainingspartner“ (Bricolage) mit der
+  Tages-Direktive, Wochen-Rückblick als Karte; im Gespräch spricht ATLAS mit
+  Avatar „A“ und Blase links (Protokollzeilen in Blau), die eigenen Nachrichten
+  stehen rechts als Tinte-Blase mit Rand. Fragen als Pillen mit Rand im Dock.
+- **Stimme:** `ATLAS_PERSONA` (`lib/atlas/prompts.ts`) beschreibt ATLAS als
+  Trainingspartner an der Bank: direkt, ermutigend, gut gelaunt, nie albern;
+  feste Sätze im Training (`lib/trainer.ts`, `MOTIVATE_*`, Rekord) im selben
+  Ton, ohne Gedankenstriche.
 
 ## Fokus-Modus (Training)
 
