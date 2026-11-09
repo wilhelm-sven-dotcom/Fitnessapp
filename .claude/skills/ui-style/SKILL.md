@@ -186,7 +186,7 @@ sonst statisch gedreht. Reduced motion: Dauern 0, kein Sprung.
 
 Einheit · Satz · Pause · Rekord · Aufwärmen · Übung · Abschluss · Plan ·
 ATLAS · Sprungtest · Wochen-Rückblick · Hell/Dunkel · Muskeln · Übungen.
-Freundlich und direkt, Du-Form, kurze Sätze („Los geht's“, „Mittwoch. Brust ist
+Freundlich und direkt, Du-Form, kurze Sätze („Los geht’s“, „Mittwoch. Brust ist
 dran.“, „Noch einer. Ich hab dich.“). Keine Laborsprache (Studie, Kader,
 Platte, belichtet, Verschlusszeit) in der Oberfläche; Code-Bezeichner dürfen sie
 behalten. ATLAS-Protokollzeilen `Beobachtung:` / `Einschätzung:` / `Plan:` /
@@ -219,20 +219,26 @@ Sheets 50.
 
 ## Heute
 
-- **Aufbau von oben:** Kicker „Deine Einheit heute · Datum“ → Titel (Name der
-  Einheit oder „Wo trainierst du heute?“) → Bestandszeile (`heute-bestand`) →
-  **Wochenleiste** (Mo–So, trainierte Tage als Tinte-Kreis mit Haken, heute mit
-  Rand, „2 von 3 Einheiten“) → Ort-Segment → Karte (Phasenband, Begründung,
-  Plan-Quelle) → Übungszeilen (Regionsbalken 4 px, Figur 32 px, Name, „3 × 10–15
-  Wdh · Muskel“ in der Regionsfarbe, Gewicht rechts) → Umbauen (Pillen) und
-  Wunschfeld → Hinweiskarten → Wochenraster.
+- **Aufbau von oben:** Kicker „Deine Einheit heute · Datum“ → Überschrift
+  Bricolage 30 px: „Montag.“ und darunter der Fokus der Einheit (Teil des
+  Namens nach „·“) in einer Sonnen-Markierung mit Rand, „… ist/sind dran.“;
+  erledigt „Montag. Geschafft.“; vor der Ortswahl „Wo trainierst du heute?“ →
+  Bestandszeile (`heute-bestand`) → **Wochenleiste** (Mo–So als Kreise mit
+  Rand: trainiert blau mit Haken, heute oranger Ring; Sticker „1 von 3
+  Einheiten“) → Ort-Segment → **Einheitskarte** (Rand + harter Schatten: Name
+  der Einheit, Zeilen mit Nummer-Kachel in Regionsfarbe, Figur in Tinte, Name,
+  „3 × 10–15 Wdh · Muskel“, Gewicht rechts; Trenner gestrichelt; unten die
+  Plan-Quelle) → ATLAS-Begründung als Sprechblase → „Zuerst kommt das
+  Aufwärmen.“ → Umbauen (Pillen mit Rand) und Wunschfeld → Hinweiskarten →
+  Wochenraster.
 - **Zeit und Start im Dock über der Tab-Leiste** (`StartDock` per Portal in den
-  `NavSlot` der AppShell): Stufen 20/30/45/60/90 und „frei“ (öffnet ein Blatt mit
-  dem Feld — kein Eingabefeld im Dock), darunter „Training starten“. Nie während
-  der Ortsfrage, nicht für eine erledigte Einheit; läuft eine Einheit, nur
-  „Training fortsetzen“. Die AppShell misst Leiste + Dock und gibt dem Inhalt so
-  viel Auslauf.
-- Phasenband-Nummern nur, wenn der schmalste Kader ≥ 20 px breit ist (gemessen).
+  `NavSlot` der AppShell): Zeit-Pillen 20/30/45/60/90 und „frei“ (Rand,
+  gewählt Tinte; „frei“ öffnet ein Blatt mit dem Feld — kein Eingabefeld im
+  Dock), darunter der blaue Knopf „Los geht’s“. Nie während der Ortsfrage,
+  nicht für eine erledigte Einheit; läuft eine Einheit, nur „Weiter geht’s“.
+  Die AppShell misst Leiste + Dock und gibt dem Inhalt so viel Auslauf.
+- Ortsfrage: zwei Kacheln (Zuhause/Studio) mit Rand und kleinem harten
+  Schatten, Figur, Übungszahl, Geräte.
 
 ## Fortschritt und Übungsdetail
 
@@ -363,7 +369,8 @@ wählen nur den BEARBEITETEN Ort.
 Änderung NUR zusammen mit dem Skript im selben Commit:
 
 - Texte: „Deine Einheit heute“ · „Wo trainierst du heute?“ (Orts-Kacheln als
-  Button, Name beginnt mit dem Ort) · „Training starten“ · „Bearbeiten“ ·
+  Button, Name beginnt mit dem Ort) · „Los geht’s“ (Tests suchen „Los geht“) ·
+  „Bearbeiten“ ·
   „Einheit bearbeiten“ · „Übung wählen“ · „‹Name› tauschen“ · „Tagesform“ ·
   „Überspringen“ · „Pause“ · „Zum Abschluss“ · „Wie fühlt sich dein unterer
   Rücken an?“ · „Gut“ · „Beenden & speichern“ · „Verlauf“ · „Orte & Geräte“ ·

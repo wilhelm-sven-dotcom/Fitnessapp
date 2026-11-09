@@ -142,7 +142,7 @@ export function Welcome() {
             full
             className=""
           >
-            Los geht&apos;s
+            Los geht’s
           </Button>
           <p className="mt-3 text-center text-sm text-muted">
             Alles bleibt auf dem Gerät, kein Konto nötig.

@@ -58,8 +58,8 @@ await page.addInitScript(() => {
 });
 
 await page.goto(BASE + "/", { waitUntil: "networkidle" });
-await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 15000 });
-await page.getByText("Training starten", { exact: false }).first().click();
+await page.getByText("Los geht", { exact: false }).first().waitFor({ timeout: 15000 });
+await page.getByText("Los geht", { exact: false }).first().click();
 await page.getByText("Überspringen").first().click();
 await page.getByLabel("Aufwärmen beenden").click();
 await page.getByTestId("stage-order").waitFor({ timeout: 15000 });

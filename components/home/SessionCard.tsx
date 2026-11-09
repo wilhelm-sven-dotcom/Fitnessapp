@@ -3,15 +3,14 @@
 import { Pencil, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
-import { Card } from "@/components/ui/Card";
 import { Kicker } from "@/components/ui/Kicker";
-import { Phasenband } from "@/components/ui/Phasenband";
 import { Pressable } from "@/components/ui/pressable";
+import { Sprechblase } from "@/components/ui/Sprechblase";
 import { WishBar } from "@/components/home/WishBar";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { effectiveProfile } from "@/lib/athlete";
 import { fmtGewicht } from "@/lib/format";
-import { bandOfPlanned, REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
+import { REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { figurFor } from "@/lib/phasen/figuren";
 import { presc } from "@/lib/progression";
 import { startWeight } from "@/lib/start-weight";
@@ -36,10 +35,11 @@ function zielVon(sets: number, lo: number, hi: number, sek: boolean): string {
 }
 
 /**
- * Die heutige Einheit: EINE Karte (Phasenband + ATLAS-Begründung +
- * Plan-Quelle), darunter die Übungen als Zeilen (Regionsmarke, Figur, Name,
- * Schema · Muskel in der Regionsfarbe, Gewicht) und das Umbauen. Zeit und
- * „Training starten“ stehen im Dock über der Tab-Leiste (StartDock).
+ * Die heutige Einheit „spotter“: EINE Karte mit Rand und hartem Schatten
+ * (Name der Einheit, die Übungen als Zeilen mit Nummer-Kachel in der
+ * Regionsfarbe, Figur, Schema · Muskel, Gewicht; unten die Plan-Quelle),
+ * darunter ATLAS’ Begründung als Sprechblase und das Umbauen. Zeit und
+ * „Los geht’s“ stehen im Dock über der Tab-Leiste (StartDock).
  */
 export function SessionCard({
   session,
@@ -95,18 +95,6 @@ export function SessionCard({
     });
   }, [session.items, byId, lastPerf, settings, body]);
 
-  // Die Vorschläge färben auch die Basislinien des Bands (IWF-Scheibenfarbe
-  // der geplanten Last) — EINE Berechnung für beides.
-  const kgByItem = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const z of zeilen) if (z && z.weight != null) m.set(z.it.id, z.weight);
-    return m;
-  }, [zeilen]);
-  const gruppen = useMemo(
-    () => bandOfPlanned(session.items, byId, kgByItem),
-    [session.items, byId, kgByItem],
-  );
-
   const quelle = regenerating
     ? "Plan: Basisplan steht — ATLAS stellt gerade um"
     : session.source === "atlas"
@@ -117,21 +105,15 @@ export function SessionCard({
 
   return (
     <div className="mb-4 space-y-3">
-      {/* Die Einheit auf einen Blick: Phasenband + Warum + Plan-Quelle. */}
-      <Card>
-        <Phasenband gruppen={gruppen} groesse="hero" zoetropOn={settings.zoetrope !== false} />
-        {session.briefing && (
-          <p className="mt-3 text-base leading-relaxed text-fg">{session.briefing}</p>
-        )}
-        <Kicker className="mt-3 border-t border-line-card pt-2.5">
-          {quelle}
-          {session.edited ? " · angepasst" : ""}
-        </Kicker>
-      </Card>
-
       {/* Übungen: Nummer als Kachel in der Regionsfarbe, Figur in Tinte,
           Schema · Muskel, Gewicht rechts. */}
-      <ol className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
+      <section className="overflow-hidden rounded-card border-dick border-rand bg-surface-1 shadow-hart">
+        <div className="flex items-baseline justify-between gap-3 px-4 pb-1 pt-3.5">
+          <h2 className="min-w-0 font-display text-lg font-extrabold leading-tight text-fg">
+            {session.name}
+          </h2>
+        </div>
+      <ol>
         {zeilen.map((z, i) => {
           if (!z) return null;
           const m = muscleOf(z.ex);
@@ -140,7 +122,7 @@ export function SessionCard({
             <li
               key={z.it.id}
               data-exercise-id={z.ex.id}
-              className={i > 0 ? "border-t border-line-card" : undefined}
+              className={i > 0 ? "border-t-2 border-dashed border-line-card" : undefined}
             >
               <div className="flex items-center gap-3 px-4 py-3">
                 <span
@@ -175,6 +157,15 @@ export function SessionCard({
           );
         })}
       </ol>
+        <Kicker className="border-t-2 border-dashed border-line-card px-4 py-2.5 text-3xs">
+          {quelle}
+          {session.edited ? " · angepasst" : ""}
+        </Kicker>
+      </section>
+
+      {/* ATLAS sagt, warum heute diese Einheit — als Sprechblase. */}
+      {session.briefing && <Sprechblase>{session.briefing}</Sprechblase>}
+
       <p className="px-1 text-sm text-muted">
         {locked ? "Die Einheit läuft." : "Zuerst kommt das Aufwärmen."}
       </p>
@@ -185,7 +176,7 @@ export function SessionCard({
           <div className="flex flex-wrap items-center gap-2">
             <Pressable
               onClick={onEdit}
-              className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+              className="flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <Pencil size={16} aria-hidden /> Bearbeiten
             </Pressable>
@@ -193,7 +184,7 @@ export function SessionCard({
               onClick={() => onRegenerate()}
               // Nicht gesperrt: eine neue Anfrage bricht die laufende ab
               // (app/page.tsx, atlasAbort), es kann sich nichts stauen.
-              className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+              className="flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <RefreshCw size={16} aria-hidden className={regenerating ? "opacity-50" : undefined} />
               {regenerating ? "ATLAS ordnet an …" : "Neu ansetzen"}

@@ -103,8 +103,8 @@ try {
   await pg.getByText("Wo trainierst du heute?").first().waitFor({ timeout: 15000 });
   await pg.waitForTimeout(1500);
   pruefe(anfragen.length === 0, `A · keine ATLAS-Anfrage vor der Wahl (${anfragen.length})`);
-  const startSichtbar = await pg.getByText("Training starten").first().isVisible().catch(() => false);
-  pruefe(!startSichtbar, "A · noch kein „Training starten“");
+  const startSichtbar = await pg.getByText("Los geht").first().isVisible().catch(() => false);
+  pruefe(!startSichtbar, "A · noch kein „Los geht’s“");
   pruefe(
     (await pg.getByRole("button", { name: /^Zuhause/ }).count()) > 0 &&
       (await pg.getByRole("button", { name: /^Studio/ }).count()) > 0,
@@ -113,7 +113,7 @@ try {
 
   // ── B · Studio → eine Anfrage mit Ort und Maschinen ───────────────────
   await pg.getByRole("button", { name: /^Studio/ }).first().click();
-  await pg.getByText("Training starten").first().waitFor({ timeout: 8000 });
+  await pg.getByText("Los geht").first().waitFor({ timeout: 8000 });
   await pg.waitForTimeout(1000);
   pruefe(anfragen.length === 1, `B · genau eine Anfrage nach der Wahl (${anfragen.length})`);
   const b = anfragen[anfragen.length - 1] ?? {};
@@ -146,7 +146,7 @@ try {
 
   // ── D · Reload → keine Frage, Ort bleibt ──────────────────────────────
   await pg.reload({ waitUntil: "networkidle" });
-  await pg.getByText("Training starten").first().waitFor({ timeout: 8000 });
+  await pg.getByText("Los geht").first().waitFor({ timeout: 8000 });
   const frageNachReload = await pg.getByText("Wo trainierst du heute?").count();
   pruefe(frageNachReload === 0, "D · nach Reload keine Ortsfrage");
   pruefe(
@@ -188,7 +188,7 @@ try {
   pruefe((await kraft.getAttribute("aria-pressed")) === "false", "F · Kraftgeräte abgewählt");
   const vorF = anfragen.length;
   await pg.goto(BASE + "/", { waitUntil: "networkidle" });
-  await pg.getByText("Training starten").first().waitFor({ timeout: 8000 });
+  await pg.getByText("Los geht").first().waitFor({ timeout: 8000 });
   await pg.waitForTimeout(1500);
   pruefe(anfragen.length === vorF + 1, `F · Heute stellt neu zusammen (${anfragen.length - vorF} Anfrage)`);
   const f = anfragen[anfragen.length - 1] ?? {};
