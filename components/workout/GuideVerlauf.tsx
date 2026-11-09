@@ -45,7 +45,7 @@ export function GuideVerlauf({ ex }: { ex: Exercise }) {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="text-3xs font-bold text-muted">
           Bestwert · {KENNZAHL[serie.kind]}
         </p>
         <p className="mt-1 font-display text-3xl font-extrabold leading-none tabular-nums text-rekord">
@@ -60,7 +60,7 @@ export function GuideVerlauf({ ex }: { ex: Exercise }) {
 
       {letzte.length > 0 && (
         <div>
-          <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="mb-1 text-3xs font-bold text-muted">
             Letzte Sätze
           </p>
           <ul>
@@ -78,7 +78,7 @@ export function GuideVerlauf({ ex }: { ex: Exercise }) {
       )}
 
       <div>
-        <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="mb-1 text-3xs font-bold text-muted">
           Verlauf · {KENNZAHL[serie.kind]} je Einheit
         </p>
         <TrendChart

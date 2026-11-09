@@ -13,7 +13,7 @@ import { dumbbellHint } from "@/lib/equipment";
 import { fmtSatz } from "@/lib/format";
 import { tick } from "@/lib/haptics";
 import { SPRING } from "@/lib/motion";
-import { REGION_AUF, REGION_FLAECHE, REGION_VAR, type Region } from "@/lib/phasen/band";
+import { REGION_AUF, REGION_FLAECHE, type Region } from "@/lib/phasen/band";
 import type { SetEntry, Unit } from "@/lib/types";
 
 /** Stepper-Taste in der Kachel — 44 px hoch, weiße Fläche auf der Spur. */
@@ -30,7 +30,7 @@ function StepBtn({
     <Pressable
       onClick={onStep}
       aria-label={label}
-      className="flex h-11 touch-manipulation items-center justify-center rounded-inner bg-surface-1 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+      className="flex h-11 touch-manipulation items-center justify-center rounded-inner border-dick border-rand bg-surface-1 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
       {dir === 1 ? <Plus size={20} strokeWidth={2.5} /> : <Minus size={20} strokeWidth={2.5} />}
     </Pressable>
@@ -109,7 +109,6 @@ export function SetRow({
   const reduce = useReducedMotion();
   const slot = useDockSlot();
   const timed = unit === "Sek";
-  const mark = REGION_VAR[region];
   const flaeche = REGION_FLAECHE[region];
   const auf = REGION_AUF[region];
 
@@ -186,7 +185,7 @@ export function SetRow({
   };
 
   const zeile =
-    "flex min-h-12 w-full items-center gap-3 rounded-inner bg-surface-1 px-3 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
+    "flex min-h-12 w-full items-center gap-3 rounded-inner border-dick border-rand bg-surface-1 px-3 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
   // ── Eingetragen: Zeile mit gefülltem Kreis in der Regionsfarbe. ──
   if (state === "done") {
@@ -267,7 +266,6 @@ export function SetRow({
     <motion.div
       data-testid="satz-aktiv"
       className="set-active space-y-3 rounded-card p-4"
-      style={{ boxShadow: `inset 0 0 0 2px ${mark}` }}
       initial={reduce ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING.panel}
@@ -300,7 +298,7 @@ export function SetRow({
           {/* Gewicht: ± in weightStep-Schritten — Tastatur nur bei direktem
               Tipp ins Feld (Fokus markiert den Inhalt komplett). */}
           <div className="rounded-inner bg-surface-2 p-2.5">
-            <p className="text-center text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="text-center text-3xs font-bold text-muted">
               Gewicht kg
             </p>
             <input
@@ -329,7 +327,7 @@ export function SetRow({
           </div>
           {/* Wiederholungen: ±1, Basis ist der Vorschlag. */}
           <div className="rounded-inner bg-surface-2 p-2.5">
-            <p className="text-center text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="text-center text-3xs font-bold text-muted">
               Wiederholungen
             </p>
             <input

@@ -25,7 +25,7 @@ export function Scale({
   return (
     <div className={cn("mt-1.5 flex items-center gap-2", className)}>
       {label && (
-        <span className="shrink-0 text-3xs font-semibold uppercase tracking-label text-muted">
+        <span className="shrink-0 text-3xs font-bold text-muted">
           {label}
         </span>
       )}

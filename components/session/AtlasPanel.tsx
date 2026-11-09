@@ -107,7 +107,7 @@ export function AtlasPanel({
     >
       <p className="flex items-center gap-2">
         <AtlasMark size={13} live={!!override} className="shrink-0 text-muted" />
-        <span className="text-3xs font-semibold uppercase tracking-label text-muted">
+        <span className="text-3xs font-bold text-muted">
           ATLAS
         </span>
       </p>

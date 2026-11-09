@@ -91,7 +91,7 @@ export function Sheet({
           <motion.div
             ref={panelRef}
             tabIndex={-1}
-            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface-1 focus:outline-none"
+            className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card border-dick border-b-0 border-rand bg-surface-1 focus:outline-none"
             initial={reduce ? { opacity: 0 } : { y: "103%" }}
             animate={
               reduce
@@ -137,11 +137,11 @@ export function Sheet({
               style={{ touchAction: "none" }}
             >
               <div className="flex justify-center pb-1 pt-3">
-                <span className="h-1 w-10 rounded-pill bg-line" />
+                <span className="h-1.5 w-10 rounded-pill bg-rand" />
               </div>
               {title && (
                 <div className="px-5 pb-1 pt-2">
-                  <h3 id={titleId} className="font-display text-2xl font-bold">
+                  <h3 id={titleId} className="font-display text-2xl font-extrabold">
                     {title}
                   </h3>
                 </div>

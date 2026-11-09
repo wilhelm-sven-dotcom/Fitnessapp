@@ -21,11 +21,11 @@ const PATTERNS: Pattern[] = [
 
 // Feld-Rezept (ui-style): ≥ 16 px Schrift, sonst zoomt iOS beim Fokus.
 const inputClass =
-  "min-h-11 w-full rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
+  "min-h-11 w-full rounded-inner border-dick border-rand bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1.5 mt-4 text-3xs font-semibold uppercase tracking-label text-muted">
+    <p className="mb-1.5 mt-4 text-3xs font-bold text-muted">
       {children}
     </p>
   );

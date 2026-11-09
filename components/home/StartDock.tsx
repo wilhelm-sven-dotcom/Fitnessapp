@@ -59,7 +59,7 @@ export function StartDock({
     <div className="mx-auto max-w-md">
       {!locked && (
         <div className="mb-2.5 flex items-center gap-1.5">
-          <span className="mr-0.5 text-3xs font-semibold uppercase tracking-label text-muted">
+          <span className="mr-0.5 text-3xs font-bold text-muted">
             Zeit
           </span>
           {BUDGETS.map((b) => (
@@ -122,7 +122,7 @@ export function StartDock({
             }}
             aria-label="Zeitbudget in Minuten"
             placeholder="z. B. 50"
-            className="min-w-0 flex-1 rounded-inner border border-line bg-surface-1 px-3 py-3 text-lg tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="min-w-0 flex-1 rounded-inner border-dick border-rand bg-surface-1 px-3 py-3 text-lg tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
           <span className="text-base text-muted">Min</span>
         </div>

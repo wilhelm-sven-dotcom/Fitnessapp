@@ -114,7 +114,7 @@ export function JumpCheck({
   return (
     <div className="mb-4 rounded-card bg-surface-2 p-3" data-testid="jump-check">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="font-mono text-3xs font-bold text-muted">
           Sprungtest
         </p>
         {phase !== "measuring" && (

@@ -15,13 +15,13 @@ export function PhaseCard({ log, phase: p }: { log: LoggedSession[]; phase: Phas
 
   return (
     <div>
-      <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+      <p className="text-3xs font-bold text-muted">
         Woche {p.cycleWeek} von {p.cycleLength}
       </p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <p className="font-display text-2xl font-extrabold text-fg">{p.title}</p>
         {p.due && (
-          <span className="rounded-pill border border-warnung px-2.5 py-0.5 text-3xs font-semibold uppercase tracking-label text-warnung">
+          <span className="rounded-pill border border-warnung px-2.5 py-0.5 text-3xs font-bold text-warnung">
             fällig
           </span>
         )}

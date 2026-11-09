@@ -33,7 +33,7 @@ export function RecordsBoard({
   return (
     <Card>
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-3xs font-semibold uppercase tracking-label text-rekord">
+        <span className="flex items-center gap-1.5 text-3xs font-bold text-rekord">
           <Trophy size={14} aria-hidden /> Rekorde
         </span>
         <span className="text-sm tabular-nums text-muted">

@@ -39,7 +39,7 @@ export function CoachCard({
         <div className="min-w-0">
           <p
             className={cn(
-              "text-3xs font-semibold uppercase tracking-label",
+              "text-3xs font-bold",
               sevKicker[card.severity],
             )}
           >

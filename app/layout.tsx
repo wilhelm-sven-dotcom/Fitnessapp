@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo } from "next/font/google";
+import { Bricolage_Grotesque, Onest } from "next/font/google";
 import "./globals.css";
 import { TrainingProvider } from "@/components/providers/TrainingProvider";
 import { AppShell } from "@/components/layout/AppShell";
@@ -10,13 +10,18 @@ import { Toaster } from "@/components/ui/Toaster";
 import { GRUND_DUNKEL, GRUND_HELL } from "@/lib/grundfarben";
 import { ICON_VERSION } from "@/lib/icon-art";
 
-// Eine Schrift: Archivo, variabel mit Breitenachse — normal für Text, breit
-// (font-stretch 125 %, .font-display in globals.css) für Titel und Restzeit.
-// Tabellenziffern über `tabular-nums`. Self-hosted via next/font.
-const archivo = Archivo({
+// „spotter“: Bricolage Grotesque (variabel, optische Größe) für Titel,
+// Zahlen, Knöpfe und Sticker; Onest für Text. Ziffern über `tabular-nums`.
+// Self-hosted via next/font.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  axes: ["wdth"],
-  variable: "--font-archivo",
+  axes: ["opsz"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
+const onest = Onest({
+  subsets: ["latin"],
+  variable: "--font-onest",
   display: "swap",
 });
 
@@ -72,27 +77,27 @@ export default function RootLayout({
       // mismatch on this element. Suppress it (scoped to <html>'s own
       // attributes only; descendant mismatches still surface).
       suppressHydrationWarning
-      className={archivo.variable}
+      className={`${bricolage.variable} ${onest.variable}`}
     >
       <body>
-        {/* Richtungsvertrag „Regionen“ — als inertes <script> statt JSX-
+        {/* Richtungsvertrag „spotter“ — als inertes <script> statt JSX-
             Kommentar, damit er den Produktions-Build überlebt und im
             ausgelieferten HTML auditierbar bleibt. */}
         <script
           type="text/x-direction-contract"
           dangerouslySetInnerHTML={{
             __html: `
-THESIS: Krafttraining in Scheibenfarben — jede Körperregion hat eine Farbe
-(Beine Rot, Druck Blau, Zug Gelb, Rumpf Grün wie die Wettkampf-Hantelscheiben),
-alles andere ist Tinte auf warmem Papier bzw. helle Tinte auf warmem Dunkel.
-Die Farbe bedeutet etwas: sie zeigt die Region einer Übung in Liste, Training,
-Fortschritt und Muskelkarte. Bedienung in Alltagsdeutsch.
-OWN-WORLD: Archivo (breit für Titel), Hauptaktionen als Tinte-Flächen, Karten
-20 px, Zeilen 14 px, Knöpfe als Pille, keine Schatten. Kontrast Text ≥ 4,5:1,
-Bedienelemente ≥ 3:1. Hell/Dunkel folgt der Einstellung, auch im Training.
-STORY: öffnen → „Wo trainierst du heute?“ (Zuhause/Studio) → die heutige
-Einheit lesen → aufwärmen → Satz für Satz eintragen → ATLAS begleitet →
-speichern; Rekorde bekommen ihren Moment.
+THESIS: Der Kumpel an der Bank — laut, direkt, gut gelaunt. Weiß und Tinte,
+Elektroblau für Aktionen und Daten, Signalorange für Rekorde, Sonnengelb für
+Sticker. ATLAS spricht in Sprechblasen wie ein Trainingspartner.
+OWN-WORLD: Karten und Knöpfe mit dickem Tinte-Rand und hartem Versatz-Schatten,
+Sticker leicht gedreht, Regionen als kleine Kacheln (Beine Orange, Druck Blau,
+Zug Sonne, Rumpf Weiß). Bricolage Grotesque für Titel, Zahlen, Knöpfe;
+Onest für Text. Kontrast Text ≥ 4,5:1, Bedienelemente ≥ 3:1. Hell ist
+Grundzustand, Dunkel folgt der Einstellung, auch im Training.
+STORY: öffnen → „Wo trainierst du heute?“ (Zuhause/Studio) → „Mittwoch. Brust
+ist dran.“ → Los geht's → Satz für Satz eintragen, ATLAS ruft mit → speichern;
+ein Rekord bekommt die orange Fläche und den PR-Sticker.
 DOC: .claude/skills/ui-style/SKILL.md
 `,
           }}

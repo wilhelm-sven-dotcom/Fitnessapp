@@ -854,7 +854,7 @@ export function SessionRunner() {
     return (
       <>
         <div className="pt-10 text-center">
-          <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="font-mono text-3xs font-bold text-muted">
             Gleich geht&apos;s los
           </p>
           <h1 className="mt-1 font-display font-bold text-2xl text-fg">

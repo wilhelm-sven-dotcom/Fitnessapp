@@ -47,7 +47,7 @@ export function WochenLeiste({ log, now = new Date() }: { log: LoggedSession[]; 
   return (
     <section aria-label="Diese Woche" className="mb-4">
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-3xs font-semibold uppercase tracking-label text-muted">Diese Woche</p>
+        <p className="text-3xs font-bold text-muted">Diese Woche</p>
         <p className="text-sm tabular-nums text-muted">
           {anzahl} von {ZIEL} Einheiten
         </p>

@@ -18,7 +18,7 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { trainingLevel } from "@/lib/achievements";
 import { KENNZAHL, exerciseSeries, fmtKennzahl } from "@/lib/exercise-series";
 import { fmtKg } from "@/lib/format";
-import { REGION_VAR, regionOf } from "@/lib/phasen/band";
+import { REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { sessionVolume } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
@@ -87,8 +87,8 @@ function Kachel({
   pfeil?: boolean;
 }) {
   return (
-    <div className="h-full rounded-card bg-surface-1 px-3 py-3 text-left">
-      <p className="flex items-center justify-between text-3xs font-semibold uppercase tracking-label text-muted">
+    <div className="h-full rounded-card border-dick border-rand bg-surface-1 px-3 py-3 text-left">
+      <p className="flex items-center justify-between text-3xs font-bold text-muted">
         {label}
         {pfeil && <ChevronRight size={14} aria-hidden />}
       </p>
@@ -188,7 +188,7 @@ export function OverviewTab() {
       {/* Volumen mit Zeitraum: Woche bzw. Monat als Balken, die laufende voll. */}
       <Card>
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-3xs font-semibold uppercase tracking-label text-muted">Volumen</p>
+          <p className="text-3xs font-bold text-muted">Volumen</p>
           <p className="text-sm tabular-nums text-muted">
             Ø {fmtKg(schnitt / 1000)} t je {reihe.je}
           </p>
@@ -226,13 +226,13 @@ export function OverviewTab() {
 
       {serien.length > 0 && (
         <section aria-label="Verläufe">
-          <p className="mb-2 px-1 text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="mb-2 px-1 text-3xs font-bold text-muted">
             Verläufe · {serien.length}
           </p>
-          <ul className="overflow-hidden rounded-card bg-surface-1">
+          <ul className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
             {gezeigt.map((e, i) => {
               const ex = byId.get(e.id);
-              const farbe = ex ? REGION_VAR[regionOf(ex)] : "var(--info)";
+              const region = ex ? regionOf(ex) : "cardio";
               return (
                 <li key={e.id} className={i > 0 ? "border-t border-line-card" : undefined}>
                   <Pressable
@@ -243,8 +243,8 @@ export function OverviewTab() {
                   >
                     <span
                       aria-hidden
-                      className="h-9 w-1 shrink-0 rounded-pill"
-                      style={{ backgroundColor: farbe }}
+                      className="h-4 w-4 shrink-0 rounded-xs border-dick border-rand"
+                      style={{ backgroundColor: REGION_FLAECHE[region] }}
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block text-base font-semibold leading-snug text-fg">
@@ -255,7 +255,7 @@ export function OverviewTab() {
                         {e.isPR && <span className="font-semibold text-rekord"> · Rekord</span>}
                       </span>
                     </span>
-                    <MiniKurve werte={e.points.map((p) => p.value)} farbe={farbe} />
+                    <MiniKurve werte={e.points.map((p) => p.value)} farbe="var(--info)" />
                     {ex && <ChevronRight size={18} className="shrink-0 text-muted" aria-hidden />}
                   </Pressable>
                 </li>

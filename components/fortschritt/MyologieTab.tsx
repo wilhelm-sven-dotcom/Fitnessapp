@@ -29,7 +29,7 @@ export function MyologieTab() {
   return (
     <div className="space-y-4">
       <Card>
-        <div className="flex justify-between text-3xs font-semibold uppercase tracking-label text-muted">
+        <div className="flex justify-between text-3xs font-bold text-muted">
           <span>Muskelgruppen</span>
           <span>Diese Woche</span>
         </div>

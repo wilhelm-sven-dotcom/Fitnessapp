@@ -36,7 +36,7 @@ export function MuscleBalanceCard({
 
   return (
     <Card>
-      <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
+      <p className="mb-1 text-3xs font-bold text-muted">
         Muskel-Balance
       </p>
       <p className="mb-2 text-sm text-muted">

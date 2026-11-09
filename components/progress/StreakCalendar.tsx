@@ -35,7 +35,7 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   return (
     <Card className="rounded-card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="font-mono text-3xs font-bold text-muted">
           Diese & letzte Wochen
         </p>
         <span className="text-xs text-muted">Ziel 3× / Woche</span>

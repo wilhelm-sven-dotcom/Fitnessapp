@@ -45,12 +45,11 @@ export interface KaderGruppe {
 const FILL_OHNE_REKORD = 0.62;
 const FILL_FLOOR = 0.12;
 
-/* ── Region + Intensität: jede Übung gehört zu einer Körperregion; die Farbe
- *    folgt den Wettkampf-Scheiben (Beine Rot, Druck Blau, Zug Gelb, Rumpf
- *    Grün, Cardio neutral). Gelb und Grün liegen für Protan-Sehende nah
- *    beieinander — deshalb steht die Region überall AUCH als Text (Muskel in
- *    der Unterzeile, Region im Übungskopf); Farbe ist nie das einzige Signal
- *    (WCAG 1.4.1). */
+/* ── Region + Intensität: jede Übung gehört zu einer Körperregion. Im Look
+ *    „spotter“ trägt die Region ihre Farbe nur als Kachel mit Tinte-Rand
+ *    (Beine Orange, Druck Blau, Zug Sonne, Rumpf Weiß, Cardio Grau); die
+ *    Region steht überall AUCH als Text (Muskel in der Unterzeile, Sticker im
+ *    Übungskopf) — Farbe ist nie das einzige Signal (WCAG 1.4.1). */
 
 export type Region = "unterkoerper" | "push" | "pull" | "core" | "cardio";
 
@@ -62,16 +61,13 @@ export const REGION_VAR: Record<Region, string> = {
   cardio: "var(--cardio)",
 };
 
-/** Große Flächen in Regionsfarbe (Übungskopf) — modusgleich. */
-export const REGION_FLAECHE: Record<Region, string> = {
-  unterkoerper: "var(--beine-flaeche)",
-  push: "var(--druck-flaeche)",
-  pull: "var(--zug-flaeche)",
-  core: "var(--rumpf-flaeche)",
-  cardio: "var(--cardio-flaeche)",
-};
+/** Kachel-Fläche der Region (immer mit Tinte-Rand `border-rand`): im Look
+ *  „spotter“ dieselben Werte wie `REGION_VAR` — Regionsfarbe gibt es nur als
+ *  Kachel, nie als Schrift oder randlose Marke (Sonne und Weiß hätten auf
+ *  Weiß keinen Kontrast). */
+export const REGION_FLAECHE: Record<Region, string> = REGION_VAR;
 
-/** Schrift auf `REGION_FLAECHE` (Zug-Gelb trägt Tinte, sonst Weiß). */
+/** Schrift auf der Kachel (Blau trägt Weiß, sonst Tinte). */
 export const REGION_AUF: Record<Region, string> = {
   unterkoerper: "var(--auf-beine)",
   push: "var(--auf-druck)",

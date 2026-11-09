@@ -183,7 +183,7 @@ export function SessionComplete({
           initial={reduce ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={stagger(0)}
-          className="flex w-full items-baseline justify-between font-mono text-2xs font-semibold uppercase tracking-label"
+          className="flex w-full items-baseline justify-between font-mono text-2xs font-bold"
         >
           <span className="text-fg">
             Einheit <span className="tabular-nums">{plattenNr}</span>
@@ -199,7 +199,7 @@ export function SessionComplete({
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={stagger(1)}
-              className="mt-8 font-mono text-2xs font-semibold uppercase tracking-label text-rekord"
+              className="mt-8 font-mono text-2xs font-bold text-rekord"
             >
               Persönlicher Rekord
             </motion.p>
@@ -296,7 +296,7 @@ export function SessionComplete({
           transition={stagger(8)}
           className="mt-8 w-full"
         >
-          <div className="mb-1.5 flex items-center justify-between font-mono text-3xs font-medium uppercase tracking-label text-muted">
+          <div className="mb-1.5 flex items-center justify-between font-mono text-3xs font-medium text-muted">
             <span className="flex items-center gap-1.5">
               Level
               <AnimatePresence mode="popLayout" initial={false}>
@@ -325,7 +325,7 @@ export function SessionComplete({
               }}
             />
           </div>
-          <p className="mt-2 font-mono text-3xs uppercase tracking-label text-muted">
+          <p className="mt-2 font-mono text-3xs text-muted">
             Diese Woche: {summary.weekSets}/{summary.weekTarget} Sätze
           </p>
         </motion.div>
@@ -337,9 +337,9 @@ export function SessionComplete({
             animate={{ opacity: 1, y: 0 }}
             transition={stagger(9)}
             data-testid="session-debrief"
-            className="mt-6 w-full rounded-card border border-line-card bg-surface-1 p-3.5 text-left"
+            className="mt-6 w-full rounded-card border-dick border-rand bg-surface-1 p-3.5 text-left"
           >
-            <p className="mb-2 flex items-center gap-2 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="mb-2 flex items-center gap-2 font-mono text-3xs font-bold text-muted">
               <AtlasMark size={14} className="text-fg" /> ATLAS
             </p>
             <div className="space-y-1.5">

@@ -232,7 +232,7 @@ export function WarmupPlayer({
         </div>
       </div>
 
-      <p className="mt-2 px-5 text-center text-3xs font-semibold uppercase tracking-label text-muted">
+      <p className="mt-2 px-5 text-center text-3xs font-bold text-muted">
         Aufwärmen
       </p>
 
@@ -264,7 +264,7 @@ export function WarmupPlayer({
         >
           {embed ? (
             <div
-              className="mb-3 overflow-hidden rounded-card bg-surface-1"
+              className="mb-3 overflow-hidden rounded-card border-dick border-rand bg-surface-1"
               style={{ height: "min(32vh, 300px)", aspectRatio: "9 / 16" }}
             >
               <iframe
@@ -277,8 +277,8 @@ export function WarmupPlayer({
               />
             </div>
           ) : fig ? (
-            <div className="mb-3 w-72 rounded-card bg-surface-1 p-3">
-              <p className="px-1 text-left text-3xs font-semibold uppercase tracking-label text-muted">
+            <div className="mb-3 w-72 rounded-card border-dick border-rand bg-surface-1 p-3">
+              <p className="px-1 text-left text-3xs font-bold text-muted">
                 Übung {index + (switching ? 2 : 1)}
               </p>
               <FigurePanel
@@ -298,7 +298,7 @@ export function WarmupPlayer({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: EASE_OUT }}
         >
-          <span className="mb-3 rounded-pill border border-line px-3 py-1 text-3xs font-semibold uppercase tracking-label text-muted">
+          <span className="mb-3 rounded-pill border border-line px-3 py-1 text-3xs font-bold text-muted">
             {switching ? "Wechsel" : badge.label}
           </span>
           <h2 className="font-display text-2xl font-extrabold text-fg">

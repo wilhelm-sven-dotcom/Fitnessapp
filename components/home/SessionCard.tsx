@@ -11,7 +11,7 @@ import { WishBar } from "@/components/home/WishBar";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { effectiveProfile } from "@/lib/athlete";
 import { fmtGewicht } from "@/lib/format";
-import { bandOfPlanned, REGION_VAR, regionOf } from "@/lib/phasen/band";
+import { bandOfPlanned, REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { figurFor } from "@/lib/phasen/figuren";
 import { presc } from "@/lib/progression";
 import { startWeight } from "@/lib/start-weight";
@@ -129,13 +129,13 @@ export function SessionCard({
         </Kicker>
       </Card>
 
-      {/* Übungen: Regionsmarke + Figur, Schema · Muskel in der Regionsfarbe
-          (die Marke ist zugleich die Legende des Bands), Gewicht rechts. */}
-      <ol className="overflow-hidden rounded-card bg-surface-1">
+      {/* Übungen: Nummer als Kachel in der Regionsfarbe, Figur in Tinte,
+          Schema · Muskel, Gewicht rechts. */}
+      <ol className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
         {zeilen.map((z, i) => {
           if (!z) return null;
           const m = muscleOf(z.ex);
-          const farbe = REGION_VAR[regionOf(z.ex)];
+          const region = regionOf(z.ex);
           return (
             <li
               key={z.it.id}
@@ -145,15 +145,17 @@ export function SessionCard({
               <div className="flex items-center gap-3 px-4 py-3">
                 <span
                   aria-hidden
-                  className="h-10 w-1 shrink-0 rounded-pill"
-                  style={{ backgroundColor: farbe }}
-                />
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-kachel border-dick border-rand font-display text-sm font-extrabold tabular-nums"
+                  style={{ backgroundColor: REGION_FLAECHE[region], color: REGION_AUF[region] }}
+                >
+                  {i + 1}
+                </span>
                 <span aria-hidden className="w-8 shrink-0">
-                  <PhasenFigur figur={figurFor(z.ex)} color={farbe} />
+                  <PhasenFigur figur={figurFor(z.ex)} color="var(--fg)" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-semibold leading-snug text-fg">{z.ex.name}</p>
-                  <p className="mt-0.5 text-sm tabular-nums" style={{ color: farbe }}>
+                  <p className="mt-0.5 text-sm tabular-nums text-muted">
                     {z.ziel} · {MUSCLE_LABEL[m.primary]}
                   </p>
                 </div>

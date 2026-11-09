@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { ChipTone } from "@/lib/coaching";
 
-// Hinweis-Chip: Pille mit Rand `border-line`, Ton nur als Schriftfarbe
+// Hinweis-Chip: Pille mit dickem Tinte-Rand, Ton nur als Schriftfarbe
 // (Warnung = über Ziel, Erfolg = im Ziel).
 const toneClass: Record<ChipTone, string> = {
   amber: "text-status-over",
@@ -20,7 +20,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-block rounded-pill border border-line bg-surface-1 px-2.5 py-1 text-3xs font-semibold",
+        "inline-block rounded-pill border-dick border-rand bg-surface-1 px-2.5 py-1 text-3xs font-bold",
         toneClass[tone],
       )}
     >

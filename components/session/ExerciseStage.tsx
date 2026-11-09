@@ -236,7 +236,7 @@ export function ExerciseStage({
       )}
 
       {cardio ? (
-        <div className="mt-3 rounded-card bg-surface-1 p-4">
+        <div className="mt-3 rounded-card border-dick border-rand bg-surface-1 p-4">
           {ex.steps.length > 0 && (
             <ol className="mb-3 space-y-1.5">
               {ex.steps.map((st, i) => (

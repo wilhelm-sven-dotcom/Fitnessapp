@@ -49,7 +49,7 @@ export function Welcome() {
   const toggleGoal = (v: TrainingGoal) =>
     setGoals((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]));
 
-  const fieldLabel = "text-3xs font-semibold uppercase tracking-label text-muted";
+  const fieldLabel = "text-3xs font-bold text-muted";
 
   return (
     <motion.div
@@ -86,7 +86,7 @@ export function Welcome() {
             <Marke size={84} />
           </span>
 
-          <p className="mt-7 text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="mt-7 text-3xs font-bold text-muted">
             Krafttraining mit ATLAS
           </p>
           <h1 className="mt-2 font-display text-4xl font-extrabold text-fg">Platte 311</h1>
@@ -109,7 +109,7 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="z. B. J. Weber"
-            className="mb-4 min-h-12 w-full rounded-inner border border-line bg-surface-1 px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="mb-4 min-h-12 w-full rounded-inner border-dick border-rand bg-surface-1 px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
 
           <p className={`mb-1.5 px-1 ${fieldLabel}`}>Erfahrung</p>

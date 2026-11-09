@@ -67,7 +67,7 @@ export function AtlasEingabe({
           rows={1}
           placeholder="Frag ATLAS …"
           aria-label="Nachricht an ATLAS"
-          className="min-h-12 flex-1 resize-none rounded-inner border border-line bg-surface-1 px-4 py-3 text-base leading-snug text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="min-h-12 flex-1 resize-none rounded-inner border-dick border-rand bg-surface-1 px-4 py-3 text-base leading-snug text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
         <Button
           onClick={() => onSend(value)}

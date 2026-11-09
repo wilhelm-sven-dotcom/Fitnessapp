@@ -226,7 +226,7 @@ export default function CoachPage() {
   const buildEl = (
     <Pressable
       onClick={() => router.push("/")}
-      className="flex min-h-12 w-full items-center justify-between gap-2 rounded-card bg-surface-1 px-4 py-3 text-left text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+      className="flex min-h-12 w-full items-center justify-between gap-2 rounded-card border-dick border-rand bg-surface-1 px-4 py-3 text-left text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
       <span className="flex items-center gap-2.5">
         <Dumbbell size={18} className="shrink-0" aria-hidden />
@@ -262,7 +262,7 @@ export default function CoachPage() {
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
             <AtlasMark size={16} live className="text-fg" />
-            <h1 className="text-3xs font-semibold uppercase tracking-label text-fg">ATLAS · Coach</h1>
+            <h1 className="text-3xs font-bold text-fg">ATLAS · Coach</h1>
           </span>
           <span className="text-sm tabular-nums text-muted">
             Einheit {plattenNummer(log)} · Mission {Math.round(trainer.mission.pct * 100)} %
@@ -274,7 +274,7 @@ export default function CoachPage() {
 
       {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
       <Card>
-        <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="text-3xs font-bold text-muted">
           Wochen-Rückblick · KW {isoWeek(new Date())}
         </p>
         <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-fg">

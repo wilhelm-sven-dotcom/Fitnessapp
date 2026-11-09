@@ -86,7 +86,7 @@ export function RestPanel({
         </p>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="text-3xs font-bold text-muted">
               {over ? "Pause vorbei" : "Pause"}
             </p>
             <motion.p
@@ -98,7 +98,7 @@ export function RestPanel({
               {over ? "Los" : fmtClock(left)}
             </motion.p>
           </div>
-          <p className="pb-1 text-3xs font-semibold uppercase tracking-label tabular-nums text-muted">
+          <p className="pb-1 text-3xs font-bold tabular-nums text-muted">
             von {fmtClock(total)}
           </p>
         </div>

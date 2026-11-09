@@ -185,7 +185,7 @@ export function HistoryTab() {
 
   const inputCls =
     "w-full rounded-pill bg-surface-2 px-3 py-2.5 text-sm tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus";
-  const eyebrowCls = "mb-1.5 block text-3xs font-semibold uppercase tracking-label text-muted";
+  const eyebrowCls = "mb-1.5 block text-3xs font-bold text-muted";
 
   if (items.length === 0) {
     return (
@@ -228,12 +228,12 @@ export function HistoryTab() {
 
   return (
     <div>
-      <p className="mb-2 px-1 text-3xs font-semibold uppercase tracking-label text-muted">
+      <p className="mb-2 px-1 text-3xs font-bold text-muted">
         Diese Woche
       </p>
       <div className="mb-4 grid grid-cols-4 gap-2">
         {stats.map((s) => (
-          <div key={s.l} className="rounded-inner bg-surface-1 px-2 py-2.5 text-center">
+          <div key={s.l} className="rounded-inner border-dick border-rand bg-surface-1 px-2 py-2.5 text-center">
             <p className="font-display text-xl font-extrabold tabular-nums text-fg">{s.v}</p>
             <p className="mt-0.5 text-sm text-muted">{s.l}</p>
           </div>
@@ -255,7 +255,7 @@ export function HistoryTab() {
           const neueWoche =
             idx === 0 || weekStartMon(new Date(dateOf(items[idx - 1]))).getTime() !== wk;
           const folio = neueWoche ? (
-            <p className="px-1 pt-2 text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="px-1 pt-2 text-3xs font-bold text-muted">
               KW {isoWeek(new Date(dateOf(it)))}
             </p>
           ) : null;
@@ -267,7 +267,7 @@ export function HistoryTab() {
             return (
               <Fragment key={key}>
                 {folio}
-                <div className="overflow-hidden rounded-card bg-surface-1">
+                <div className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
                   <Pressable
                     onClick={() => setExpanded(isOpen ? null : key)}
                     aria-expanded={isOpen}
@@ -307,7 +307,7 @@ export function HistoryTab() {
           return (
             <Fragment key={`s-${s.date}-${realIdx}`}>
               {folio}
-              <div className="overflow-hidden rounded-card bg-surface-1">
+              <div className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
                 <Pressable
                   onClick={() => setExpanded(isOpen ? null : key)}
                   aria-expanded={isOpen}
@@ -374,7 +374,7 @@ export function HistoryTab() {
                     ))}
                     {s.debrief && s.debrief.length > 0 && (
                       <div className="rounded-inner bg-surface-0 px-3 py-2">
-                        <p className="mb-1 flex items-center gap-1.5 text-3xs font-semibold uppercase tracking-label text-muted">
+                        <p className="mb-1 flex items-center gap-1.5 text-3xs font-bold text-muted">
                           <AtlasMark size={12} className="text-fg" /> ATLAS
                         </p>
                         <p className="text-sm leading-relaxed text-muted">{s.debrief.join(" ")}</p>

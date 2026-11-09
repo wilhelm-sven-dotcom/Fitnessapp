@@ -32,7 +32,7 @@ function parseBloecke(text: string): Block[] {
 export function ProtokollBubble({ text, busy }: { text: string; busy?: boolean }) {
   const bloecke = parseBloecke(text);
   return (
-    <div className="mr-4 rounded-card border border-line-card bg-surface-1 px-3.5 py-3">
+    <div className="mr-4 rounded-card border-dick border-rand bg-surface-1 px-3.5 py-3">
       {bloecke.length === 0 && (
         <p className="text-base leading-relaxed text-faint">
           {busy ? "…" : ""}
@@ -41,7 +41,7 @@ export function ProtokollBubble({ text, busy }: { text: string; busy?: boolean }
       {bloecke.map((b, i) => (
         <div key={i} className={cn(i > 0 && "mt-2.5")}>
           {b.label && (
-            <p className="font-mono text-3xs font-semibold uppercase tracking-label text-info">
+            <p className="font-mono text-3xs font-bold text-info">
               {b.label}
             </p>
           )}

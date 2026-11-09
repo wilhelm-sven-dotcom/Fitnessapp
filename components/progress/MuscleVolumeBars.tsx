@@ -22,7 +22,7 @@ export function MuscleVolumeBars({ data }: { data: MuscleVolume[] }) {
   return (
     <Card>
       <div className="mb-3 flex items-baseline justify-between gap-2">
-        <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="text-3xs font-bold text-muted">
           Sätze je Muskel
         </p>
         <p className="text-sm text-muted">diese Woche / Ziel</p>
