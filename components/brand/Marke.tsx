@@ -1,21 +1,21 @@
-import { markeArt } from "@/lib/marke-art";
+import { MARKE_VIEWBOX, markeArt } from "@/lib/marke-art";
 
 /**
- * Das Zeichen im DOM (Kopfzeile, Rückkehr-Seiten der Dienste): Scheiben in
- * den festen Wettkampffarben, Stange in `currentColor` — trägt also die
- * Tinte ihres Kontexts. Zeichnung: `lib/marke-art.tsx`.
+ * Das Zeichen im DOM (Kopfzeile, Rückkehr-Seiten der Dienste): weiße
+ * Sprechblase mit Tinte-Rand und blauen Scheiben — feste Markenfarben in
+ * jedem Modus. Zeichnung: `lib/marke-art.tsx`.
  */
-export function Marke({ size = 24, className }: { size?: number; className?: string }) {
+export function Marke({ size = 28, className }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 48 48"
+      viewBox={MARKE_VIEWBOX}
       className={className}
       style={{ display: "block" }}
       aria-hidden="true"
     >
-      {markeArt("currentColor")}
+      {markeArt()}
     </svg>
   );
 }

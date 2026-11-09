@@ -1,9 +1,10 @@
-# Platte 311
+# spotter
 
 Hochpersonalisierte Trainings-App für Muskelaufbau mit **ATLAS**, dem
-KI-Coach, der jede Einheit frisch zusammenstellt und live durchs Training
-begleitet. Das Aussehen zitiert Muybridges Chronofotografie — daher der Name;
-die Bedienung spricht schlichtes Deutsch. Ganzkörper-Fokus, Zeitfenster frei
+KI-Trainingspartner, der jede Einheit frisch zusammenstellt und live durchs
+Training begleitet. Der Name ist die Rolle: der Spotter, der Kumpel an der
+Bank, der dich beim Heben sichert („Ich hab dich.“); die Bedienung spricht
+schlichtes, freundliches Deutsch. Vorher hieß die App „Platte 311“. Ganzkörper-Fokus, Zeitfenster frei
 wählbar (10–180 Minuten, Stufen oder eigene Zahl), mit besonderem Augenmerk auf einen empfindlichen unteren
 Rücken.
 
@@ -67,18 +68,17 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 
 ## Design
 
-„Platte 311" — fotografisches Systemdesign: helles Albumin-Papier
-(„Archiv") und Kollodium-Dunkelkammer („Atelier"), Siegellack-Akzent,
-Cyanotypie und Messing, Old Standard TT (Kursive) + IBM Plex Mono (trägt
-den Body), weiche Ecken (Karten 14 px, Bedienelemente als Pille), null
-Schatten, „Filmtransport"-Motion (harte
-Rucks, Kreide-Blitz, Zoetrop mit 8 B/s). Das App-Icon ist die Marey-Spur:
-die Referenzfigur dreimal überlagert, Kreide auf Kollodium. Beim Kaltstart
-läuft ein Startbild (Vorgabe „311", dazu zwei Alternativen) — immer dunkel,
-abschaltbar unter Einstellungen · Darstellung. **Die Metapher steckt im
-Aussehen, nicht in den Wörtern:** die Bedienung sagt Einheit, Satz, Pause,
-Rekord. Verbindliche Tokens, Rezepte und Verbote:
-`.claude/skills/ui-style/SKILL.md`.
+„spotter“ — der Kumpel an der Bank: Weiß und Tinte, Elektroblau für
+Aktionen und Daten, Signalorange für Rekorde, Sonnengelb für Sticker. Karten
+und Knöpfe tragen einen dicken Tinte-Rand (2,5 px) und einen harten
+Versatz-Schatten; Etiketten sind leicht gedrehte Sticker; Körperregionen sind
+kleine Kacheln (Beine Orange, Druck Blau, Zug Gelb, Rumpf Weiß). ATLAS spricht
+in Sprechblasen. Schriften: Bricolage Grotesque (Titel, Zahlen, Knöpfe) und
+Onest (Text). Hell ist der Grundzustand, Dunkel folgt der Einstellung. Das
+App-Zeichen ist eine Sprechblase mit Hantel auf Blau; beim Kaltstart läuft ein
+blaues Startbild mit Sticker (abschaltbar unter Einstellungen · Darstellung).
+Nach einem Rekord wird die Fläche orange und die PR-Karte springt auf.
+Verbindliche Tokens, Rezepte und Regeln: `.claude/skills/ui-style/SKILL.md`.
 
 ## Stack
 

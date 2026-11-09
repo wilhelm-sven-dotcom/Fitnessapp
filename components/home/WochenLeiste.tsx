@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import { useMemo } from "react";
+import { Sticker } from "@/components/ui/Sticker";
 import { cn } from "@/lib/utils";
 import type { LoggedSession } from "@/lib/types";
 
@@ -46,11 +47,11 @@ export function WochenLeiste({ log, now = new Date() }: { log: LoggedSession[]; 
 
   return (
     <section aria-label="Diese Woche" className="mb-4">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="text-3xs font-semibold uppercase tracking-label text-muted">Diese Woche</p>
-        <p className="text-sm tabular-nums text-muted">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-muted">Diese Woche</p>
+        <Sticker drehung={-3} className="tabular-nums">
           {anzahl} von {ZIEL} Einheiten
-        </p>
+        </Sticker>
       </div>
       <ol className="mt-2 grid grid-cols-7 gap-1">
         {tage.map((t) => (
@@ -59,20 +60,20 @@ export function WochenLeiste({ log, now = new Date() }: { log: LoggedSession[]; 
             className="flex flex-col items-center gap-1"
             aria-label={`${LANG[t.i]}, ${t.nr}.${t.erledigt ? ": trainiert" : t.heute ? ": heute" : ""}`}
           >
-            <span aria-hidden className={cn("text-3xs font-semibold", t.heute ? "text-fg" : "text-muted")}>
+            <span aria-hidden className={cn("text-3xs font-bold", t.heute ? "text-fg" : "text-muted")}>
               {KURZ[t.i]}
             </span>
             <span
               aria-hidden
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-pill text-sm font-semibold tabular-nums",
+                "flex h-10 w-10 items-center justify-center rounded-pill border-dick font-display text-sm font-extrabold tabular-nums",
                 t.erledigt
-                  ? "bg-strong text-on-strong"
+                  ? "border-rand bg-accent text-on-accent"
                   : t.heute
-                    ? "border-2 border-fg text-fg"
+                    ? "border-rekord-flaeche bg-surface-1 text-fg"
                     : t.zukunft
-                      ? "text-muted"
-                      : "text-faint",
+                      ? "border-rand bg-surface-1 text-fg"
+                      : "border-line bg-surface-1 text-muted",
               )}
             >
               {t.erledigt ? <Check size={16} strokeWidth={3} /> : t.nr}

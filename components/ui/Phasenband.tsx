@@ -19,6 +19,10 @@ import { cn } from "@/lib/utils";
 
 export type PhasenbandGroesse = "hero" | "zeile" | "mini" | "live" | "punkt";
 
+/** Look „spotter“: das Band zeigt Daten — eine Farbe (Blau) für alle
+ *  Regionen; die Region steht als Kachel und Wort an anderer Stelle. */
+const FARBE = "var(--info)";
+
 const HOEHE: Record<PhasenbandGroesse, number> = {
   hero: 64,
   zeile: 28,
@@ -80,9 +84,9 @@ function KaderZelle({
           flex: `${kader.widthReps} 1 0%`,
           height: h,
           ...(belichtet
-            ? { backgroundColor: gruppe.tintVar }
+            ? { backgroundColor: FARBE }
             : aktiv
-              ? { borderColor: gruppe.tintVar }
+              ? { borderColor: FARBE }
               : undefined),
         }}
       />
@@ -110,7 +114,7 @@ function KaderZelle({
             className="absolute inset-x-0 bottom-0"
             style={{
               height: `${Math.round(kader.fillRatio * 100)}%`,
-              backgroundColor: gruppe.tintVar,
+              backgroundColor: FARBE,
             }}
           />
           {hero && (
@@ -146,7 +150,7 @@ function KaderZelle({
               style={{
                 height: `${Math.round(kader.fillRatio * 100)}%`,
                 opacity: 0.38,
-                backgroundColor: gruppe.tintVar,
+                backgroundColor: FARBE,
               }}
             />
           )}
@@ -158,7 +162,7 @@ function KaderZelle({
             style={{
               height: 3,
               opacity: 0.7,
-              backgroundColor: kader.iwf ? IWF_VAR[kader.iwf] : gruppe.tintVar,
+              backgroundColor: kader.iwf ? IWF_VAR[kader.iwf] : FARBE,
             }}
           />
         </>

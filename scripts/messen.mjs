@@ -3,7 +3,7 @@
  *
  *   npm run build && npm run messen
  *
- * Je Viewport (390 × 844 und 375 × 667): „Training starten“ auf Heute,
+ * Je Viewport (390 × 844 und 375 × 667): „Los geht’s“ auf Heute,
  * „Satz eintragen“ (Dock) im Training, das Pausenfeld, die ATLAS-Eingabe und die
  * Höhe der Fortschritt-Übersicht. „im Bild“ heißt: ganz innerhalb des Viewports.
  * Port 3197. Gibt JSON aus; Exit 0, die Werte sind zum Vergleichen da.

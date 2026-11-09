@@ -32,31 +32,39 @@ function parseBloecke(text: string): Block[] {
 export function ProtokollBubble({ text, busy }: { text: string; busy?: boolean }) {
   const bloecke = parseBloecke(text);
   return (
-    <div className="mr-4 rounded-card border border-line-card bg-surface-1 px-3.5 py-3">
-      {bloecke.length === 0 && (
-        <p className="text-base leading-relaxed text-faint">
-          {busy ? "…" : ""}
-        </p>
-      )}
-      {bloecke.map((b, i) => (
-        <div key={i} className={cn(i > 0 && "mt-2.5")}>
-          {b.label && (
-            <p className="font-mono text-3xs font-semibold uppercase tracking-label text-info">
-              {b.label}
-            </p>
-          )}
-          <p
-            className={cn(
-              b.label === "PLAN" && ANORDNUNG_RE.test(b.text)
-                ? "font-mono text-sm font-bold tabular-nums text-fg"
-                : "text-base leading-relaxed text-fg",
-              b.label && "mt-0.5",
-            )}
-          >
-            {b.text}
+    <div className="flex items-start gap-2.5">
+      <span
+        aria-hidden
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill border-dick border-rand bg-sonne font-display text-base font-extrabold text-sonne-auf"
+      >
+        A
+      </span>
+      <div className="mr-4 min-w-0 flex-1 rounded-card rounded-bl-xs border-dick border-rand bg-surface-1 px-3.5 py-3">
+        {bloecke.length === 0 && (
+          <p className="text-base leading-relaxed text-faint">
+            {busy ? "…" : ""}
           </p>
-        </div>
-      ))}
+        )}
+        {bloecke.map((b, i) => (
+          <div key={i} className={cn(i > 0 && "mt-2.5")}>
+            {b.label && (
+              <p className="font-mono text-3xs font-bold text-info">
+                {b.label}
+              </p>
+            )}
+            <p
+              className={cn(
+                b.label === "PLAN" && ANORDNUNG_RE.test(b.text)
+                  ? "font-mono text-sm font-bold tabular-nums text-fg"
+                  : "text-base leading-relaxed text-fg",
+                b.label && "mt-0.5",
+              )}
+            >
+              {b.text}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

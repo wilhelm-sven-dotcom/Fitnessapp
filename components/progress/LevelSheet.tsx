@@ -68,7 +68,7 @@ export function LevelSheet({ open, onClose }: { open: boolean; onClose: () => vo
             {data.lvl.level + 1}. Die Schwellen wachsen mit jedem Level.
           </p>
 
-          <p className="mb-1 mt-6 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="mb-1 mt-6 font-mono text-3xs font-bold text-muted">
             Abzeichen · {unlocked}/{data.badges.length}
           </p>
           <ul>
@@ -98,7 +98,7 @@ export function LevelSheet({ open, onClose }: { open: boolean; onClose: () => vo
                       >
                         {b.title}
                       </p>
-                      <span className="shrink-0 rounded-xs bg-surface-2 px-1 py-0.5 font-mono text-3xs font-semibold uppercase tracking-label text-faint">
+                      <span className="shrink-0 rounded-xs bg-surface-2 px-1 py-0.5 font-mono text-3xs font-bold text-faint">
                         {b.tier}
                       </span>
                     </div>

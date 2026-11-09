@@ -1,15 +1,16 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Phasenband } from "@/components/ui/Phasenband";
 import { Odometer } from "@/components/ui/Odometer";
 import { Pressable } from "@/components/ui/pressable";
 import type { KaderGruppe } from "@/lib/phasen/band";
+import { cn } from "@/lib/utils";
 
 /**
- * Kopf des Trainings: Schließen links, „Übung 2 von 6“ in der Mitte, Restzeit
- * rechts; darunter das Phasenband (ein Segment je Satz in der Regionsfarbe,
- * erledigt gefüllt). Tipp aufs Band öffnet die Übersicht.
+ * Kopf des Trainings „spotter“: runder Schließen-Knopf links, „Übung 2 von 6“
+ * in der Mitte, Restzeit rechts; darunter ein dickes Segment je Übung (Pille
+ * mit Tinte-Rand), erledigte Sätze füllen es blau. Die laufende Übung hat den
+ * dicken Rand. Tipp auf die Segmente öffnet die Übersicht.
  */
 export function ProgressHeader({
   gruppen,
@@ -31,15 +32,15 @@ export function ProgressHeader({
           <Pressable
             onClick={onExit}
             aria-label="Training beenden"
-            className="-ml-2.5 flex h-11 w-11 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="flex h-10 w-10 items-center justify-center rounded-pill border-dick border-rand bg-surface-1 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
-            <X size={22} />
+            <X size={18} strokeWidth={2.5} />
           </Pressable>
         </div>
-        <p className="min-w-0 flex-1 truncate text-center text-base font-semibold tabular-nums text-fg">
+        <p className="min-w-0 flex-1 truncate text-center font-display text-lg font-extrabold tabular-nums text-fg">
           Übung {currentIndex + 1} von {gruppen.length}
         </p>
-        <p className="w-20 shrink-0 text-right text-sm tabular-nums text-muted">
+        <p className="w-20 shrink-0 text-right text-sm font-semibold tabular-nums text-muted">
           {/* Rollt nur bei echten Wertwechseln — beim Mount steht er sofort. */}
           ~<Odometer value={remainMin} /> Min
         </p>
@@ -48,9 +49,27 @@ export function ProgressHeader({
       <Pressable
         onClick={onOverview}
         aria-label={`Einheit im Überblick, Übung ${currentIndex + 1} von ${gruppen.length}`}
-        className="mt-2 block w-full rounded-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        className="mt-2.5 flex w-full gap-1.5 rounded-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
-        <Phasenband gruppen={gruppen} groesse="live" />
+        {gruppen.map((g, i) => {
+          const gesamt = g.kader.length || 1;
+          const erledigt = g.kader.filter((k) => k.status === "belichtet").length;
+          return (
+            <span
+              key={g.itemId}
+              aria-hidden
+              className={cn(
+                "relative h-3 min-w-0 flex-1 overflow-hidden rounded-pill border-rand bg-surface-1",
+                i === currentIndex ? "border-dick" : "border-2",
+              )}
+            >
+              <span
+                className="absolute inset-y-0 left-0 bg-accent"
+                style={{ width: `${Math.round((erledigt / gesamt) * 100)}%` }}
+              />
+            </span>
+          );
+        })}
       </Pressable>
     </div>
   );

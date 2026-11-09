@@ -30,9 +30,9 @@ function naechstesTeile(n: NextSetPreview): { was: string; werte: string } {
 }
 
 /**
- * Die Satzpause im Dock: Restzeit groß, Balken in der Regionsfarbe, was als
- * Nächstes kommt, ±15 s, „Pause beenden“ und die EINE Frage nach dem eben
- * eingetragenen Satz. Bei 0 steht „Los“, bis der Nutzer weitermacht (die
+ * Die Satzpause im Dock „spotter“: Restzeit groß (Bricolage), dicker blauer
+ * Balken mit Tinte-Rand, was als Nächstes kommt (gestrichelt), ±15 s,
+ * „Pause beenden“ und die EINE Frage nach dem eben eingetragenen Satz. Bei 0 steht „Los“, bis der Nutzer weitermacht (die
  * Bewertung soll nicht mit dem Timer verschwinden).
  */
 export function RestPanel({
@@ -56,7 +56,7 @@ export function RestPanel({
   setNo: number;
   /** Was nach der Pause kommt (null: unbekannt → Zeile entfällt). */
   next: NextSetPreview | null;
-  /** Regionsfarbe der eben trainierten Übung (Balken). */
+  /** Farbe des Balkens (Hauptaktion Blau). */
   markVar: string;
   onRir: (v: number) => void;
   onIntensity: (v: number) => void;
@@ -76,7 +76,10 @@ export function RestPanel({
       : `Pause ${fmtClock(total)}.`;
 
   return (
-    <section aria-label="Satzpause" className="rounded-t-card border-t border-line-card bg-surface-1">
+    <section
+      aria-label="Satzpause"
+      className="rounded-t-card border-dick border-b-0 border-rand bg-surface-1"
+    >
       <div
         className="mx-auto max-w-md px-5 pt-4"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
@@ -86,7 +89,7 @@ export function RestPanel({
         </p>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+            <p className="text-sm font-bold text-muted">
               {over ? "Pause vorbei" : "Pause"}
             </p>
             <motion.p
@@ -98,13 +101,16 @@ export function RestPanel({
               {over ? "Los" : fmtClock(left)}
             </motion.p>
           </div>
-          <p className="pb-1 text-3xs font-semibold uppercase tracking-label tabular-nums text-muted">
+          <p className="pb-1 text-sm font-bold tabular-nums text-muted">
             von {fmtClock(total)}
           </p>
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-pill bg-surface-2" aria-hidden>
+        <div
+          className="mt-3 h-4 overflow-hidden rounded-pill border-dick border-rand bg-surface-1"
+          aria-hidden
+        >
           <div
-            className="h-full rounded-pill"
+            className="h-full"
             style={{
               width: `${Math.round(anteil * 1000) / 10}%`,
               backgroundColor: markVar,
@@ -114,7 +120,7 @@ export function RestPanel({
         </div>
 
         {teile && (
-          <div className="mt-3 flex min-h-11 items-center gap-3 rounded-inner bg-surface-2 px-3 py-2">
+          <div className="mt-3 flex min-h-11 items-center gap-3 rounded-inner border-dick border-dashed border-rand px-3 py-2">
             <span className="shrink-0 text-sm text-muted">Als Nächstes</span>
             <span className="min-w-0 flex-1 truncate text-right text-base font-semibold text-fg">
               {teile.was}
@@ -130,24 +136,24 @@ export function RestPanel({
             onClick={onSub}
             aria-label="Pause 15 Sekunden kürzer"
             disabled={over}
-            className="flex min-h-11 shrink-0 items-center justify-center rounded-pill bg-surface-2 px-4 text-base font-semibold tabular-nums text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
+            className="flex min-h-11 shrink-0 items-center justify-center rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-base font-extrabold tabular-nums text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
           >
             −15 s
           </Pressable>
           <Pressable
             onClick={onAdd}
             aria-label="Pause 15 Sekunden länger"
-            className="flex min-h-11 shrink-0 items-center justify-center rounded-pill bg-surface-2 px-4 text-base font-semibold tabular-nums text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="flex min-h-11 shrink-0 items-center justify-center rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-base font-extrabold tabular-nums text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             +15 s
           </Pressable>
           <Pressable
             onClick={onSkip}
             className={cn(
-              "flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-pill px-4 text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+              "flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-pill border-dick border-rand px-4 font-display text-base font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
               over
-                ? "bg-accent text-on-accent active:bg-accent-press"
-                : "border border-line text-fg",
+                ? "bg-accent text-on-accent shadow-hart-sm active:bg-accent-press"
+                : "bg-surface-1 text-fg",
             )}
           >
             Pause beenden

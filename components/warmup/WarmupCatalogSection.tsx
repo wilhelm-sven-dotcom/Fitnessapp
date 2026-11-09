@@ -38,8 +38,8 @@ export function WarmupCatalogSection() {
 
   return (
     <>
-      <section className="mb-4 overflow-hidden rounded-card border border-line bg-surface-1">
-        <p className="border-b border-line px-4 py-2 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+      <section className="mb-4 overflow-hidden rounded-card border-dick border-rand bg-surface-1">
+        <p className="border-b border-line px-4 py-2 font-mono text-3xs font-bold text-muted">
           Aufwärmen · Übungen <span className="text-faint">· {drills.length}</span>
         </p>
         <div className="px-2 py-1">

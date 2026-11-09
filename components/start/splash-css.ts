@@ -8,21 +8,21 @@
  * zweite Datei warten.
  *
  * Grundsätze:
- * · Der Splash liegt IMMER im Dunkel, unabhängig vom App-Modus.
- * · Nur transform und opacity; Kurven TRANSPORT ein (.55,0,1,1) / aus
- *   (.45,0,1,1), step-end für das Einrasten.
+ * · Der Splash liegt IMMER auf Elektroblau, unabhängig vom App-Modus.
+ * · Nur transform und opacity.
  * · Basiszustand = ENDBILD, alle Animationen additiv: bei
  *   prefers-reduced-motion bleibt nach dem Abschalten ein Standbild übrig.
+ * · Die Blase verschwindet nie (sie steht schon im iOS-Startbild davor).
  * · Ohne data-splash auf <html> bleibt alles unsichtbar (Fail-Safe).
  *
- * Ablauf (ab Einfügen): 80–280 ms Stange · 280 ms Verschluss · ab 300 ms
- * die vier Scheiben im 90-ms-Takt (je 220 ms mit Raste) · 760–920 ms
- * Wortmarke. Fertig bei ~920 ms; SplashGate hält bis MIN_MS.
+ * Ablauf (ab Einfügen): 80–340 ms die Blase nickt · 160/240 ms die Scheiben
+ * pumpen · 320–520 ms Wortmarke · 560–860 ms Sticker springt auf. Fertig bei
+ * ~860 ms; SplashGate hält bis MIN_MS.
  */
-import { GRUND_DUNKEL, NEBEN_DUNKEL, TINTE_DUNKEL } from "@/lib/grundfarben";
+import { MARKE, TINTE_HELL } from "@/lib/grundfarben";
 
 export const SPLASH_CSS = `
-#splash{display:none;position:fixed;inset:0;z-index:100;background:${GRUND_DUNKEL};color:${TINTE_DUNKEL};
+#splash{display:none;position:fixed;inset:0;z-index:100;background:${MARKE.blau};color:#ffffff;
   font-family:var(--font-body),system-ui,sans-serif}
 html[data-splash="v1"] #splash,html[data-splash="v2"] #splash,html[data-splash="v3"] #splash{display:block}
 html[data-splash="weg"] #splash{display:none}
@@ -32,30 +32,24 @@ html[data-splash="weg"] #splash{display:none}
    darunter, ohne die Mitte zu verschieben. */
 .sp-buehne{position:absolute;inset:0}
 .sp-marke{position:absolute;left:50%;top:50%;display:block;width:45vw;max-width:220px;height:auto;
-  aspect-ratio:1;transform:translate(-50%,-50%);overflow:visible}
+  aspect-ratio:1;transform:translate(-50%,-50%);overflow:visible;
+  animation:sp-nick 260ms cubic-bezier(.3,1.5,.6,1) 80ms both}
+@keyframes sp-nick{0%{transform:translate(-50%,-50%) scale(1)}45%{transform:translate(-50%,-50%) scale(1.07)}
+  100%{transform:translate(-50%,-50%) scale(1)}}
+.sp-scheibe{transform-box:fill-box;transform-origin:center;animation:sp-pump 200ms cubic-bezier(.3,1.6,.6,1) both}
+.sp-scheibe[data-i="0"]{animation-delay:160ms}
+.sp-scheibe[data-i="1"]{animation-delay:240ms}
+@keyframes sp-pump{0%{transform:scaleY(1)}50%{transform:scaleY(1.22)}100%{transform:scaleY(1)}}
 
-.sp-stange{transform-box:fill-box;transform-origin:left center;
-  animation:sp-stange 200ms cubic-bezier(.55,0,1,1) 80ms both}
-@keyframes sp-stange{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
-.sp-verschluss{animation:sp-auf 1ms steps(1,end) 280ms both}
-.sp-scheibe{animation:sp-scheibe 220ms both}
-.sp-scheibe[data-i="0"]{animation-delay:300ms}
-.sp-scheibe[data-i="1"]{animation-delay:390ms}
-.sp-scheibe[data-i="2"]{animation-delay:480ms}
-.sp-scheibe[data-i="3"]{animation-delay:570ms}
-@keyframes sp-scheibe{
-  0%{opacity:0;transform:translateX(14px);animation-timing-function:cubic-bezier(.55,0,1,1)}
-  1%{opacity:1}
-  82%{opacity:1;transform:translateX(-1px);animation-timing-function:step-end}
-  100%{opacity:1;transform:translateX(0)}}
-
-.sp-wort{position:absolute;left:0;right:0;top:calc(50% + min(22.5vw,110px) + 20px);text-align:center;
-  animation:sp-auf 1ms steps(1,end) 760ms both,sp-ruck 160ms cubic-bezier(.55,0,1,1) 760ms both}
-.sp-kicker{font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:${NEBEN_DUNKEL}}
-.sp-titel{margin-top:6px;font-family:var(--font-display),system-ui,sans-serif;font-stretch:125%;font-weight:800;
-  font-size:34px;line-height:1.1;color:${TINTE_DUNKEL}}
-@keyframes sp-auf{0%{opacity:0}100%{opacity:1}}
-@keyframes sp-ruck{0%{transform:translateY(16px)}100%{transform:translateY(0)}}
+.sp-wort{position:absolute;left:0;right:0;top:calc(50% + min(18vw,88px) + 18px);display:flex;flex-direction:column;
+  align-items:center;gap:14px;text-align:center}
+.sp-titel{font-family:var(--font-display),system-ui,sans-serif;font-weight:800;font-size:52px;line-height:1;
+  letter-spacing:-.02em;color:#ffffff;animation:sp-auf 200ms cubic-bezier(.2,.8,.3,1) 320ms both}
+.sp-sticker{display:inline-block;padding:4px 12px;border:2.5px solid ${TINTE_HELL};border-radius:10px;
+  background:${MARKE.sonne};color:${TINTE_HELL};font-family:var(--font-display),system-ui,sans-serif;font-weight:800;
+  font-size:17px;line-height:1.3;transform:rotate(-3deg);animation:sp-sticker 300ms cubic-bezier(.3,1.6,.6,1) 560ms both}
+@keyframes sp-auf{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes sp-sticker{0%{opacity:0;transform:rotate(-14deg) scale(.4)}100%{opacity:1;transform:rotate(-3deg) scale(1)}}
 
 /* Abgang: der Screen ruckt 24 px weg; danach setzt SplashGate data-splash="weg". */
 html[data-splash="ab"] #splash{display:block;animation:sp-ab 180ms cubic-bezier(.45,0,1,1) forwards}

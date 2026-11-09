@@ -19,12 +19,12 @@ const THEMES: { id: ThemePref; label: string }[] = [
 export function AppearanceSection() {
   const { settings, setTheme, setUserName, setZoetrope, setSplash } = useTraining();
   const theme = settings.theme ?? "light";
-  // Ein Startbild im Look „Regionen“: alte Werte v1/v2/v3/zufall heißen „an“.
+  // Ein Startbild im Look „spotter“: alte Werte v1/v2/v3/zufall heißen „an“.
   const splashAn = (settings.splash ?? "v3") !== "aus";
   const [name, setName] = useState(settings.userName ?? "");
 
   return (
-    <section className="mb-4 rounded-card bg-surface-1 p-4">
+    <section className="mb-4 rounded-card border-dick border-rand bg-surface-1 p-4">
       <Kicker as="h2" className="mb-4">
         Darstellung
       </Kicker>
@@ -36,7 +36,7 @@ export function AppearanceSection() {
         onChange={(e) => setName(e.target.value)}
         onBlur={() => setUserName(name)}
         placeholder="z. B. J. Weber"
-        className="min-h-11 w-full rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        className="min-h-11 w-full rounded-inner border-dick border-rand bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       />
       <p className="mb-5 mt-1.5 text-sm text-muted">So spricht ATLAS dich an.</p>
 

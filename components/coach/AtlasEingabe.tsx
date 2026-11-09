@@ -46,7 +46,7 @@ export function AtlasEingabe({
               key={s}
               onClick={() => onSend(s)}
               disabled={busy}
-              className="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-pill border border-line bg-surface-1 px-3.5 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
+              className="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-pill border-dick border-rand bg-surface-1 px-3.5 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
             >
               {s}
             </Pressable>
@@ -67,7 +67,7 @@ export function AtlasEingabe({
           rows={1}
           placeholder="Frag ATLAS …"
           aria-label="Nachricht an ATLAS"
-          className="min-h-12 flex-1 resize-none rounded-inner border border-line bg-surface-1 px-4 py-3 text-base leading-snug text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="min-h-12 flex-1 resize-none rounded-inner border-dick border-rand bg-surface-1 px-4 py-3 text-base leading-snug text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
         <Button
           onClick={() => onSend(value)}

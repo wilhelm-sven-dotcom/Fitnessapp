@@ -14,7 +14,7 @@ export const BUDGETS = [20, 30, 45, 60, 90];
 
 /**
  * Zeit und Start über der Tab-Leiste (Portal in den NavSlot): die Stufen,
- * „frei“ für jede andere Minutenzahl und „Training starten“. Kein
+ * „frei“ für jede andere Minutenzahl und „Los geht’s“. Kein
  * Eingabefeld im Dock — „frei“ öffnet ein Blatt mit dem Feld (die
  * iOS-Tastatur verträgt sich nicht mit festen Elementen). Das Blatt bleibt
  * im normalen Baum, nur der Dock-Inhalt wandert ins Portal.
@@ -31,7 +31,7 @@ export function StartDock({
   budgetMin: number;
   onBudget: (min: number) => void;
   onStart: () => void;
-  /** Einheit läuft schon: nur „Training fortsetzen“, keine Zeitwahl. */
+  /** Einheit läuft schon: nur „Weiter geht’s“, keine Zeitwahl. */
   locked?: boolean;
 }) {
   const [freiOffen, setFreiOffen] = useState(false);
@@ -51,15 +51,15 @@ export function StartDock({
 
   const chip = (aktiv: boolean) =>
     cn(
-      "flex h-10 min-w-0 flex-1 items-center justify-center rounded-pill text-sm font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
-      aktiv ? "bg-strong text-on-strong" : "border border-line text-fg",
+      "flex h-10 min-w-0 flex-1 items-center justify-center rounded-pill border-dick border-rand font-display text-sm font-extrabold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+      aktiv ? "bg-strong text-on-strong" : "bg-surface-1 text-fg",
     );
 
   const dock = (
     <div className="mx-auto max-w-md">
       {!locked && (
         <div className="mb-2.5 flex items-center gap-1.5">
-          <span className="mr-0.5 text-3xs font-semibold uppercase tracking-label text-muted">
+          <span className="mr-0.5 text-sm font-bold text-muted">
             Zeit
           </span>
           {BUDGETS.map((b) => (
@@ -96,7 +96,7 @@ export function StartDock({
         }}
       >
         <Play size={18} strokeWidth={2.5} aria-hidden />
-        {locked ? "Training fortsetzen" : "Training starten"}
+        {locked ? "Weiter geht’s" : "Los geht’s"}
       </Button>
     </div>
   );
@@ -122,7 +122,7 @@ export function StartDock({
             }}
             aria-label="Zeitbudget in Minuten"
             placeholder="z. B. 50"
-            className="min-w-0 flex-1 rounded-inner border border-line bg-surface-1 px-3 py-3 text-lg tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="min-w-0 flex-1 rounded-inner border-dick border-rand bg-surface-1 px-3 py-3 text-lg tabular-nums text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
           <span className="text-base text-muted">Min</span>
         </div>

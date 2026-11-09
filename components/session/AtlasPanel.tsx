@@ -98,36 +98,45 @@ export function AtlasPanel({
   if (ex.pattern === "cardio" && !override) return null;
   const quiet = !override && !line;
 
+  // Antreiben („Noch einer.“) und eigene Ansagen stehen in einer Sonnen-Blase,
+  // sonst weiß. Die Blase ist IMMER da (stille Momente zeigen „…“).
+  const laut = !!override || line?.tone === "push";
   return (
-    <section
-      className={cn(
-        "rounded-card border-2 bg-surface-1 px-4 py-3",
-        override || line?.tone === "push" ? "border-fg" : "border-transparent",
-      )}
-    >
-      <p className="flex items-center gap-2">
-        <AtlasMark size={13} live={!!override} className="shrink-0 text-muted" />
-        <span className="text-3xs font-semibold uppercase tracking-label text-muted">
-          ATLAS
-        </span>
-      </p>
-      <p
-        className={cn(
-          "mt-1 text-base leading-relaxed",
-          quiet ? "text-faint" : "text-fg",
-        )}
-        aria-hidden={quiet || undefined}
+    <section className="flex items-start gap-2.5">
+      <span
+        aria-hidden
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-pill border-dick border-rand bg-sonne font-display text-base font-extrabold text-sonne-auf"
       >
-        {override ? override.text : quiet ? "…" : line!.text}
-      </p>
-      {override?.actionLabel && override.onApply && (
-        <Pressable
-          onClick={override.onApply}
-          className="mt-2 inline-flex min-h-11 items-center rounded-pill bg-strong px-4 text-sm font-bold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        A
+      </span>
+      <div
+        className={cn(
+          "min-w-0 flex-1 rounded-card rounded-bl-xs border-dick border-rand px-3.5 py-2.5",
+          laut ? "bg-sonne text-sonne-auf" : "bg-surface-1 text-fg",
+        )}
+      >
+        <p className="flex items-center gap-1.5">
+          <AtlasMark size={12} live={!!override} className={cn("shrink-0", laut ? "" : "text-muted")} />
+          <span className={cn("text-3xs font-bold", laut ? "" : "text-muted")}>ATLAS</span>
+        </p>
+        <p
+          className={cn(
+            "mt-0.5 text-base font-semibold leading-snug",
+            quiet && "font-normal text-faint",
+          )}
+          aria-hidden={quiet || undefined}
         >
-          {override.actionLabel}
-        </Pressable>
-      )}
+          {override ? override.text : quiet ? "…" : line!.text}
+        </p>
+        {override?.actionLabel && override.onApply && (
+          <Pressable
+            onClick={override.onApply}
+            className="mt-2 inline-flex min-h-11 items-center rounded-pill border-dick border-rand bg-strong px-4 font-display text-sm font-extrabold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          >
+            {override.actionLabel}
+          </Pressable>
+        )}
+      </div>
     </section>
   );
 }

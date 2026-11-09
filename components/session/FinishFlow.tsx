@@ -37,8 +37,8 @@ function bewegt(kg: number): { wert: string; einheit: string } {
 
 function Kennzahl({ label, wert, einheit }: { label: string; wert: string; einheit?: string }) {
   return (
-    <div className="rounded-inner bg-surface-1 px-3 py-2.5">
-      <p className="text-3xs font-semibold uppercase tracking-label text-muted">{label}</p>
+    <div className="rounded-inner border-dick border-rand bg-surface-1 px-3 py-2.5">
+      <p className="text-3xs font-bold text-muted">{label}</p>
       <p className="mt-1 font-display text-2xl font-extrabold leading-none tabular-nums text-fg">
         {wert}
         {einheit && <span className="ml-1 font-body text-sm font-semibold text-muted">{einheit}</span>}
@@ -115,7 +115,7 @@ export function FinishFlow({
         <ArrowLeft size={18} aria-hidden /> Zurück zum Training
       </Pressable>
 
-      <p className="text-3xs font-semibold uppercase tracking-label text-muted">Abschluss</p>
+      <p className="text-3xs font-bold text-muted">Abschluss</p>
       <h2 className="mt-1 font-display text-titel font-extrabold text-fg">{state.session.name}</h2>
 
       {saetze === 0 && zeilen.length === 0 ? (
@@ -131,11 +131,11 @@ export function FinishFlow({
             {zeilen.map((z) => (
               <li
                 key={z.key}
-                className="flex min-h-12 items-center gap-3 rounded-inner bg-surface-1 px-3 py-2"
+                className="flex min-h-12 items-center gap-3 rounded-inner border-dick border-rand bg-surface-1 px-3 py-2"
               >
                 <span
                   aria-hidden
-                  className="h-2 w-2 shrink-0 rounded-pill"
+                  className="h-4 w-4 shrink-0 rounded-xs border-dick border-rand"
                   style={{ backgroundColor: z.farbe }}
                 />
                 <span className="min-w-0 flex-1">
@@ -158,7 +158,7 @@ export function FinishFlow({
         </>
       )}
 
-      <div className="mt-5 rounded-card bg-surface-1 p-4">
+      <div className="mt-5 rounded-card border-dick border-rand bg-surface-1 p-4">
         <p className="text-base font-semibold text-fg">Wie fühlt sich dein unterer Rücken an?</p>
         <p className="mb-3 mt-0.5 text-sm text-muted">Steuert die nächste Einheit.</p>
         <Segment
@@ -172,7 +172,7 @@ export function FinishFlow({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Notiz: Wie war's?"
           rows={2}
-          className="mt-4 w-full resize-none rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="mt-4 w-full resize-none rounded-inner border-dick border-rand bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
       </div>
 

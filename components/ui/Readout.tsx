@@ -13,8 +13,7 @@ const SIZE: Record<ReadoutSize, string> = {
 };
 
 /**
- * The signature numeral readout: a big Space-Grotesk number with a small mono
- * eyebrow and optional unit — the app's "instrument" voice. One bold metric,
+ * Die große Zahl: Bricolage 800 mit kleinem Kicker und optionaler Einheit. One bold metric,
  * stated plainly. Rollt beim Einblenden wie ein Zählwerk hoch (reduced-motion-sicher via Odometer).
  */
 export function Readout({
@@ -42,12 +41,12 @@ export function Readout({
   return (
     <div className={cn("min-w-0", className)}>
       {eyebrow && (
-        <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">{eyebrow}</p>
+        <p className="mb-1 text-sm font-bold text-muted">{eyebrow}</p>
       )}
       <p className="flex items-baseline gap-1.5">
         <span
           className={cn(
-            "font-bold leading-none tabular-nums text-fg",
+            "font-display font-extrabold leading-none tabular-nums text-fg",
             SIZE[size],
           )}
           style={tone ? { color: tone } : undefined}

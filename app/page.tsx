@@ -79,6 +79,14 @@ export default function HomePage() {
   // Zykluswoche aus der Periodisierung.
   const plattenNr = plattenNummer(log);
   const plattenDatum = fmtPlatteDatum(now);
+  // Überschrift „Mittwoch. Brust & Schultern sind dran.“: Wochentag und der
+  // Fokus der Einheit (Teil nach „·“, sonst der ganze Name).
+  const wochentag = now.toLocaleDateString("de-DE", { weekday: "long" });
+  const einheitName = todaySession?.name ?? "";
+  const fokus = einheitName.includes(" · ")
+    ? einheitName.split(" · ").slice(1).join(" · ")
+    : einheitName;
+  const mehrzahl = /\s(&|und)\s|,/.test(fokus);
   const saetzeGesamt = todaySession?.items.reduce((n, it) => n + it.sets, 0) ?? 0;
 
   const [editing, setEditing] = useState(false);
@@ -368,19 +376,36 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      {/* Kopf: Kicker + Datum, Titel in Kursive, EINE Bestandszeile (Nummer,
-          Übungen, Sätze, Minuten). Die Zykluswoche ist hier weg — ohne
-          angenommene Entlastungswoche stand dort immer „W1“; die echte Phase
-          zeigt Fortschritt. */}
+      {/* Kopf „spotter“: Kicker + Datum, dann der Kumpel spricht —
+          „Mittwoch. Brust & Schultern sind dran.“ (Fokus aus dem Namen der
+          Einheit, in Sonne markiert); EINE Bestandszeile (Nummer, Übungen,
+          Sätze, Minuten). */}
       <header className="mb-4">
-        <div className="flex items-baseline justify-between gap-2 text-3xs font-semibold uppercase tracking-label text-muted">
+        <div className="flex items-baseline justify-between gap-2 text-3xs font-bold text-muted">
           <span>Deine Einheit heute</span>
           <span className="whitespace-nowrap tabular-nums">{plattenDatum}</span>
         </div>
-        <h1 className="mt-2 hyphens-auto break-words font-display text-titel font-extrabold text-fg">
-          {frageOffen
-            ? "Wo trainierst du heute?"
-            : (todaySession?.name ?? "Einheit wird zusammengestellt …")}
+        <h1 className="mt-2 hyphens-auto break-words font-display text-3xl font-extrabold leading-tight text-fg">
+          {frageOffen ? (
+            "Wo trainierst du heute?"
+          ) : !todaySession ? (
+            "Einheit wird zusammengestellt …"
+          ) : todaySession.completedAt ? (
+            <>
+              {wochentag}.{" "}
+              <mark className="box-decoration-clone rounded-kachel border-dick border-rand bg-sonne px-1.5 text-sonne-auf">
+                Geschafft.
+              </mark>
+            </>
+          ) : (
+            <>
+              {wochentag}.<br />
+              <mark className="box-decoration-clone rounded-kachel border-dick border-rand bg-sonne px-1.5 text-sonne-auf">
+                {fokus}
+              </mark>{" "}
+              {mehrzahl ? "sind" : "ist"} dran.
+            </>
+          )}
         </h1>
         {!frageOffen && todaySession && todaySession.items.length > 0 && (
           <p data-testid="heute-bestand" className="mt-2 text-sm tabular-nums text-muted">
@@ -407,7 +432,7 @@ export default function HomePage() {
       )}
 
       {veraltet && !sessionLocked && todaySession?.edited && todaySession.ort && activeGym && (
-        <div className="mb-4 rounded-card bg-surface-1 px-4 py-3">
+        <div className="mb-4 rounded-card border-dick border-rand bg-surface-1 px-4 py-3">
           <p className="text-sm leading-snug text-fg">
             {todaySession.ort.id !== activeGym.id
               ? `Diese Einheit ist für ${todaySession.ort.name} geplant.`
@@ -448,12 +473,12 @@ export default function HomePage() {
       )}
 
       {/* Weg zurück ins Training nur, wenn die Karte ihn nicht schon trägt
-          („Training fortsetzen“) — etwa wenn die Einheit gestern Abend
+          („Weiter geht’s“) — etwa wenn die Einheit gestern Abend
           begann und heute noch die Ortsfrage steht. */}
       {running && (frageOffen || !todaySession || !!todaySession.completedAt) && (
         <Pressable
           onClick={() => router.push("/workout")}
-          className="mb-4 flex min-h-12 w-full items-center justify-between gap-3 rounded-card bg-surface-1 px-4 py-3 text-left"
+          className="mb-4 flex min-h-12 w-full items-center justify-between gap-3 rounded-card border-dick border-rand bg-surface-1 px-4 py-3 text-left"
         >
           <span className="min-w-0 truncate text-sm text-fg">
             Einheit läuft · {running.name}
@@ -467,7 +492,7 @@ export default function HomePage() {
       {/* Die heutige Einheit — das eine Herzstück der Seite. */}
       {frageOffen ? null : todaySession?.completedAt ? (
         <Card className="mb-4 p-5">
-          <p className="flex items-center gap-2 text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="flex items-center gap-2 text-3xs font-bold text-muted">
             <CheckCircle2 size={16} className="text-erfolg" aria-hidden /> Heute erledigt
           </p>
           <h2 className="mt-1 font-display text-2xl font-extrabold text-fg">
@@ -497,7 +522,7 @@ export default function HomePage() {
         />
       ) : (
         <Card className="mb-4 p-5">
-          <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="text-3xs font-bold text-muted">
             Trainingsplan
           </p>
           <p className="mt-2 text-sm text-muted">ATLAS stellt die Einheit zusammen …</p>

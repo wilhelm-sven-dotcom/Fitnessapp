@@ -186,7 +186,7 @@ export function BodyTab() {
 
       {body.length > 0 && (
         <Card className="mb-3">
-          <p className="mb-3 font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="mb-3 font-mono text-3xs font-bold text-muted">
             Timeline
           </p>
           <div className="space-y-3">

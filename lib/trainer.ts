@@ -658,7 +658,7 @@ export function liveLine(opts: {
   // ① Rekord gefallen.
   if (record && filled.some((s) => beatsRecord(ex, s, record))) {
     return {
-      text: pick(["Rekord gefallen. Notiert.", "Neuer Rekord — genau so."], seed),
+      text: pick(["Neuer Rekord. Das bleibt.", "Rekord! Genau so."], seed),
       tone: "push",
       kind: "record",
     };
@@ -777,27 +777,28 @@ export function liveLine(opts: {
 
 /* ─────────────── Motivations-Zeile (Coach-Ansporn, an/aus) ─────────────── */
 
+// Ton „spotter“: der Kumpel an der Bank — kurz, direkt, ermutigend.
 const MOTIVATE_START = [
-  "Erster Satz — gib den Ton an.",
-  "Los geht's. Sauber, kontrolliert, voll da.",
-  "Kopf an, Fokus auf die Technik. Jetzt.",
-  "Anfangen ist die halbe Miete — leg los.",
+  "Erster Satz. Ich steh neben dir.",
+  "Los geht’s. Sauber und kontrolliert.",
+  "Ruhig rein, Technik zuerst. Ich hab dich.",
+  "Fang sauber an, der Rest kommt.",
 ];
 const MOTIVATE_MID = [
-  "Dranbleiben — genau hier entsteht der Fortschritt.",
-  "Technik hält, Tempo hält. Weiter so.",
-  "Sauber wie eben — nächster Satz.",
-  "Jeder Satz zählt. Bleib präsent.",
+  "Noch einer. Ich hab dich.",
+  "Genau so. Gleiche Technik, nächster Satz.",
+  "Sauber wie eben. Weiter.",
+  "Bleib dran, hier passiert’s.",
 ];
 const MOTIVATE_LAST = [
-  "Letzter Satz — alles rein, was du hast.",
-  "Noch einer. Beiß dich sauber durch bis zum Schluss.",
-  "Finish stark — dafür bist du hier.",
+  "Letzter Satz. Alles rein, ich pass auf.",
+  "Noch einer. Sauber bis zum Schluss.",
+  "Letzter. Zeig, was du hast.",
 ];
 const MOTIVATE_DONE = [
-  "Übung durch — stark gezogen.",
-  "Abgehakt. Genau so weiter.",
-  "Sitzt. Nächste Übung wartet.",
+  "Übung durch. Stark gemacht.",
+  "Abgehakt. Weiter geht’s.",
+  "Sitzt. Nächste Übung.",
 ];
 
 /**

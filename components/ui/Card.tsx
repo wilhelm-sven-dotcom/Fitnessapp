@@ -2,20 +2,19 @@ import { cn } from "@/lib/utils";
 
 type CardVariant = "base" | "elevated" | "glass";
 
-/** Die Platte: Karton-Fläche, Faden-Rahmen (faden-flaeche), KEIN Schatten.
- *  Alle drei Alt-Varianten münden im selben flachen Rezept — Hervorhebung
- *  (offener Kader) trägt an der Nutzstelle border-accent-ink. */
+/** Karte „spotter“: weiße Fläche, dicker Tinte-Rand. `elevated` trägt
+ *  zusätzlich den harten Versatz-Schatten — für die EINE Karte, um die es auf
+ *  einem Bildschirm geht (Einheit heute, offener Satz). */
 const VARIANT: Record<CardVariant, string> = {
-  base: "bg-surface-1",
-  elevated: "bg-surface-1",
-  glass: "bg-surface-1",
+  base: "border-dick border-rand bg-surface-1",
+  elevated: "border-dick border-rand bg-surface-1 shadow-hart",
+  glass: "border-dick border-rand bg-surface-1",
 };
 
 /**
- * Shared card surface — DAS eine Platten-Rezept (`border-line-card
- * bg-surface-1`). <section>-Panels tragen dieselben Klassen direkt, wo die
- * Semantik ein section-Element verlangt. Padding (14 px) / Radius (3 px)
- * default sensibly and can be overridden via `className` (twMerge).
+ * DAS Karten-Rezept. <section>-Panels tragen dieselben Klassen direkt
+ * (`rounded-card border-dick border-rand bg-surface-1`), wo die Semantik ein
+ * section-Element verlangt. Padding und Radius über `className` (twMerge).
  */
 export function Card({
   variant = "base",

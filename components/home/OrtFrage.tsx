@@ -44,7 +44,7 @@ export function OrtFrage({
             <Pressable
               key={g.id}
               onClick={() => onWaehle(g.id)}
-              className="flex min-h-11 flex-col items-start rounded-card bg-surface-1 p-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+              className="flex min-h-11 flex-col items-start rounded-card border-dick border-rand bg-surface-1 p-4 text-left shadow-hart-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <span aria-hidden className="block w-14 text-fg">
                 <PhasenFigur figur={PATTERN_FIGUR[ortMuster(g)]} color="var(--fg)" />

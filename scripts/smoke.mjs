@@ -5,7 +5,7 @@
  *   npm run build && npm run smoke
  *
  * Startet selbst `next start` auf Port 3199, fährt die Kern-Reise ab:
- * Boot ohne Splash → Ortsfrage (Zuhause) → Heute angesetzt → Editor-Tausch → Training starten →
+ * Boot ohne Splash → Ortsfrage (Zuhause) → Heute angesetzt → Editor-Tausch → Los geht’s →
  * Check-in überspringen → Aufwärmen → Satz loggen (Inline-Pause, ATLAS-Zeile)
  * → Reload mitten in der Einheit (Resume!) → Abschluss speichern → Verlauf
  * zeigt die Einheit → Katalog-Filter + eigene Übung → Alt-Log (A/B/C) rendert.
@@ -109,7 +109,7 @@ try {
   const t0 = Date.now();
   await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
   await page.getByText("Deine Einheit heute", { exact: false }).first().waitFor({ timeout: 1500 }).catch(async () => {
-    await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 3000 });
+    await page.getByText("Los geht", { exact: false }).first().waitFor({ timeout: 3000 });
   });
   console.log(`OK boot: Inhalt nach ${Date.now() - t0} ms, kein Splash`);
 
@@ -117,16 +117,16 @@ try {
   step = "ort";
   await page.getByText("Wo trainierst du heute?", { exact: false }).first().waitFor({ timeout: 5000 });
   // innerText = sichtbarer Text; textContent enthielte auch den
-  // Richtungsvertrag im <script> des Layouts (dort steht „Training starten“).
+  // Richtungsvertrag im <script> des Layouts (dort steht „Los geht’s“).
   const vorWahl = await page.locator("body").innerText();
-  if (/Training starten/i.test(vorWahl)) throw new Error("Einheit steht schon vor der Ortswahl");
+  if (/Los geht/i.test(vorWahl)) throw new Error("Einheit steht schon vor der Ortswahl");
   await page.getByRole("button", { name: /^Studio/ }).first().waitFor({ timeout: 3000 });
   await page.getByRole("button", { name: /^Zuhause/ }).first().click();
   console.log("OK ort: Frage steht, Zuhause gewählt");
 
   // ── 3 · Heute: komponierte Einheit mit ≥3 Übungen + why-Zeilen ──
   step = "heute";
-  await page.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 8000 });
+  await page.getByText("Los geht", { exact: false }).first().waitFor({ timeout: 8000 });
   // Zeilen der Übungsliste zählen (früher: /0[123]/ auf textContent — das
   // traf auch Kadernummern und Ziffern des Startbilds und bestand immer).
   const zeilen = await page.locator("[data-exercise-id]").count();
@@ -160,7 +160,7 @@ try {
 
   // ── 5 · Start → Check-in überspringen → Aufwärmen → Bühne ──
   step = "start";
-  await page.getByText("Training starten", { exact: false }).first().click();
+  await page.getByText("Los geht", { exact: false }).first().click();
   await page.waitForURL("**/workout", { timeout: 8000 });
   await page.getByText("Tagesform").first().waitFor({ timeout: 8000 });
   await page.getByText("Überspringen").first().click();

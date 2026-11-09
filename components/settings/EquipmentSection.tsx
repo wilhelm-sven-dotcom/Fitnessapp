@@ -53,7 +53,7 @@ export function EquipmentSection() {
   const heute = ort.id === activeGym?.id;
 
   return (
-    <section className="mb-4 rounded-card bg-surface-1 p-4">
+    <section className="mb-4 rounded-card border-dick border-rand bg-surface-1 p-4">
       <Kicker as="h2" className="mb-3">
         Orte & Geräte
       </Kicker>
@@ -79,7 +79,7 @@ export function EquipmentSection() {
       </p>
 
       <label className="mb-4 block">
-        <span className="mb-1.5 block text-3xs font-semibold uppercase tracking-label text-muted">
+        <span className="mb-1.5 block text-3xs font-bold text-muted">
           Name
         </span>
         <input
@@ -93,7 +93,7 @@ export function EquipmentSection() {
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
           }}
-          className="min-h-11 w-full rounded-inner border border-line bg-surface-1 px-3 py-2.5 text-base text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="min-h-11 w-full rounded-inner border-dick border-rand bg-surface-1 px-3 py-2.5 text-base text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         />
       </label>
 
@@ -147,7 +147,7 @@ export function EquipmentSection() {
             maxLength={40}
             placeholder="z. B. Hotel"
             aria-label="Neuen Ort anlegen"
-            className="min-h-11 min-w-0 flex-1 rounded-inner border border-line bg-surface-1 px-3 py-2 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="min-h-11 min-w-0 flex-1 rounded-inner border-dick border-rand bg-surface-1 px-3 py-2 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
           <Button
             variant="secondary"

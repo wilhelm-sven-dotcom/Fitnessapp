@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Abschnitts-Kicker — EIN Rezept für alle Überschriften über Karten und
- * Sektionen (Versalien, gesperrt `tracking-label`, `text-muted`). Versalien kommen aus CSS,
- * im DOM steht Normalschreibung (Screenreader).
+ * Sektionen: Normalschreibung, fett, `text-muted` (der Kumpel spricht, er
+ * beschriftet nicht in Versalien).
  */
 export function Kicker({
   as: Tag = "p",
@@ -17,7 +17,7 @@ export function Kicker({
   return (
     <Tag
       className={cn(
-        "text-3xs font-semibold uppercase tracking-label text-muted",
+        "text-sm font-bold text-muted",
         className,
       )}
     >

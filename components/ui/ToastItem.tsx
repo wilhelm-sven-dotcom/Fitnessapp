@@ -5,7 +5,7 @@ import { useReducedMotion } from "framer-motion";
 import { AlertTriangle, Check } from "lucide-react";
 import { toast, type ToastRecord } from "@/lib/toast";
 
-/** Toast Platte 311: Tinte-Fläche, Text in Grundfarbe, eine Mono-Zeile.
+/** Toast „spotter“: Tinte-Fläche mit Rand, Text in Grundfarbe, eine Zeile.
  *  Motion = Filmtransport: ruckt 12 px von unten ein (120 ms Transport),
  *  der Abgang ist ein HARTER Schnitt (steps(1)) — auch bei Tap.
  *  Auto-Dismiss pausiert, solange der Tab verborgen ist. */

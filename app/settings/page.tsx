@@ -113,7 +113,7 @@ function SettingsContent() {
 
       {seg === "daten" && (
         <>
-          <section className="mb-4 rounded-card border border-line-card bg-surface-1 p-5">
+          <section className="mb-4 rounded-card border-dick border-rand bg-surface-1 p-5">
             <Kicker as="h2" className="mb-2">
               Daten
             </Kicker>
@@ -168,7 +168,7 @@ function SettingsContent() {
             </div>
           </Sheet>
 
-          <section className="rounded-card border border-line-card bg-surface-1 p-5">
+          <section className="rounded-card border-dick border-rand bg-surface-1 p-5">
             <Kicker as="h2" className="mb-2">
               Als App installieren
             </Kicker>

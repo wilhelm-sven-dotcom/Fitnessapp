@@ -11,12 +11,13 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        // „Regionen“: Archivo trägt alles. `font-display` setzt zusätzlich
-        // die breite Schnittbreite (globals.css), `font-mono` ist Archivo.
-        sans: ["var(--font-body)", "Archivo", "system-ui", "sans-serif"],
-        body: ["var(--font-body)", "Archivo", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "Archivo", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "Archivo", "system-ui", "sans-serif"],
+        // „spotter“: Bricolage Grotesque für Titel, Zahlen, Knöpfe und
+        // Sticker (`font-display`), Onest für Text. `font-mono` bleibt als
+        // Klasse gültig und ist Onest (Ziffern über `tabular-nums`).
+        sans: ["var(--font-body)", "Onest", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "Onest", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "Onest", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Bricolage Grotesque", "system-ui", "sans-serif"],
       },
       // Lesbare Mindestgrößen: Labels 12 px, Meta 11 px, 10 px nur für
       // Diagramm-Beschriftung. Keine Arbitrary-Values im JSX.
@@ -34,7 +35,7 @@ const config: Config = {
         label: "0.08em",
       },
       colors: {
-        // Hauptaktion = Tinte (accent), gedrückt, Schrift darauf.
+        // Hauptaktion = Elektroblau (accent), gedrückt, Schrift darauf.
         accent: {
           DEFAULT: "var(--accent)",
           press: "var(--accent-press)",
@@ -43,28 +44,22 @@ const config: Config = {
         // Funktionsrollen.
         info: "var(--info)",
         fokus: "var(--fokus)",
-        rekord: "var(--rekord)",
+        // Rekord: als Schrift (DEFAULT), als Fläche, Schrift auf der Fläche.
+        rekord: {
+          DEFAULT: "var(--rekord)",
+          flaeche: "var(--rekord-flaeche)",
+          auf: "var(--auf-rekord)",
+        },
+        // Sonnengelb für Sticker und Markierungen, Schrift darauf.
+        sonne: {
+          DEFAULT: "var(--sonne)",
+          auf: "var(--auf-sonne)",
+        },
+        // Dicker Rand an Karten, Knöpfen, Chips und Kacheln.
+        rand: "var(--rand)",
         erfolg: "var(--erfolg)",
         warnung: "var(--warnung)",
         gefahr: "var(--gefahr)",
-        // Körperregionen: Marke/Schrift, Fläche, Schrift auf Fläche.
-        region: {
-          beine: "var(--beine)",
-          druck: "var(--druck)",
-          zug: "var(--zug)",
-          rumpf: "var(--rumpf)",
-          cardio: "var(--cardio)",
-          "beine-flaeche": "var(--beine-flaeche)",
-          "druck-flaeche": "var(--druck-flaeche)",
-          "zug-flaeche": "var(--zug-flaeche)",
-          "rumpf-flaeche": "var(--rumpf-flaeche)",
-          "cardio-flaeche": "var(--cardio-flaeche)",
-          "auf-beine": "var(--auf-beine)",
-          "auf-druck": "var(--auf-druck)",
-          "auf-zug": "var(--auf-zug)",
-          "auf-rumpf": "var(--auf-rumpf)",
-          "auf-cardio": "var(--auf-cardio)",
-        },
         // Muskel-Stufen I–IV (diskret, keine Verläufe).
         stufe: {
           1: "var(--stufe-1)",
@@ -105,8 +100,18 @@ const config: Config = {
       borderRadius: {
         card: "var(--radius-card)",
         inner: "var(--radius-inner)",
+        kachel: "var(--radius-kachel)",
         pill: "var(--radius-pill)",
         xs: "var(--radius-xs)",
+      },
+      // Der dicke Rand (2,5 px) — mit `border-rand` als Farbe.
+      borderWidth: {
+        dick: "2.5px",
+      },
+      // Der EINE erlaubte Schatten: hart versetzt, nie weich.
+      boxShadow: {
+        hart: "4px 4px 0 var(--schatten)",
+        "hart-sm": "3px 3px 0 var(--schatten)",
       },
     },
   },

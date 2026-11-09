@@ -3,130 +3,140 @@
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────────────────────────────────
-   EIN Design: „Regionen“ — Krafttraining in Scheibenfarben.
-   Warmes Papier (hell) und warmes Dunkel ([data-theme="dark"]); jede
-   Körperregion hat eine Farbe (Beine Rot, Druck Blau, Zug Gelb, Rumpf Grün,
-   wie die Wettkampf-Hantelscheiben), alles andere ist Tinte. Hauptaktionen
-   sind Tinte-Flächen. Archivo trägt alles (breit für Titel). Keine Schatten,
-   Radius 20/14/Pille/6. Kontrast: Text ≥ 4,5:1, Bedienelemente ≥ 3:1 —
-   `npm run kontrast -- --streng`. Werte und Rezepte: .claude/skills/ui-style.
+   EIN Design: „spotter“ — der Kumpel an der Bank. Weiß und Tinte, Elektroblau
+   für Aktionen und Daten, Signalorange für Rekorde, Sonnengelb für Sticker.
+   Karten und Knöpfe tragen einen dicken Tinte-Rand (2,5 px) und einen harten
+   Versatz-Schatten (4 px, nie weich). Regionen sind kleine Kacheln mit Rand:
+   Beine Orange, Druck Blau, Zug Sonne, Rumpf Weiß. Bricolage Grotesque für
+   Titel, Zahlen, Knöpfe und Sticker; Onest für Text. Kontrast: Text ≥ 4,5:1,
+   Bedienelemente ≥ 3:1 — `npm run kontrast -- --streng`. Werte und Rezepte:
+   .claude/skills/ui-style.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
-  --base: #f6f4ef; /* Grund */
+  --base: #eef0f4; /* Grund */
   --card: #ffffff; /* Fläche: Karten, Sheets, Zeilen */
-  --surface-2: #ece8e0; /* eingelassen: Segment-Spur, Stepper, Chips */
-  --line: #dcd6ca; /* Linie auf dem Grund */
-  --line-card: #e8e3da; /* Linie auf der Fläche */
-  --fg: #16140f; /* Tinte */
-  --muted: #5a554b; /* Nebentext 7,4:1 auf Fläche */
-  --faint: #6a6458; /* Hinweis/Meta 5,9:1 auf Fläche */
-  --strong: #16140f;
+  --surface-2: #e2e5ec; /* eingelassen: Segment-Spur, Stepper */
+  --line: #c5cad4; /* feine Linie auf dem Grund */
+  --line-card: #d3d6de; /* feine Linie auf der Fläche (gestrichelte Trenner) */
+  --rand: #0e0f14; /* dicker Rand an Karten, Knöpfen, Chips, Kacheln */
+  --schatten: #0e0f14; /* harter Versatz-Schatten */
+  --fg: #0e0f14; /* Tinte */
+  --muted: #535866; /* Nebentext 7,1:1 auf Fläche */
+  --faint: #5a5f6d; /* Hinweis/Meta 6,4:1 auf Fläche */
+  --strong: #0e0f14;
   --on-strong: #ffffff;
-  --glass: #f6f4ef; /* opak: kein Milchglas */
+  --glass: #eef0f4; /* opak: kein Milchglas */
 
-  --accent: #16140f; /* Hauptaktion = Tinte */
-  --accent-press: #2e2a22;
+  --accent: #2f45ff; /* Hauptaktion = Elektroblau */
+  --accent-press: #2236e0;
   --on-accent: #ffffff;
   --ink-on-color: #ffffff;
-  --accent-ink: #16140f;
+  --accent-ink: #2f45ff; /* Aktiv-Markierung als Schrift 5,4:1 auf Grund */
 
-  --info: #2b5fb8; /* Daten, Charts, Links 6,1:1 */
-  --fokus: #2b5fb8; /* Fokusring */
-  --rekord: #8a6100; /* Rekorde 5,5:1 */
-  --erfolg: #257a4c;
-  --warnung: #a85500;
-  --gefahr: #c7352b;
+  --info: #2f45ff; /* Daten, Charts, Links */
+  --fokus: #2f45ff; /* Fokusring */
+  --rekord: #c2410c; /* Rekord als Schrift 5,2:1 */
+  --rekord-flaeche: #ff5a1f; /* Rekord-Fläche, Schrift darauf Tinte */
+  --auf-rekord: #0e0f14;
+  --sonne: #ffd43b; /* Sticker, Markierung */
+  --auf-sonne: #0e0f14;
+  --erfolg: #17784a;
+  --warnung: #94590a;
+  --gefahr: #cc2b1d;
 
-  /* Regionen: Marke/Schrift (≥ 3:1 bzw. ≥ 4,5:1 auf Fläche) … */
-  --beine: #c7352b;
-  --druck: #2b5fb8;
-  --zug: #8f6700;
-  --rumpf: #257a4c;
-  --cardio: #6a6458;
-  /* … und Flächen mit ihrer Schrift (modusgleich). */
-  --beine-flaeche: #c7352b;
-  --druck-flaeche: #2b5fb8;
-  --zug-flaeche: #e3a600;
-  --rumpf-flaeche: #257a4c;
-  --cardio-flaeche: #ece8e0;
-  --auf-beine: #ffffff;
+  /* Regionen als Kachel (Fläche mit Tinte-Rand) und Schrift darauf. */
+  --beine: #ff5a1f;
+  --druck: #2f45ff;
+  --zug: #ffd43b;
+  --rumpf: #ffffff;
+  --cardio: #d3d6de;
+  --auf-beine: #0e0f14;
   --auf-druck: #ffffff;
-  --auf-zug: #16140f;
-  --auf-rumpf: #ffffff;
-  --auf-cardio: #16140f;
+  --auf-zug: #0e0f14;
+  --auf-rumpf: #0e0f14;
+  --auf-cardio: #0e0f14;
 
-  --stufe-1: #d9d2c3; /* Muskel-Stufen I–IV */
-  --stufe-2: #a99f8c;
-  --stufe-3: #6e6656;
-  --stufe-4: #16140f;
+  --stufe-1: #dde1ff; /* Muskel-Stufen I–IV in Blau */
+  --stufe-2: #a9b3ff;
+  --stufe-3: #6c7bff;
+  --stufe-4: #2f45ff;
 
-  /* IWF-Scheibenfarben = dieselben Scheiben wie die Regionen (modusgleich). */
+  /* IWF-Scheibenfarben: echte Hantelscheiben (Lastcodierung), modusgleich. */
   --iwf-rot: #c7352b;
   --iwf-blau: #2b5fb8;
   --iwf-gelb: #e3a600;
   --iwf-gruen: #257a4c;
 
-  --scrim: rgba(22, 20, 15, 0.45);
+  --scrim: rgba(14, 15, 20, 0.5);
 
-  --font-display: var(--font-archivo);
-  --font-body: var(--font-archivo);
-  --font-mono: var(--font-archivo);
+  --font-display: var(--font-bricolage);
+  --font-body: var(--font-onest);
+  --font-mono: var(--font-onest);
 
   --radius-card: 20px;
   --radius-inner: 14px;
+  --radius-kachel: 10px;
   --radius-pill: 9999px;
   --radius-xs: 6px;
 }
 
-/* Dunkel: gleiche Rollen, warmes Dunkel. Regions-Flächen bleiben modusgleich,
-   Marken und Schrift werden heller. */
+/* Dunkel: gleiche Rollen. Rand hell, Schatten schwarz, Blau heller. */
 [data-theme="dark"] {
   color-scheme: dark;
-  --base: #13120f;
-  --card: #1d1b17;
-  --surface-2: #2a2722;
-  --line: #34302a;
-  --line-card: #2e2a24;
-  --fg: #f3f0e8;
-  --muted: #b8b1a2;
-  --faint: #a39c8d;
-  --strong: #f3f0e8;
-  --on-strong: #13120f;
-  --glass: #13120f;
+  --base: #0f1015;
+  --card: #1a1c24;
+  --surface-2: #252833;
+  --line: #343845;
+  --line-card: #2c2f3a;
+  --rand: #d9dce4;
+  --schatten: #000000;
+  --fg: #f3f4f8;
+  --muted: #a7acba;
+  --faint: #9ca2b1;
+  --strong: #f3f4f8;
+  --on-strong: #0f1015;
+  --glass: #0f1015;
 
-  --accent: #f3f0e8;
-  --accent-press: #d9d4c8;
-  --on-accent: #13120f;
+  --accent: #4d5eff;
+  --accent-press: #3b4cf0;
+  --on-accent: #ffffff;
   --ink-on-color: #ffffff;
-  --accent-ink: #f3f0e8;
+  --accent-ink: #8a96ff;
 
-  --info: #7ea7f0;
-  --fokus: #7ea7f0;
-  --rekord: #e3b341;
-  --erfolg: #5cc28a;
-  --warnung: #f0a04b;
-  --gefahr: #f07a6b;
+  --info: #8a96ff;
+  --fokus: #8a96ff;
+  --rekord: #ff8a5c;
+  --rekord-flaeche: #ff6b33;
+  --auf-rekord: #0f1015;
+  --sonne: #ffd43b;
+  --auf-sonne: #0f1015;
+  --erfolg: #4cc38a;
+  --warnung: #e8b04a;
+  --gefahr: #ff7a6b;
 
-  --beine: #f07a6b;
-  --druck: #7ea7f0;
-  --zug: #e3b341;
-  --rumpf: #5cc28a;
-  --cardio: #a39c8d;
-  --cardio-flaeche: #2a2722;
-  --auf-cardio: #f3f0e8;
+  --beine: #ff6b33;
+  --druck: #4d5eff;
+  --zug: #ffd43b;
+  --rumpf: #f3f4f8;
+  --cardio: #3a3e4b;
+  --auf-beine: #0f1015;
+  --auf-druck: #ffffff;
+  --auf-zug: #0f1015;
+  --auf-rumpf: #0f1015;
+  --auf-cardio: #f3f4f8;
 
-  --stufe-1: #3a362e;
-  --stufe-2: #6e6656;
-  --stufe-3: #a99f8c;
-  --stufe-4: #f3f0e8;
+  --stufe-1: #262a4d;
+  --stufe-2: #3946b5;
+  --stufe-3: #6c7bff;
+  --stufe-4: #c3caff;
 
-  --scrim: rgba(0, 0, 0, 0.55);
+  --scrim: rgba(0, 0, 0, 0.6);
 }
 
-/* Archivo breit für Titel, Übungsköpfe, Restzeit, Wortmarke. */
+/* Bricolage für Titel, Zahlen, Knöpfe, Sticker: eng gesetzt. */
 .font-display {
-  font-stretch: 125%;
+  letter-spacing: -0.02em;
 }
 
 html {
@@ -225,10 +235,11 @@ body {
   display: none;
 }
 
-/* Offener Satz: Fläche mit 2-px-Rahmen in Tinte (Etappe 3: Regionsfarbe). */
+/* Offener Satz: Karte mit dickem Rand und hartem Schatten. */
 .set-active {
   background: var(--card);
-  box-shadow: inset 0 0 0 2px var(--fg);
+  border: 2.5px solid var(--rand);
+  box-shadow: 4px 4px 0 var(--schatten);
 }
 
 /* ── Zoetrop — die EINE Bewegung des Labors ─────────────────────────────────

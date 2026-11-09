@@ -226,7 +226,7 @@ export default function CoachPage() {
   const buildEl = (
     <Pressable
       onClick={() => router.push("/")}
-      className="flex min-h-12 w-full items-center justify-between gap-2 rounded-card bg-surface-1 px-4 py-3 text-left text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+      className="flex min-h-12 w-full items-center justify-between gap-2 rounded-card border-dick border-rand bg-surface-1 px-4 py-3 text-left text-base font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
       <span className="flex items-center gap-2.5">
         <Dumbbell size={18} className="shrink-0" aria-hidden />
@@ -259,22 +259,20 @@ export default function CoachPage() {
     <div className="space-y-4">
       {/* Status-Kopf: ATLAS + Tages-Direktive. */}
       <Card>
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2">
-            <AtlasMark size={16} live className="text-fg" />
-            <h1 className="text-3xs font-semibold uppercase tracking-label text-fg">ATLAS · Coach</h1>
-          </span>
-          <span className="text-sm tabular-nums text-muted">
-            Einheit {plattenNummer(log)} · Mission {Math.round(trainer.mission.pct * 100)} %
-          </span>
+        <div className="flex items-center gap-2">
+          <AtlasMark size={18} live className="shrink-0 text-fg" />
+          <h1 className="font-display text-lg font-extrabold text-fg">ATLAS · dein Trainingspartner</h1>
         </div>
-        <p className="mt-2.5 text-lg font-semibold leading-snug text-fg">{trainer.directive.text}</p>
+        <p className="mt-0.5 text-sm tabular-nums text-muted">
+          Einheit {plattenNummer(log)} · Mission {Math.round(trainer.mission.pct * 100)} %
+        </p>
+        <p className="mt-2.5 font-display text-xl font-extrabold leading-snug text-fg">{trainer.directive.text}</p>
         <p className="mt-1 text-sm leading-relaxed text-muted">{trainer.directive.reason}</p>
       </Card>
 
       {/* Wochen-Rapport: deterministisch sofort, ATLAS-Fassung auf Abruf. */}
       <Card>
-        <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="text-3xs font-bold text-muted">
           Wochen-Rückblick · KW {isoWeek(new Date())}
         </p>
         <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-fg">
@@ -284,7 +282,7 @@ export default function CoachPage() {
           <Pressable
             onClick={() => void loadRapport()}
             disabled={rapportBusy}
-            className="mt-3 flex min-h-11 items-center gap-2 rounded-pill border border-line px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-50"
+            className="mt-3 flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-50"
           >
             <Sparkles size={16} aria-hidden />
             {rapportBusy ? "ATLAS schreibt …" : "Ausführlicher Rückblick"}
@@ -306,7 +304,7 @@ export default function CoachPage() {
             m.role === "user" ? (
               <div
                 key={i}
-                className="ml-8 rounded-card bg-strong px-4 py-3 text-base leading-relaxed text-on-strong"
+                className="ml-10 rounded-card rounded-br-xs border-dick border-rand bg-strong px-4 py-3 text-base font-semibold leading-snug text-on-strong"
               >
                 {m.content}
               </div>

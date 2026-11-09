@@ -11,8 +11,8 @@ export interface SegmentOption<T extends string | number> {
 }
 
 /**
- * DER Umschalter der App: Pillen-Rahmen, Pillen-Segmente, das aktive Segment
- * in Tinte. Ersetzt die früheren Einzel-Rezepte (Einstellungen, Profil,
+ * DER Umschalter der App: Pille mit dickem Tinte-Rand, das aktive Segment
+ * als Tinte-Fläche. Ersetzt die früheren Einzel-Rezepte (Einstellungen, Profil,
  * Gewichtsstufe, Darstellung, Ort). `aria-pressed` je Segment.
  */
 export function Segment<T extends string | number>({
@@ -36,7 +36,7 @@ export function Segment<T extends string | number>({
       role="group"
       aria-label={label}
       className={cn(
-        "flex gap-1 rounded-pill bg-surface-2 p-1",
+        "flex gap-1 rounded-pill border-dick border-rand bg-surface-1 p-1",
         disabled && "opacity-50",
         className,
       )}
@@ -54,8 +54,8 @@ export function Segment<T extends string | number>({
             aria-pressed={active}
             aria-label={o.ariaLabel}
             className={cn(
-              "min-h-10 min-w-0 flex-1 truncate rounded-pill px-2 py-2 text-sm font-semibold",
-              active ? "bg-strong text-on-strong" : "text-muted",
+              "min-h-10 min-w-0 flex-1 truncate rounded-pill px-2 py-2 font-display text-sm font-extrabold",
+              active ? "bg-strong text-on-strong" : "text-fg",
             )}
           >
             {o.label}

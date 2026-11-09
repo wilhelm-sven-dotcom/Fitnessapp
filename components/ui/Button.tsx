@@ -7,23 +7,25 @@ import { cn } from "@/lib/utils";
 type ButtonVariant = "primary" | "strong" | "secondary" | "ghost" | "danger";
 type ButtonSize = "lg" | "sm";
 
-/** Button-Rezepte „Regionen“: Pille, Normalschreibung, 700, keine Schatten.
- *  Gedrückt = Fläche `accent-press`; der Druck-Ruck kommt aus Pressable. */
+/** Button-Rezepte „spotter“: Bricolage 800, Normalschreibung, dicker
+ *  Tinte-Rand. Nur die Hauptaktion trägt den harten Versatz-Schatten; beim
+ *  Drücken rutscht sie in den Schatten (Druck-Ruck aus Pressable dazu). */
 const VARIANT: Record<ButtonVariant, string> = {
-  // Tinte-Fläche — die Hauptaktion eines Bildschirms.
-  primary: "bg-accent text-on-accent active:bg-accent-press",
-  // Tinte-Fläche (Chip-Logik groß) — für Sekundär-Momente mit Gewicht.
-  strong: "bg-strong text-on-strong",
-  // 1px-Tinte-Rahmen, transparent; Down = Faden-Fläche.
-  secondary: "border border-line bg-transparent text-fg active:bg-surface-2",
+  // Elektroblau mit Rand und hartem Schatten — die Hauptaktion eines Bildschirms.
+  primary:
+    "border-dick border-rand bg-accent text-on-accent shadow-hart active:translate-x-0.5 active:translate-y-0.5 active:bg-accent-press active:shadow-hart-sm",
+  // Tinte-Fläche — die zweite starke Aktion (z. B. „Weiter“ nach dem Rekord).
+  strong: "border-dick border-rand bg-strong text-on-strong",
+  // Weiße Fläche mit Tinte-Rand; gedrückt = eingelassene Fläche.
+  secondary: "border-dick border-rand bg-surface-1 text-fg active:bg-surface-2",
   // Ohne Material — z. B. „Abbrechen" neben einer destruktiven Aktion.
   ghost: "text-muted active:text-fg",
   // Destruktiv, aber ruhig: Rand + Schrift in `gefahr`, kein voller Block.
-  danger: "border border-gefahr bg-transparent text-gefahr",
+  danger: "border-dick border-gefahr bg-transparent text-gefahr",
 };
 
 const SIZE: Record<ButtonSize, string> = {
-  lg: "min-h-14 rounded-pill px-5 py-3 text-lg",
+  lg: "min-h-14 rounded-card px-5 py-3 text-xl",
   sm: "min-h-11 rounded-pill px-4 py-2 text-base",
 };
 
@@ -49,7 +51,7 @@ export function Button({
   return (
     <Pressable
       className={cn(
-        "flex items-center justify-center gap-2 font-bold leading-tight disabled:opacity-40",
+        "flex items-center justify-center gap-2 font-display font-extrabold leading-tight disabled:opacity-40",
         SIZE[size],
         VARIANT[variant],
         full && "w-full",

@@ -47,7 +47,7 @@ import {
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
-import { bandOfActive, REGION_VAR, regionOf, type Region } from "@/lib/phasen/band";
+import { bandOfActive, regionOf, type Region } from "@/lib/phasen/band";
 import { plattenNummern } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
 import { swapItem, type DailySession } from "@/lib/session-model";
@@ -854,7 +854,7 @@ export function SessionRunner() {
     return (
       <>
         <div className="pt-10 text-center">
-          <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+          <p className="font-mono text-3xs font-bold text-muted">
             Gleich geht&apos;s los
           </p>
           <h1 className="mt-1 font-display font-bold text-2xl text-fg">
@@ -938,7 +938,7 @@ export function SessionRunner() {
     : undefined;
   const restEx = restItem ? byId.get(restItem.exerciseId) : undefined;
 
-  const restMark = restEx ? REGION_VAR[regionOf(restEx)] : "var(--fg)";
+  const restMark = "var(--accent)";
 
   return (
     <DockSlotContext.Provider value={rest ? null : slotEl}>
@@ -1033,6 +1033,16 @@ export function SessionRunner() {
             : null
         }
       />
+
+      {/* Was danach kommt — gestrichelt, nur Info; „Weiter“ springt dorthin. */}
+      {nextExName && (
+        <p className="flex min-h-11 items-center gap-2 rounded-inner border-dick border-dashed border-rand px-3.5 py-2 text-sm text-muted">
+          <span className="shrink-0">Danach</span>
+          <span className="min-w-0 truncate font-display text-base font-extrabold text-fg">
+            {nextExName}
+          </span>
+        </p>
+      )}
 
       <div className="flex items-center gap-2 pt-1">
         <Button

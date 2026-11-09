@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { cn } from "@/lib/utils";
 
-/** Tab-Leiste „Regionen“: vier Reiter mit Symbol und Text. Aktiv in Tinte,
+/** Tab-Leiste „spotter“: vier Reiter mit Symbol und Text. Aktiv als blaue Pille,
  *  inaktiv als Hinweis-Schrift; kein gleitender Marker. */
 const tabs: readonly { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/", label: "Heute", Icon: CalendarDays },
@@ -71,7 +71,7 @@ export function BottomNav({
     >
       <div ref={slotRef} className="border-t border-line bg-surface-0 px-5 py-3 empty:hidden" />
       <div
-        className={cn("border-t border-line bg-surface-1", offen && "hidden")}
+        className={cn("border-t-dick border-rand bg-surface-1 px-2.5 pt-2", offen && "hidden")}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
       <div className="mx-auto flex max-w-md">
@@ -83,8 +83,8 @@ export function BottomNav({
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 pb-2 pt-2.5 text-4xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus",
-                active ? "text-fg" : "text-faint",
+                "mx-0.5 mb-1.5 flex flex-1 flex-col items-center justify-center gap-1 rounded-inner py-1.5 text-4xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus",
+                active ? "bg-accent text-on-accent" : "text-muted",
               )}
             >
               <Icon size={22} strokeWidth={active ? 2.2 : 1.8} aria-hidden />

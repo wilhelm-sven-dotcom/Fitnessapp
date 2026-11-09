@@ -133,7 +133,7 @@ export function VideoLinkEditor({
     // Einladungs-Karte: hier fehlt noch das Bild zur Ausführung.
     return (
       <div className="rounded-card border border-line bg-surface-0 p-4">
-        <p className="font-mono text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="font-mono text-3xs font-bold text-muted">
           Video-Anleitung
         </p>
         <p className="mt-1 text-sm text-muted">

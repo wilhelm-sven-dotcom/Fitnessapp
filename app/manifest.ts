@@ -1,26 +1,26 @@
 import type { MetadataRoute } from "next";
-import { GRUND_DUNKEL, GRUND_HELL } from "@/lib/grundfarben";
+import { GRUND_HELL, MARKE } from "@/lib/grundfarben";
+import { APP_NAME, BESCHREIBUNG } from "@/lib/marke";
 import { ICON_VERSION } from "@/lib/icon-art";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Platte 311",
-    short_name: "Platte 311",
-    description: "Krafttraining mit ATLAS als Coach.",
+    name: APP_NAME,
+    short_name: APP_NAME,
+    description: BESCHREIBUNG,
     lang: "de",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    // Der OS-Splash liegt IMMER im Dunkel: das Manifest kennt nur EINE
-    // background_color — modusgleich gäbe es in einem der beiden Modi einen
-    // Farbsprung an der Naht zum In-App-Startbild (das ebenfalls dunkel ist).
-    // theme_color ist der helle Grundzustand; das Pre-Paint-Skript in
-    // layout.tsx schreibt das meta-Tag ohnehin je Modus um.
-    background_color: GRUND_DUNKEL,
+    // Der OS-Splash liegt IMMER auf Elektroblau wie das In-App-Startbild:
+    // das Manifest kennt nur EINE background_color, an der Naht darf es
+    // keinen Farbsprung geben. theme_color ist der helle Grundzustand; das
+    // Pre-Paint-Skript in layout.tsx schreibt das meta-Tag je Modus um.
+    background_color: MARKE.blau,
     theme_color: GRUND_HELL,
-    // Die Marey-Spur liegt komplett im Sicherheitskreis (r 19,2 um 24/24) —
-    // dieselbe Zeichnung taugt als normales UND als maskiertes Icon. Der
+    // Die Sprechblase liegt im Sicherheitskreis (r 0,4 der Kante) — dieselbe
+    // Zeichnung taugt als normales UND als maskiertes Icon. Der
     // Next-Typ kennt "any maskable" nicht, deshalb je ein eigener Eintrag.
     // Das `?v=` ist Pflicht, nicht Kosmetik: diese Routen sind — anders als
     // /icon und /apple-icon — von Next NICHT gehasht. Ohne wechselnde URL

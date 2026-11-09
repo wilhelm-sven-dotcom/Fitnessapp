@@ -63,7 +63,7 @@ async function seite(route, warten = "networkidle") {
   }, SEED);
   if (route) await pg.route("**/api/atlas/session", route);
   await pg.goto(BASE + "/", { waitUntil: warten });
-  await pg.getByText("Training starten", { exact: false }).first().waitFor({ timeout: 20000 });
+  await pg.getByText("Los geht", { exact: false }).first().waitFor({ timeout: 20000 });
   return pg;
 }
 

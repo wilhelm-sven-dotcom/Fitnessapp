@@ -22,6 +22,16 @@ const ALT = [
   "IBM_Plex",
   "blaupause",
   "kreide-blau",
+  // Look „Regionen“ (abgelöst durch „spotter“, Nov 2026)
+  "Archivo",
+  "archivo",
+  "font-stretch",
+  "beine-flaeche",
+  "druck-flaeche",
+  "zug-flaeche",
+  "rumpf-flaeche",
+  "cardio-flaeche",
+  "SCHEIBE.",
 ];
 
 function dateien(dir) {

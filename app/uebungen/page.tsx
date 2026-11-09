@@ -192,12 +192,12 @@ export default function ExerciseCatalogPage() {
               {/* Gruppenkopf trägt die Figur EINMAL — die Zeilen nennen Muskel und Gerät. */}
               <div className="mb-2 flex items-center gap-3 px-1">
                 <span aria-hidden className="w-9 shrink-0">
-                  <PhasenFigur figur={PATTERN_FIGUR[g.pat]} color={farbe} />
+                  <PhasenFigur figur={PATTERN_FIGUR[g.pat]} color="var(--fg)" />
                 </span>
                 <h2 className="text-base font-bold text-fg">{PATTERN_LABEL[g.pat]}</h2>
                 <span className="text-sm tabular-nums text-muted">{g.list.length}</span>
               </div>
-              <div className="overflow-hidden rounded-card bg-surface-1">
+              <div className="overflow-hidden rounded-card border-dick border-rand bg-surface-1">
                 {g.list.map((ex, rowIdx) => {
                   const hasVideo = !!exerciseVideos[ex.id];
                   const available = reqOk(ex, has);
@@ -217,8 +217,8 @@ export default function ExerciseCatalogPage() {
                       >
                         <span
                           aria-hidden
-                          className="h-8 w-1 shrink-0 rounded-pill"
-                          style={{ backgroundColor: available && !off ? farbe : "var(--line)" }}
+                          className="h-4 w-4 shrink-0 rounded-xs border-dick border-rand"
+                          style={{ backgroundColor: available && !off ? farbe : "var(--surface-2)" }}
                         />
                         <span className="min-w-0 flex-1">
                           <span className="flex min-w-0 flex-wrap items-center gap-x-2">

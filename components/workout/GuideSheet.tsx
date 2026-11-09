@@ -7,7 +7,6 @@ import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import type { MyologieStufe } from "@/lib/heat";
-import { REGION_VAR, regionOf } from "@/lib/phasen/band";
 import { figurFor } from "@/lib/phasen/figuren";
 import { MUSCLE_LABEL, muscleOf } from "@/lib/volume";
 import { GuideVerlauf } from "@/components/workout/GuideVerlauf";
@@ -121,7 +120,7 @@ export function GuideSheet({
               <PhasenFigur
                 figur={figurFor(ex)}
                 mode="zoetrop"
-                color={REGION_VAR[regionOf(ex)]}
+                color="var(--fg)"
                 zoetropOn={settings.zoetrope !== false}
               />
             </div>
@@ -202,7 +201,7 @@ export function GuideSheet({
 
           {ex.cue && (
             <div className="mb-3">
-              <p className="text-3xs font-semibold uppercase tracking-label text-muted">
+              <p className="text-3xs font-bold text-muted">
                 Technik
               </p>
               <p className="mt-1 text-base leading-relaxed text-fg">{ex.cue}</p>
@@ -211,7 +210,7 @@ export function GuideSheet({
 
           {(ex.steps?.length ?? 0) > 0 ? (
             <div className="mb-3">
-              <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
+              <p className="mb-1 text-3xs font-bold text-muted">
                 Ausführung
               </p>
               <ol className="space-y-1.5">
@@ -321,7 +320,7 @@ export function GuideSheet({
 
           {ex.back && (
             <div className="mb-2 rounded-inner border border-line px-3 py-2.5">
-              <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-warnung">
+              <p className="mb-1 text-3xs font-bold text-warnung">
                 Rücken
               </p>
               <p className="text-sm text-fg">{ex.back}</p>

@@ -1,7 +1,6 @@
 /**
- * Consistent page header „Platte 311": Versal-Kicker (gesperrt), Titel in
- * Old-Standard-Kursive, optionale Versal-Bestandszeile. Statisch —
- * Seitenwechsel transportieren hart, ohne Einflug.
+ * Seitenkopf „spotter“: Kicker (fett, Normalschreibung), Titel in Bricolage
+ * 800, optionale Bestandszeile. Statisch, ohne Einflug.
  */
 export function PageHeader({
   title,
@@ -15,7 +14,7 @@ export function PageHeader({
   return (
     <div className="mb-5">
       {eyebrow && (
-        <p className="mb-1 text-3xs font-semibold uppercase tracking-label text-muted">
+        <p className="mb-1 text-sm font-bold text-muted">
           {eyebrow}
         </p>
       )}
