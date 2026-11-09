@@ -38,8 +38,8 @@ export function Scale({
             className={cn(
               // 44-px-Ziel: der meistgetippte Control im Training — mit
               // Schweiß an den Händen zählt jede Zielfläche.
-              "flex h-11 flex-1 items-center justify-center rounded-inner text-base font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
-              value === o ? "bg-accent text-on-accent" : "bg-surface-2 text-fg",
+              "flex h-11 flex-1 items-center justify-center rounded-inner border-dick border-rand font-display text-lg font-extrabold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+              value === o ? "bg-accent text-on-accent" : "bg-surface-1 text-fg",
             )}
           >
             {o}

@@ -6,13 +6,13 @@ import { useEffect, useState } from "react";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { SetRow } from "@/components/workout/SetRow";
 import { Button } from "@/components/ui/Button";
+import { Sticker } from "@/components/ui/Sticker";
 import { Pressable } from "@/components/ui/pressable";
 import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { fmtSatz } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
 import { figurFor } from "@/lib/phasen/figuren";
-import { REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { isFilled } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import type { PlannedExercise } from "@/lib/session-model";
@@ -98,9 +98,6 @@ export function ExerciseStage({
   useEffect(() => setEditIdx(null), [item.id]);
   const reduce = useReducedMotion();
 
-  const region = regionOf(ex);
-  const flaeche = REGION_FLAECHE[region];
-  const auf = REGION_AUF[region];
   const cardio = ex.pattern === "cardio";
   const timed = ex.unit === "Sek";
 
@@ -168,8 +165,7 @@ export function ExerciseStage({
       {/* Übungskopf = Wischfläche: horizontal blättern; Satzliste darunter
           bleibt reine Tipp-Zone. */}
       <motion.div
-        className="flex items-center gap-3 rounded-card p-4"
-        style={{ backgroundColor: flaeche, color: auf }}
+        className="relative mt-3 flex items-center gap-3 rounded-card border-dick border-rand bg-accent p-4 pr-5 text-on-accent shadow-hart"
         drag={reduce ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.18}
@@ -184,7 +180,7 @@ export function ExerciseStage({
             <PhasenFigur
               figur={figur}
               mode={alleErledigt ? "freeze" : "zoetrop"}
-              color={auf}
+              color="var(--on-accent)"
               zoetropOn={zoetropOn}
             />
           </div>
@@ -198,16 +194,21 @@ export function ExerciseStage({
           >
             {ex.name}
           </h2>
-          <p className="mt-1 text-sm font-medium tabular-nums">
-            {ex.tag} · {stand}
+          <p className="mt-1 text-sm font-semibold tabular-nums">
+            {stand}
+            {zielLabel && !alleErledigt ? ` · ${zielLabel}` : ""}
           </p>
         </div>
+        {/* Die Region als Sticker an der Kartenkante (Wort, nicht Farbe). */}
+        <Sticker drehung={4} className="absolute -top-3.5 right-3 max-w-48 overflow-hidden">
+          {ex.tag}
+        </Sticker>
       </motion.div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Pressable
           onClick={onOpenGuide}
-          className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+          className="flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
         >
           <BookOpen size={18} aria-hidden /> Anleitung
         </Pressable>
@@ -215,7 +216,7 @@ export function ExerciseStage({
           <Pressable
             onClick={onSwap}
             aria-label={`${ex.name} tauschen`}
-            className="flex min-h-11 items-center gap-2 rounded-pill bg-surface-1 px-4 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             <ArrowLeftRight size={18} aria-hidden /> Tauschen
           </Pressable>
@@ -277,7 +278,6 @@ export function ExerciseStage({
                     set={s}
                     isDumbbell={ex.req.includes("dumbbell") || ex.req.includes("db")}
                     state={state}
-                    region={region}
                     ghostWeight={s.warmup ? undefined : ghostWeight}
                     ghostReps={s.warmup ? undefined : ghostReps}
                     weightStep={weightStep}

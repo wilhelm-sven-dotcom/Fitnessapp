@@ -75,7 +75,7 @@ export function ReadinessGate({
         }}
       />
       {cardioAdvice.level !== "none" && (
-        <div className="mb-4 flex items-start gap-2 rounded-inner bg-surface-2 p-3">
+        <div className="mb-4 flex items-start gap-2 rounded-inner border-dick border-dashed border-rand p-3">
           <Bike size={16} className="mt-0.5 shrink-0 text-fg" aria-hidden />
           <p className="text-sm leading-relaxed text-muted">{cardioAdvice.body}</p>
         </div>
