@@ -7,7 +7,7 @@
  * Supabase configured, all cloud helpers no-op and the app stays purely local.
  */
 
-import { getSupabase, isCloudConfigured } from "@/lib/supabase";
+import { isCloudConfigured, loadSupabase } from "@/lib/supabase";
 
 export interface StorageAdapter {
   get(key: string): Promise<string | null>;
@@ -128,7 +128,7 @@ export const storage = {
 // --- Cloud-Sync (Supabase) --------------------------------------------------
 
 async function currentUserId(): Promise<string | null> {
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   if (!sb) return null;
   const {
     data: { session },
@@ -140,7 +140,7 @@ async function currentUserId(): Promise<string | null> {
 export async function cloudPush(key: string, value: string): Promise<void> {
   if (LOCAL_ONLY_KEYS.has(key)) return;
   if (!isCloudConfigured()) return;
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   if (!sb) return;
   try {
     const userId = await currentUserId();
@@ -164,7 +164,7 @@ export async function cloudPushAll(entries: [string, string][]): Promise<void> {
 /** Pull all of the signed-in user's keys. Null when not configured / signed out. */
 export async function cloudPull(): Promise<Record<string, string> | null> {
   if (!isCloudConfigured()) return null;
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   if (!sb) return null;
   try {
     const userId = await currentUserId();

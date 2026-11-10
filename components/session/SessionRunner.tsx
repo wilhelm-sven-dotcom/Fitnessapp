@@ -8,6 +8,7 @@ import { FinishFlow } from "@/components/session/FinishFlow";
 import { OverviewSheet } from "@/components/session/OverviewSheet";
 import { ProgressHeader } from "@/components/session/ProgressHeader";
 import { DockSlotContext } from "@/components/session/DockSlot";
+import { RestCues } from "@/components/session/RestCues";
 import { RestPanel } from "@/components/session/RestPanel";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
@@ -38,11 +39,13 @@ import {
   prefillEntries,
   prescForItem,
   reconcileEntries,
+  shiftRest,
   startScale,
   workSetNo,
   type ActiveSessionState,
   type PrefillOpts,
   type PrescCtx,
+  type RestState,
 } from "@/lib/active-session";
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
@@ -54,7 +57,7 @@ import { swapItem, type DailySession } from "@/lib/session-model";
 import { estimateRemainingMin, TIME } from "@/lib/session-time";
 import { roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
-import { beep, beepEnd, primeAudio } from "@/lib/beep";
+import { primeAudio } from "@/lib/beep";
 import { swapPoolFor } from "@/lib/swap-pool";
 import { toast } from "@/lib/toast";
 import { success, tap } from "@/lib/haptics";
@@ -66,13 +69,6 @@ import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import type { Exercise, Readiness, SetEntry, TrafficLight } from "@/lib/types";
 
 type Boot = "loading" | "gate" | "none" | "running";
-
-interface RestState {
-  itemId: string;
-  setIdx: number;
-  left: number;
-  total: number;
-}
 
 /** ATLAS' Live-Reaktion (KI) — ersetzt die deterministische Zeile im Panel. */
 interface LiveCoachCall {
@@ -129,7 +125,6 @@ export function SessionRunner() {
   // Rekord-Tafel des Sieger-Moments — ebenfalls VOR dem Save (recordMap kennt
   // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
   const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
-  const [rest, setRest] = useState<RestState | null>(null);
   /** Gemessene Höhe des Docks (0 = leer) — siehe Wirt unten. */
   const [dockH, setDockH] = useState(0);
   /** Ziel für „Satz eintragen“ (Portal aus der Satzkarte). */
@@ -193,6 +188,23 @@ export function SessionRunner() {
     const cur = activeRef.current;
     if (cur) commit(fn(cur));
   };
+
+  // Die Satzpause lebt im Live-Stand (übersteht ein Neuladen) und trägt nur
+  // ihre ENDZEIT. Der Sekundentakt läuft in RestPanel und RestCues — diese
+  // Seite rendert dadurch nicht mehr jede Sekunde neu.
+  const rest = active?.rest ?? null;
+  const setRest = (
+    next: RestState | null | ((r: RestState | null) => RestState | null),
+  ) =>
+    patch((s) => {
+      const cur = s.rest ?? null;
+      const val = typeof next === "function" ? next(cur) : next;
+      if (val === cur) return s;
+      if (val) return { ...s, rest: val };
+      const { rest: _weg, ...ohne } = s;
+      void _weg;
+      return ohne;
+    });
 
   const lighter = daysAgo != null && daysAgo > 5;
   const scale = useMemo(
@@ -405,7 +417,7 @@ export function SessionRunner() {
   // sonst bliebe das Dock unsichtbar.
   useEffect(() => {
     setTippt(istFeld(document.activeElement));
-  }, [active, rest]);
+  }, [active]);
 
   // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
   // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
@@ -429,34 +441,10 @@ export function SessionRunner() {
     };
   }, []);
 
-  // Pausen-Countdown — als Dock unten, hörbar ohne Blick aufs Display: Tick
-  // in den letzten 3 s, Doppelton bei 0. iOS kennt kein navigator.vibrate —
-  // Audio ist dort das einzige Ende-Signal. Beeps bewusst ungated (cueVolume
-  // regelt die Lautstärke), nur die Stimme hängt an voiceCues. Kein Auto-
-  // Unmount: das Dock bleibt als „Pause vorbei" stehen, bis der Nutzer
-  // weitermacht (+15 s startet neu, Weiter räumt weg).
-  useEffect(() => {
-    if (!rest) return;
-    if (rest.left <= 0) {
-      beepEnd();
-      if (typeof navigator !== "undefined" && navigator.vibrate)
-        navigator.vibrate(200);
-      if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
-      return;
-    }
-    // Musik kurz leiser, damit Endton + Ansage durchkommen (Restore automatisch).
-    if (rest.left === 5) duckFor(7000);
-    if (rest.left <= 3) beep();
-    if (settings.voiceCues) {
-      if (rest.left === 10) speak("Noch zehn Sekunden");
-      else if (rest.left <= 3) speak(["", "eins", "zwei", "drei"][rest.left]);
-    }
-    const id = setTimeout(
-      () => setRest((r) => (r ? { ...r, left: r.left - 1 } : r)),
-      1000,
-    );
-    return () => clearTimeout(id);
-  }, [rest, settings.voiceCues, duckFor]);
+  // Pausen-Countdown: hörbar ohne Blick aufs Display (Tick in den letzten
+  // 3 s, Doppelton bei 0) — siehe RestCues im Dock. Kein Auto-Unmount: das
+  // Dock bleibt als „Pause vorbei" stehen, bis der Nutzer weitermacht (+15 s
+  // startet neu, Weiter räumt weg).
 
   /* ── Satz-Handler ── */
 
@@ -600,9 +588,7 @@ export function SessionRunner() {
     if (!call?.adjustment) return;
     const adj = call.adjustment;
     if (adj.kind === "rest") {
-      setRest((r) =>
-        r ? { ...r, left: r.left + adj.value, total: r.total + adj.value } : r,
-      );
+      setRest((r) => (r ? shiftRest(r, adj.value) : r));
     } else {
       const st = activeRef.current;
       const sets = st?.entries[call.itemId] ?? [];
@@ -642,7 +628,12 @@ export function SessionRunner() {
     }
     // Direkt vorm Pausenstart wecken — der Countdown tönt dann auch aus Timern.
     primeAudio();
-    setRest({ itemId, setIdx: i, left: TIME.restSec, total: TIME.restSec });
+    setRest({
+      itemId,
+      setIdx: i,
+      endsAt: Date.now() + TIME.restSec * 1000,
+      total: TIME.restSec,
+    });
     scheduleCoachCall(itemId, i);
   };
 
@@ -1071,9 +1062,17 @@ export function SessionRunner() {
           per Portal aus der Satzkarte). Beim Tippen in ein Feld unsichtbar:
           die iOS-Tastatur schiebt feste Elemente sonst mitten ins Bild. */}
       <div ref={dockRef} className={cn("fixed inset-x-0 bottom-0 z-30", tippt && "invisible")}>
+        {rest && (
+          <RestCues
+            key={`${rest.itemId}:${rest.setIdx}`}
+            endsAt={rest.endsAt}
+            voice={!!settings.voiceCues}
+            duckFor={duckFor}
+          />
+        )}
         {rest ? (
           <RestPanel
-            left={rest.left}
+            endsAt={rest.endsAt}
             total={rest.total}
             set={restSet}
             timed={restEx?.unit === "Sek"}
@@ -1084,16 +1083,8 @@ export function SessionRunner() {
             onIntensity={(v) =>
               rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
             }
-            onAdd={() =>
-              setRest((r) => (r ? { ...r, left: r.left + 15, total: r.total + 15 } : r))
-            }
-            onSub={() =>
-              setRest((r) =>
-                r
-                  ? { ...r, left: Math.max(0, r.left - 15), total: Math.max(15, r.total - 15) }
-                  : r,
-              )
-            }
+            onAdd={() => setRest((r) => (r ? shiftRest(r, 15) : r))}
+            onSub={() => setRest((r) => (r ? shiftRest(r, -15) : r))}
             onSkip={() => setRest(null)}
           />
         ) : (

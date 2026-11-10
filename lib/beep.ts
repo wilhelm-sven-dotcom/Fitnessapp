@@ -34,6 +34,16 @@ export function getCueVolume(): number {
 
 type AudioContextCtor = typeof AudioContext;
 
+/** Kontext wecken, falls er nicht läuft. iOS setzt ihn nach einer Sperre oder
+ *  einem Anruf auf „suspended“ bzw. „interrupted“ — dann blieben Countdown und
+ *  Endton stumm, bis irgendwo getippt wird. */
+function wecke(): void {
+  if (ctx && ctx.state !== "running" && ctx.state !== "closed")
+    void ctx.resume().catch(() => {});
+}
+
+let weckerAn = false;
+
 export function primeAudio(): void {
   if (typeof window === "undefined") return;
   const Ctor: AudioContextCtor | undefined =
@@ -47,7 +57,17 @@ export function primeAudio(): void {
       return;
     }
   }
-  if (ctx.state === "suspended") void ctx.resume().catch(() => {});
+  wecke();
+  // Einmal anmelden: beim Zurückkommen in die App von selbst wieder wecken.
+  if (!weckerAn && typeof document !== "undefined") {
+    weckerAn = true;
+    const beiRueckkehr = () => {
+      if (document.visibilityState === "visible") wecke();
+    };
+    document.addEventListener("visibilitychange", beiRueckkehr);
+    window.addEventListener("pageshow", beiRueckkehr);
+    window.addEventListener("focus", beiRueckkehr);
+  }
 }
 
 /** Master-Bus (lazy): Kompressor als Limiter vor dem Ausgang. */
@@ -69,7 +89,12 @@ function bus(): AudioNode | null {
 }
 
 function tone(freq: number, ms: number, gain: number, delaySec = 0): void {
-  if (!ctx || ctx.state !== "running") return;
+  if (!ctx) return;
+  if (ctx.state !== "running") {
+    // Dieser Ton fällt aus, der nächste soll wieder kommen.
+    wecke();
+    return;
+  }
   const out = bus();
   if (!out) return;
   // Nutzer-Lautstärke einrechnen und bei ~0.9 kappen (Clipping-Schutz).

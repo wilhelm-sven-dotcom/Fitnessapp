@@ -23,7 +23,7 @@ const exe = process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium";
 
 const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(PORT)], {
   stdio: "ignore",
-  env: { ...process.env, PORT: String(PORT) },
+  env: { ...process.env, PORT: String(PORT), ANTHROPIC_API_KEY: "" },
 });
 process.on("exit", () => server.kill("SIGTERM"));
 

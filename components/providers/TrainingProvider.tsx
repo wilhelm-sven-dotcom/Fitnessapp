@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { DEFAULT_EQUIP, EQUIP_LIST, LIB } from "@/lib/exercises";
@@ -56,7 +57,7 @@ import { weeklySetStats } from "@/lib/set-plan";
 import { sessionVolume } from "@/lib/stats";
 import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
 import { youtubeEmbedUrl } from "@/lib/youtube";
-import { getSupabase, isCloudConfigured } from "@/lib/supabase";
+import { isCloudConfigured, loadSupabase } from "@/lib/supabase";
 import { deletePhoto } from "@/lib/photo-store";
 import { applyTheme, type ThemePref } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
@@ -574,21 +575,33 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadAll, collectLocal]);
 
+  // Für wen in diesem Seitenleben schon abgeglichen wurde. Supabase meldet
+  // SIGNED_IN nicht nur beim Anmelden, sondern auch bei jedem Zurückkehren in
+  // die App — ohne diese Sperre lief bei jedem Entsperren ein voller Abgleich
+  // (alles ziehen, zusammenführen, alle Schlüssel neu hochladen).
+  const abgeglichenFuer = useRef<string | null>(null);
   useEffect(() => {
     if (!cloudConfigured) return;
-    const sb = getSupabase();
-    if (!sb) return;
     let active = true;
-    void sb.auth.getSession().then(({ data: { session } }) => {
-      if (active) setCloudEmail(session?.user.email ?? null);
-    });
-    const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
-      setCloudEmail(session?.user.email ?? null);
-      if (event === "SIGNED_IN") void pullOrSeed();
+    let abmelden: (() => void) | undefined;
+    void loadSupabase().then((sb) => {
+      if (!sb || !active) return;
+      void sb.auth.getSession().then(({ data: { session } }) => {
+        if (active) setCloudEmail(session?.user.email ?? null);
+      });
+      const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
+        setCloudEmail(session?.user.email ?? null);
+        if (!session) abgeglichenFuer.current = null;
+        if (event === "SIGNED_IN" && session && abgeglichenFuer.current !== session.user.id) {
+          abgeglichenFuer.current = session.user.id;
+          void pullOrSeed();
+        }
+      });
+      abmelden = () => sub.subscription.unsubscribe();
     });
     return () => {
       active = false;
-      sub.subscription.unsubscribe();
+      abmelden?.();
     };
   }, [cloudConfigured, pullOrSeed]);
 
@@ -619,7 +632,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     email: cloudEmail,
     busy: cloudBusy,
     signIn: async (email) => {
-      const sb = getSupabase();
+      const sb = await loadSupabase();
       if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
       if (!email.trim()) return { ok: false, error: "Bitte eine E-Mail-Adresse eingeben." };
       setCloudBusy(true);
@@ -639,7 +652,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     },
     verifyCode: async (email, token) => {
-      const sb = getSupabase();
+      const sb = await loadSupabase();
       if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
       if (!email.trim() || !token.trim())
         return { ok: false, error: "Bitte E-Mail und Code eingeben." };
@@ -658,7 +671,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     },
     signInWithPassword: async (email, password) => {
-      const sb = getSupabase();
+      const sb = await loadSupabase();
       if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
       if (!email.trim() || !password)
         return { ok: false, error: "Bitte E-Mail und Passwort eingeben." };
@@ -681,7 +694,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     // E-Mail + Passwort; steht „Confirm email“ im Dashboard aus, ist man
     // sofort angemeldet, ganz ohne Mail.
     signUp: async (email, password) => {
-      const sb = getSupabase();
+      const sb = await loadSupabase();
       if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
       if (!email.trim()) return { ok: false, error: "Bitte eine E-Mail-Adresse eingeben." };
       if (password.length < 6) return { ok: false, error: "Mindestens 6 Zeichen." };
@@ -705,7 +718,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     },
     setPassword: async (password) => {
-      const sb = getSupabase();
+      const sb = await loadSupabase();
       if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
       if (password.length < 6) return { ok: false, error: "Mindestens 6 Zeichen." };
       setCloudBusy(true);
@@ -719,7 +732,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     },
     signOut: async () => {
-      const sb = getSupabase();
+      const sb = await loadSupabase();
       if (!sb) return;
       await sb.auth.signOut();
       setCloudEmail(null);

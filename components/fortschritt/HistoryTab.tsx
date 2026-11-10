@@ -78,6 +78,9 @@ function metricsLine(c: CardioSession): string {
   return parts.join(" · ");
 }
 
+/** Einträge je „Seite“ im Verlauf. */
+const SEITE = 30;
+
 type TimelineItem =
   | { kind: "strength"; date: string; s: LoggedSession; realIdx: number }
   | { kind: "cardio"; date: string; c: CardioSession };
@@ -101,6 +104,9 @@ export function HistoryTab() {
   const router = useRouter();
   /** Aufgeklappte Einheit: `s-‹Index›` (Kraft) bzw. `c-‹Id›` (Cardio). */
   const [expanded, setExpanded] = useState<string | null>(null);
+  /** So viele Einträge stehen im Blatt; „Mehr laden“ legt je 30 nach. Der
+   *  ganze Verlauf auf einmal hieß nach einem Jahr hunderte Karten. */
+  const [sichtbar, setSichtbar] = useState(SEITE);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -248,7 +254,7 @@ export function HistoryTab() {
       </Pressable>
 
       <div className="space-y-2">
-        {items.map((it, idx) => {
+        {items.slice(0, sichtbar).map((it, idx) => {
           const dateOf = (x: (typeof items)[number]) =>
             x.kind === "cardio" ? x.c.date : x.s.date;
           const wk = weekStartMon(new Date(dateOf(it))).getTime();
@@ -391,6 +397,17 @@ export function HistoryTab() {
           );
         })}
       </div>
+
+      {items.length > sichtbar && (
+        <Button
+          variant="secondary"
+          full
+          className="mt-3"
+          onClick={() => setSichtbar((n) => n + SEITE)}
+        >
+          Mehr laden · noch {items.length - sichtbar}
+        </Button>
+      )}
 
       <Link
         href="/settings?seg=verbindungen"

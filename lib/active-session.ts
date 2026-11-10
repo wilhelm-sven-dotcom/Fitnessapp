@@ -31,7 +31,42 @@ export interface ActiveSessionState {
   backSafe: boolean;
   backTraffic?: TrafficLight | null;
   note?: string;
+  /** Laufende Satzpause — gehört zum Live-Stand, damit sie ein Neuladen
+   *  übersteht. */
+  rest?: RestState;
   schemaVersion: 1;
+}
+
+/**
+ * Satzpause als ENDZEIT statt als Zähler: die Restzeit ergibt sich aus der
+ * Uhr. Ein heruntergezählter Zähler blieb stehen, sobald das iPhone gesperrt
+ * oder die App im Hintergrund war (Timer schlafen dort).
+ */
+export interface RestState {
+  itemId: string;
+  setIdx: number;
+  /** Ende der Pause, Epoch-Millisekunden. */
+  endsAt: number;
+  /** Geplante Länge in Sekunden (für „von 1:30“ und den Balken). */
+  total: number;
+}
+
+/** Eine Pause, die länger als das vorbei ist, zeigt nach dem Neuladen niemand
+ *  mehr an. */
+const REST_STALE_MS = 5 * 60 * 1000;
+
+function gueltigePause(r: unknown): RestState | undefined {
+  if (!r || typeof r !== "object") return undefined;
+  const x = r as Partial<RestState>;
+  if (
+    typeof x.itemId !== "string" ||
+    !Number.isFinite(x.setIdx) ||
+    !Number.isFinite(x.endsAt) ||
+    !Number.isFinite(x.total)
+  )
+    return undefined;
+  if (Date.now() - (x.endsAt as number) > REST_STALE_MS) return undefined;
+  return { itemId: x.itemId, setIdx: x.setIdx as number, endsAt: x.endsAt as number, total: x.total as number };
 }
 
 /** Länger unterbrochen als das ist keine Pause mehr, sondern ein Abbruch. */
@@ -52,8 +87,11 @@ export async function loadActiveState(): Promise<ActiveSessionState | null> {
     void storage.remove(KEYS.active);
     return null;
   }
+  const { rest: gespeichertePause, ...ohnePause } = raw;
+  const rest = gueltigePause(gespeichertePause);
   return {
-    ...raw,
+    ...ohnePause,
+    ...(rest ? { rest } : {}),
     currentIndex: Math.max(
       0,
       Math.min(raw.session.items.length - 1, raw.currentIndex ?? 0),
@@ -61,6 +99,24 @@ export async function loadActiveState(): Promise<ActiveSessionState | null> {
     phase:
       raw.phase === "warmup" || raw.phase === "finish" ? raw.phase : "exercise",
   };
+}
+
+/** Pause ab jetzt um `sek` verlängern bzw. (negativ) kürzen. Eine abgelaufene
+ *  Pause startet bei „+“ neu ab jetzt; gekürzt wird nie unter jetzt. */
+export function shiftRest(r: RestState, sek: number, now = Date.now()): RestState {
+  if (sek >= 0) {
+    return { ...r, endsAt: Math.max(now, r.endsAt) + sek * 1000, total: r.total + sek };
+  }
+  return {
+    ...r,
+    endsAt: Math.max(now, r.endsAt + sek * 1000),
+    total: Math.max(15, r.total + sek),
+  };
+}
+
+/** Restsekunden einer Pause (aufgerundet, nie negativ). */
+export function restLeft(endsAt: number, now = Date.now()): number {
+  return Math.max(0, Math.ceil((endsAt - now) / 1000));
 }
 
 export function persistActiveState(s: ActiveSessionState): Promise<void> {

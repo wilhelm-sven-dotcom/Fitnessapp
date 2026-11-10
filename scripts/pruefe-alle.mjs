@@ -28,6 +28,7 @@ const SKRIPTE = [
   "scripts/pruefe-training.mjs",
   "scripts/pruefe-zeitbudget.mjs",
   "scripts/pruefe-ort.mjs",
+  "scripts/tempo.mjs",
 ];
 
 for (const s of SKRIPTE) {

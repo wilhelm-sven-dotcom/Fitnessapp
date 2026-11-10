@@ -5,7 +5,7 @@
  * so they follow the user across devices. All cloud calls no-op otherwise.
  */
 
-import { getSupabase, isCloudConfigured } from "@/lib/supabase";
+import { isCloudConfigured, loadSupabase } from "@/lib/supabase";
 
 const DB_NAME = "wilhelm-training-photos";
 const STORE = "photos";
@@ -108,7 +108,7 @@ export async function downscaleImage(
 
 async function cloudPath(id: string): Promise<{ path: string } | null> {
   if (!isCloudConfigured()) return null;
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   if (!sb) return null;
   const {
     data: { session },
@@ -118,7 +118,7 @@ async function cloudPath(id: string): Promise<{ path: string } | null> {
 }
 
 export async function uploadPhoto(id: string, blob: Blob): Promise<void> {
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   const loc = await cloudPath(id);
   if (!sb || !loc) return;
   try {
@@ -132,7 +132,7 @@ export async function uploadPhoto(id: string, blob: Blob): Promise<void> {
 }
 
 async function deleteCloudPhoto(id: string): Promise<void> {
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   const loc = await cloudPath(id);
   if (!sb || !loc) return;
   try {
@@ -146,7 +146,7 @@ async function deleteCloudPhoto(id: string): Promise<void> {
 export async function fetchPhoto(id: string): Promise<Blob | null> {
   const local = await getPhoto(id);
   if (local) return local;
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   const loc = await cloudPath(id);
   if (!sb || !loc) return null;
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { Cloud, CloudOff, Settings } from "lucide-react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { NavSlotContext } from "./NavSlot";
@@ -12,7 +13,13 @@ import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
-import { Welcome } from "@/components/onboarding/Welcome";
+
+// Die Begrüßung sieht man genau einmal — sie gehört nicht ins Bündel, das
+// jede Seite bei jedem Start lädt.
+const Welcome = dynamic(
+  () => import("@/components/onboarding/Welcome").then((m) => m.Welcome),
+  { ssr: false },
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loading, cloud, settings, log, body } = useTraining();

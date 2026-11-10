@@ -5,6 +5,7 @@ import { INTENSITY_OPTIONS, RIR_OPTIONS, Scale } from "@/components/workout/Scal
 import { Pressable } from "@/components/ui/pressable";
 import type { NextSetPreview } from "@/lib/active-session";
 import { fmtClock, fmtSatz } from "@/lib/format";
+import { useCountdown } from "@/lib/use-countdown";
 import { cn } from "@/lib/utils";
 import type { SetEntry } from "@/lib/types";
 
@@ -34,9 +35,12 @@ function naechstesTeile(n: NextSetPreview): { was: string; werte: string } {
  * Balken mit Tinte-Rand, was als Nächstes kommt (gestrichelt), ±15 s,
  * „Pause beenden“ und die EINE Frage nach dem eben eingetragenen Satz. Bei 0 steht „Los“, bis der Nutzer weitermacht (die
  * Bewertung soll nicht mit dem Timer verschwinden).
+ *
+ * Die Restzeit rechnet das Blatt selbst aus der Endzeit (`useCountdown`): so
+ * rendert im Sekundentakt nur dieses Blatt, nicht die Trainingsseite.
  */
 export function RestPanel({
-  left,
+  endsAt,
   total,
   set,
   timed,
@@ -49,7 +53,8 @@ export function RestPanel({
   onSub,
   onSkip,
 }: {
-  left: number;
+  /** Ende der Pause, Epoch-Millisekunden. */
+  endsAt: number;
   total: number;
   set: SetEntry | undefined;
   timed: boolean;
@@ -65,6 +70,7 @@ export function RestPanel({
   onSkip: () => void;
 }) {
   const reduce = useReducedMotion();
+  const left = useCountdown(endsAt);
   const over = left <= 0;
   const anteil = total > 0 ? Math.max(0, Math.min(1, left / total)) : 0;
   const teile = next ? naechstesTeile(next) : null;
