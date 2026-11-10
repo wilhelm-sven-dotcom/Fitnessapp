@@ -1,5 +1,6 @@
 /**
- * Alle Playwright-Prüfungen nacheinander (sie teilen sich Port 3199).
+ * Alle Playwright-Prüfungen nacheinander (sie teilen sich Port 3199; die
+ * Offline-Prüfung belegt zusätzlich 3198).
  *
  *   npm run build && npm run pruefe
  *
@@ -28,6 +29,7 @@ const SKRIPTE = [
   "scripts/pruefe-training.mjs",
   "scripts/pruefe-zeitbudget.mjs",
   "scripts/pruefe-ort.mjs",
+  "scripts/pruefe-offline.mjs",
   "scripts/tempo.mjs",
 ];
 

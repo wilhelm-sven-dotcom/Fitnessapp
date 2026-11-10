@@ -107,6 +107,7 @@ npm run smoke    # End-to-End-Smoke gegen den Build (ohne API-Key = Fallback-Pfa
 npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
 npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingszeit
 npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
+npm run pruefe:offline    # ohne Netz: Seiten, Training, Neuladen, Update wartet im Training
 npm run tempo             # Rechenzeit mit 150 Einheiten im Verlauf, mit Grenzen
 npm run pruefe            # alle Prüfungen nacheinander (gemeinsamer Port 3199)
 npm run fotos -- --klein  # Bildschirmfotos nach .fotos/, mit --klein auch 375 × 667

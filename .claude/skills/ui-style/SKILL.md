@@ -403,8 +403,9 @@ wählen nur den BEARBEITETEN Ort.
   (Scheiben Blau).
 - **Icon:** `lib/icon-art.tsx` auf Elektroblau, Scheiben Orange, Blase im
   Maskable-Kreis. Bei JEDER Änderung `ICON_VERSION` hochzählen und
-  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen, dazu
-  `CACHE` in `public/sw.js`.
+  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen. Der
+  Service Worker braucht keine Pflege von Hand: `/sw.js` entsteht beim Bauen
+  (`app/sw.js/route.ts` + `worker.js`) und fasst Icons und Manifest nicht an.
 - **Startbild:** Elektroblau, Blase genau mittig bei 45 vw wie im
   iOS-Startbild (`app/apple-splash/[spec]`), die Blase nickt, die Scheiben
   pumpen, dann Wortmarke (Bricolage 52 px weiß) und Sticker mit dem Claim („Eine geht noch.“);
