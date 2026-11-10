@@ -177,7 +177,7 @@ Verbindliche Tokens, Rezepte und Regeln: `.claude/skills/ui-style/SKILL.md`.
 
 ## Stack
 
-Next.js 14 (App Router) · React 18 · TypeScript (strict) · Tailwind CSS v3 ·
+Next.js 15.5 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS v3 ·
 Framer Motion · @anthropic-ai/sdk. Persistenz über `localStorage`,
 abstrahiert in `lib/storage.ts` (Supabase-Spiegel optional).
 

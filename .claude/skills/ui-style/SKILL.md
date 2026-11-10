@@ -16,7 +16,7 @@ description: >-
 
 # UI-Style — Design-System „spotter“
 
-Stack: **Next.js 14 App Router · React 18 · TypeScript strict · Tailwind 3.4 ·
+Stack: **Next.js 15.5 App Router · React 19 · TypeScript strict · Tailwind 3.4 ·
 Framer Motion 11 · lucide-react · `cn()` (clsx + tailwind-merge)**. Mobile-first
 PWA, Container `max-w-md`, Touch-/Press-zentriert.
 
