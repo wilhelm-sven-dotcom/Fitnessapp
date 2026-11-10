@@ -10,8 +10,11 @@
  *   C  Ohne Netz ein Training starten, einen Satz eintragen, neu laden: die
  *      Einheit läuft weiter.
  *   D  Ein neuer Build wartet, solange trainiert wird. Erst nach dem Speichern
- *      übernimmt er, die Seite lädt einmal neu, die Einheit steht im Verlauf.
- *   E  Außerhalb des Trainings übernimmt ein neuer Build sofort.
+ *      übernimmt er; ein Fenster mit altem Code lädt einmal neu, die Einheit
+ *      steht im Verlauf.
+ *   E  Außerhalb des Trainings übernimmt ein neuer Build gleich: ohne Neuladen,
+ *      wenn im Fenster schon der neue Code läuft; mit Neuladen, wenn nicht —
+ *      aber nie, solange der Nutzer in einem Eingabefeld tippt.
  *   F  Hängt das Netz, kommt die Seite nach rund 3 s aus dem Cache, die
  *      nächsten Aufrufe sofort.
  *
@@ -137,6 +140,49 @@ const cacheInhalt = () =>
 const marke = () => page.evaluate(() => void (window.__marke = true));
 const hatMarke = () => page.evaluate(() => window.__marke === true).catch(() => false);
 const pfad = () => new URL(page.url()).pathname;
+/**
+ * Wartet, bis nur noch der Cache `name` da ist. Fragt von außen in Abständen
+ * nach statt im Fenster zu warten: nach dem Training lädt die Seite ein- oder
+ * zweimal neu (einmal mehr, wenn der Wechsel zur Startseite als ganzer
+ * Seitenaufruf lief, wie in der Minute nach einem Netzausfall), und ein
+ * Warten im Fenster reißt bei jedem Neuladen ab.
+ */
+async function nurNochCache(name, ms = 30000) {
+  const bis = Date.now() + ms;
+  let inhalt = {};
+  while (Date.now() < bis) {
+    try {
+      inhalt = await cacheInhalt();
+      const k = Object.keys(inhalt);
+      if (k.length === 1 && k[0] === name) return { ok: true, inhalt };
+    } catch {
+      /* Seite lädt gerade neu */
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  return { ok: false, inhalt };
+}
+/** Simuliert einen neuen Build: `/sw.js` bekommt eine andere Kennung, dann
+ *  fragt die Seite nach einem Update. */
+async function neuerBuild(anhang) {
+  swAnhang = anhang;
+  await page.evaluate(async () => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    await reg.update();
+  });
+}
+/** Macht aus dem Fenster eines mit altem Code: es hat ein Skript geladen, das
+ *  der neue Build nicht kennt. */
+const machAlt = () =>
+  page.evaluate(() => {
+    const s = document.createElement("script");
+    s.src = "/_next/static/chunks/alter-build-0000.js";
+    document.head.appendChild(s);
+  });
+const beschreibe = (inhalt) =>
+  Object.keys(inhalt)
+    .map((k) => `${k}: ${inhalt[k].length} Einträge`)
+    .join(", ");
 
 try {
   // ── A · Erster Besuch ──────────────────────────────────────────────────
@@ -224,17 +270,19 @@ try {
 
   // ── D · Ein neuer Build wartet, solange trainiert wird ─────────────────
   setzeModus("an");
+  // Einmal mit Netz laden: der Worker merkt, dass es wieder da ist, und der
+  // Wechsel zur Startseite läuft danach wieder weich (ohne ganzen Seitenaufruf).
+  await page.reload({ waitUntil: "load" });
+  await page.getByTestId("stage-order").waitFor({ timeout: 15000 });
+  await page.waitForTimeout(800);
   const alt = Object.keys(await cacheInhalt())[0];
+  await machAlt();
   await marke();
-  swAnhang = "d";
-  await page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.getRegistration();
-    await reg.update();
-  });
+  await neuerBuild("d");
   const wartet = await page
     .waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.waiting, null, { timeout: 60000 })
     .then(() => true, () => false);
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500);
   pruefe(wartet && (await hatMarke()), "D · neuer Build ist geladen und wartet, das Training läuft ungestört weiter");
   pruefe(Object.keys(await cacheInhalt()).includes(alt), "D · der Cache des laufenden Builds bleibt, solange gewartet wird");
 
@@ -244,33 +292,64 @@ try {
   await page.getByText("Gut", { exact: true }).click();
   await page.getByText("Beenden & speichern").click();
   await page.getByRole("button", { name: "Weiter" }).first().click({ timeout: 15000 });
+  const nachD = await nurNochCache(`${alt}d`);
+  pruefe(nachD.ok, `D · nach dem Speichern übernimmt der neue Build, der alte Cache ist weg (${beschreibe(nachD.inhalt)})`);
   const neuGeladen = await page
-    .waitForFunction(() => window.__marke !== true && location.pathname === "/", null, { timeout: 30000 })
+    .waitForFunction(() => window.__marke !== true && location.pathname === "/", null, { timeout: 15000 })
     .then(() => true, () => false);
-  pruefe(neuGeladen, "D · nach dem Speichern übernimmt der neue Build, die Seite lädt einmal neu");
-  await page.waitForFunction(async () => (await caches.keys()).length === 1, null, { timeout: 15000 }).catch(() => {});
-  const nachD = Object.keys(await cacheInhalt());
-  pruefe(nachD.length === 1 && nachD[0] === `${alt}d`, `D · nur noch der Cache des neuen Builds (${nachD.join(", ")})`);
+  pruefe(neuGeladen, "D · das Fenster mit dem alten Code lädt einmal neu");
+  await page.waitForLoadState("load");
   const gespeichert = await page.evaluate(() => {
     const log = JSON.parse(localStorage.getItem("wilhelm-training-log") || "[]");
     return { anzahl: log.length, offen: localStorage.getItem("wilhelm-training-active") != null };
   });
   pruefe(gespeichert.anzahl === 1 && !gespeichert.offen, `D · die Einheit steht im Verlauf (${gespeichert.anzahl})`);
 
-  // ── E · Außerhalb des Trainings übernimmt ein neuer Build sofort ───────
+  // ── E · Außerhalb des Trainings ────────────────────────────────────────
+  // E1 · Das Fenster hat schon den neuen Code (der Normalfall nach einem
+  // Deployment: die Seite kam frisch aus dem Netz): übernehmen OHNE Neuladen.
   await page.getByText("Geschafft", { exact: false }).first().waitFor({ timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(500);
   await marke();
-  swAnhang = "e";
-  await page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.getRegistration();
-    await reg.update();
-  });
-  const sofort = await page
-    .waitForFunction(() => window.__marke !== true, null, { timeout: 60000 })
+  await neuerBuild("e");
+  const nachE1 = await nurNochCache(`${alt}e`);
+  await page.waitForTimeout(1500);
+  pruefe(
+    nachE1.ok && (await hatMarke()),
+    `E · läuft im Fenster schon der neue Code, übernimmt der neue Build ohne Neuladen (${beschreibe(nachE1.inhalt)})`,
+  );
+
+  // E2 · Das Fenster hat alten Code: übernehmen und einmal neu laden.
+  await machAlt();
+  await marke();
+  await neuerBuild("f");
+  const nachE2 = await nurNochCache(`${alt}f`);
+  const neuE2 = await page
+    .waitForFunction(() => window.__marke !== true, null, { timeout: 15000 })
     .then(() => true, () => false);
-  await page.waitForFunction(async () => (await caches.keys()).length === 1, null, { timeout: 15000 }).catch(() => {});
-  const nachE = Object.keys(await cacheInhalt());
-  pruefe(sofort && nachE.length === 1 && nachE[0] === `${alt}e`, `E · außerhalb des Trainings übernimmt der neue Build sofort (${nachE.join(", ")})`);
+  pruefe(nachE2.ok && neuE2, `E · mit altem Code im Fenster lädt die Seite einmal neu (${beschreibe(nachE2.inhalt)})`);
+
+  // E3 · Altes Fenster, aber der Nutzer tippt gerade: erst nach dem Tippen.
+  await page.waitForLoadState("load");
+  await page.locator('nav a[href="/coach"]').click();
+  const feld = page.getByLabel("Nachricht an ATLAS");
+  await feld.waitFor({ timeout: 15000 });
+  await page.waitForTimeout(500);
+  await machAlt();
+  await marke();
+  await feld.fill("Wie steigere ich");
+  await neuerBuild("g");
+  const nachE3 = await nurNochCache(`${alt}g`);
+  await page.waitForTimeout(2000);
+  pruefe(
+    nachE3.ok && (await hatMarke()) && (await feld.inputValue()) === "Wie steigere ich",
+    "E · tippt der Nutzer gerade, wird nicht neu geladen, der Text bleibt stehen",
+  );
+  await page.evaluate(() => document.activeElement?.blur?.());
+  const neuE3 = await page
+    .waitForFunction(() => window.__marke !== true, null, { timeout: 15000 })
+    .then(() => true, () => false);
+  pruefe(neuE3, "E · sobald das Eingabefeld verlassen ist, lädt die Seite neu");
 
   // ── F · Das Netz hängt ─────────────────────────────────────────────────
   await page.waitForLoadState("load");

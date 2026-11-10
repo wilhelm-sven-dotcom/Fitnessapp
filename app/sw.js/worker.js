@@ -27,7 +27,9 @@
 // · Update: ein neuer Worker wartet, bis die Seite ihn freigibt
 //   (`SKIP_WAITING`) — das tut sie nie mitten im Training. Erst dann löscht er
 //   die Caches älterer Builds. Gelöscht werden nur CODE-Caches, nie
-//   localStorage oder IndexedDB: Trainingsdaten bleiben unberührt.
+//   localStorage oder IndexedDB: Trainingsdaten bleiben unberührt. Danach
+//   fragt die Seite, ob in ihr schon dieser Build läuft (`GEHOERT_ZU_DIR`),
+//   und lädt nur neu, wenn nicht.
 
 /* global BAU */
 
@@ -40,6 +42,22 @@ const SCHLECHT_MS = 60000;
 let schlechtBis = 0;
 const netzSchlecht = () => Date.now() < schlechtBis || self.navigator.onLine === false;
 const warte = (ms) => new Promise((r) => setTimeout(() => r(null), ms));
+
+/**
+ * Lesen und Schreiben, ohne den Cache dabei ANZULEGEN. `caches.open()` legt
+ * einen fehlenden Cache neu an — und genau das tat ein abgelöster Worker: der
+ * neue hatte beim Übernehmen den alten Cache gelöscht, der alte beantwortete
+ * noch einen letzten Dateiabruf, öffnete „seinen“ Cache und ließ ihn als
+ * leere Hülle zurück.
+ */
+const ausCache = (anfrage, opts) => caches.match(anfrage, { cacheName: CACHE, ...opts });
+async function ablegen(request, res) {
+  if (!(await caches.has(CACHE))) return;
+  await (await caches.open(CACHE)).put(request, res);
+}
+/** Ist dieser Worker der, der gerade im Amt ist? (Ein abgelöster darf nichts
+ *  mehr reparieren.) Wo der Browser das nicht verrät: nein. */
+const imAmt = () => !!self.serviceWorker && self.registration.active === self.serviceWorker;
 
 /** Skripte, die eine Seite im HTML lädt (ohne Anhang wie `?dpl=…`). */
 function skripteAus(html) {
@@ -109,7 +127,18 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+  const d = event.data;
+  if (!d) return;
+  if (d.type === "SKIP_WAITING") self.skipWaiting();
+  // „Läuft in diesem Fenster schon dein Build?“ Die Seite schickt die Skripte,
+  // die sie geladen hat. Kennt dieser Worker sie alle, muss sie nach der
+  // Übernahme nicht neu laden.
+  if (d.type === "GEHOERT_ZU_DIR" && event.ports && event.ports[0]) {
+    const bekannt = new Set(BAU.dateien);
+    const ja =
+      Array.isArray(d.skripte) && d.skripte.length > 0 && d.skripte.every((s) => bekannt.has(s));
+    event.ports[0].postMessage({ ja });
+  }
 });
 
 self.addEventListener("activate", (event) => {
@@ -125,9 +154,8 @@ self.addEventListener("activate", (event) => {
 /** Seitenaufruf: Netz zuerst (höchstens 3 s), sonst die vorgeladene Seite. */
 async function seite(event, url) {
   const { request } = event;
-  const cache = await caches.open(CACHE);
   const pfad = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : "/";
-  const treffer = await cache.match(pfad);
+  const treffer = await ausCache(pfad);
 
   if (!treffer) {
     // Nicht vorgeladen: eine Seite wie die Rückkehr von Strava — oder der
@@ -135,10 +163,10 @@ async function seite(event, url) {
     // es zur Startseite.
     try {
       const res = await fetch(request);
-      if (SEITEN.includes(pfad)) event.waitUntil(vorladen().catch(() => {}));
+      if (SEITEN.includes(pfad) && imAmt()) event.waitUntil(vorladen().catch(() => {}));
       return res;
     } catch (e) {
-      if (pfad !== "/" && (await cache.match("/"))) return Response.redirect("/", 302);
+      if (pfad !== "/" && (await ausCache("/"))) return Response.redirect("/", 302);
       throw e;
     }
   }
@@ -178,12 +206,11 @@ async function seitenDaten(request) {
 
 /** Datei des Builds: Cache zuerst, sonst Netz und ablegen. */
 async function datei(request) {
-  const cache = await caches.open(CACHE);
   // Ein Anhang wie `?dpl=…` oder `?v=3` ändert nichts am Inhalt.
-  const hit = await cache.match(request, { ignoreSearch: true });
+  const hit = await ausCache(request, { ignoreSearch: true });
   if (hit) return hit;
   const res = await fetch(request);
-  if (res.status === 200 && res.type === "basic") cache.put(request, res.clone()).catch(() => {});
+  if (res.status === 200 && res.type === "basic") ablegen(request, res.clone()).catch(() => {});
   return res;
 }
 
