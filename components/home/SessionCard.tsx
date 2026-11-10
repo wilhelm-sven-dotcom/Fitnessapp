@@ -139,7 +139,7 @@ export function SessionCard({
                     aria-hidden
                     className="h-8 w-11 shrink-0 overflow-hidden rounded-xs border-2 border-rand bg-surface-1"
                   >
-                    <GeraetBild geraet={geraetVon(z.ex)!} dekorativ />
+                    <GeraetBild geraet={geraetVon(z.ex)!} dekorativ klein />
                   </span>
                 ) : (
                   <span aria-hidden className="w-8 shrink-0">

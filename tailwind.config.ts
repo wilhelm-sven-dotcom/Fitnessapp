@@ -115,6 +115,11 @@ const config: Config = {
         hart: "4px 4px 0 var(--schatten)",
         "hart-sm": "3px 3px 0 var(--schatten)",
       },
+      // Format der Gerätebilder (`public/geraete/`, 3:2): Boxen in diesem
+      // Format zeigen das Bild ohne Beschnitt.
+      aspectRatio: {
+        bild: "3 / 2",
+      },
     },
   },
   plugins: [],

@@ -8,7 +8,8 @@
  * Boot ohne Splash → Ortsfrage (Zuhause) → Heute angesetzt → Editor-Tausch → Los geht’s →
  * Check-in überspringen → Aufwärmen → Satz loggen (Inline-Pause, ATLAS-Zeile)
  * → Reload mitten in der Einheit (Resume!) → Abschluss speichern → Verlauf
- * zeigt die Einheit → Katalog-Filter + eigene Übung → Alt-Log (A/B/C) rendert.
+ * zeigt die Einheit → Katalog-Filter + eigene Übung → Gerätebilder im
+ * Katalog Studio laden → Alt-Log (A/B/C) rendert.
  */
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -226,6 +227,29 @@ try {
   if (!/Smoke-Übung/.test(kat)) throw new Error("Eigene Übung erscheint nicht");
   if (!/1 eigene/.test(kat)) throw new Error("Eigene-Zähler fehlt");
   console.log("OK katalog: Filter-Seite + eigene Übung");
+
+  // Katalog Studio: Gruppen je Gerät; jedes mitgelieferte Gerätebild
+  // (public/geraete/) lädt. Lazy-Bilder werden dafür sofort geladen.
+  step = "gerätebilder";
+  await page.getByRole("group", { name: "Katalog für Ort" }).getByRole("button", { name: "Studio", exact: true }).click();
+  await page.waitForTimeout(600);
+  const bilder = await page.evaluate(async () => {
+    const imgs = [...document.querySelectorAll('img[src^="/geraete/"]')];
+    const kaputt = [];
+    for (const img of imgs) {
+      img.loading = "eager";
+      try {
+        await img.decode();
+      } catch {
+        /* unten geprüft */
+      }
+      if (!(img.naturalWidth > 0)) kaputt.push(img.getAttribute("src"));
+    }
+    return { n: imgs.length, kaputt };
+  });
+  if (bilder.n === 0) throw new Error("Katalog Studio zeigt kein Gerätebild");
+  if (bilder.kaputt.length) throw new Error(`Gerätebild lädt nicht: ${bilder.kaputt.join(", ")}`);
+  console.log(`OK gerätebilder: ${bilder.n} Bilder im Katalog Studio geladen`);
 
   // ── 11 · Einstellungen rendern (Theme, Orte & Geräte, ATLAS-Sektion) ──
   step = "settings";

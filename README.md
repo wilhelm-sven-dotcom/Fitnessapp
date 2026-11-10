@@ -3,7 +3,7 @@
 Hochpersonalisierte Trainings-App für Muskelaufbau mit **ATLAS**, dem
 KI-Trainingspartner, der jede Einheit frisch zusammenstellt und live durchs
 Training begleitet. Der Name ist die Rolle: der Spotter, der Kumpel an der
-Bank, der dich beim Heben sichert („Ich hab dich.“); die Bedienung spricht
+Bank, der dich beim Heben sichert („Eine geht noch.“); die Bedienung spricht
 schlichtes, freundliches Deutsch. Vorher hieß die App „Platte 311“. Ganzkörper-Fokus, Zeitfenster frei
 wählbar (10–180 Minuten, Stufen oder eigene Zahl), mit besonderem Augenmerk auf einen empfindlichen unteren
 Rücken.

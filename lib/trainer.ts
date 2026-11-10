@@ -658,7 +658,7 @@ export function liveLine(opts: {
   // ① Rekord gefallen.
   if (record && filled.some((s) => beatsRecord(ex, s, record))) {
     return {
-      text: pick(["Neuer Rekord. Das bleibt.", "Rekord! Genau so."], seed),
+      text: pick(["Neuer Rekord. Den nimmt dir keiner.", "Rekord! Genau dafür trainierst du."], seed),
       tone: "push",
       kind: "record",
     };
@@ -777,28 +777,34 @@ export function liveLine(opts: {
 
 /* ─────────────── Motivations-Zeile (Coach-Ansporn, an/aus) ─────────────── */
 
-// Ton „spotter“: der Kumpel an der Bank — kurz, direkt, ermutigend.
+// Ton „spotter“: der Kumpel an der Bank — kurz, direkt, ermutigend, Technik
+// vor Gewicht. Claim „Eine geht noch.“ (lib/marke.ts) taucht hier nur mit
+// der Technik-Bedingung auf.
 const MOTIVATE_START = [
-  "Erster Satz. Ich steh neben dir.",
-  "Los geht’s. Sauber und kontrolliert.",
-  "Ruhig rein, Technik zuerst. Ich hab dich.",
-  "Fang sauber an, der Rest kommt.",
+  "Erster Satz. Locker rein.",
+  "Los geht’s. Erst die Technik, dann das Gewicht.",
+  "Ruhig anfangen. Der Rest kommt.",
+  "Erster Satz. Spür rein, wie es heute geht.",
+  "Sauber starten, Tempo im Griff.",
 ];
 const MOTIVATE_MID = [
-  "Noch einer. Ich hab dich.",
-  "Genau so. Gleiche Technik, nächster Satz.",
-  "Sauber wie eben. Weiter.",
-  "Bleib dran, hier passiert’s.",
+  "Gleiche Bahn, gleiche Spannung.",
+  "Eine geht noch, wenn die Technik hält.",
+  "Läuft. Dranbleiben.",
+  "Genau so. Nächster Satz, gleiche Qualität.",
+  "Atmen, sammeln, weiter.",
 ];
 const MOTIVATE_LAST = [
-  "Letzter Satz. Alles rein, ich pass auf.",
-  "Noch einer. Sauber bis zum Schluss.",
-  "Letzter. Zeig, was du hast.",
+  "Letzter Satz. Jetzt zählt’s.",
+  "Letzter Satz. Alles rein, sauber bleiben.",
+  "Einer noch. Den holst du dir.",
+  "Letzter Satz. Mach ihn zum besten.",
 ];
 const MOTIVATE_DONE = [
-  "Übung durch. Stark gemacht.",
-  "Abgehakt. Weiter geht’s.",
-  "Sitzt. Nächste Übung.",
+  "Sitzt. Weiter.",
+  "Übung erledigt. Gut gemacht.",
+  "Abgehakt. Nächste Übung.",
+  "Das war sauber. Weiter geht’s.",
 ];
 
 /**

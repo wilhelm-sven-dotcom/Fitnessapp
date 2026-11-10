@@ -636,7 +636,7 @@ export function SessionRunner() {
     if (rec && beatsRecord(ex, set, rec) && !recordCelebratedRef.current.has(itemId)) {
       recordCelebratedRef.current.add(itemId);
       success();
-      if (settings.voiceCues) speak("Neuer Rekord. Stark.");
+      if (settings.voiceCues) speak("Neuer Rekord. Den nimmt dir keiner.");
     } else {
       tap();
     }

@@ -6,7 +6,7 @@ import { APP_NAME, CLAIM } from "@/lib/marke";
 /**
  * Das Startbild im Look „spotter“: Elektroblau, in der Mitte die Sprechblase
  * mit der Hantel (wie Icon und iOS-Startbild, `lib/marke-art.tsx`), darunter
- * die Wortmarke und der Sticker „Ich hab dich.“. Die Blase steht von Anfang
+ * die Wortmarke und der Sticker mit dem Claim („Eine geht noch.“). Die Blase steht von Anfang
  * an da (an der Naht zum iOS-Startbild springt nichts); sie nickt einmal, die
  * Scheiben pumpen, dann kommen Wortmarke und Sticker.
  *

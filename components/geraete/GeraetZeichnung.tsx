@@ -2,8 +2,9 @@
  * Gezeichnete Geräte im Look „spotter“: Seitenansichten mit dicker Kontur,
  * Polster in Blau, Gewichtsblock in Sonne. Eine Zeichnung je Gerät-Key
  * (`m_*` und `cable`), alle im Feld 200 × 140 auf einer Bodenlinie, damit sie
- * nebeneinander gleich groß wirken. Steht kein eigenes Foto des Geräts bereit,
- * zeigt `GeraetBild` diese Zeichnung.
+ * nebeneinander gleich groß wirken. Steht weder ein eigenes Foto noch ein
+ * mitgeliefertes Bild (`public/geraete/`) bereit, zeigt `GeraetBild` diese
+ * Zeichnung.
  *
  * Varianten: `hell` (Tokens, folgt Hell/Dunkel) und `auf-blau` (weiße Kontur,
  * Polster in Sonne — für die blaue Übungskarte im Training).

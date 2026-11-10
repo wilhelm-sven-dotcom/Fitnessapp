@@ -140,7 +140,7 @@ export function SessionComplete({
   // Sieger-Haptik + gesprochene Zeile + XP-Füllung (Bestand).
   useEffect(() => {
     success();
-    if (sieger && settings.voiceCues) speak("Neuer Rekord. Das bleibt.");
+    if (sieger && settings.voiceCues) speak("Einheit gespeichert. Mit neuem Rekord.");
     const t1 = setTimeout(() => setPct(summary.xpPctTo), reduce ? 0 : 350);
     const t2 = levelUp
       ? setTimeout(() => setLvl(summary.levelAfter), reduce ? 0 : 1100)
