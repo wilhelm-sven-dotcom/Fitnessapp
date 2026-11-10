@@ -72,9 +72,42 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 - **ATLAS-Server-API** (`/api/atlas/*`) — session (Komposition, Opus),
   set (Live-Reaktion, Sonnet), debrief, chat, briefing (Streams); gemeinsames
   gecachtes System-Präfix, strikte Tools, Server-Sanitizer, Rate-Limits.
-- **Cloud-Sync** — optionaler Login (Supabase), localStorage bleibt die
-  Wahrheit; der Live-Trainingszustand synct bewusst NICHT (gerätelokal).
-- **Export/Import** als JSON.
+- **Ohne Netz** — der Service Worker lädt beim Installieren alle Hauptseiten
+  und den ganzen Code des Builds vor; im Studio braucht die App kein Netz.
+  Ein Update wartet, bis das Training gespeichert ist (siehe unten).
+- **Cloud-Sync** — optionaler Login (Supabase). Dieses Gerät ist die
+  Wahrheit, die Cloud die Sicherung; der Live-Trainingszustand synct bewusst
+  NICHT (gerätelokal).
+- **Export/Import** als JSON, ohne die Zugänge zu Strava und Spotify;
+  einspielen als „Ergänzen“ oder „Ersetzen“.
+
+## Ohne Netz und ohne Datenverlust
+
+**Service Worker.** `/sw.js` entsteht beim Bauen: `app/sw.js/route.ts` stellt
+vor die Logik (`worker.js`) die Liste aller Skripte, Styles, Schriften und
+Gerätebilder des Builds samt Fingerabdruck. Der Worker lädt beim Installieren
+diese Liste und die sechs Hauptseiten vor; fehlt etwas, bleibt der bisherige
+Worker im Amt. Seitenaufrufe gehen zuerst ins Netz, höchstens 3 s, dann kommt
+die vorgeladene Seite; `/api/` fasst der Worker nie an. Ein neuer Build
+wartet, bis die Seite ihn freigibt, und das tut sie nie in `/workout`
+(`components/pwa/ServiceWorkerRegister.tsx`). Von Hand zu pflegen ist nichts.
+
+**Daten** (`lib/storage.ts`). localStorage ist der Speicher der App.
+
+- Schreiben meldet Erfolg. Die laufende Einheit wird erst weggeräumt, wenn
+  sie wirklich im Verlauf steht; ist der Speicher voll, sagt die App das.
+- Vom Verlauf und den Körperwerten bleibt die Fassung vor der ersten Änderung
+  des Tages als Sicherung (`…-sicherung`), zurückzuholen unter Einstellungen
+  → Daten. Unlesbare Werte werden beiseitegelegt (`…-defekt`), nicht gelöscht.
+- Eine Einheit, die vor mehr als sechs Stunden begann und in der Sätze
+  stehen, verschwindet nicht mehr: Heute fragt „speichern oder verwerfen“.
+- Cloud: Beim ersten Anmelden mit einem Konto wird zusammengeführt
+  (`lib/merge.ts`). Danach wird nichts mehr still zurückgeholt, sonst käme
+  Gelöschtes wieder; was ohne Netz geändert wurde, wird nachgereicht.
+- „Alle Daten löschen“ löscht alles auf dem Gerät und in der Cloud; die App
+  startet danach wie neu.
+
+Nachweis: `npm run pruefe:offline` und `npm run pruefe:daten`.
 
 ## Design
 
@@ -108,8 +141,9 @@ npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
 npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingszeit
 npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
 npm run pruefe:offline    # ohne Netz: Seiten, Training, Neuladen, Update wartet im Training
+npm run pruefe:daten      # Speichern, liegengebliebene Einheit, Löschen, Export/Import, Strava
 npm run tempo             # Rechenzeit mit 150 Einheiten im Verlauf, mit Grenzen
-npm run pruefe            # alle Prüfungen nacheinander (gemeinsamer Port 3199)
+npm run pruefe            # alle Prüfungen nacheinander (Port 3199, offline zusätzlich 3198)
 npm run fotos -- --klein  # Bildschirmfotos nach .fotos/, mit --klein auch 375 × 667
 npm run messen            # wo Start-, Satz- und ATLAS-Eingabe liegen (JSON)
 npm run kontrast          # WCAG-Kontrast der Farb-Tokens, hell und dunkel
@@ -157,4 +191,7 @@ Foto-Bucket — stehen zum Kopieren in **[`supabase/SETUP.md`](supabase/SETUP.md
 
 Daten-Schlüssel: `wilhelm-training-{log,equip,custom,body,cardio,gyms,settings,
 mission,jumps,today,chat}` (synct) und `wilhelm-training-active` (bewusst nur
-lokal — der Live-Zustand einer laufenden Einheit).
+lokal — der Live-Zustand einer laufenden Einheit). Dazu nur lokal:
+`…-sicherung`, `…-sicherung-tag`, `…-defekt` und die Vermerke
+`…-cloud-{offen,konto,leeren}`. „Alle Daten löschen“ entfernt alles mit dem
+Präfix `wilhelm-training-`.

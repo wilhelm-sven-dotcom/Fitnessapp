@@ -73,33 +73,71 @@ function gueltigePause(r: unknown): RestState | undefined {
 /** Länger unterbrochen als das ist keine Pause mehr, sondern ein Abbruch. */
 export const RESUME_WINDOW_MS = 6 * 60 * 60 * 1000;
 
-export async function loadActiveState(): Promise<ActiveSessionState | null> {
+/** Steht in der Einheit schon ein eingetragener Arbeitssatz? */
+export function hatEingetrageneSaetze(s: Pick<ActiveSessionState, "entries">): boolean {
+  return Object.values(s.entries ?? {}).some(
+    (saetze) =>
+      Array.isArray(saetze) && saetze.some((x) => !x.warmup && x.reps !== "" && x.reps != null),
+  );
+}
+
+/** Begann die Einheit vor mehr als sechs Stunden? */
+export function istLiegengeblieben(startedAt: string, now = Date.now()): boolean {
+  const alter = now - new Date(startedAt).getTime();
+  return !Number.isFinite(alter) || alter > RESUME_WINDOW_MS;
+}
+
+/**
+ * Liest den gespeicherten Live-Stand. `alt`: die Einheit begann vor mehr als
+ * sechs Stunden. So eine Einheit wird nicht mehr still fortgesetzt — aber
+ * auch nicht mehr still gelöscht, wenn schon Sätze drinstehen (früher waren
+ * die dann weg). Die Heute-Seite fragt: speichern oder verwerfen.
+ */
+async function leseAktiv(): Promise<{ state: ActiveSessionState; alt: boolean } | null> {
   const raw = await storage.getJSON<ActiveSessionState | null>(KEYS.active, null);
   if (!raw || raw.schemaVersion !== 1) return null;
   if (
     !raw.session ||
     !Array.isArray(raw.session.items) ||
     raw.session.items.length === 0 ||
-    typeof raw.entries !== "object"
+    typeof raw.entries !== "object" ||
+    raw.entries === null
   )
     return null;
-  const age = Date.now() - new Date(raw.startedAt).getTime();
-  if (!Number.isFinite(age) || age > RESUME_WINDOW_MS) {
+  const alt = istLiegengeblieben(raw.startedAt);
+  if (alt && (!hatEingetrageneSaetze(raw) || !Number.isFinite(new Date(raw.startedAt).getTime()))) {
+    // Nichts eingetragen: da geht nichts verloren.
     void storage.remove(KEYS.active);
     return null;
   }
   const { rest: gespeichertePause, ...ohnePause } = raw;
-  const rest = gueltigePause(gespeichertePause);
+  const rest = alt ? undefined : gueltigePause(gespeichertePause);
   return {
-    ...ohnePause,
-    ...(rest ? { rest } : {}),
-    currentIndex: Math.max(
-      0,
-      Math.min(raw.session.items.length - 1, raw.currentIndex ?? 0),
-    ),
-    phase:
-      raw.phase === "warmup" || raw.phase === "finish" ? raw.phase : "exercise",
+    alt,
+    state: {
+      ...ohnePause,
+      ...(rest ? { rest } : {}),
+      currentIndex: Math.max(
+        0,
+        Math.min(raw.session.items.length - 1, raw.currentIndex ?? 0),
+      ),
+      phase:
+        raw.phase === "warmup" || raw.phase === "finish" ? raw.phase : "exercise",
+    },
   };
+}
+
+/** Die laufende Einheit zum Fortsetzen — `null`, wenn keine läuft oder sie
+ *  liegengeblieben ist. */
+export async function loadActiveState(): Promise<ActiveSessionState | null> {
+  const g = await leseAktiv();
+  return g && !g.alt ? g.state : null;
+}
+
+/** Eine liegengebliebene Einheit mit eingetragenen Sätzen (älter als 6 h). */
+export async function loadLiegengeblieben(): Promise<ActiveSessionState | null> {
+  const g = await leseAktiv();
+  return g?.alt ? g.state : null;
 }
 
 /** Pause ab jetzt um `sek` verlängern bzw. (negativ) kürzen. Eine abgelaufene
@@ -120,7 +158,7 @@ export function restLeft(endsAt: number, now = Date.now()): number {
   return Math.max(0, Math.ceil((endsAt - now) / 1000));
 }
 
-export function persistActiveState(s: ActiveSessionState): Promise<void> {
+export function persistActiveState(s: ActiveSessionState): Promise<boolean> {
   return storage.setJSONLocal(KEYS.active, s);
 }
 

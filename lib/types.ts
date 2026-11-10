@@ -306,6 +306,10 @@ export interface AppSettings {
     /** Unix seconds when the access token expires. */
     expiresAt: number;
     athleteName?: string;
+    /** Letzter gelungener Abgleich (Epoch-Millisekunden). */
+    syncedAt?: number;
+    /** Strava hat die Anmeldung zurückgewiesen: neu verbinden. */
+    reauth?: boolean;
   };
   /** Spotify connection (OAuth PKCE, public client — no server secret). */
   spotify?: {

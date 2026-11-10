@@ -30,6 +30,7 @@ const SKRIPTE = [
   "scripts/pruefe-zeitbudget.mjs",
   "scripts/pruefe-ort.mjs",
   "scripts/pruefe-offline.mjs",
+  "scripts/pruefe-daten.mjs",
   "scripts/tempo.mjs",
 ];
 

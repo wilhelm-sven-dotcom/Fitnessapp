@@ -241,6 +241,11 @@ Sheets 50.
   Die AppShell misst Leiste + Dock und gibt dem Inhalt so viel Auslauf.
 - Ortsfrage: zwei Kacheln (Zuhause/Studio) mit Rand und kleinem harten
   Schatten, Figur, Übungszahl, Geräte.
+- **Offene Einheit** (`components/home/OffeneEinheit.tsx`): Karte über der
+  Einheitskarte, wenn eine Einheit vor mehr als sechs Stunden begann und
+  schon Sätze drinstehen — „Speichern“ (Tinte) und „Verwerfen“ (`danger`,
+  mit Rückfrage im Blatt). Solange sie steht, gibt es kein Start-Dock.
+  Test-Anker: `role="region"` mit Namen „Offene Einheit“.
 
 ## Fortschritt und Übungsdetail
 
@@ -279,6 +284,11 @@ Sheets 50.
 - **Geräte am Ort:** ChipToggle mit Haken, Ort-Segment „Studio · 10“.
 - **Formularfelder** mit `text-base` (≥ 16 px, sonst zoomt iOS) und dem
   Feld-Rezept; Erfahrungsstufen tragen je einen erklärenden Satz.
+- **Einstellungen → Daten:** „Daten exportieren“, „Backup einspielen“ (Blatt
+  mit „Ergänzen“ als Tinte-Knopf und „Ersetzen“ als `danger`, je ein Satz
+  Erklärung darunter), „Sicherung zurückholen“ (nur wenn es eine gibt, mit
+  Datum und Zahl der Einheiten), „Alle Daten löschen“ (`danger`, Rückfrage im
+  Blatt). Die Knopfnamen sind Test-Anker (`scripts/pruefe-daten.mjs`).
 - **ATLAS-Seite:** Kopf „ATLAS · dein Trainingspartner“ (Bricolage) mit der
   Tages-Direktive, Wochen-Rückblick als Karte; im Gespräch spricht ATLAS mit
   Avatar „A“ und Blase links (Protokollzeilen in Blau), die eigenen Nachrichten

@@ -116,10 +116,32 @@ export function sanitizeVideoMap(x: unknown): Record<string, string> {
  * writes the cleaned value back, so ANY build — old or new — reads renderable
  * data on the next load. Pure DOM localStorage access (no Supabase-heavy storage
  * layer import), every step guarded → never throws. Valid data incl. video URLs
- * is preserved 1:1; only structurally-broken entries are dropped.
+ * is preserved 1:1; only structurally-broken entries are dropped. Ein Wert,
+ * der sich gar nicht lesen lässt, wird beiseitegelegt statt gelöscht.
  *
  * Key strings MUST match KEYS in lib/storage.ts.
  */
+/**
+ * Ein unlesbarer Wert wird nicht gelöscht, sondern unter `…-defekt`
+ * beiseitegelegt. Für Verlauf und Körperwerte springt die Sicherung ein
+ * (`…-sicherung`, siehe lib/storage.ts — die Endungen müssen übereinstimmen).
+ */
+function legeBeiseite(ls: Storage, key: string, raw: string): void {
+  try {
+    ls.setItem(`${key}-defekt`, raw);
+  } catch {
+    /* kein Platz — dann bleibt nur das Entfernen */
+  }
+  ls.removeItem(key);
+  if (key !== "wilhelm-training-log" && key !== "wilhelm-training-body") return;
+  try {
+    const kopie = ls.getItem(`${key}-sicherung`);
+    if (kopie != null && Array.isArray(JSON.parse(kopie))) ls.setItem(key, kopie);
+  } catch {
+    /* Sicherung selbst unlesbar */
+  }
+}
+
 export function repairPersistedData(): void {
   let ls: Storage;
   try {
@@ -148,7 +170,7 @@ export function repairPersistedData(): void {
       try {
         parsed = JSON.parse(raw);
       } catch {
-        ls.removeItem(key);
+        legeBeiseite(ls, key, raw);
         continue;
       }
       const next = JSON.stringify(fn(parsed));
@@ -167,7 +189,7 @@ export function repairPersistedData(): void {
       try {
         parsed = JSON.parse(raw);
       } catch {
-        ls.removeItem(key);
+        legeBeiseite(ls, key, raw);
         continue;
       }
       const okObj = !!parsed && typeof parsed === "object" && !Array.isArray(parsed);

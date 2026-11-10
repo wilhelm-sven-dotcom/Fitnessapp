@@ -29,7 +29,18 @@ import {
   todayKey,
   type DailySession,
 } from "@/lib/session-model";
-import type { ActiveSessionState } from "@/lib/active-session";
+import { istLiegengeblieben, type ActiveSessionState } from "@/lib/active-session";
+import {
+  ergaenze,
+  nachDatum,
+  nurTexte,
+  ohneZugaenge,
+  pruefeChat,
+  pruefeSpruenge,
+  vereinige,
+  type ChatZeile,
+  type ImportModus,
+} from "@/lib/datensicherung";
 import type { JumpEntry } from "@/lib/jump";
 import {
   NEUTRAL_SCALE,
@@ -56,10 +67,24 @@ import {
 } from "@/lib/sanitize";
 import { weeklySetStats } from "@/lib/set-plan";
 import { sessionVolume } from "@/lib/stats";
-import { KEYS, storage, cloudPull, cloudPushAll } from "@/lib/storage";
+import {
+  KEYS,
+  SPEICHER_VOLL,
+  storage,
+  cloudKonto,
+  cloudLeeren,
+  cloudLeerenOffen,
+  cloudOffen,
+  cloudOffenErledigt,
+  cloudPull,
+  cloudPushAll,
+  merkeCloudLeeren,
+  setzeCloudKonto,
+} from "@/lib/storage";
+import { toast } from "@/lib/toast";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import { isCloudConfigured, loadSupabase } from "@/lib/supabase";
-import { deletePhoto } from "@/lib/photo-store";
+import { deletePhoto, leereCloudFotos, leereFotos } from "@/lib/photo-store";
 import { applyTheme, type ThemePref } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
 import type { SpotifyAuth } from "@/lib/spotify";
@@ -134,7 +159,14 @@ export interface ExportEnvelope {
   exerciseNotes: Record<string, string>;
   /** Eigene YouTube-Links je Aufwärm-Drill (additiv — alte Backups bleiben gültig). */
   warmupVideos?: Record<string, string>;
+  /** Ohne die Zugänge zu Strava und Spotify (lib/datensicherung.ts). */
   settings?: AppSettings;
+  /** Ab Fassung 4: was vorher im Export fehlte. */
+  disabledExercises?: string[];
+  hiddenCardio?: string[];
+  jumps?: JumpEntry[];
+  mission?: StoredMission | null;
+  chat?: ChatZeile[];
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -175,6 +207,8 @@ function applyReadiness(list: ResolvedSlot[], scale: ReadinessScale): ResolvedSl
 }
 
 type StravaTokens = NonNullable<AppSettings["strava"]>;
+/** So alt darf der letzte Strava-Abgleich sein, bevor die App selbst nachsieht. */
+const STRAVA_ABSTAND_MS = 6 * 60 * 60 * 1000;
 /** Server-Roundtrip für alle Strava-Aktionen — zustandsfrei, lebt außerhalb
  *  der Komponente, damit die API-Objekte sauber memoisierbar sind. */
 async function stravaPost(payload: Record<string, unknown>) {
@@ -291,6 +325,9 @@ interface TrainingContextValue {
   renameGym: (id: string, name: string) => void;
   removeGym: (id: string) => void;
   /** Den Live-State des Runners als LoggedSession speichern (leer → null). */
+  /** Speichert die Einheit in den Verlauf. `null`: es stand kein Arbeitssatz
+   *  drin. WIRFT, wenn das Gerät nicht speichern konnte (Speicher voll) —
+   *  die laufende Einheit bleibt dann erhalten. */
   saveActiveSession: (state: ActiveSessionState) => Promise<SessionSummary | null>;
   /** KI-Debrief nachträglich an die zuletzt gespeicherte Einheit schreiben. */
   amendLastDebrief: (lines: string[]) => void;
@@ -327,8 +364,13 @@ interface TrainingContextValue {
   dismissCard: (card: CoachCard) => void;
   addBodyMetric: (m: BodyMetric) => Promise<void>;
   deleteBodyMetric: (idx: number) => Promise<void>;
-  exportData: () => ExportEnvelope;
-  importData: (raw: unknown) => Promise<boolean>;
+  exportData: () => Promise<ExportEnvelope>;
+  /** Spielt eine Export-Datei ein: „ergaenzen“ (Vorgabe) fügt Fehlendes
+   *  hinzu, „ersetzen“ setzt das Gerät auf den Stand der Datei. */
+  importData: (raw: unknown, modus?: ImportModus) => Promise<boolean>;
+  /** Tauscht den Verlauf gegen die Sicherung (lib/storage.ts). Ein zweiter
+   *  Aufruf macht den ersten rückgängig. */
+  holeSicherung: () => Promise<boolean>;
   cardio: CardioSession[];
   addManualCardio: (entry: Omit<CardioSession, "id" | "source">) => Promise<void>;
   removeCardio: (id: string) => Promise<void>;
@@ -359,6 +401,8 @@ export interface StravaApi {
   connected: boolean;
   athlete: string | null;
   busy: boolean;
+  /** Strava hat die Anmeldung zurückgewiesen: neu verbinden. */
+  needsReauth: boolean;
   /** Exchange the OAuth authorization code, store tokens, pull activities. */
   connect: (code: string) => Promise<{ ok: boolean; error?: string }>;
   syncNow: () => Promise<{ ok: boolean; error?: string }>;
@@ -400,6 +444,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({});
   const [stravaBusy, setStravaBusy] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  // Der JÜNGSTE Stand der Einstellungen. Wer nach einem `await` schreibt
+  // (Strava, Spotify) oder zweimal im selben Handler, darf nicht auf dem Stand
+  // des letzten Renders aufbauen — sonst verschwindet die Änderung dazwischen.
+  const settingsRef = useRef<AppSettings>(DEFAULT_SETTINGS);
+  const cardioRef = useRef<CardioSession[]>([]);
+  const hiddenCardioRef = useRef<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -486,6 +536,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setChoices(sanitizeStringMap(c));
     setCustom(sanitizeCustom(cu));
     setBody(sanitizeBody(b));
+    settingsRef.current = settingsLoaded;
     setSettings(settingsLoaded);
     // Nur die letzten 2 Wochen behalten — ältere Importe beim Öffnen wegräumen
     // (und persistieren, wenn wirklich etwas wegfiel), manuelle bleiben.
@@ -548,9 +599,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     return entries;
   }, []);
 
-  const pullOrSeed = useCallback(async () => {
+  /** Erster Abgleich mit einem Konto: zusammenführen (beide Seiten haben
+   *  Daten), übernehmen (frisches Gerät) oder die leere Cloud befüllen.
+   *  `false`: die Cloud war nicht zu erreichen — dann ist nichts geschehen. */
+  const pullOrSeed = useCallback(async (): Promise<boolean> => {
     const map = await cloudPull();
-    if (map && Object.keys(map).length) {
+    // Nicht erreichbar ist NICHT „leer“: sonst überschriebe ein Gerät ohne
+    // Netz beim nächsten Mal die Sicherung mit seinem Stand.
+    if (map === null) return false;
+    if (Object.keys(map).length) {
       const known = new Set<string>(Object.values(KEYS));
       const localLog = await storage.getJSON<LoggedSession[]>(KEYS.log, []);
       if (localLog.length) {
@@ -577,13 +634,49 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       // First login with an empty cloud → seed it from local data.
       await cloudPushAll(await collectLocal());
     }
+    return true;
   }, [loadAll, collectLocal]);
 
-  // Für wen in diesem Seitenleben schon abgeglichen wurde. Supabase meldet
-  // SIGNED_IN nicht nur beim Anmelden, sondern auch bei jedem Zurückkehren in
-  // die App — ohne diese Sperre lief bei jedem Entsperren ein voller Abgleich
-  // (alles ziehen, zusammenführen, alle Schlüssel neu hochladen).
+  /**
+   * Abgleich mit dem angemeldeten Konto. Dieses Gerät ist die Wahrheit, die
+   * Cloud die Sicherung (Nutzer-Entscheid: ein iPhone):
+   *  · Erstes Mal mit diesem Konto → zusammenführen (`pullOrSeed`).
+   *  · Danach wird nie mehr still aus der Cloud zurückgeholt — sonst käme
+   *    Gelöschtes wieder. Es wird nur nachgereicht, was die Cloud noch nicht
+   *    hat (Änderungen ohne Netz).
+   *  · Steht ein „Alle Daten löschen“ für das Konto noch aus, kommt das zuerst.
+   */
+  const abgleichLaeuft = useRef(false);
+  const gleicheAb = useCallback(
+    async (userId: string) => {
+      if (abgleichLaeuft.current) return;
+      abgleichLaeuft.current = true;
+      try {
+        if ((await cloudLeerenOffen()) === userId) {
+          if ((await cloudLeeren()) !== true) return;
+          void leereCloudFotos();
+        }
+        if ((await cloudKonto()) !== userId) {
+          if (await pullOrSeed()) await setzeCloudKonto(userId);
+          return;
+        }
+        if (await cloudOffen()) {
+          // Vermerk zuerst löschen: ein Fehlschlag beim Hochladen setzt ihn neu.
+          await cloudOffenErledigt();
+          await cloudPushAll(await collectLocal());
+        }
+      } finally {
+        abgleichLaeuft.current = false;
+      }
+    },
+    [pullOrSeed, collectLocal],
+  );
+
+  // Supabase meldet SIGNED_IN nicht nur beim Anmelden, sondern auch bei jedem
+  // Zurückkehren in die App; beim Start kommt INITIAL_SESSION. Der Abgleich
+  // läuft je Konto einmal pro Seitenleben, danach nur noch das Nachreichen.
   const abgeglichenFuer = useRef<string | null>(null);
+  const angemeldetAls = useRef<string | null>(null);
   useEffect(() => {
     if (!cloudConfigured) return;
     let active = true;
@@ -595,19 +688,35 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       });
       const { data: sub } = sb.auth.onAuthStateChange((event, session) => {
         setCloudEmail(session?.user.email ?? null);
+        angemeldetAls.current = session?.user.id ?? null;
         if (!session) abgeglichenFuer.current = null;
-        if (event === "SIGNED_IN" && session && abgeglichenFuer.current !== session.user.id) {
-          abgeglichenFuer.current = session.user.id;
-          void pullOrSeed();
+        if (
+          (event === "SIGNED_IN" || event === "INITIAL_SESSION") &&
+          session &&
+          abgeglichenFuer.current !== session.user.id
+        ) {
+          const id = session.user.id;
+          abgeglichenFuer.current = id;
+          // Nicht im Rückruf selbst: Supabase hält dort noch seine Sperre.
+          window.setTimeout(() => void gleicheAb(id), 0);
         }
       });
       abmelden = () => sub.subscription.unsubscribe();
     });
+    // Wieder Netz oder zurück in der App: nachreichen, was liegen blieb.
+    const nachreichen = () => {
+      if (document.visibilityState !== "visible" || navigator.onLine === false) return;
+      if (angemeldetAls.current) void gleicheAb(angemeldetAls.current);
+    };
+    window.addEventListener("online", nachreichen);
+    document.addEventListener("visibilitychange", nachreichen);
     return () => {
       active = false;
       abmelden?.();
+      window.removeEventListener("online", nachreichen);
+      document.removeEventListener("visibilitychange", nachreichen);
     };
-  }, [cloudConfigured, pullOrSeed]);
+  }, [cloudConfigured, gleicheAb]);
 
   // Supabase antwortet englisch und technisch. Die drei Fälle, die hier real
   // vorkommen, brauchen einen Klartext MIT Ausweg — besonders das
@@ -744,8 +853,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     syncNow: async () => {
       setCloudBusy(true);
       try {
+        await cloudOffenErledigt();
         await cloudPushAll(await collectLocal());
-        await pullOrSeed();
+        if ((await pullOrSeed()) && angemeldetAls.current)
+          await setzeCloudKonto(angemeldetAls.current);
       } finally {
         setCloudBusy(false);
       }
@@ -962,9 +1073,19 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     await storage.setJSON(KEYS.custom, next);
   }, []);
   const saveSettings = useCallback(async (next: AppSettings) => {
+    settingsRef.current = next;
     setSettings(next);
     await storage.setJSON(KEYS.settings, next);
   }, []);
+  /** Einzelne Einstellungen ändern — der eine Weg für alle Schalter. Baut auf
+   *  dem jüngsten Stand auf (`settingsRef`), nie auf dem eines alten Renders. */
+  const updateSettings = useCallback(
+    (patch: Partial<AppSettings> | ((s: AppSettings) => Partial<AppSettings>)) => {
+      const basis = settingsRef.current;
+      return saveSettings({ ...basis, ...(typeof patch === "function" ? patch(basis) : patch) });
+    },
+    [saveSettings],
+  );
   const saveGyms = useCallback(async (next: GymProfile[]) => {
     setGyms(next);
     await storage.setJSON(KEYS.gyms, next);
@@ -972,6 +1093,23 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const saveCardio = useCallback(async (next: CardioSession[]) => {
     setCardio(next);
     await storage.setJSON(KEYS.cardio, next);
+  }, []);
+
+  // Das Gerät konnte etwas nicht speichern (Speicher voll): sagen, statt die
+  // Änderung beim nächsten Öffnen still fehlen zu lassen. Höchstens einmal je
+  // Minute — ein voller Speicher trifft jeden weiteren Schreibvorgang auch.
+  useEffect(() => {
+    let zuletzt = 0;
+    const melde = () => {
+      if (Date.now() - zuletzt < 60_000) return;
+      zuletzt = Date.now();
+      toast(
+        "Der Speicher des Geräts ist voll. Änderungen werden gerade nicht gesichert: Daten exportieren und alte Einträge oder Fotos löschen.",
+        { kind: "error", duration: 9000 },
+      );
+    };
+    window.addEventListener(SPEICHER_VOLL, melde);
+    return () => window.removeEventListener(SPEICHER_VOLL, melde);
   }, []);
 
   // Sprungtests laden (unkritisch fürs erste Rendern — darf nachladen).
@@ -988,66 +1126,105 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     setBeepCueVolume(settings.cueVolume ?? 1);
   }, [settings.cueVolume]);
 
+  cardioRef.current = cardio;
+  hiddenCardioRef.current = hiddenCardio;
+
+  /** Fahrten von Strava holen. Liest Zugänge und Listen über die Refs — die
+   *  Antwort kommt nach einem `await`, bis dahin kann sich beides geändert
+   *  haben. Darum stabil und auch aus dem Selbstabgleich aufrufbar. */
+  const stravaSync = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+    const t = settingsRef.current.strava;
+    if (!t?.refreshToken) return { ok: false, error: "Nicht verbunden." };
+    setStravaBusy(true);
+    try {
+      const j = await stravaPost({
+        action: "sync",
+        accessToken: t.accessToken,
+        refreshToken: t.refreshToken,
+        expiresAt: t.expiresAt,
+      });
+      if (!j.ok) {
+        // Strava hat die Anmeldung zurückgewiesen (Zugriff entzogen, Token
+        // verfallen): merken, damit die Einstellungen es zeigen.
+        if (j.reauth)
+          await updateSettings((s) => (s.strava ? { strava: { ...s.strava, reauth: true } } : {}));
+        return { ok: false, error: j.error };
+      }
+      if (j.rides) {
+        const versteckt = hiddenCardioRef.current;
+        await saveCardio(
+          pruneOldImports(
+            mergeCardio(cardioRef.current, j.rides.filter((r) => !versteckt.includes(r.id))),
+          ),
+        );
+      }
+      // Erneuerte Zugänge sichern (Name bleibt), Zeitpunkt festhalten.
+      await updateSettings((s) =>
+        s.strava
+          ? {
+              strava: {
+                ...s.strava,
+                ...(j.tokens ?? {}),
+                athleteName: s.strava.athleteName,
+                syncedAt: Date.now(),
+                reauth: undefined,
+              },
+            }
+          : {},
+      );
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
+    } finally {
+      setStravaBusy(false);
+    }
+  }, [saveCardio, updateSettings]);
+
+  // Selbstabgleich: beim Öffnen und beim Zurückkommen, wenn der letzte länger
+  // als sechs Stunden her ist. Vorher kamen Fahrten nur nach „Jetzt syncen“
+  // an — ATLAS plante also oft ohne die Fahrt vom Vorabend.
+  const stravaVersucht = useRef(0);
+  useEffect(() => {
+    if (loading) return;
+    const pruefe = () => {
+      const t = settingsRef.current.strava;
+      if (!t?.refreshToken || t.reauth) return;
+      if (document.visibilityState !== "visible" || navigator.onLine === false) return;
+      const jetzt = Date.now();
+      if (jetzt - (t.syncedAt ?? 0) < STRAVA_ABSTAND_MS) return;
+      // Fehlschläge (kein Netz) nicht bei jedem Entsperren wiederholen.
+      if (jetzt - stravaVersucht.current < 15 * 60 * 1000) return;
+      stravaVersucht.current = jetzt;
+      void stravaSync();
+    };
+    pruefe();
+    document.addEventListener("visibilitychange", pruefe);
+    return () => document.removeEventListener("visibilitychange", pruefe);
+  }, [loading, stravaSync]);
+
   const strava = useMemo<StravaApi>(() => ({
     connected: !!settings.strava?.refreshToken,
     athlete: settings.strava?.athleteName ?? null,
     busy: stravaBusy,
+    needsReauth: !!settings.strava?.reauth,
     connect: async (code) => {
       setStravaBusy(true);
       try {
         const j = await stravaPost({ action: "exchange", code });
         if (!j.ok || !j.tokens) return { ok: false, error: j.error };
-        const tokens = j.tokens;
-        await saveSettings({ ...settings, strava: tokens });
-        // Pull activities right away so the rides show up immediately.
-        const s = await stravaPost({
-          action: "sync",
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresAt: tokens.expiresAt,
-        });
-        if (s.ok && s.rides)
-          await saveCardio(
-            pruneOldImports(mergeCardio(cardio, s.rides.filter((r) => !hiddenCardio.includes(r.id)))),
-          );
-        return { ok: true };
+        await updateSettings({ strava: j.tokens });
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
       } finally {
         setStravaBusy(false);
       }
+      // Gleich abgleichen, damit die Fahrten sofort da sind.
+      await stravaSync();
+      return { ok: true };
     },
-    syncNow: async () => {
-      const t = settings.strava;
-      if (!t?.refreshToken) return { ok: false, error: "Nicht verbunden." };
-      setStravaBusy(true);
-      try {
-        const j = await stravaPost({
-          action: "sync",
-          accessToken: t.accessToken,
-          refreshToken: t.refreshToken,
-          expiresAt: t.expiresAt,
-        });
-        if (!j.ok) return { ok: false, error: j.error };
-        if (j.rides)
-          await saveCardio(
-            pruneOldImports(mergeCardio(cardio, j.rides.filter((r) => !hiddenCardio.includes(r.id)))),
-          );
-        // Persist rotated tokens (keep the athlete name we already have).
-        if (j.tokens)
-          await saveSettings({
-            ...settings,
-            strava: { ...j.tokens, athleteName: t.athleteName },
-          });
-        return { ok: true };
-      } catch (e) {
-        return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };
-      } finally {
-        setStravaBusy(false);
-      }
-    },
-    disconnect: () => void saveSettings({ ...settings, strava: undefined }),
-  }), [settings, stravaBusy, cardio, hiddenCardio, saveSettings, saveCardio]);
+    syncNow: stravaSync,
+    disconnect: () => void updateSettings({ strava: undefined }),
+  }), [settings.strava, stravaBusy, stravaSync, updateSettings]);
 
   // Spotify uses OAuth PKCE (no server secret) — the token exchange/refresh and
   // now-playing polling live in the useSpotify hook; the provider only persists
@@ -1056,12 +1233,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     configured: !!process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
     auth: settings.spotify,
     connect: async (auth) => {
-      await saveSettings({ ...settings, spotify: auth });
+      await updateSettings({ spotify: auth });
     },
     disconnect: async () => {
-      await saveSettings({ ...settings, spotify: undefined });
+      await updateSettings({ spotify: undefined });
     },
-  }), [settings, saveSettings]);
+  }), [settings.spotify, updateSettings]);
 
   // DAS Context-Value — memoisiert, damit ein Provider-Render (z. B. ein
   // Settings-Toggle) nicht jede Konsumenten-Komponente neu rendert. Die
@@ -1145,7 +1322,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const waehleOrt = (id: string) => {
       const g = gyms.find((x) => x.id === id);
       if (!g || settings.activeGymId === id) return;
-      void saveSettings({ ...settings, activeGymId: id });
+      void updateSettings({ activeGymId: id });
       void saveEquip([...g.equip]);
     };
     const addGym = (name: string, equipPreset?: EquipKey[]): string => {
@@ -1167,7 +1344,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const next = gyms.filter((g) => g.id !== id);
       void saveGyms(next);
       if (activeGym?.id === id) {
-        void saveSettings({ ...settings, activeGymId: next[0].id });
+        void updateSettings({ activeGymId: next[0].id });
         void saveEquip([...next[0].equip]);
       }
     };
@@ -1207,56 +1384,52 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       );
     };
     const setGeraetFoto = (geraet: string, photoId: string | null) => {
-      const alt = settings.geraetFotos?.[geraet];
+      const alt = settingsRef.current.geraetFotos?.[geraet];
       if (alt && alt !== photoId) void deletePhoto(alt);
-      const fotos = { ...(settings.geraetFotos ?? {}) };
-      if (photoId) fotos[geraet] = photoId;
-      else delete fotos[geraet];
-      void saveSettings({ ...settings, geraetFotos: fotos });
+      void updateSettings((s) => {
+        const fotos = { ...(s.geraetFotos ?? {}) };
+        if (photoId) fotos[geraet] = photoId;
+        else delete fotos[geraet];
+        return { geraetFotos: fotos };
+      });
     };
 
     const setWeightStep = (step: number) =>
-      void saveSettings({ ...settings, weightStep: step });
+      void updateSettings({ weightStep: step });
     const setBikeWarmup = (on: boolean) =>
-      void saveSettings({ ...settings, bikeWarmup: on });
+      void updateSettings({ bikeWarmup: on });
     const setBudget = (min: number) =>
-      void saveSettings({ ...settings, timeBudgetMin: min });
+      void updateSettings({ timeBudgetMin: min });
     const setKeepAwake = (on: boolean) =>
-      void saveSettings({ ...settings, keepAwake: on });
+      void updateSettings({ keepAwake: on });
     const setDuckSpotify = (on: boolean) =>
-      void saveSettings({ ...settings, duckSpotify: on });
+      void updateSettings({ duckSpotify: on });
     const setAiPlanning = (on: boolean) =>
-      void saveSettings({ ...settings, aiPlanning: on });
+      void updateSettings({ aiPlanning: on });
     const setAtlasImTraining = (on: boolean) =>
-      void saveSettings({ ...settings, coachLive: on, coachMotivation: on });
+      void updateSettings({ coachLive: on, coachMotivation: on });
     const setVoiceCues = (on: boolean) =>
-      void saveSettings({ ...settings, voiceCues: on });
+      void updateSettings({ voiceCues: on });
     const setCueVolume = (v: number) =>
-      void saveSettings({ ...settings, cueVolume: v });
+      void updateSettings({ cueVolume: v });
     const setTheme = (t: ThemePref) =>
-      void saveSettings({ ...settings, theme: t });
+      void updateSettings({ theme: t });
     const setZoetrope = (on: boolean) =>
-      void saveSettings({ ...settings, zoetrope: on });
+      void updateSettings({ zoetrope: on });
     // Greift erst beim nächsten Kaltstart: das Startbild wählt das
     // Pre-Paint-Skript, lange bevor dieser Provider existiert.
     const setSplash = (v: NonNullable<AppSettings["splash"]>) =>
-      void saveSettings({ ...settings, splash: v });
+      void updateSettings({ splash: v });
     const setUserName = (name: string) =>
-      void saveSettings({ ...settings, userName: name.trim() || undefined });
+      void updateSettings({ userName: name.trim() || undefined });
     const setAthleteProfile = (patch: Partial<AthleteProfile>) =>
-      void saveSettings({
-        ...settings,
-        athleteProfile: { ...settings.athleteProfile, ...patch },
-      });
+      void updateSettings((s) => ({ athleteProfile: { ...s.athleteProfile, ...patch } }));
     const completeOnboarding = (name?: string, profile?: Partial<AthleteProfile>) =>
-      void saveSettings({
-        ...settings,
+      void updateSettings((s) => ({
         onboarded: true,
-        userName: name?.trim() ? name.trim() : settings.userName,
-        athleteProfile: profile
-          ? { ...settings.athleteProfile, ...profile }
-          : settings.athleteProfile,
-      });
+        userName: name?.trim() ? name.trim() : s.userName,
+        athleteProfile: profile ? { ...s.athleteProfile, ...profile } : s.athleteProfile,
+      }));
 
     /** Sprungtest: Sprunghöhe festhalten (7-Tage-Schnitt = Referenz). */
     const addJump = (heightCm: number) => {
@@ -1283,9 +1456,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     };
 
     const acceptExam = () =>
-      void saveSettings({ ...settings, lastExamDate: new Date().toISOString() });
+      void updateSettings({ lastExamDate: new Date().toISOString() });
     const acceptDeload = () =>
-      void saveSettings({ ...settings, lastDeloadDate: new Date().toISOString() });
+      void updateSettings({ lastDeloadDate: new Date().toISOString() });
     const dismissCard = (card: CoachCard) =>
       setDismissed((d) => [...d, card.kind + (card.exId ?? "")]);
 
@@ -1361,6 +1534,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       // um 23:40 startet und nach Mitternacht endet, gehört zur alten Woche.
       const jetzt = new Date().toISOString();
       const begonnen = new Date(state.startedAt).getTime();
+      // Eine liegengebliebene Einheit (älter als 6 h, von der Heute-Seite aus
+      // gespeichert) hat keine brauchbare Dauer: „Start bis jetzt“ wären Stunden.
+      const liegengeblieben = istLiegengeblieben(state.startedAt);
       const newSession: LoggedSession = {
         date: Number.isFinite(begonnen) ? new Date(begonnen).toISOString() : jetzt,
         dayKey: "today",
@@ -1370,7 +1546,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
       };
       if (state.backTraffic) newSession.backTraffic = state.backTraffic;
-      const durationMin = sessionMinutes(state.startedAt, jetzt);
+      const durationMin = liegengeblieben ? null : sessionMinutes(state.startedAt, jetzt);
       if (durationMin != null) newSession.durationMin = durationMin;
       const noteText = (state.note ?? "").trim();
       if (noteText) newSession.note = noteText;
@@ -1381,7 +1557,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       // Ort als Namens-Snapshot (wie die Übungs-Notiz): was an dem Tag galt.
       const ortName = s.ort?.name ?? activeGym?.name;
       if (ortName) newSession.ort = ortName;
-      const newLog = [...log, newSession];
+      // Nach Datum einsortiert: eine nachträglich gespeicherte Einheit von
+      // gestern gehört vor die von heute (der Verlauf ist überall aufsteigend).
+      const newLog = nachDatum([...log, newSession]);
       // Summary for the completion takeover — computed BEFORE state clears so
       // the celebration can show exactly what this session achieved.
       const lvlBefore = trainingLevel({ log, allLib, settings });
@@ -1411,12 +1589,15 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const summary: SessionSummary = { ...core, debrief };
       if (durationMin != null) summary.durationMin = durationMin;
       setSaving(true);
-      await storage.setJSON(KEYS.log, newLog);
-      setLog(newLog);
+      const gespeichert = await storage.setJSON(KEYS.log, newLog, { still: true });
       setSaving(false);
+      // Nicht gespeichert (Speicher voll): NICHTS wegräumen. Früher verschwand
+      // hier die laufende Einheit, obwohl sie nirgends stand.
+      if (!gespeichert) throw new Error("Einheit konnte nicht gespeichert werden");
+      setLog(newLog);
       // Heute-Einheit als erledigt stempeln — die Startseite zeigt dann Ruhe
-      // statt eines abgearbeiteten Plans.
-      setTodaySession({ ...s, completedAt: new Date().toISOString() });
+      // statt eines abgearbeiteten Plans. Nur, wenn die Einheit von heute ist.
+      if (s.date === todayKey()) setTodaySession({ ...s, completedAt: new Date().toISOString() });
       void storage.remove(KEYS.active);
       setTodayReadiness(null);
       setBackSpareToday(false);
@@ -1449,13 +1630,40 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const deleteSession = async (realIdx: number) => {
       const newLog = log.filter((_, i) => i !== realIdx);
       setLog(newLog);
-      if (newLog.length) await storage.setJSON(KEYS.log, newLog);
-      else await storage.remove(KEYS.log);
+      // Auch die leere Liste wird GESCHRIEBEN (nicht der Schlüssel entfernt):
+      // nur so erfährt die Cloud vom Löschen. Sonst kam die letzte Einheit
+      // beim nächsten Abgleich zurück.
+      await storage.setJSON(KEYS.log, newLog);
     };
 
+    /** Tauscht den Verlauf gegen die Sicherung (Stand vor der ersten Änderung
+     *  des Tages). Der bisherige Verlauf wird dabei selbst zur Sicherung. */
+    const holeSicherung = async (): Promise<boolean> => {
+      const liste = await storage.tauscheSicherung(KEYS.log);
+      if (!liste) return false;
+      setLog(nachDatum(sanitizeSessions(liste)));
+      return true;
+    };
+
+    /** „Alle Daten löschen“: wirklich alles — Verlauf, Körperwerte, Cardio,
+     *  eigene Übungen, Orte, Einstellungen, Fotos — auf dem Gerät und in der
+     *  Cloud. Danach startet die App wie neu. (Früher: nur der Verlauf, und
+     *  der kam aus der Cloud zurück.) */
     const resetAll = async () => {
-      await storage.remove(KEYS.log);
-      setLog([]);
+      const konto = await cloudKonto();
+      // Mit Frist: bei „verbunden, aber nichts kommt an“ bliebe das Löschen
+      // sonst hängen. Was nicht mehr ankommt, wird unten vorgemerkt.
+      const cloudWeg = await Promise.race([
+        cloudLeeren(),
+        new Promise<false>((r) => window.setTimeout(() => r(false), 8000)),
+      ]);
+      if (cloudWeg === true) void leereCloudFotos();
+      await leereFotos();
+      await storage.leereAlles();
+      // Die Cloud ließ sich nicht leeren (kein Netz): für dieses Konto
+      // vormerken. Bis es nachgeholt ist, wird von dort nichts zurückgeholt.
+      if (cloudWeg !== true && konto && cloudEmail) await merkeCloudLeeren(konto);
+      window.location.replace("/");
     };
 
     const addBodyMetric = async (m: BodyMetric) => {
@@ -1470,12 +1678,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       if (target?.photoId) void deletePhoto(target.photoId);
       const next = body.filter((_, i) => i !== idx);
       setBody(next);
-      if (next.length) await storage.setJSON(KEYS.body, next);
-      else await storage.remove(KEYS.body);
+      await storage.setJSON(KEYS.body, next); // auch leer: siehe deleteSession
     };
 
-    const exportData = (): ExportEnvelope => ({
-      schemaVersion: 3,
+    const exportData = async (): Promise<ExportEnvelope> => ({
+      schemaVersion: 4,
       exportedAt: new Date().toISOString(),
       log,
       equip,
@@ -1487,32 +1694,89 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       exerciseVideos,
       exerciseNotes,
       warmupVideos,
-      settings,
+      settings: ohneZugaenge(settings),
+      disabledExercises,
+      hiddenCardio,
+      jumps,
+      mission,
+      chat: pruefeChat(await storage.getJSON<unknown>(KEYS.chat, [])),
     });
 
-    const importData = async (raw: unknown): Promise<boolean> => {
+    const importData = async (
+      raw: unknown,
+      modus: ImportModus = "ergaenzen",
+    ): Promise<boolean> => {
       if (!raw || typeof raw !== "object") return false;
       const d = raw as Record<string, unknown>;
       if (!Array.isArray(d.log)) return false;
+      const dazu = modus === "ergaenzen";
       // Sanitizer statt roher Cast — dieselbe Härtung wie loadAll (eine Wahrheit).
       // Ein fehlendes Feld behält den aktuellen State (Teil-Backup löscht nichts).
-      const nextLog = sanitizeSessions(d.log);
-      const nextEquipRaw = Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
-      const nextChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : choices;
-      const nextCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : custom;
-      const nextBody = d.body !== undefined ? sanitizeBody(d.body) : body;
-      const nextCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : cardio;
-      const nextGymsRaw = d.gyms !== undefined ? sanitizeGyms(d.gyms) : gyms;
-      const nextExerciseVideos =
-        d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : exerciseVideos;
-      const nextWarmupVideos =
-        d.warmupVideos !== undefined ? sanitizeVideoMap(d.warmupVideos) : warmupVideos;
-      const nextExerciseNotes =
-        d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : exerciseNotes;
-      const nextSettingsRaw =
-        d.settings && typeof d.settings === "object"
-          ? { ...DEFAULT_SETTINGS, ...(d.settings as AppSettings) }
-          : settings;
+      const dLog = sanitizeSessions(d.log);
+      const nextLog = nachDatum(dazu ? ergaenze(log, dLog, (x) => x.date) : dLog);
+      const nextEquipRaw =
+        !dazu && Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
+      const dChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : null;
+      const nextChoices = dChoices ? (dazu ? { ...dChoices, ...choices } : dChoices) : choices;
+      const dCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : null;
+      const nextCustom = dCustom ? (dazu ? ergaenze(custom, dCustom, (x) => x.id) : dCustom) : custom;
+      const dBody = d.body !== undefined ? sanitizeBody(d.body) : null;
+      const nextBody = dBody
+        ? nachDatum(dazu ? ergaenze(body, dBody, (x) => x.date) : dBody)
+        : body;
+      const dCardio = d.cardio !== undefined ? sanitizeCardio(d.cardio) : null;
+      // mergeCardio: der zweite gewinnt bei gleicher Kennung — also das Gerät.
+      const nextCardio = dCardio ? (dazu ? mergeCardio(dCardio, cardio) : dCardio) : cardio;
+      const dGyms = d.gyms !== undefined ? sanitizeGyms(d.gyms) : null;
+      const nextGymsRaw = dGyms ? (dazu ? ergaenze(gyms, dGyms, (x) => x.id) : dGyms) : gyms;
+      const dVideos = d.exerciseVideos !== undefined ? sanitizeVideoMap(d.exerciseVideos) : null;
+      const nextExerciseVideos = dVideos
+        ? dazu
+          ? { ...dVideos, ...exerciseVideos }
+          : dVideos
+        : exerciseVideos;
+      const dWarm = d.warmupVideos !== undefined ? sanitizeVideoMap(d.warmupVideos) : null;
+      const nextWarmupVideos = dWarm ? (dazu ? { ...dWarm, ...warmupVideos } : dWarm) : warmupVideos;
+      const dNotes = d.exerciseNotes !== undefined ? sanitizeStringMap(d.exerciseNotes) : null;
+      const nextExerciseNotes = dNotes
+        ? dazu
+          ? { ...dNotes, ...exerciseNotes }
+          : dNotes
+        : exerciseNotes;
+      // Einstellungen: beim Ergänzen bleiben die des Geräts. Beim Ersetzen
+      // kommen die der Datei — die Zugänge zu Strava und Spotify aber immer
+      // vom Gerät (alte Dateien enthielten sie noch, und die sind verfallen).
+      const jetzige = settingsRef.current;
+      const nextSettingsRaw: AppSettings =
+        !dazu && d.settings && typeof d.settings === "object" && !Array.isArray(d.settings)
+          ? {
+              ...DEFAULT_SETTINGS,
+              ...ohneZugaenge(d.settings as AppSettings),
+              strava: jetzige.strava,
+              spotify: jetzige.spotify,
+            }
+          : jetzige;
+      const dAus = d.disabledExercises !== undefined ? nurTexte(d.disabledExercises) : null;
+      const nextDisabled = dAus ? (dazu ? vereinige(disabledExercises, dAus) : dAus) : disabledExercises;
+      const dVersteckt = d.hiddenCardio !== undefined ? nurTexte(d.hiddenCardio) : null;
+      const nextHidden = dVersteckt
+        ? dazu
+          ? vereinige(hiddenCardio, dVersteckt)
+          : dVersteckt
+        : hiddenCardio;
+      const dSpruenge = d.jumps !== undefined ? pruefeSpruenge(d.jumps) : null;
+      const nextJumps = dSpruenge
+        ? nachDatum(dazu ? ergaenze(jumps, dSpruenge, (x) => x.date) : dSpruenge).slice(-60)
+        : jumps;
+      const dMission =
+        d.mission && typeof d.mission === "object" && (d.mission as StoredMission).targets &&
+        typeof (d.mission as StoredMission).targets === "object"
+          ? (d.mission as StoredMission)
+          : null;
+      const nextMission = dazu ? (mission ?? dMission) : (dMission ?? mission);
+      const dChat = d.chat !== undefined ? pruefeChat(d.chat) : null;
+      const jetzigerChat = pruefeChat(await storage.getJSON<unknown>(KEYS.chat, []));
+      const nextChat = dChat ? (dazu && jetzigerChat.length ? jetzigerChat : dChat) : jetzigerChat;
       // Dieselbe Orte-Heilung wie beim Laden: ein Backup ohne Orte oder mit
       // verwaister `activeGymId` darf keinen ortlosen Zustand hinterlassen.
       const orte = ensureOrte(nextGymsRaw, nextEquipRaw, nextSettingsRaw);
@@ -1520,6 +1784,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const nextSettings = orte.settings;
       const nextEquip =
         nextGyms.find((g) => g.id === nextSettings.activeGymId)?.equip ?? nextEquipRaw;
+      // Den bisherigen Stand festhalten, BEVOR etwas überschrieben wird — auch
+      // wenn heute schon eine Sicherung entstand. So lässt sich ein falsch
+      // eingespieltes Backup in den Einstellungen zurücknehmen.
+      await storage.sichereJetzt(KEYS.log);
+      await storage.sichereJetzt(KEYS.body);
       setLog(nextLog);
       setEquipFlat(nextEquip);
       setChoices(nextChoices);
@@ -1530,21 +1799,30 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setExerciseVideos(nextExerciseVideos);
       setWarmupVideos(nextWarmupVideos);
       setExerciseNotes(nextExerciseNotes);
-      setSettings(nextSettings);
-      await Promise.all([
-        storage.setJSON(KEYS.log, nextLog),
-        storage.setJSON(KEYS.equip, nextEquip),
-        storage.setJSON(KEYS.choices, nextChoices),
-        storage.setJSON(KEYS.custom, nextCustom),
-        storage.setJSON(KEYS.body, nextBody),
-        storage.setJSON(KEYS.cardio, nextCardio),
-        storage.setJSON(KEYS.gyms, nextGyms),
-        storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos),
-        storage.setJSON(KEYS.warmupVideos, nextWarmupVideos),
-        storage.setJSON(KEYS.exerciseNotes, nextExerciseNotes),
-        storage.setJSON(KEYS.settings, nextSettings),
+      setDisabledExercises(nextDisabled);
+      setHiddenCardio(nextHidden);
+      setJumps(nextJumps);
+      setMission(nextMission);
+      const still = { still: true };
+      const ergebnisse = await Promise.all([
+        storage.setJSON(KEYS.log, nextLog, still),
+        storage.setJSON(KEYS.equip, nextEquip, still),
+        storage.setJSON(KEYS.choices, nextChoices, still),
+        storage.setJSON(KEYS.custom, nextCustom, still),
+        storage.setJSON(KEYS.body, nextBody, still),
+        storage.setJSON(KEYS.cardio, nextCardio, still),
+        storage.setJSON(KEYS.gyms, nextGyms, still),
+        storage.setJSON(KEYS.exerciseVideos, nextExerciseVideos, still),
+        storage.setJSON(KEYS.warmupVideos, nextWarmupVideos, still),
+        storage.setJSON(KEYS.exerciseNotes, nextExerciseNotes, still),
+        storage.setJSON(KEYS.disabledExercises, nextDisabled, still),
+        storage.setJSON(KEYS.hiddenCardio, nextHidden, still),
+        storage.setJSON(KEYS.jumps, nextJumps, still),
+        storage.setJSON(KEYS.chat, nextChat, still),
+        nextMission ? storage.setJSON(KEYS.mission, nextMission, still) : Promise.resolve(true),
+        saveSettings(nextSettings).then(() => true),
       ]);
-      return true;
+      return ergebnisse.every(Boolean);
     };
 
     return {
@@ -1624,6 +1902,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       deleteBodyMetric,
       exportData,
       importData,
+      holeSicherung,
       cardio,
       addManualCardio,
       removeCardio,
@@ -1669,6 +1948,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     saveEquip,
     saveCustom,
     saveSettings,
+    updateSettings,
+    cloudEmail,
     saveGyms,
     saveCardio,
     saveExerciseVideos,

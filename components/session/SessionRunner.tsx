@@ -33,6 +33,7 @@ import {
   itemDone,
   itemExercise,
   loadActiveState,
+  loadLiegengeblieben,
   nextOpenItemIndex,
   nextSetPreview,
   persistActiveState,
@@ -366,8 +367,14 @@ export function SessionRunner() {
     if (bootedRef.current) return;
     bootedRef.current = true;
     let alive = true;
-    void loadActiveState().then((saved) => {
+    void Promise.all([loadActiveState(), loadLiegengeblieben()]).then(([saved, liegt]) => {
       if (!alive) return;
+      // Eine liegengebliebene Einheit mit Sätzen darf nicht überschrieben
+      // werden: erst auf Heute speichern oder verwerfen.
+      if (!saved && liegt) {
+        setBoot("none");
+        return;
+      }
       if (saved) {
         const items = saved.session.items.filter((it) => byId.has(it.exerciseId));
         if (items.length > 0) {
@@ -835,7 +842,18 @@ export function SessionRunner() {
     }
     setCompleteSieger(sieger);
     commit(final);
-    const summary = await saveActiveSession(final);
+    let summary: Awaited<ReturnType<typeof saveActiveSession>>;
+    try {
+      summary = await saveActiveSession(final);
+    } catch {
+      // Das Gerät konnte nicht speichern. Die Einheit bleibt offen und liegt
+      // weiter im Live-Stand — nichts ist verloren, „Speichern“ geht erneut.
+      toast("Speichern hat nicht geklappt: Der Speicher des Geräts ist voll. Deine Einheit bleibt offen.", {
+        kind: "error",
+        duration: 8000,
+      });
+      return;
+    }
     activeRef.current = null;
     setActive(null);
     if (summary) {

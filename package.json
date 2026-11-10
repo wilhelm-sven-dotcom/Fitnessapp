@@ -13,6 +13,7 @@
     "pruefe:zeit": "node scripts/pruefe-zeitbudget.mjs",
     "pruefe:ort": "node scripts/pruefe-ort.mjs",
     "pruefe:offline": "node scripts/pruefe-offline.mjs",
+    "pruefe:daten": "node scripts/pruefe-daten.mjs",
     "tempo": "node scripts/tempo.mjs",
     "pruefe": "node scripts/pruefe-alle.mjs",
     "pruefe:tokens": "node scripts/pruefe-tokens.mjs",

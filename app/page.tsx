@@ -5,6 +5,7 @@ import { CheckCircle2, ChevronRight, RefreshCw, ShieldAlert, ShieldCheck } from 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StreakCalendar } from "@/components/progress/StreakCalendar";
+import { OffeneEinheit } from "@/components/home/OffeneEinheit";
 import { OrtFrage } from "@/components/home/OrtFrage";
 import { SessionCard } from "@/components/home/SessionCard";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
@@ -20,7 +21,11 @@ import { useTraining } from "@/components/providers/TrainingProvider";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { homeChips } from "@/lib/coaching";
 import { tap } from "@/lib/haptics";
-import { loadActiveState } from "@/lib/active-session";
+import {
+  loadActiveState,
+  loadLiegengeblieben,
+  type ActiveSessionState,
+} from "@/lib/active-session";
 import { geraeteLabels, hasFuer, ortSignatur } from "@/lib/orte";
 import { reqOk } from "@/lib/progression";
 import { generateFallbackSession } from "@/lib/session-fallback";
@@ -35,6 +40,7 @@ import {
 import { estimateSessionMin } from "@/lib/session-time";
 import { fmtPlatteDatum, plattenNummer } from "@/lib/platte";
 import { SPRING } from "@/lib/motion";
+import { toast } from "@/lib/toast";
 import { requestAtlasSession, type AtlasFehler } from "@/lib/today-session";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +73,8 @@ export default function HomePage() {
     gyms,
     activeGym,
     waehleOrt,
+    saveActiveSession,
+    discardActive,
   } = useTraining();
 
   const has = useMemo(
@@ -100,17 +108,40 @@ export default function HomePage() {
   const [running, setRunning] = useState<{ name: string } | null>(null);
   /** Erst nach dieser Prüfung darf ein Ortswechsel neu komponieren. */
   const [aktivGeprueft, setAktivGeprueft] = useState(false);
+  /** Eine Einheit von früher (älter als 6 h), in der schon Sätze stehen. */
+  const [liegt, setLiegt] = useState<ActiveSessionState | null>(null);
+  const [liegtBusy, setLiegtBusy] = useState(false);
   useEffect(() => {
     let alive = true;
-    void loadActiveState().then((st) => {
+    void Promise.all([loadActiveState(), loadLiegengeblieben()]).then(([st, alt]) => {
       if (!alive) return;
       setRunning(st ? { name: st.session.name } : null);
+      setLiegt(alt);
       setAktivGeprueft(true);
     });
     return () => {
       alive = false;
     };
   }, []);
+  const speichereLiegt = async () => {
+    if (!liegt) return;
+    setLiegtBusy(true);
+    try {
+      const gespeichert = await saveActiveSession(liegt);
+      toast(gespeichert ? "Einheit gespeichert." : "In der Einheit stand kein Satz.", {
+        kind: gespeichert ? "success" : "info",
+      });
+      setLiegt(null);
+    } catch {
+      toast("Speichern hat nicht geklappt: Der Speicher des Geräts ist voll.", { kind: "error" });
+    } finally {
+      setLiegtBusy(false);
+    }
+  };
+  const verwerfeLiegt = () => {
+    discardActive();
+    setLiegt(null);
+  };
 
   // Laufende Referenzen für die asynchrone KI-Antwort: nur eine unveränderte
   // Fallback-Session desselben Kompositions-Laufs darf ersetzt werden.
@@ -488,6 +519,15 @@ export default function HomePage() {
         </div>
       )}
 
+      {liegt && (
+        <OffeneEinheit
+          state={liegt}
+          busy={liegtBusy}
+          onSpeichern={() => void speichereLiegt()}
+          onVerwerfen={verwerfeLiegt}
+        />
+      )}
+
       {/* Weg zurück ins Training nur, wenn die Karte ihn nicht schon trägt
           („Weiter geht’s“) — etwa wenn die Einheit gestern Abend
           begann und heute noch die Ortsfrage steht. */}
@@ -584,6 +624,7 @@ export default function HomePage() {
       {/* Zeit + Start über der Tab-Leiste — nie während der Ortsfrage (erst
           wählen, dann komponieren) und nicht für eine erledigte Einheit. */}
       {!frageOffen &&
+        !liegt &&
         todaySession &&
         todaySession.items.length > 0 &&
         !todaySession.completedAt && (

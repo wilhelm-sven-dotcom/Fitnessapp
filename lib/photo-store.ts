@@ -78,6 +78,15 @@ export async function deletePhoto(id: string): Promise<void> {
   void deleteCloudPhoto(id);
 }
 
+/** Alle Fotos dieses Geräts löschen („Alle Daten löschen“). */
+export async function leereFotos(): Promise<void> {
+  if (!idbSupported()) return;
+  await new Promise<void>((resolve) => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = req.onerror = req.onblocked = () => resolve();
+  });
+}
+
 /** Shrink an uploaded image to a sane size before storing. Falls back to the original. */
 export async function downscaleImage(
   file: File,
@@ -139,6 +148,29 @@ async function deleteCloudPhoto(id: string): Promise<void> {
     await sb.storage.from(BUCKET).remove([loc.path]);
   } catch {
     /* ignore */
+  }
+}
+
+/** Alle Fotos des angemeldeten Nutzers in der Cloud löschen. `true`: weg
+ *  (oder es gab keine); `false`: ging nicht; `null`: niemand angemeldet. */
+export async function leereCloudFotos(): Promise<boolean | null> {
+  const sb = await loadSupabase();
+  const loc = await cloudPath("");
+  if (!sb || !loc) return null;
+  const ordner = loc.path.replace(/\/$/, "");
+  try {
+    for (let runde = 0; runde < 20; runde++) {
+      const { data, error } = await sb.storage.from(BUCKET).list(ordner, { limit: 100 });
+      if (error) return false;
+      if (!data?.length) return true;
+      const { error: weg } = await sb.storage
+        .from(BUCKET)
+        .remove(data.map((f) => `${ordner}/${f.name}`));
+      if (weg) return false;
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 
