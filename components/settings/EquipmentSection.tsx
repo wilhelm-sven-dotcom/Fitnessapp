@@ -11,7 +11,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { Toggle } from "@/components/ui/Toggle";
 import { EQUIP_LIST, MASCHINEN, MASCHINEN_KEYS } from "@/lib/exercises";
-import { hasFuer } from "@/lib/orte";
+import { gewichtsstufe, hasFuer } from "@/lib/orte";
 import { availableExercises } from "@/lib/today-session";
 import { muscleOf, MUSCLE_ORDER } from "@/lib/volume";
 
@@ -34,6 +34,8 @@ export function EquipmentSection() {
     removeGym,
     allLib,
     disabledExercises,
+    settings,
+    setWeightStep,
   } = useTraining();
   const [editId, setEditId] = useState<string | null>(null);
   const [neuerOrt, setNeuerOrt] = useState("");
@@ -159,6 +161,23 @@ export function EquipmentSection() {
           onChange={(on) => setNurGeraete(on, ort.id)}
           label="Nur an Geräten trainieren"
           hint="ATLAS plant hier nur Maschinen und Kabelzug, keine Hanteln und kein Körpergewicht."
+        />
+      </div>
+
+      <div className="mt-4">
+        <p className="text-sm font-medium text-fg">Gewichtsstufe an diesem Ort</p>
+        <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
+          Der kleinste Sprung, den du hier laden kannst. Vorschläge und die
+          Plus-Minus-Tasten runden darauf.
+        </p>
+        <Segment
+          label="Gewichtsstufe an diesem Ort"
+          options={[1.25, 2.5, 5].map((stufe) => ({
+            value: stufe,
+            label: `${String(stufe).replace(".", ",")} kg`,
+          }))}
+          value={gewichtsstufe(ort, settings)}
+          onChange={(stufe) => setWeightStep(stufe, ort.id)}
         />
       </div>
 

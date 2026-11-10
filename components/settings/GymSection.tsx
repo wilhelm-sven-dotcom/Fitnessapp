@@ -9,14 +9,13 @@ import { Toggle } from "@/components/ui/Toggle";
 import { useTraining } from "@/components/providers/TrainingProvider";
 
 /** Gym-Modus: alles, was WÄHREND einer Einheit wirkt (Ansagen, Töne, Wake
- *  Lock, Gewichtsstufe). Musik-Absenkung steht bei Spotify, ATLAS im
- *  Training bei ATLAS — dort, wo man sie sucht. */
+ *  Lock). Musik-Absenkung steht bei Spotify, ATLAS im Training bei ATLAS,
+ *  die Gewichtsstufe beim Ort — dort, wo man sie sucht. */
 export function GymSection() {
   const {
     settings,
     setVoiceCues,
     setCueVolume,
-    setWeightStep,
     setBikeWarmup,
     setKeepAwake,
   } = useTraining();
@@ -45,21 +44,6 @@ export function GymSection() {
           label="Display bleibt an"
           hint="Der Bildschirm bleibt wach, solange die App offen ist — kein Sperrbildschirm im Gym, auch zwischen den Übungen."
         />
-        <div>
-          <p className="text-sm font-medium text-fg">Gewichtsstufe</p>
-          <p className="mb-2 mt-0.5 text-xs leading-relaxed text-muted">
-            Kleinste Hantelstufe, die du laden kannst — die Vorschläge runden darauf.
-          </p>
-          <Segment
-            label="Gewichtsstufe"
-            options={[1.25, 2.5, 5].map((s) => ({
-              value: s,
-              label: `${String(s).replace(".", ",")} kg`,
-            }))}
-            value={settings.weightStep ?? 2.5}
-            onChange={setWeightStep}
-          />
-        </div>
         <div>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium text-fg">Signalton-Lautstärke</p>

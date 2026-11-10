@@ -141,7 +141,8 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
 - **Segment** (genau eine Wahl): Pille mit Rand, aktives Segment Tinte-Fläche,
   inaktiv `text-fg`; `aria-pressed`; Knopfname = sichtbarer Text
   (Test-Anker Ortsumschalter).
-- **Toggle:** Pille mit Rand, an Blau, aus Weiß; `role="switch"`.
+- **Toggle:** Pille mit Rand (52 × 32 px), an Blau, aus Weiß; `role="switch"`.
+  Die Tippfläche ist 44 px hoch (der Knopf ist größer als die Pille).
 - **Sticker** (`Sticker`): `rounded-kachel border-dick border-rand`, Bricolage
   800 14 px, Töne `sonne` (Standard), `orange` (nur Rekord), `blau`, `weiss`,
   statisch gedreht (−3° Standard, ±6° max). Kurze Etiketten, nie Fließtext.
@@ -157,9 +158,19 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
 - **Felder:** `rounded-inner border-dick border-rand bg-surface-1 px-3`,
   `text-base`, Fokus `focus-visible:ring-2 focus-visible:ring-fokus`.
 - **Pressable / PressableLink:** Druck `scale .985`, Fokusring `ring-fokus`.
-- **Toast:** `bg-strong text-on-strong rounded-pill`. **Skeleton:** `bg-surface-2`.
-- **Fokus & Ziele:** immer `focus-visible:`, Ziele ≥ 44 px, `aria-pressed`
-  an Auswahl, `disabled:opacity-40`.
+- **Toast:** `bg-strong text-on-strong rounded-card` (einzeilig wirkt er wie
+  eine Pille, mehrzeilig bleiben die Ecken ruhig). Er sitzt über Leiste und
+  Dock (`--nav-h`), im Training OBEN unter dem Kopf — nie über „Satz
+  eintragen“. Fehler tragen `role="alert"`. **Skeleton:** `bg-surface-2`.
+- **Fokus & Ziele:** immer `focus-visible:`, Ziele ≥ 44 px (`min-h-11`,
+  `h-11 w-11`; darf die Zeichnung kleiner sein, wächst die Tippfläche über
+  Polster, wie beim Übersichts-Balken im Training), `aria-pressed` an Auswahl,
+  `disabled:opacity-40`. Knöpfe nur mit Symbol tragen ein `aria-label`,
+  Felder ein `aria-label` oder ein `<label>` (der Platzhalter ist kein Name).
+  `npm run pruefe:bedienung` misst beides auf jedem Bildschirm.
+- **Offline:** ohne Netz steht im Kopf ein Sonnen-Etikett „Offline“ (im
+  Training klein unter der Restzeit), `lib/use-offline.ts`. Der Inhalt jeder
+  Seite liegt in `<main>` (AppShell).
 
 ## Signatur-Elemente
 

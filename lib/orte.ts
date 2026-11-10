@@ -38,6 +38,22 @@ export function cleanEquip(x: unknown): EquipKey[] {
   return out;
 }
 
+/**
+ * Gewichtsstufe, auf die Vorschläge und die ±-Tasten runden: die des Orts,
+ * sonst die allgemeine, sonst 2,5 kg. Vorher gab es nur EINE Stufe für alles —
+ * wer zuhause mit 1,25-kg-Scheiben und im Studio an 5-kg-Stufen trainiert,
+ * bekam an einem der beiden Orte Vorschläge, die sich nicht laden ließen.
+ */
+export function gewichtsstufe(
+  ort: Pick<GymProfile, "weightStep"> | null | undefined,
+  settings: Pick<AppSettings, "weightStep">,
+): number {
+  for (const v of [ort?.weightStep, settings.weightStep]) {
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) return v;
+  }
+  return 2.5;
+}
+
 /** `has()` eines Orts: seine Geräte plus die Regel „nur an Geräten“. */
 export function hasFuer(g: Pick<GymProfile, "equip" | "nurGeraete">): (k: string) => boolean {
   return (k) => (k === NUR_GERAETE ? !!g.nurGeraete : (g.equip as string[]).includes(k));

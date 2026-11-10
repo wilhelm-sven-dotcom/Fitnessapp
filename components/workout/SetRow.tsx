@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Sticker } from "@/components/ui/Sticker";
 import { Pressable } from "@/components/ui/pressable";
 import { dumbbellHint } from "@/lib/equipment";
-import { fmtSatz } from "@/lib/format";
+import { fmtGewicht, fmtSatz } from "@/lib/format";
 import { tick } from "@/lib/haptics";
 import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -326,8 +326,8 @@ export function SetRow({
               className={inputClass}
             />
             <div className="mt-2 flex justify-center gap-2.5">
-              <StepBtn dir={-1} label={`Gewicht ${weightStep} kg weniger`} onStep={() => stepWeight(-1)} />
-              <StepBtn dir={1} label={`Gewicht ${weightStep} kg mehr`} onStep={() => stepWeight(1)} />
+              <StepBtn dir={-1} label={`Gewicht ${fmtGewicht(weightStep)} kg weniger`} onStep={() => stepWeight(-1)} />
+              <StepBtn dir={1} label={`Gewicht ${fmtGewicht(weightStep)} kg mehr`} onStep={() => stepWeight(1)} />
             </div>
           </div>
           {/* Wiederholungen: ±1, Basis ist der Vorschlag. */}

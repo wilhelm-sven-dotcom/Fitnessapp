@@ -34,7 +34,7 @@ export default function FortschrittPage() {
             onClick={() => setSeg(s.key)}
             aria-pressed={seg === s.key}
             className={cn(
-              "relative flex-1 pb-3 pt-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus",
+              "relative min-h-11 flex-1 pb-3 pt-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus",
               seg === s.key ? "text-fg" : "text-muted",
             )}
           >

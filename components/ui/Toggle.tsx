@@ -4,7 +4,8 @@ import { Pressable } from "@/components/ui/pressable";
 import { cn } from "@/lib/utils";
 
 /** Schalter (Pille mit Tinte-Rand) mit rundem Knopf; der Zustandswechsel
- *  bleibt hart ohne Gleiten. An = Blau, aus = Weiß. `role="switch"`. */
+ *  bleibt hart ohne Gleiten. An = Blau, aus = Weiß. `role="switch"`.
+ *  Die Pille ist 52 × 32 px, die Tippfläche darum 44 px hoch. */
 export function Toggle({
   checked,
   onChange,
@@ -27,16 +28,20 @@ export function Toggle({
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={cn(
-          "relative h-8 shrink-0 rounded-pill border-dick border-rand focus:outline-none",
-          checked ? "bg-accent" : "bg-surface-1",
-        )}
-        style={{ width: 52 }}
+        className="flex h-11 shrink-0 items-center rounded-pill focus:outline-none"
       >
         <span
-          className={cn("absolute h-5 w-5 rounded-pill", checked ? "bg-on-accent" : "bg-fg")}
-          style={{ top: 3, left: checked ? 24 : 3 }}
-        />
+          className={cn(
+            "relative block h-8 rounded-pill border-dick border-rand",
+            checked ? "bg-accent" : "bg-surface-1",
+          )}
+          style={{ width: 52 }}
+        >
+          <span
+            className={cn("absolute h-5 w-5 rounded-pill", checked ? "bg-on-accent" : "bg-fg")}
+            style={{ top: 3, left: checked ? 24 : 3 }}
+          />
+        </span>
       </Pressable>
     </div>
   );

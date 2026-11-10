@@ -135,7 +135,7 @@ export function BodyTab() {
     <div>
       <Pressable
         onClick={() => setEntryOpen(true)}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+        className="mb-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-pill bg-surface-2 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       >
         <Plus size={16} /> Körperdaten eintragen
       </Pressable>
@@ -245,7 +245,7 @@ export function BodyTab() {
                         onClick={() => setBeforeIdx(pIdx)}
                         aria-label="Als Vorher-Bild setzen"
                         className={cn(
-                          "h-7 w-7 rounded-pill font-mono text-xs font-bold focus:outline-none",
+                          "h-11 w-11 rounded-pill font-mono text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                           pIdx === bIdx ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                         )}
                       >
@@ -255,7 +255,7 @@ export function BodyTab() {
                         onClick={() => setAfterIdx(pIdx)}
                         aria-label="Als Nachher-Bild setzen"
                         className={cn(
-                          "h-7 w-7 rounded-pill font-mono text-xs font-bold focus:outline-none",
+                          "h-11 w-11 rounded-pill font-mono text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                           pIdx === aIdx
                             ? "bg-accent text-on-accent"
                             : "bg-surface-2 text-muted",
@@ -272,7 +272,7 @@ export function BodyTab() {
                         void deleteBodyMetric(i);
                         toast("Eintrag gelöscht.");
                       }}
-                      className="shrink-0 rounded-pill px-2 py-1 text-xs font-medium text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+                      className="flex min-h-11 shrink-0 items-center rounded-pill px-3 text-sm font-semibold text-status-danger focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                     >
                       Löschen?
                     </Pressable>

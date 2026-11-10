@@ -228,12 +228,27 @@ try {
   pruefe(/AKTUELL: Eben Satz 1\/\d+ von .* 40 Wdh/.test(satz?.frage ?? ""), "C · der eben beendete Satz steht im Transkript");
 
   // ── D · Chat ───────────────────────────────────────────────────────────
+  /**
+   * Der gespeicherte Chat-Verlauf, sobald er `laenge` Nachrichten hat. Der Text
+   * steht schon WÄHREND des Stroms auf dem Bildschirm, gespeichert wird erst
+   * nach dessen Ende — wer sofort nachsieht, liest manchmal den alten Stand.
+   */
+  const verlauf = async (laenge) => {
+    await page
+      .waitForFunction(
+        (n) => JSON.parse(localStorage.getItem("wilhelm-training-chat") || "[]").length >= n,
+        laenge,
+        { timeout: 8000 },
+      )
+      .catch(() => {});
+    return JSON.parse(await page.evaluate(() => localStorage.getItem("wilhelm-training-chat") || "[]"));
+  };
   await page.goto(BASE + "/coach", { waitUntil: "networkidle" });
   const feld = page.getByLabel("Nachricht an ATLAS");
   await feld.fill("Wie lief die Woche?");
   await page.getByLabel("Senden").click();
   await page.getByText("Morgen Zug.", { exact: false }).first().waitFor({ timeout: 15000 });
-  const chat1 = JSON.parse(await page.evaluate(() => localStorage.getItem("wilhelm-training-chat")));
+  const chat1 = await verlauf(2);
   pruefe(
     chat1.length === 2 && chat1[1].content === "Beobachtung: Du bist dran geblieben.\nPlan: Morgen Zug.",
     "D · die Antwort kommt als Strom an und steht sauber im Verlauf",
@@ -248,7 +263,7 @@ try {
   await feld.fill("Und jetzt?");
   await page.getByLabel("Senden").click();
   await page.getByText("Dazu kann ATLAS nichts sagen.").waitFor({ timeout: 15000 });
-  const chat2 = JSON.parse(await page.evaluate(() => localStorage.getItem("wilhelm-training-chat")));
+  const chat2 = await verlauf(3);
   pruefe(
     chat2.length === 3 && chat2[2].role === "user" && !JSON.stringify(chat2).includes("Halber Satz"),
     "D · bei einer Ablehnung steht kein Fehlersatz und kein halber Text im Verlauf, die Frage bleibt",
@@ -258,7 +273,7 @@ try {
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Erneut senden" }).click();
   await page.getByText("Morgen Zug.", { exact: false }).nth(1).waitFor({ timeout: 15000 });
-  const chat3 = JSON.parse(await page.evaluate(() => localStorage.getItem("wilhelm-training-chat")));
+  const chat3 = await verlauf(4);
   pruefe(
     chat3.length === 4 && chat3[2].content === "Und jetzt?" && chat3[3].role === "assistant",
     "D · „Erneut senden“ steht auch nach dem Neuladen da und holt die Antwort, ohne die Frage zu verdoppeln",
@@ -267,6 +282,10 @@ try {
   // ── E · Wochen-Rückblick ───────────────────────────────────────────────
   await page.getByRole("button", { name: "Ausführlicher Rückblick" }).click();
   await page.getByText("Nächste Woche zählt der Rücken.", { exact: false }).waitFor({ timeout: 15000 });
+  // Auch hier: gespeichert wird nach dem Ende des Stroms, nicht beim ersten Wort.
+  await page
+    .waitForFunction(() => !!localStorage.getItem("wilhelm-training-rapport"), null, { timeout: 8000 })
+    .catch(() => {});
   const vorher = anfragen.length;
   await page.reload({ waitUntil: "networkidle" });
   const nochDa = await page

@@ -54,7 +54,7 @@ import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
-import { ensureOrte, hasFuer } from "@/lib/orte";
+import { ensureOrte, gewichtsstufe, hasFuer } from "@/lib/orte";
 import { prTimeline } from "@/lib/records";
 import {
   sanitizeBody,
@@ -343,7 +343,10 @@ interface TrainingContextValue {
   setTheme: (t: ThemePref) => void;
   setZoetrope: (on: boolean) => void;
   setSplash: (v: NonNullable<AppSettings["splash"]>) => void;
-  setWeightStep: (step: number) => void;
+  /** Gewichtsstufe des heutigen Orts (lib/orte.ts `gewichtsstufe`). */
+  weightStep: number;
+  /** Setzt die Gewichtsstufe eines Orts (Vorgabe: der heutige). */
+  setWeightStep: (step: number, gymId?: string) => void;
   setBikeWarmup: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
   setDuckSpotify: (on: boolean) => void;
@@ -1396,8 +1399,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
-    const setWeightStep = (step: number) =>
-      void updateSettings({ weightStep: step });
+    const setWeightStep = (step: number, gymId?: string) => {
+      const id = gymId ?? activeGym?.id;
+      if (!id) return void updateSettings({ weightStep: step });
+      void saveGyms(gyms.map((g) => (g.id === id ? { ...g, weightStep: step } : g)));
+    };
     const setBikeWarmup = (on: boolean) =>
       void updateSettings({ bikeWarmup: on });
     const setBudget = (min: number) =>
@@ -1884,6 +1890,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setTheme,
       setZoetrope,
       setSplash,
+      weightStep: gewichtsstufe(activeGym, settings),
       setWeightStep,
       setBikeWarmup,
       setKeepAwake,

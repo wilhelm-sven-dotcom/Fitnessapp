@@ -119,6 +119,7 @@ export function SessionRunner() {
     saveActiveSession,
     amendLastDebrief,
     discardActive,
+    weightStep,
     saving,
     exerciseNotes,
     disabledExercises,
@@ -225,7 +226,7 @@ export function SessionRunner() {
     allLib,
     lastPerf,
     daysAgo,
-    weightStep: settings.weightStep,
+    weightStep,
     scale,
     variant,
     profile,
@@ -258,8 +259,8 @@ export function SessionRunner() {
 
   // Eine Rechenvorschrift für Vorschläge: Bühne und Pausen-Vorschau.
   const prescCtx = useMemo<PrescCtx>(
-    () => ({ lastPerf, profile, pause, scale, weightStep: settings.weightStep }),
-    [lastPerf, profile, pause, scale, settings.weightStep],
+    () => ({ lastPerf, profile, pause, scale, weightStep }),
+    [lastPerf, profile, pause, scale, weightStep],
   );
   // Was nach der Pause kommt — neu nur bei neuem Satz oder geändertem
   // Protokoll, nicht jede Sekunde des Countdowns.
@@ -341,7 +342,7 @@ export function SessionRunner() {
       allLib,
       lastPerf,
       daysAgo,
-      weightStep: settings.weightStep,
+      weightStep,
       scale: sc,
       profile,
     });
@@ -547,7 +548,7 @@ export function SessionRunner() {
       return undefined;
     const ref = Number(lastSet.weight);
     if (!Number.isFinite(ref) || ref <= 0) return undefined;
-    const step = settings.weightStep || 2.5;
+    const step = weightStep;
     const bound = Math.max(ref * 0.1, step);
     const clamped = Math.min(ref + bound, Math.max(ref - bound, adj.value));
     const rounded = roundStep(clamped, step);
@@ -1046,7 +1047,7 @@ export function SessionRunner() {
         record={recordMap.get(ex.id) ?? null}
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
-        weightStep={settings.weightStep ?? 2.5}
+        weightStep={weightStep}
         zoetropOn={settings.zoetrope !== false}
         onOpenGuide={() => setGuideOpen(true)}
         onSwap={

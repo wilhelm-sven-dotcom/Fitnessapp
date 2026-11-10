@@ -122,6 +122,9 @@ export interface GymProfile {
   /** Hier wird nur an Geräten trainiert (Maschinen + Kabelzug): Planung,
    *  Tauschen und Katalog lassen freie Gewichte und Körpergewicht weg. */
   nurGeraete?: boolean;
+  /** Kleinste Gewichtsstufe an diesem Ort in kg (Zuhause oft 2,5, an
+   *  Maschinen 5). Fehlt sie, gilt die allgemeine aus den Einstellungen. */
+  weightStep?: number;
 }
 
 export interface EquipItem {

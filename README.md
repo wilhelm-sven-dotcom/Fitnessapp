@@ -69,6 +69,8 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 - **Satzpause** — Grundübungen 2:30, sonst 1:30; läuft aus der Uhr und stimmt
   auch nach Sperre oder Neuladen.
 - **Gym-Modus** — Sprach-Ansagen, Wake-Lock, Spotify-Now-Playing.
+- **Gewichtsstufe je Ort** — zuhause 1,25 kg, im Studio 5 kg: Vorschläge und
+  die Plus-Minus-Tasten runden auf die Stufe des heutigen Orts.
 - **ATLAS-Server-API** (`/api/atlas/*`) — session (Plan), set (Reaktion auf
   einen Satz), debrief, chat, briefing (Textströme), status (Stand und
   Selbsttest). Ein gemeinsamer Aufruf (`lib/atlas/call.ts`), gecachtes
@@ -178,6 +180,7 @@ npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
 npm run pruefe:offline    # ohne Netz: Seiten, Training, Neuladen, Update wartet im Training
 npm run pruefe:daten      # Speichern, liegengebliebene Einheit, Löschen, Export/Import, Strava
 npm run pruefe:atlas      # ATLAS-Routen gegen eine nachgestellte Schnittstelle (kein Schlüssel nötig)
+npm run pruefe:bedienung  # jedes Bedienelement benannt und mindestens 44 px, Meldungen, Offline, Gewichtsstufe je Ort
 npm run tempo             # Rechenzeit mit 150 Einheiten im Verlauf, mit Grenzen
 npm run pruefe            # alle Prüfungen nacheinander (Port 3199, dazu 3198 und 3197)
 npm run fotos -- --klein  # Bildschirmfotos nach .fotos/, mit --klein auch 375 × 667

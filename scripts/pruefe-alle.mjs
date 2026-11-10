@@ -32,6 +32,7 @@ const SKRIPTE = [
   "scripts/pruefe-offline.mjs",
   "scripts/pruefe-daten.mjs",
   "scripts/pruefe-atlas.mjs",
+  "scripts/pruefe-bedienung.mjs",
   "scripts/tempo.mjs",
 ];
 

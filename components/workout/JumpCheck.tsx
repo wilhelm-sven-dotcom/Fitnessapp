@@ -120,7 +120,7 @@ export function JumpCheck({
         {phase !== "measuring" && (
           <Pressable
             onClick={() => void start()}
-            className="rounded-pill bg-strong px-3 py-1.5 text-xs font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="flex min-h-11 items-center rounded-pill bg-strong px-4 text-sm font-semibold text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             {phase === "done" || phase === "failed" ? "Nochmal" : "Messen"}
           </Pressable>

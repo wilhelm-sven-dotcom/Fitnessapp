@@ -47,7 +47,7 @@ export function WarmupCatalogSection() {
             <Pressable
               key={d.id}
               onClick={() => setSelected(d)}
-              className="flex w-full min-w-0 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+              className="flex min-h-11 w-full min-w-0 items-center justify-between gap-3 px-2 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
               <span className="min-w-0 truncate text-sm text-fg">{d.name}</span>
               <span className="flex shrink-0 items-center gap-2">

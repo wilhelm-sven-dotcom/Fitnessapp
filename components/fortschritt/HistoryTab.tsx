@@ -411,7 +411,7 @@ export function HistoryTab() {
 
       <Link
         href="/settings?seg=verbindungen"
-        className="mt-5 block text-center text-xs text-muted underline-offset-2 hover:underline"
+        className="mt-3 flex min-h-11 items-center justify-center text-center text-xs text-muted underline-offset-2 hover:underline"
       >
         Strava verbinden für automatische Läufe und Fahrten →
       </Link>
@@ -426,7 +426,7 @@ export function HistoryTab() {
                   key={sp}
                   onClick={() => setSport(sp)}
                   className={cn(
-                    "rounded-pill px-3 py-1.5 text-sm font-medium",
+                    "flex min-h-11 items-center rounded-pill px-3.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                     sport === sp ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                   )}
                 >
@@ -486,8 +486,9 @@ export function HistoryTab() {
                 <Pressable
                   key={i.v}
                   onClick={() => setIntensity(i.v)}
+                  aria-pressed={intensity === i.v}
                   className={cn(
-                    "flex-1 rounded-pill py-2 text-sm font-medium",
+                    "min-h-11 flex-1 rounded-pill py-2 text-sm font-medium",
                     intensity === i.v ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                   )}
                 >
