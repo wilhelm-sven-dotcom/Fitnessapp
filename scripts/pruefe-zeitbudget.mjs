@@ -56,11 +56,11 @@ const SEED = {
 };
 
 /** Seite mit gesetztem Seed öffnen; `route` bedient /api/atlas/session. */
-async function seite(route, warten = "networkidle") {
+async function seite(route, warten = "networkidle", seed = SEED) {
   const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await pg.addInitScript((s) => {
     localStorage.setItem("wilhelm-training-settings", JSON.stringify(s));
-  }, SEED);
+  }, seed);
   if (route) await pg.route("**/api/atlas/session", route);
   await pg.goto(BASE + "/", { waitUntil: warten });
   await pg.getByText("Los geht", { exact: false }).first().waitFor({ timeout: 20000 });
@@ -136,16 +136,23 @@ const zeitKlick = async (pg, min) =>
 }
 
 // ── D · Bearbeitete Einheit: anpassen statt blockieren ──────────────────
+// Start bei 45 Minuten: seit den längeren Pausen bei Grundübungen steht der
+// Plan bei 25 Minuten schon am Minimum (3 Übungen × 2 Sätze) und könnte
+// nicht weiter sinken.
 {
   let anfragen = 0;
-  const pg = await seite(async (route) => {
-    anfragen += 1;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: false }),
-    });
-  });
+  const pg = await seite(
+    async (route) => {
+      anfragen += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: false }),
+      });
+    },
+    "networkidle",
+    { ...SEED, timeBudgetMin: 45 },
+  );
   await pg.waitForTimeout(1500);
   // Einheit bearbeiten: erste Übung tauschen (Muster aus scripts/smoke.mjs)
   await pg.getByText("Bearbeiten", { exact: false }).first().click();

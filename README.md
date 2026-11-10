@@ -56,11 +56,18 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 
 ## Weitere Features
 
+- **Steigerung** — doppelte Progression: Gewicht hoch, sobald alle Sätze die
+  obere Wiederholungsgrenze schaffen und mindestens 1 in Reserve bleibt (oder
+  bei 3 in Reserve). Entlastungs- und Test-Einheiten sind kein Ausgangswert.
+  Nach 14 Tagen Lücke ruhig einsteigen, nach 28 Tagen 10 % leichter.
 - **RIR-Autoregulation** — Gewichtsempfehlung aus Reps-in-Reserve; Tagesform
   (Check-in + Sprungtest) skaliert Last und Satzzahl.
 - **Rücken-Intelligenz** — Ampel nach jeder Einheit; „rot" erzwingt
   rückenschonende Auswahl, 2× rot → Arzt-Hinweis; Rücken-Reset-Einheit.
-- **Automatische Aufwärmsätze** (40 %/65 %) + geführtes Aufwärm-Programm.
+- **Automatische Aufwärmsätze** (40 %/65 %) bei der ersten Übung je Muskel +
+  geführtes Aufwärm-Programm.
+- **Satzpause** — Grundübungen 2:30, sonst 1:30; läuft aus der Uhr und stimmt
+  auch nach Sperre oder Neuladen.
 - **Gym-Modus** — Sprach-Ansagen, Wake-Lock, Spotify-Now-Playing.
 - **ATLAS-Server-API** (`/api/atlas/*`) — session (Komposition, Opus),
   set (Live-Reaktion, Sonnet), debrief, chat, briefing (Streams); gemeinsames
@@ -95,11 +102,13 @@ abstrahiert in `lib/storage.ts` (Supabase-Spiegel optional).
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # Produktions-Build
+npm test         # Unit-Tests der Trainingslogik (tests/, node:test über tsx)
 npm run smoke    # End-to-End-Smoke gegen den Build (ohne API-Key = Fallback-Pfade)
 npm run pruefe:training   # misst im Fokus-Modus, was Strings nicht hergeben
 npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingszeit
 npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
-npm run pruefe            # alle vier Prüfungen nacheinander (gemeinsamer Port 3199)
+npm run tempo             # Rechenzeit mit 150 Einheiten im Verlauf, mit Grenzen
+npm run pruefe            # alle Prüfungen nacheinander (gemeinsamer Port 3199)
 npm run fotos -- --klein  # Bildschirmfotos nach .fotos/, mit --klein auch 375 × 667
 npm run messen            # wo Start-, Satz- und ATLAS-Eingabe liegen (JSON)
 npm run kontrast          # WCAG-Kontrast der Farb-Tokens, hell und dunkel

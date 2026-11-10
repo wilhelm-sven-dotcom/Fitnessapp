@@ -37,6 +37,7 @@ import {
   scaleFor,
   type ReadinessScale,
 } from "@/lib/readiness";
+import { hatArbeitssatz, lastPerfOf } from "@/lib/last-perf";
 import { estimateSessionMin, sessionMinutes } from "@/lib/session-time";
 import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
@@ -150,9 +151,12 @@ function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale
     : base;
 }
 
-/** Import-Fenster: nur die letzten 2 Wochen an Strava-Einheiten behalten.
+/** Import-Fenster: die letzten 4 Wochen an Strava-Einheiten behalten —
+ *  so lange schaut die Belastungs-Kurve zurück (lib/fatigue.ts). Mit 2 Wochen
+ *  zählte Ausdauer voll in die letzten 7 Tage, aber nur halb in den
+ *  4-Wochen-Schnitt: die Kurve zeigte dauerhaft zu viel Belastung.
  *  Manuell Eingetragenes bleibt IMMER (das hat der Nutzer selbst erfasst). */
-const IMPORT_WINDOW_MS = 14 * 86_400_000;
+const IMPORT_WINDOW_MS = 28 * 86_400_000;
 function pruneOldImports(list: CardioSession[]): CardioSession[] {
   const cutoff = Date.now() - IMPORT_WINDOW_MS;
   return list.filter(
@@ -1065,19 +1069,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // sich eine Dep wirklich ändert — Stale-Closures sind damit ausgeschlossen,
   // solange die Dep-Liste vollständig ist (exhaustive-deps wacht darüber).
   const value = useMemo<TrainingContextValue>(() => {
-    const hatArbeitssatz = (sets?: SetEntry[]) =>
-      !!sets && sets.some((s) => !s.warmup && s.reps !== "" && s.reps != null);
-
-    const lastPerf = (id: string): LastPerf | null => {
-      for (let i = log.length - 1; i >= 0; i--) {
-        const ex = log[i].exercises?.find((e) => e.id === id);
-        // Only a filled WORKING set counts as a performance — a warmup-only entry
-        // (auto-prefilled reps) would collapse the next prescription to "3 × 1".
-        if (ex && hatArbeitssatz(ex.sets))
-          return { sets: ex.sets, date: log[i].date, note: ex.note };
-      }
-      return null;
-    };
+    // Ausgangswert für den nächsten Vorschlag — ohne Entlastungs- und
+    // Test-Einheiten (lib/last-perf.ts).
+    const lastPerf = (id: string): LastPerf | null => lastPerfOf(log, id);
 
     /**
      * Ersatz-Historie, wenn es die Übung selbst noch nie gab: die jüngste
@@ -1363,8 +1357,12 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         setBackSpareToday(false);
         return null;
       }
+      // Die Einheit zählt für den Tag, an dem sie BEGANN: eine Einheit, die
+      // um 23:40 startet und nach Mitternacht endet, gehört zur alten Woche.
+      const jetzt = new Date().toISOString();
+      const begonnen = new Date(state.startedAt).getTime();
       const newSession: LoggedSession = {
-        date: new Date().toISOString(),
+        date: Number.isFinite(begonnen) ? new Date(begonnen).toISOString() : jetzt,
         dayKey: "today",
         dayName: s.name,
         focus: s.focus,
@@ -1372,7 +1370,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         estimatedMin: estimateSessionMin(resolveDailySession(s, allLib, has)),
       };
       if (state.backTraffic) newSession.backTraffic = state.backTraffic;
-      const durationMin = sessionMinutes(state.startedAt, newSession.date);
+      const durationMin = sessionMinutes(state.startedAt, jetzt);
       if (durationMin != null) newSession.durationMin = durationMin;
       const noteText = (state.note ?? "").trim();
       if (noteText) newSession.note = noteText;

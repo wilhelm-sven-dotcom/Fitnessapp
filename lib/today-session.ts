@@ -1,5 +1,5 @@
 import { buildCoachContext } from "@/lib/coach-context";
-import { reqOk } from "@/lib/progression";
+import { reqOk, stressesInjury } from "@/lib/progression";
 import { muscleOf, MUSCLE_LABEL } from "@/lib/volume";
 import type { DailySession, SessionVariant } from "@/lib/session-model";
 import type {
@@ -98,8 +98,15 @@ export async function requestAtlasSession(
   try {
     if (typeof navigator !== "undefined" && !navigator.onLine)
       return { fehler: "netz" };
-    const avail = availableExercises(req.allLib, req.has, req.disabled);
+    let avail = availableExercises(req.allLib, req.has, req.disabled);
     if (avail.length < 5) return { fehler: "aus" };
+    // Rückenschonung ist eine harte Grenze, kein Hinweis im Prompt: was den
+    // unteren Rücken belastet, steht heute gar nicht erst zur Wahl (solange
+    // genug übrig bleibt).
+    if (req.backSafe) {
+      const schonend = avail.filter((e) => !stressesInjury(e, "rücken"));
+      if (schonend.length >= 5) avail = schonend;
+    }
 
     const contextParts = [
       buildCoachContext({

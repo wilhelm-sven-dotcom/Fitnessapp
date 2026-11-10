@@ -27,6 +27,7 @@ import { generateFallbackSession } from "@/lib/session-fallback";
 import {
   passeZeitAn,
   resolveDailySession,
+  schoneRuecken,
   todayKey,
   type DailySession,
   type SessionVariant,
@@ -242,7 +243,18 @@ export default function HomePage() {
             !cur.edited &&
             cur.ort?.sig === ort?.sig
           ) {
-            setTodaySession(ort ? { ...r.session, ort } : r.session);
+            // Das Zeitfenster gilt auch für ATLAS: der Plan wird, wenn nötig,
+            // gekürzt (Sätze, dann Übungen) — nie aufgefüllt, sein Umfang ist
+            // gewollt. Rückenschonung bleibt harte Grenze.
+            let plan = r.session;
+            if (variant === "normal") {
+              if (backSafe) plan = schoneRuecken(plan, allLib, has, disabledExercises).session;
+              plan = passeZeitAn(plan, allLib, has, budgetMin, {
+                protectCore: backSafe,
+                nurKuerzen: true,
+              });
+            }
+            setTodaySession(ort ? { ...plan, ort } : plan);
           }
         })
         .catch(() => {

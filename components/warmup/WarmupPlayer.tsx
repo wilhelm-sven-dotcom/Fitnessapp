@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Pause, Play, Volume2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
 import { Button } from "@/components/ui/Button";
@@ -45,6 +45,18 @@ export function WarmupPlayer({
   const total = drills.length;
   const [index, setIndex] = useState(0);
   const [left, setLeft] = useState(drills[0]?.durationSec ?? 0);
+  // Die Restzeit kommt aus der Uhr: `endeRef` ist das Ende des laufenden
+  // Abschnitts. Ein heruntergezählter Zähler blieb stehen, sobald das iPhone
+  // gesperrt oder die App im Hintergrund war. Bei „Pause“ merkt sich
+  // `restMsRef`, wie viel noch offen ist.
+  const endeRef = useRef<number>(Date.now() + (drills[0]?.durationSec ?? 0) * 1000);
+  const restMsRef = useRef<number | null>(null);
+  /** Einen Abschnitt (Übung oder Wechsel) mit `sek` Sekunden starten. */
+  const starte = (sek: number) => {
+    endeRef.current = Date.now() + sek * 1000;
+    restMsRef.current = null;
+    setLeft(sek);
+  };
   /** "drill" = Übung läuft; "switch" = 5-s-Wechselpause vor der nächsten. */
   const [phase, setPhase] = useState<"drill" | "switch">("drill");
   const [paused, setPaused] = useState(false);
@@ -94,7 +106,7 @@ export function WarmupPlayer({
     if (done) return;
     const d = drills[index];
     if (!d) return;
-    setLeft(d.durationSec);
+    starte(d.durationSec);
     vibrate(50);
     if (voiceOn) speak(d.name, { interrupt: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,7 +139,7 @@ export function WarmupPlayer({
       if (phase === "drill") {
         if (index + 1 < total) {
           setPhase("switch");
-          setLeft(SWITCH_SEC);
+          starte(SWITCH_SEC);
         } else {
           setDone(true);
           vibrate([60, 40, 60]);
@@ -139,20 +151,39 @@ export function WarmupPlayer({
         // und pendelt zurück in einen neuen Wechsel (der Drill startet nie).
         setPhase("drill");
         setIndex((i) => i + 1);
-        setLeft(drills[index + 1]?.durationSec ?? 0);
+        starte(drills[index + 1]?.durationSec ?? 0);
       }
       return;
     }
-    const t = setTimeout(() => setLeft((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    // Restzeit aus der Uhr nachführen (4 Hz; gleiche Werte rendern nicht).
+    // Nach Sperre oder Hintergrund springt sie sofort auf den echten Stand.
+    const tick = () =>
+      setLeft(Math.max(0, Math.ceil((endeRef.current - Date.now()) / 1000)));
+    const id = window.setInterval(tick, 250);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [left, paused, done, index, total, voiceOn, phase, drills]);
+
+  // Pause hält die Uhr an: Rest merken, beim Weiterlaufen neu ansetzen.
+  useEffect(() => {
+    if (paused) {
+      restMsRef.current = Math.max(0, endeRef.current - Date.now());
+    } else if (restMsRef.current != null) {
+      endeRef.current = Date.now() + restMsRef.current;
+      restMsRef.current = null;
+    }
+  }, [paused]);
 
   const skip = () => {
     primeAudio();
     if (index + 1 < total) {
       setPhase("drill");
       setIndex((i) => i + 1);
-      setLeft(drills[index + 1]?.durationSec ?? 0);
+      starte(drills[index + 1]?.durationSec ?? 0);
     } else {
       setDone(true);
     }

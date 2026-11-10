@@ -40,10 +40,13 @@ bringt v. a. mehr Ermüdung. Versagen vs. 1–2 RIR: vergleichbarer Muskelzuwach
 67 Kraftstudien) <https://sportrxiv.org/index.php/server/preprint/view/295> · Refalo et al.
 2024, J Sports Sci <https://www.tandfonline.com/doi/full/10.1080/02640414.2024.2321021>
 
-**In der App.** `rirAdjust`/`presc` in `lib/progression.ts`: selbst der härteste Satz
-noch mit ≥3 in Reserve (zu leicht) → +Last; ein Satz am Versagen (RIR 0) → eine Stufe
-leichter; Zone RIR 1–2 → Gewicht halten, +1 Wdh (doppelte Progression). Genau das
-„nah dran, aber nicht stur bis zum Versagen".
+**In der App.** `rirAdjust`/`presc` in `lib/progression.ts` (Stand Nov 2026):
+selbst der härteste Satz noch mit ≥3 in Reserve (zu leicht) → eine Gewichtsstufe hoch;
+alle Sätze an der oberen Wiederholungsgrenze und noch ≥1 in Reserve → eine Stufe hoch;
+alle Sätze oben, aber einer am Versagen (RIR 0) → halten; sonst ein Satz am Versagen →
+eine Stufe leichter; Zone RIR 1–2 unterhalb der oberen Grenze → Gewicht halten, +1 Wdh
+(doppelte Progression). Genau das „nah dran, aber nicht stur bis zum Versagen". Eine
+Stufe ist die eingestellte Gewichtsstufe (`weightStep`), nicht fest 2,5 kg.
 
 ---
 
@@ -57,6 +60,10 @@ Volumenverteilung), nicht weil „öfter = mehr".
 **Quelle.** Pelland et al. 2024 (s. o.; Frequenz-Slope ≈ 0 bei äquivalentem Volumen).
 
 **In der App.** Doppelte Progression in `presc`; 3× Ganzkörper trifft jeden Muskel ~2–3×/Woche.
+Ausgangswert ist die letzte NORMALE Einheit der Übung (`lib/last-perf.ts`):
+Entlastungs- und Test-Einheiten zählen dafür nicht. Nach einer Trainingslücke
+(`pauseStufe`): bis 13 Tage normal weiter, ab 14 Tagen gleiches Gewicht mit der
+untersten Wiederholungszahl, ab 28 Tagen 10 % leichter.
 
 ---
 
@@ -70,6 +77,12 @@ die den Muskel in der **gedehnten Position** unter Last fordern, begünstigen Wa
 <https://pmc.ncbi.nlm.nih.gov/articles/PMC11349676/> · Lengthened-Position-Literatur (laufende Evidenz).
 
 **In der App.** Als Prinzip in `TRAINING_PRINCIPLES` → Coach/Builder berücksichtigen es.
+Seit Nov 2026 auch im Training selbst (`restSecFor` in `lib/session-time.ts`):
+Grundübungen (mehrgelenkig: Presse, Kniebeuge, Kreuzheben, Drücken, Rudern, Latzug,
+Klimmzug) pausieren 2:30, alles andere 1:30. Die Zeitschätzung rechnet mit denselben
+Pausen — in ein Zeitfenster passen dadurch weniger Sätze (45 Min: 13 statt 18).
+Aufwärmsätze (40 %/65 %) bekommt nur die erste gewichtete Übung je Muskel
+(`lib/aufwaermsaetze.ts`).
 
 ---
 

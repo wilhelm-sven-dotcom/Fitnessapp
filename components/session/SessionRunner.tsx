@@ -53,9 +53,15 @@ import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { bandOfActive, regionOf, type Region } from "@/lib/phasen/band";
 import { plattenNummern } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
-import { swapItem, type DailySession } from "@/lib/session-model";
-import { estimateRemainingMin, TIME } from "@/lib/session-time";
-import { roundStep } from "@/lib/progression";
+import {
+  passeZeitAn,
+  resolveDailySession,
+  schoneRuecken,
+  swapItem,
+  type DailySession,
+} from "@/lib/session-model";
+import { estimateRemainingMin, estimateSessionMin, restSecFor } from "@/lib/session-time";
+import { pauseStufe, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
 import { primeAudio } from "@/lib/beep";
 import { swapPoolFor } from "@/lib/swap-pool";
@@ -206,7 +212,7 @@ export function SessionRunner() {
       return ohne;
     });
 
-  const lighter = daysAgo != null && daysAgo > 5;
+  const pause = pauseStufe(daysAgo);
   const scale = useMemo(
     () => startScale(settings, active?.readiness ?? null),
     [settings, active?.readiness],
@@ -250,8 +256,8 @@ export function SessionRunner() {
 
   // Eine Rechenvorschrift für Vorschläge: Bühne und Pausen-Vorschau.
   const prescCtx = useMemo<PrescCtx>(
-    () => ({ lastPerf, profile, lighter, scale, weightStep: settings.weightStep }),
-    [lastPerf, profile, lighter, scale, settings.weightStep],
+    () => ({ lastPerf, profile, pause, scale, weightStep: settings.weightStep }),
+    [lastPerf, profile, pause, scale, settings.weightStep],
   );
   // Was nach der Pause kommt — neu nur bei neuem Satz oder geändertem
   // Protokoll, nicht jede Sekunde des Countdowns.
@@ -294,7 +300,41 @@ export function SessionRunner() {
       setBoot("none");
       return;
     }
-    const session = applySetDelta(known, allLib, sc);
+    // Rückenschonung als harte Grenze: meldet erst der Check-in „Rücken
+    // schlecht“ (oder hat ATLAS die Schonung nicht umgesetzt), werden
+    // rückenkritische Übungen jetzt getauscht. Bisher änderte der Check-in
+    // nur das Aufwärmen.
+    let basis = known;
+    if (backSafe && base.variant !== "reset" && base.variant !== "exam") {
+      const schon = schoneRuecken(known, allLib, has, disabledExercises);
+      const n = schon.getauscht.length + schon.gestrichen.length;
+      if (n > 0) {
+        basis = schon.session;
+        setTodaySession(schon.session);
+        toast(
+          n === 1
+            ? "Rücken wird geschont: eine Übung angepasst."
+            : `Rücken wird geschont: ${n} Übungen angepasst.`,
+        );
+      }
+    }
+    // Gute Tagesform gibt einen Satz mehr — aber nicht über das gewählte
+    // Zeitfenster hinaus: danach wird, wenn nötig, wieder gekürzt.
+    let session = applySetDelta(basis, allLib, sc);
+    if (
+      sc.setDelta > 0 &&
+      !base.edited &&
+      base.variant !== "reset" &&
+      base.variant !== "exam"
+    ) {
+      // Nie unter den Umfang VOR dem Zusatzsatz kürzen: war der Plan schon
+      // länger als das Zeitfenster, bleibt er, wie er war.
+      const vorher = estimateSessionMin(resolveDailySession(basis, allLib, has));
+      session = passeZeitAn(session, allLib, has, Math.max(settings.timeBudgetMin, vorher), {
+        protectCore: backSafe,
+        nurKuerzen: true,
+      });
+    }
     const entries = prefillEntries(session, {
       allLib,
       lastPerf,
@@ -628,11 +668,13 @@ export function SessionRunner() {
     }
     // Direkt vorm Pausenstart wecken — der Countdown tönt dann auch aus Timern.
     primeAudio();
+    // Grundübungen pausieren 2:30, alles andere 1:30 (lib/session-time.ts).
+    const pauseSek = restSecFor(ex);
     setRest({
       itemId,
       setIdx: i,
-      endsAt: Date.now() + TIME.restSec * 1000,
-      total: TIME.restSec,
+      endsAt: Date.now() + pauseSek * 1000,
+      total: pauseSek,
     });
     scheduleCoachCall(itemId, i);
   };

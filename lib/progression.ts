@@ -9,14 +9,48 @@ import type {
 import { istGeraeteUebung, MASCHINEN_KEYS } from "@/lib/exercises";
 import { fmtGewicht } from "@/lib/format";
 
-/** Round a weight suggestion to the nearest 2.5 kg step. */
-export const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
+const stufe = (step?: number) => (step && step > 0 ? step : 2.5);
 
 /** Round to the user's smallest available weight increment (default 2.5 kg). */
 export const roundStep = (x: number, step = 2.5) => {
-  const s = step && step > 0 ? step : 2.5;
+  const s = stufe(step);
   return Math.round(x / s) * s;
 };
+
+/**
+ * Die nächste ladbare Stufe ÜBER bzw. UNTER einem Gewicht, auf dem Raster der
+ * eingestellten Gewichtsstufe. Vorher stieg und fiel das Gewicht immer um
+ * 2,5 kg und wurde dann aufs Raster gerundet — bei einer 5-kg-Stufe (Stapel
+ * am Gerät) rundete „etwas leichter“ so auf dasselbe Gewicht zurück.
+ */
+export function stufeHoch(w: number, step = 2.5): number {
+  const s = stufe(step);
+  return (Math.floor(w / s + 1e-9) + 1) * s;
+}
+
+export function stufeRunter(w: number, step = 2.5): number {
+  const s = stufe(step);
+  return Math.max(s, (Math.ceil(w / s - 1e-9) - 1) * s);
+}
+
+/**
+ * Einstieg nach einer Trainingslücke (Tage seit der letzten Einheit):
+ * bis 13 Tage normal weiter, ab 14 Tagen „ruhig“ (gleiches Gewicht, unterste
+ * Wiederholungszahl), ab 28 Tagen „leichter“ (10 % weniger, unterste
+ * Wiederholungszahl). Kraft hält sich zwei bis drei Wochen; die alte Grenze
+ * von 6 Tagen bremste schon nach einer normalen Wochenpause.
+ */
+export type PauseStufe = "ruhig" | "leichter";
+export const PAUSE_RUHIG_AB_TAGEN = 14;
+export const PAUSE_LEICHTER_AB_TAGEN = 28;
+const PAUSE_LEICHTER_FAKTOR = 0.9;
+
+export function pauseStufe(daysAgo: number | null | undefined): PauseStufe | undefined {
+  if (daysAgo == null || !Number.isFinite(daysAgo)) return undefined;
+  if (daysAgo >= PAUSE_LEICHTER_AB_TAGEN) return "leichter";
+  if (daysAgo >= PAUSE_RUHIG_AB_TAGEN) return "ruhig";
+  return undefined;
+}
 
 /**
  * Two warm-up sets at 40 % and 65 % of the working weight, 5 reps each.
@@ -99,11 +133,20 @@ interface RirResult {
  *
  * RIR = Wiederholungen in Reserve: HOHES RIR heißt "zu leicht", RIR 0 heißt
  * "am Versagen". Ziel-Zone laut Trainingsprinzipien ist RIR 1–2.
- * Weighted: alle Sätze mit ≥3 in Reserve → +2.5 kg; ein Satz am Versagen
- * (RIR 0) → eine Stufe leichter; sonst (Zone 1–2) → Gewicht halten, +1 Wdh.
+ *
+ * Mit Gewicht (doppelte Progression, eine Gewichtsstufe je Schritt):
+ *  · alle Sätze mit ≥ 3 in Reserve                        → eine Stufe hoch
+ *  · alle Sätze an der oberen Wiederholungsgrenze, ≥ 1
+ *    in Reserve                                           → eine Stufe hoch
+ *  · alle Sätze oben, aber ein Satz am Versagen (RIR 0)   → halten
+ *  · sonst ein Satz am Versagen                           → eine Stufe leichter
+ *  · sonst (Zone 1–2, noch nicht oben)                    → halten, +1 Wdh
+ * Vorher stieg das Gewicht NUR bei ≥ 3 in Reserve: wer oben in der Spanne
+ * sauber in der Ziel-Zone trainierte, blieb auf dem Gewicht stehen.
+ *
  * Timed: gefühlte Intensität 1–5 statt RIR (≤2 = leicht → +5 s halten).
  */
-export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
+export function rirAdjust(ex: Exercise, sets: SetEntry[], step = 2.5): RirResult | null {
   const work = sets.filter((s) => !s.warmup);
   const timed = ex.unit === "Sek";
   const maxReps = Math.max(0, ...work.map((s) => Number(s.reps) || 0));
@@ -133,14 +176,19 @@ export function rirAdjust(ex: Exercise, sets: SetEntry[]): RirResult | null {
     // Ohne Gewichts-Historie gibt es keine sinnvolle kg-Empfehlung —
     // Rückfall auf die Wiederholungs-Heuristik in `presc` (nie "@ 0 kg").
     if (!lastW) return null;
-    if (minRir >= 3)
-      return { weight: round25(lastW + 2.5), repTarget: ex.repLow, reason: "up" };
-    if (minRir === 0)
-      return {
-        weight: round25(Math.max(2.5, lastW - 2.5)),
-        repTarget: ex.repLow,
-        reason: "down",
-      };
+    // „Oben“ heißt: jeder geleistete Arbeitssatz erreicht die obere Grenze —
+    // mindestens zwei Sätze (ein einzelner Satz ist kein Beleg), außer der
+    // Plan sieht selbst nur einen vor.
+    const voll = work.filter((s) => s.reps !== "" && s.reps != null);
+    const oben =
+      voll.length >= Math.min(2, Math.max(1, ex.sets)) &&
+      voll.every((s) => (Number(s.reps) || 0) >= ex.repHigh);
+    if (minRir >= 3 || (oben && minRir >= 1))
+      return { weight: stufeHoch(lastW, step), repTarget: ex.repLow, reason: "up" };
+    if (minRir === 0) {
+      if (oben) return { weight: lastW, repTarget: ex.repHigh, reason: "hold" };
+      return { weight: stufeRunter(lastW, step), repTarget: ex.repLow, reason: "down" };
+    }
     return {
       weight: lastW,
       repTarget: Math.min(ex.repHigh, maxReps + 1),
@@ -167,7 +215,8 @@ export function presc(
   ex: Exercise,
   lp: LastPerf | null,
   opts: {
-    lighter?: boolean;
+    /** Einstieg nach einer Trainingslücke — siehe `pauseStufe`. */
+    pause?: PauseStufe;
     loadMult?: number;
     cap?: boolean;
     step?: number;
@@ -222,34 +271,37 @@ export function presc(
   const maxReps = Math.max(0, ...work.map((s) => Number(s.reps) || 0));
   const lastW = Math.max(0, ...work.map((s) => Number(s.weight) || 0));
 
-  // Eased entry after a long break — don't push, just get moving.
-  if (opts.lighter) {
+  // Eased entry after a long break — don't push, just get moving. Ab vier
+  // Wochen zusätzlich 10 % leichter.
+  if (opts.pause) {
+    const leichter = opts.pause === "leichter";
+    const vorweg = leichter ? "Nach langer Pause 10 % leichter" : "Ruhig einsteigen";
     if (timed)
       return {
         w: "",
         r: String(Math.max(ex.repLow, maxReps)),
         reason: "lighter",
-        line: `Ruhig einsteigen: ${ex.sets} × ${Math.max(ex.repLow, maxReps)} s`,
+        line: `${vorweg}: ${ex.sets} × ${Math.max(ex.repLow, maxReps)} s`,
       };
     if (weighted) {
-      const w = scaleW(lastW);
+      const w = scaleW(lastW * (leichter ? PAUSE_LEICHTER_FAKTOR : 1));
       return {
         w: lastW ? String(w) : "",
         r: String(ex.repLow),
         suggestedWeight: lastW ? w : undefined,
         reason: "lighter",
-        line: `Ruhig einsteigen: ${ex.sets} × ${ex.repLow} @ ${lastW ? fmtGewicht(w) : "?"} kg`,
+        line: `${vorweg}: ${ex.sets} × ${ex.repLow} @ ${lastW ? fmtGewicht(w) : "?"} kg`,
       };
     }
     return {
       w: "",
       r: String(Math.max(ex.repLow, maxReps)),
       reason: "lighter",
-      line: `Ruhig einsteigen: ${ex.sets} × ${Math.max(ex.repLow, maxReps)} Wdh`,
+      line: `${vorweg}: ${ex.sets} × ${Math.max(ex.repLow, maxReps)} Wdh`,
     };
   }
 
-  const adj = rirAdjust(ex, work);
+  const adj = rirAdjust(ex, work, opts.step);
   if (adj) {
     if (timed) {
       const t = opts.cap ? ex.repLow : adj.repTarget;
@@ -312,7 +364,7 @@ export function presc(
   }
   if (weighted) {
     if (top) {
-      const w = scaleW(lastW + 2.5);
+      const w = scaleW(stufeHoch(lastW, opts.step));
       const r = repOf(ex.repLow);
       return {
         w: String(w),

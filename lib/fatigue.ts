@@ -47,9 +47,13 @@ function strengthLoad(s: LoggedSession): number {
 }
 
 function cardioLoad(c: CardioSession): number {
-  const kj = c.kj ?? (c.durationSec / 60) * 8; // ~8 kJ/min fallback
+  // Ein Eintrag ohne Dauer und ohne kJ trägt nichts bei. Vorher wurde daraus
+  // NaN, und NaN fiel durch alle Vergleiche bis in die Stufe „hoch“.
+  const dauerMin = Number.isFinite(c.durationSec) ? c.durationSec / 60 : 0;
+  const kj = Number.isFinite(c.kj) ? (c.kj as number) : dauerMin * 8; // ~8 kJ/min fallback
   const intens = c.intensity === "hard" ? 1.2 : c.intensity === "easy" ? 0.85 : 1;
-  return (kj / 1000) * 1.5 * intens;
+  const last = (kj / 1000) * 1.5 * intens;
+  return Number.isFinite(last) && last > 0 ? last : 0;
 }
 
 const COPY: Record<FatigueBand, { title: string; message: string }> = {
@@ -84,7 +88,8 @@ export function fatigueState(
   const spanDays = (now - oldest) / DAY;
   const enough = spanDays >= 14 && chronicWeekly > 0;
 
-  const ratio = chronicWeekly > 0 ? acute / chronicWeekly : 0;
+  const roh = chronicWeekly > 0 ? acute / chronicWeekly : 0;
+  const ratio = Number.isFinite(roh) ? roh : 0;
   const recent = log
     .filter((s) => s.readiness)
     .slice(-3)

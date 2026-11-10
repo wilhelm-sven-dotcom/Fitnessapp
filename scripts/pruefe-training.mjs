@@ -5,6 +5,11 @@
  *   B  Das Pausen-Dock verdeckt die Satzliste nicht mehr — per Bounding-Box
  *      gemessen, nicht nach Augenmaß.
  *   C  Ist die Übung fertig, steht der Knopf zur nächsten Übung da.
+ *   D  Die Satzpause rechnet aus der Uhr: Grundübungen pausieren 2:30, die
+ *      Pause übersteht ein Neuladen und holt nach einem Zeitsprung (iPhone
+ *      gesperrt) sofort auf.
+ *   E  Meldet der Check-in „Rücken schlecht“, sind rückenkritische Übungen
+ *      beim Start getauscht — auch in einem fertigen ATLAS-Plan.
  *
  * Läuft gegen den Produktions-Build auf Port 3199 (wie scripts/smoke.mjs).
  * Aufruf: node scripts/pruefe-training.mjs [screenshot-verzeichnis]
@@ -140,6 +145,138 @@ if (sichtbar) {
   );
 }
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/fertig.png` });
+
+// ── D · Satzpause aus der Uhr ───────────────────────────────────────────
+{
+  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await pg.addInitScript(() => {
+    localStorage.setItem(
+      "wilhelm-training-settings",
+      JSON.stringify({
+        timeBudgetMin: 25,
+        autoregOn: true,
+        theme: "dark",
+        onboarded: true,
+        benchMigrated: true,
+        themeMigratedM72: true,
+        splash: "aus",
+        orteM1: true,
+      }),
+    );
+  });
+  await pg.goto(BASE + "/", { waitUntil: "networkidle" });
+  await pg.getByText("Los geht", { exact: false }).first().click();
+  await pg.getByText("Überspringen").first().click();
+  await pg.getByLabel("Aufwärmen beenden").click();
+  await pg.getByTestId("stage-order").waitFor({ timeout: 15000 });
+  const felder = pg.locator(".set-active input");
+  if ((await felder.count()) >= 2) {
+    await felder.nth(0).fill("20");
+    await felder.nth(1).fill("10");
+    await felder.nth(1).press("Enter");
+  } else {
+    await felder.nth(0).fill("10");
+    await felder.nth(0).press("Enter");
+  }
+  const pause = pg.locator('section[aria-label="Satzpause"]');
+  await pause.waitFor({ state: "visible", timeout: 8000 });
+  const uhr = async () => (await pause.locator("p.font-display").first().innerText()).trim();
+  const sek = (t) => {
+    const [m, x] = t.split(":").map(Number);
+    return m * 60 + x;
+  };
+  // Die erste Übung des Basisplans ist eine Grundübung (Kniebeuge-Muster).
+  const von = (await pause.innerText()).match(/von (\d+:\d+)/)?.[1];
+  pruefe(von === "2:30", `D · Grundübung pausiert 2:30 (Dock sagt „von ${von}“)`);
+  const a = await uhr();
+  await pg.waitForTimeout(2100);
+  const b = await uhr();
+  pruefe(
+    sek(a) - sek(b) >= 2 && sek(a) - sek(b) <= 3,
+    `D · Pause läuft in Echtzeit (${a} → ${b})`,
+  );
+  await pg.reload({ waitUntil: "networkidle" });
+  const da = await pause
+    .waitFor({ state: "visible", timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
+  const c = da ? await uhr() : "–";
+  pruefe(da && sek(c) <= sek(b) && sek(c) >= sek(b) - 8, `D · Pause übersteht das Neuladen (${b} → ${c})`);
+  // Wie nach einer Sperre: die Uhr ist 5 Minuten weiter, die App wird wieder
+  // sichtbar. Ein Zähler stünde noch bei der alten Restzeit.
+  await pg.evaluate(() => {
+    const echt = Date.now.bind(Date);
+    Date.now = () => echt() + 300000;
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await pg.waitForTimeout(700);
+  pruefe(
+    da && /Pause vorbei/.test(await pause.innerText()),
+    "D · nach 5 Minuten Sperre steht „Pause vorbei“",
+  );
+  await pg.close();
+}
+
+// ── E · Rückenschonung aus dem Check-in ─────────────────────────────────
+{
+  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await pg.addInitScript(() => {
+    localStorage.setItem(
+      "wilhelm-training-settings",
+      JSON.stringify({
+        timeBudgetMin: 45,
+        autoregOn: true,
+        theme: "dark",
+        onboarded: true,
+        benchMigrated: true,
+        themeMigratedM72: true,
+        splash: "aus",
+        orteM1: true,
+      }),
+    );
+    // Ein fertiger ATLAS-Plan mit zwei rückenkritischen Übungen.
+    if (!localStorage.getItem("wilhelm-training-today")) {
+      const d = new Date();
+      const tag = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const item = (id, exerciseId) => ({ id, exerciseId, sets: 3, repLow: 8, repHigh: 12, why: "", intro: "" });
+      localStorage.setItem(
+        "wilhelm-training-today",
+        JSON.stringify({
+          id: "today-test",
+          date: tag,
+          name: "Ganzkörper · Test",
+          focus: "Test",
+          briefing: "",
+          items: [item("i1", "rdl_db"), item("i2", "bench_db"), item("i3", "crunch")],
+          source: "atlas",
+          variant: "normal",
+          createdAt: d.toISOString(),
+          schemaVersion: 1,
+        }),
+      );
+    }
+  });
+  await pg.goto(BASE + "/", { waitUntil: "networkidle" });
+  await pg.getByText("Los geht", { exact: false }).first().click();
+  await pg.getByText("Tagesform").first().waitFor({ timeout: 10000 });
+  await pg.getByRole("group", { name: "Rücken" }).getByRole("button", { name: "schlecht" }).click();
+  await pg.getByRole("button", { name: "Weiter zum Aufwärmen" }).click();
+  await pg.getByLabel("Aufwärmen beenden").waitFor({ timeout: 10000 });
+  await pg.waitForTimeout(400);
+  const ids = await pg.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("wilhelm-training-active") || "null");
+    return st ? st.session.items.map((it) => it.exerciseId) : null;
+  });
+  pruefe(
+    Array.isArray(ids) && !ids.includes("rdl_db") && !ids.includes("crunch"),
+    `E · rückenkritische Übungen sind getauscht (${ids ? ids.join(", ") : "kein Live-Stand"})`,
+  );
+  pruefe(
+    Array.isArray(ids) && ids.length === 3 && ids[1] === "bench_db",
+    "E · die übrigen Übungen und die Reihenfolge bleiben",
+  );
+  await pg.close();
+}
 
 await browser.close();
 server.kill("SIGTERM");

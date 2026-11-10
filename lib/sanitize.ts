@@ -57,9 +57,20 @@ export function sanitizeSessions(x: unknown): LoggedSession[] {
 }
 
 export function sanitizeCardio(x: unknown): CardioSession[] {
-  return arr(x).filter(
-    (s): s is CardioSession => isObj(s) && typeof s.id === "string" && typeof s.date === "string",
-  );
+  return arr(x)
+    .filter(
+      (s): s is Record<string, unknown> =>
+        isObj(s) && typeof s.id === "string" && typeof s.date === "string",
+    )
+    .map((s) => {
+      // Dauer immer als endliche Zahl ≥ 0: alles, was damit rechnet (Minuten,
+      // Tempo, Belastung), bekäme sonst NaN.
+      const d = Number(s.durationSec);
+      return {
+        ...(s as unknown as CardioSession),
+        durationSec: Number.isFinite(d) && d > 0 ? d : 0,
+      };
+    });
 }
 
 export function sanitizeBody(x: unknown): BodyMetric[] {

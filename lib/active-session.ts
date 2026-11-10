@@ -1,5 +1,6 @@
 import type { EffectiveProfile } from "@/lib/athlete";
-import { presc, warmupSets } from "@/lib/progression";
+import { aufwaermPlan } from "@/lib/aufwaermsaetze";
+import { pauseStufe, presc, warmupSets, type PauseStufe } from "@/lib/progression";
 import { NEUTRAL_SCALE, band, scaleFor, type ReadinessScale } from "@/lib/readiness";
 import { startWeight } from "@/lib/start-weight";
 import type { DailySession, PlannedExercise } from "@/lib/session-model";
@@ -179,13 +180,19 @@ export interface PrefillOpts {
   profile?: EffectiveProfile;
 }
 
-/** Normale Vorbelegung: Aufwärmsätze + leere Arbeitssätze mit Gewichtsvorschlag. */
-function initSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
+/** Normale Vorbelegung: Aufwärmsätze (nur wenn `aufwaermen`) + leere
+ *  Arbeitssätze mit Gewichtsvorschlag. */
+function initSetsFor(
+  ex: Exercise,
+  sets: number,
+  o: PrefillOpts,
+  aufwaermen: boolean,
+): SetEntry[] {
   const lp = o.lastPerf(ex.id);
   const startW =
     !lp && o.profile ? startWeight(ex, o.profile, { step: o.weightStep })?.w : undefined;
   const p = presc(ex, lp, {
-    lighter: o.daysAgo != null && o.daysAgo > 5,
+    pause: pauseStufe(o.daysAgo),
     loadMult: o.scale.loadMult,
     cap: o.scale.cap,
     step: o.weightStep,
@@ -196,7 +203,7 @@ function initSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
     reps: "",
   }));
   const warm =
-    ex.weighted && p.w && Number(p.w) > 0
+    aufwaermen && ex.weighted && p.w && Number(p.w) > 0
       ? warmupSets(Number(p.w), o.weightStep)
       : [];
   return [...warm, ...working];
@@ -215,7 +222,7 @@ function examSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
           .map((s) => Number(s.weight) || 0),
       )
     : 0;
-  if (!ex.weighted || !isFinite(best) || best <= 0) return initSetsFor(ex, sets, o);
+  if (!ex.weighted || !isFinite(best) || best <= 0) return initSetsFor(ex, sets, o, true);
   const step = o.weightStep ?? 2.5;
   // Strikt aufsteigend, Rundung darf die Stufen nicht kollabieren lassen;
   // der Test-Satz liegt einen Schritt ÜBER der letzten Bestleistung.
@@ -231,16 +238,25 @@ function examSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
   return [...warmupSets(w5, o.weightStep), ...working];
 }
 
-/** Vorbelegung für EIN Item (auch beim Tausch/Hinzufügen mitten in der Einheit). */
+/** Vorbelegung für EIN Item (auch beim Tausch/Hinzufügen mitten in der
+ *  Einheit). `aufwaermen`: bekommt die Übung Aufwärmsätze? Das entscheidet die
+ *  Reihenfolge der Einheit (`aufwaermPlan`) — nur die erste gewichtete Übung
+ *  je Muskel. Die Prüfung bringt ihre eigene Rampe mit. */
 export function prefillFor(
   item: PlannedExercise,
   ex: Exercise,
   o: PrefillOpts,
+  aufwaermen = true,
 ): SetEntry[] {
   if (ex.pattern === "cardio") return [{ weight: "", reps: "" }];
   return o.variant === "exam"
     ? examSetsFor(ex, item.sets, o)
-    : initSetsFor(ex, item.sets, o);
+    : initSetsFor(ex, item.sets, o, aufwaermen);
+}
+
+/** Aufwärmsatz-Plan einer Einheit, je Item in Reihenfolge. */
+function aufwaermenJeItem(session: DailySession, byId: Map<string, Exercise>): boolean[] {
+  return aufwaermPlan(session.items.map((it) => byId.get(it.exerciseId)));
 }
 
 /** Komplette Vorbelegung beim Einheiten-Start, je Item-Instanz-Id. */
@@ -249,11 +265,12 @@ export function prefillEntries(
   o: PrefillOpts,
 ): Record<string, SetEntry[]> {
   const byId = new Map(o.allLib.map((e) => [e.id, e]));
+  const warm = aufwaermenJeItem(session, byId);
   const out: Record<string, SetEntry[]> = {};
-  for (const it of session.items) {
+  session.items.forEach((it, i) => {
     const ex = byId.get(it.exerciseId);
-    if (ex) out[it.id] = prefillFor(it, ex, { ...o, variant: session.variant });
-  }
+    if (ex) out[it.id] = prefillFor(it, ex, { ...o, variant: session.variant }, warm[i]);
+  });
   return out;
 }
 
@@ -292,15 +309,16 @@ export function reconcileEntries(
 ): Record<string, SetEntry[]> {
   const byId = new Map(o.allLib.map((e) => [e.id, e]));
   const prevItems = new Map(prevSession.items.map((it) => [it.id, it]));
+  const aufwaermen = aufwaermenJeItem(next, byId);
   const out: Record<string, SetEntry[]> = {};
-  for (const item of next.items) {
+  for (const [idx, item] of next.items.entries()) {
     const ex = byId.get(item.exerciseId);
     if (!ex) continue;
     const opts: PrefillOpts = { ...o, variant: next.variant };
     const old = prev[item.id];
     const was = prevItems.get(item.id);
     if (!old || !was) {
-      out[item.id] = prefillFor(item, ex, opts);
+      out[item.id] = prefillFor(item, ex, opts, aufwaermen[idx]);
       continue;
     }
     if (was.exerciseId !== item.exerciseId) {
@@ -308,10 +326,10 @@ export function reconcileEntries(
       // neue Übung (deren Gewichtsvorschlag; alte Warmups wären irreführend).
       const filled = old.filter((s) => !s.warmup && filledSet(s));
       if (!filled.length) {
-        out[item.id] = prefillFor(item, ex, opts);
+        out[item.id] = prefillFor(item, ex, opts, aufwaermen[idx]);
         continue;
       }
-      const freshWork = prefillFor(item, ex, opts).filter((s) => !s.warmup);
+      const freshWork = prefillFor(item, ex, opts, false).filter((s) => !s.warmup);
       out[item.id] = [...filled, ...freshWork.slice(filled.length)];
       continue;
     }
@@ -380,8 +398,8 @@ export function itemExercise(base: Exercise, item: PlannedExercise): Exercise {
 export interface PrescCtx {
   lastPerf: (id: string) => LastPerf | null;
   profile?: EffectiveProfile;
-  /** Lange Pause (> 5 Tage) → ruhiger Einstieg. */
-  lighter: boolean;
+  /** Einstieg nach einer Trainingslücke (ab 14 Tagen ruhig, ab 28 leichter). */
+  pause?: PauseStufe;
   scale: ReadinessScale;
   weightStep?: number;
 }
@@ -394,7 +412,7 @@ export function prescForItem(ex: Exercise, ctx: PrescCtx, lp = ctx.lastPerf(ex.i
       ? undefined
       : startWeight(ex, ctx.profile, { step: ctx.weightStep })?.w;
   return presc(ex, lp, {
-    lighter: ctx.lighter,
+    pause: ctx.pause,
     loadMult: ctx.scale.loadMult,
     cap: ctx.scale.cap,
     step: ctx.weightStep,

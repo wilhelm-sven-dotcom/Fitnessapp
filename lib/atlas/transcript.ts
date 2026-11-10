@@ -1,7 +1,7 @@
 import type { ActiveSessionState } from "@/lib/active-session";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import type { ExRecord } from "@/lib/records";
-import { TIME } from "@/lib/session-time";
+import { restSecFor, TIME } from "@/lib/session-time";
 import type { Exercise, SetEntry } from "@/lib/types";
 
 /**
@@ -58,7 +58,7 @@ export function buildSessionTranscript(opts: {
       (x) => !x.warmup && (x.reps === "" || x.reps == null),
     ).length;
     const workSec = ex.unit === "Sek" ? TIME.timedSetSec : TIME.repSetSec;
-    openSec += open * (workSec + TIME.restSec);
+    openSec += open * (workSec + restSecFor(ex));
   }
 
   const head: string[] = [

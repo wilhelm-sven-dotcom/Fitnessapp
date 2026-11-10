@@ -1,5 +1,5 @@
 import type { Exercise, ResolvedSlot } from "@/lib/types";
-import { poolFor } from "@/lib/progression";
+import { poolFor, stressesInjury } from "@/lib/progression";
 import { fitToBudget } from "@/lib/session-time";
 
 /**
@@ -200,10 +200,11 @@ export function passeZeitAn(
   allLib: Exercise[],
   has: (k: string) => boolean,
   budgetMin: number,
-  opts: { protectCore?: boolean } = {},
+  opts: { protectCore?: boolean; nurKuerzen?: boolean } = {},
 ): DailySession {
   const gepasst = fitToBudget(resolveDailySession(s, allLib, has), budgetMin, {
     protectCore: opts.protectCore,
+    nurKuerzen: opts.nurKuerzen,
   });
   const setsProItem = new Map<string, number>();
   for (const slot of gepasst.list) {
@@ -219,4 +220,65 @@ export function passeZeitAn(
   // Nie alles wegkürzen: eine leere Einheit wäre schlechter als eine zu lange.
   if (!items.length) return s;
   return { ...s, items };
+}
+
+/**
+ * Rückenschonung auf eine BESTEHENDE Einheit anwenden: jede rückenkritische
+ * Übung (`backCaution` oder schwere Hüftstreckung) wird gegen eine schonende
+ * desselben Musters getauscht, die der Ort hergibt; gibt es keine, fällt die
+ * Übung weg (nie die letzte).
+ *
+ * Wozu: Die Einheit steht schon, wenn der Check-in vor dem Training „Rücken
+ * schlecht“ meldet — bisher änderte das nur das Aufwärmen, das geplante
+ * Kreuzheben blieb. Und ein ATLAS-Plan bekam die Schonung nur als Satz im
+ * Prompt. Diese Funktion ist die harte Grenze für beide Fälle.
+ *
+ * Kein `edited`: das ist keine Bearbeitung des Nutzers, sondern Schutz.
+ */
+export function schoneRuecken(
+  s: DailySession,
+  allLib: Exercise[],
+  has: (k: string) => boolean,
+  disabled?: readonly string[],
+): { session: DailySession; getauscht: string[]; gestrichen: string[] } {
+  const byId = new Map(allLib.map((e) => [e.id, e]));
+  const blocked = disabled?.length ? new Set(disabled) : undefined;
+  const kritisch = (e: Exercise) => stressesInjury(e, "rücken");
+  const belegt = new Set(s.items.map((it) => it.exerciseId));
+  let items = s.items;
+  const getauscht: string[] = [];
+  const gestrichen: string[] = [];
+  for (const it of s.items) {
+    const ex = byId.get(it.exerciseId);
+    if (!ex || !kritisch(ex)) continue;
+    const ersatz = poolFor(ex.pattern, has, allLib, blocked).filter(
+      (e) => !kritisch(e) && !belegt.has(e.id),
+    );
+    // Rumpf: ein ausgewiesener Stabilisator zuerst.
+    const wahl =
+      (ex.pattern === "core" ? ersatz.find((e) => e.backStabilizer) : undefined) ?? ersatz[0];
+    if (wahl) {
+      belegt.delete(ex.id);
+      belegt.add(wahl.id);
+      items = items.map((x) =>
+        x.id === it.id
+          ? {
+              ...x,
+              exerciseId: wahl.id,
+              repLow: wahl.repLow,
+              repHigh: wahl.repHigh,
+              why: `Rückenschonend statt ${ex.name}.`,
+              intro: wahl.cue,
+            }
+          : x,
+      );
+      getauscht.push(`${ex.name} → ${wahl.name}`);
+    } else if (items.length > 1) {
+      belegt.delete(ex.id);
+      items = items.filter((x) => x.id !== it.id);
+      gestrichen.push(ex.name);
+    }
+  }
+  if (!getauscht.length && !gestrichen.length) return { session: s, getauscht, gestrichen };
+  return { session: { ...s, items }, getauscht, gestrichen };
 }
