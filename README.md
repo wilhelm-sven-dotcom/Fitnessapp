@@ -69,9 +69,11 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 - **Satzpause** — Grundübungen 2:30, sonst 1:30; läuft aus der Uhr und stimmt
   auch nach Sperre oder Neuladen.
 - **Gym-Modus** — Sprach-Ansagen, Wake-Lock, Spotify-Now-Playing.
-- **ATLAS-Server-API** (`/api/atlas/*`) — session (Komposition, Opus),
-  set (Live-Reaktion, Sonnet), debrief, chat, briefing (Streams); gemeinsames
-  gecachtes System-Präfix, strikte Tools, Server-Sanitizer, Rate-Limits.
+- **ATLAS-Server-API** (`/api/atlas/*`) — session (Plan), set (Reaktion auf
+  einen Satz), debrief, chat, briefing (Textströme), status (Stand und
+  Selbsttest). Ein gemeinsamer Aufruf (`lib/atlas/call.ts`), gecachtes
+  System-Präfix, strukturierte Ausgabe, Server-Sanitizer, Minuten-Limits,
+  zuschaltbarer Zugangscode. Siehe „ATLAS“ unten.
 - **Ohne Netz** — der Service Worker lädt beim Installieren alle Hauptseiten
   und den ganzen Code des Builds vor; im Studio braucht die App kein Netz.
   Ein Update wartet, bis das Training gespeichert ist (siehe unten).
@@ -80,6 +82,39 @@ Muskeln (Wochenarbeit in vier Blaustufen).
   NICHT (gerätelokal).
 - **Export/Import** als JSON, ohne die Zugänge zu Strava und Spotify;
   einspielen als „Ergänzen“ oder „Ersetzen“.
+
+## ATLAS
+
+| Aufgabe | Modell | Nachdenken (`effort`) |
+|---|---|---|
+| Plan, Chat, Wochen-Rückblick | `claude-fable-5-2` | mittel |
+| Auswertung nach der Einheit | `claude-fable-5-2` | wenig |
+| Reaktion auf einen Satz | `claude-sonnet-5-5` | wenig |
+| Ersatz, wenn ein Modell die Anfrage nicht annimmt | `claude-opus-5-5` | wie die Aufgabe |
+
+Zuordnung und Grenzen stehen in `lib/atlas/models.ts`, der eine Weg zu Claude
+in `lib/atlas/call.ts`:
+
+- Strukturierte Antworten (Plan, Satz-Reaktion) über `output_config.format`
+  mit den Schemas aus `lib/atlas/session-tool.ts` und `live-tool.ts`. Einen
+  erzwungenen Tool-Aufruf (`tool_choice`) weisen diese Modelle ab, ebenso
+  `thinking`, `temperature` und ein vorgeschriebenes Antwort-Präfix.
+- Jede Antwort wird auf ihren Endegrund geprüft: Ablehnung und abgeschnittene
+  Antwort sind Fehler, kein Ergebnis. Bei einer Ablehnung aus
+  Sicherheitsgründen antwortet serverseitig ein anderes Modell
+  (`fallbacks: "default"`).
+- Nimmt ein Modell die Anfrage gar nicht an (400, 403, 404), geht sie einmal an
+  das Ersatzmodell. Fable 5.2 verlangt im Anthropic-Konto 30 Tage
+  Datenaufbewahrung und antwortet sonst mit 400.
+- Textströme enden mit einer Statuszeile (`lib/atlas/fehler.ts`). Ein
+  Fehlersatz steht nie im Text und damit nie im gespeicherten Chat.
+- Jeder Aufruf schreibt eine Zeile ins Server-Protokoll (`[atlas]`): Aufgabe,
+  Modell, Dauer, Token, Cache-Treffer. Keine Inhalte.
+
+Prüfen: `npm run pruefe:atlas` stellt die Schnittstelle lokal nach (kein
+Schlüssel, keine Kosten). Gegen die echte Schnittstelle prüft „ATLAS testen“
+unter Einstellungen → Training: zwei kleinste Anfragen, die zeigen, welches
+Modell antwortet, wie schnell, und woran es sonst hängt.
 
 ## Ohne Netz und ohne Datenverlust
 
@@ -142,8 +177,9 @@ npm run pruefe:zeit       # zählt ATLAS-Anfragen beim Umstellen der Trainingsze
 npm run pruefe:ort        # Ortswahl Zuhause/Studio: Frage, Umschalten, Geräte
 npm run pruefe:offline    # ohne Netz: Seiten, Training, Neuladen, Update wartet im Training
 npm run pruefe:daten      # Speichern, liegengebliebene Einheit, Löschen, Export/Import, Strava
+npm run pruefe:atlas      # ATLAS-Routen gegen eine nachgestellte Schnittstelle (kein Schlüssel nötig)
 npm run tempo             # Rechenzeit mit 150 Einheiten im Verlauf, mit Grenzen
-npm run pruefe            # alle Prüfungen nacheinander (Port 3199, offline zusätzlich 3198)
+npm run pruefe            # alle Prüfungen nacheinander (Port 3199, dazu 3198 und 3197)
 npm run fotos -- --klein  # Bildschirmfotos nach .fotos/, mit --klein auch 375 × 667
 npm run messen            # wo Start-, Satz- und ATLAS-Eingabe liegen (JSON)
 npm run kontrast          # WCAG-Kontrast der Farb-Tokens, hell und dunkel

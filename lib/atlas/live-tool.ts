@@ -1,10 +1,8 @@
-import type Anthropic from "@anthropic-ai/sdk";
-
 /**
- * ATLAS' Live-Reaktion auf einen abgeschlossenen Satz: EINE kurze Ansage mit
- * vollem Session-Kontext (Transkript), optional GENAU EIN Eingriff. Client
- * zeigt sofort die deterministische Zeile; die KI-Reaktion ersetzt sie, sobald
- * sie da ist. Ohne Key/offline bleibt es bei der deterministischen Zeile.
+ * ATLAS' Reaktion auf einen eben beendeten Satz: EINE kurze Ansage mit Blick
+ * auf die ganze Einheit (Transkript), dazu höchstens EIN Eingriff. Die
+ * Oberfläche zeigt sofort eine feste Zeile; die Antwort ersetzt sie, sobald
+ * sie da ist. Ohne Schlüssel oder ohne Netz bleibt es bei der festen Zeile.
  */
 
 export interface CoachReactAdjustment {
@@ -18,44 +16,48 @@ export interface CoachReact {
   adjustment?: CoachReactAdjustment;
 }
 
-export const COACH_REACT_TOOL: Anthropic.Tool = {
-  name: "coach_react",
-  description:
-    "Deine Reaktion auf den eben protokollierten Satz — mit Blick auf den GESAMTEN Verlauf der Einheit (Transkript). Maximal zwei kurze Sätze, direkt und konkret (Du-Form); beziehe dich ruhig auf frühere Sätze oder Übungen der Einheit. Optional GENAU EIN Eingriff: Gewicht des nächsten offenen Satzes dieser Übung (kind weight, value in kg, höchstens ±10 % vom eben bewegten Gewicht) oder Pause verlängern (kind rest, value in Sekunden, 15–120). Greife nur ein, wenn die Daten es klar begründen — sonst nur die Ansage.",
-  input_schema: {
-    type: "object",
-    properties: {
-      say: {
-        type: "string",
-        description: "Die Ansage, maximal zwei Sätze, deutsch, Du-Form.",
-      },
-      adjustment: {
-        type: "object",
-        description: "Optionaler Eingriff — nur wenn klar begründet.",
-        properties: {
-          kind: { type: "string", enum: ["weight", "rest"] },
-          value: { type: "number", description: "kg (weight) bzw. Sekunden (rest)." },
-        },
-        required: ["kind", "value"],
-        additionalProperties: false,
-      },
+/** Form der Antwort (`output_config.format`). `adjustment` ist Pflichtfeld
+ *  und darf `null` sein: das Modell entscheidet so ausdrücklich, ob es
+ *  eingreift, statt ein Feld nur wegzulassen. */
+export const COACH_REACT_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  properties: {
+    say: {
+      type: "string",
+      description: "Die Ansage: höchstens zwei kurze Sätze, Du-Form.",
     },
-    required: ["say"],
-    additionalProperties: false,
+    adjustment: {
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            kind: { type: "string", enum: ["weight", "rest"] },
+            value: {
+              type: "number",
+              description: "Bei weight: das neue Gewicht in kg. Bei rest: zusätzliche Pause in Sekunden.",
+            },
+          },
+          required: ["kind", "value"],
+          additionalProperties: false,
+        },
+        { type: "null" },
+      ],
+      description: "Der Eingriff, oder null, wenn keiner nötig ist.",
+    },
   },
-  strict: true,
+  required: ["say", "adjustment"],
+  additionalProperties: false,
 };
 
-/** Regeln für den Live-Modus — kommen als dynamischer System-Block NACH dem
+/** Regeln für die Satz-Reaktion — veränderlicher System-Block NACH dem
  *  gecachten Präfix (Persona + Prinzipien + Katalog). */
 export const LIVE_RULES = [
-  "Du begleitest gerade LIVE eine laufende Einheit. Unten steht das Transkript: Plan, alle bisherigen Sätze, Tagesform und der eben beendete Satz (AKTUELL).",
-  "Lies die Zahlen GENAU SO, wie sie dastehen — jede trägt ihre Einheit. „80 kg × 12 Wdh” heißt: 80 Kilo bewegt, 12 Wiederholungen geschafft. Vertausche die beiden nie und rechne sie nie um.",
-  "Übernimm die Wiederholungszahl unverändert, auch wenn sie hoch wirkt: 40 Wdh sind 40 Wdh. Hohe Zahlen sind bei leichten Gewichten und Eigengewicht normal — korrigiere sie NICHT auf einen Wert, den du für plausibler hältst.",
-  "RIR heißt „Reps in Reserve” — wie viele Wiederholungen danach NOCH im Tank waren. „12 Wdh, RIR 1” ist eine starke Leistung, keine schwache.",
-  "Eingriff nur mit klarer Begründung: RIR 0 und Ziel verfehlt → eher Gewicht senken; viel Luft (RIR ≥ 3) und Nähe zum Rekord → gezielt anheben; Zeitnot laut Transkript → keine Pausenverlängerung. Sicherheit vor Ego.",
-  "Rufe das Tool coach_react mit deiner Reaktion auf.",
-].join("\n");
+  "Du begleitest gerade eine laufende Einheit. Die Nachricht ist das Transkript: Plan, alle bisherigen Sätze, Tagesform und unter „AKTUELL“ der eben beendete Satz. Antworte auf diesen Satz, mit Blick auf den ganzen Verlauf.",
+  "Jede Zahl im Transkript trägt ihre Einheit. „80 kg × 12 Wdh“ heißt: 80 Kilo bewegt, 12 Wiederholungen geschafft. Übernimm die Zahlen, wie sie dastehen. Hohe Wiederholungszahlen sind bei leichtem Gewicht und Eigengewicht normal: 40 Wdh sind 40 Wdh.",
+  "RIR heißt „Reps in Reserve“: wie viele Wiederholungen nach dem Satz noch möglich gewesen wären. „12 Wdh, RIR 1“ ist ein harter, guter Satz.",
+  "say ist deine Ansage. Sie steht in der Pause in einer kleinen Sprechblase und wird auf Wunsch vorgelesen, darum höchstens zwei kurze Sätze. Du kannst dich auf frühere Sätze oder Übungen der Einheit beziehen.",
+  "adjustment ist ein Eingriff und bleibt null, solange die Zahlen ihn nicht klar begründen. weight setzt das Gewicht des nächsten offenen Satzes dieser Übung (in kg, höchstens 10 Prozent vom eben bewegten Gewicht entfernt). rest verlängert die laufende Pause um 15 bis 120 Sekunden. Anhaltspunkte: RIR 0 und Ziel verfehlt spricht für weniger Gewicht; viel Luft (RIR 3 oder mehr) nahe am Bestwert für mehr; ist die Zeit laut Transkript knapp, keine längere Pause. Im Zweifel zählt Sicherheit mehr als ein Rekord.",
+].join("\n\n");
 
 const cap = (s: unknown, n: number) => (typeof s === "string" ? s.trim().slice(0, n) : "");
 

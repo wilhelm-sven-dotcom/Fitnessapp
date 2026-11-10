@@ -8,10 +8,17 @@ import type { Exercise, SetEntry } from "@/lib/types";
  * Kompaktes Live-Transkript der laufenden Einheit für /api/atlas/set —
  * Plan, ALLE bisherigen Sätze, Tagesform, Zeitstand und der eben beendete
  * Satz. So kann sich ATLAS auf frühere Sätze und Übungen beziehen, statt nur
- * den letzten Moment zu sehen. Hart auf ~4000 Zeichen gekappt.
+ * den letzten Moment zu sehen.
  */
 
-const MAX_CHARS = 5200;
+/**
+ * Längengrenze in Zeichen — dieselbe Zahl kappt auf dem Server
+ * (app/api/atlas/set/route.ts). Vorher lag die Grenze hier bei 5200 und dort
+ * bei 4500, und gekürzt wurde stumpf am Ende: in langen Einheiten fiel genau
+ * die Zeile „AKTUELL“ weg, auf die ATLAS antworten soll. Jetzt bleiben Kopf
+ * und der aktuelle Satz immer stehen; gekürzt wird bei den ältesten Übungen.
+ */
+export const TRANSKRIPT_MAX = 5200;
 
 /**
  * EIN Satz als Text — mit Einheit an JEDER Zahl.
@@ -71,18 +78,18 @@ export function buildSessionTranscript(opts: {
     );
   if (state.backSafe) head.push("Rückenschonung aktiv — keine belasteten Beugen/Hinges.");
 
-  const items: string[] = ["Plan & bisheriger Verlauf:"];
+  /** Je Übung die volle Zeile und eine Kurzfassung für den Fall, dass es eng wird. */
+  const items: { voll: string; kurz: string; aktuell: boolean }[] = [];
   s.items.forEach((it, i) => {
     const ex = byId.get(it.exerciseId);
     if (!ex) return;
     const sets = state.entries[it.id] ?? [];
     const work = sets.filter((x) => !x.warmup);
-    const doneStr = work
-      .filter((x) => x.reps !== "" && x.reps != null)
-      .map((x) => setLine(ex, x))
-      .join(", ");
-    const open = work.filter((x) => x.reps === "" || x.reps == null).length;
-    const marker = it.id === itemId ? " ← AKTUELLE ÜBUNG" : "";
+    const done = work.filter((x) => x.reps !== "" && x.reps != null);
+    const doneStr = done.map((x) => setLine(ex, x)).join(", ");
+    const open = work.length - done.length;
+    const aktuell = it.id === itemId;
+    const marker = aktuell ? " ← AKTUELLE ÜBUNG" : "";
     const rec = opts.records.get(ex.id);
     const note = opts.exerciseNotes[ex.id];
     const parts = [
@@ -100,7 +107,12 @@ export function buildSessionTranscript(opts: {
     ]
       .filter(Boolean)
       .join(" ");
-    items.push(parts + marker);
+    const letzter = done[done.length - 1];
+    items.push({
+      voll: parts + marker,
+      kurz: `${i + 1}. ${ex.name}: ${done.length} von ${it.sets} Sätzen${letzter ? `, zuletzt ${setLine(ex, letzter)}` : ""}.${marker}`,
+      aktuell,
+    });
   });
 
   const cur = state.entries[itemId]?.[setIdx];
@@ -117,8 +129,38 @@ export function buildSessionTranscript(opts: {
     );
   }
 
-  let out = [...head, "", ...items, "", ...tail].join("\n");
-  if (out.length > MAX_CHARS) out = out.slice(0, MAX_CHARS);
+  // Zusammensetzen und, wenn nötig, von vorn nach hinten eindampfen: erst
+  // Kurzfassungen für die ältesten Übungen, dann ganz weglassen. Kopf, die
+  // aktuelle Übung und „AKTUELL“ bleiben immer.
+  const zeilen = items.map((x) => x.voll);
+  let ausgelassen = 0;
+  const baue = () =>
+    [
+      ...head,
+      "",
+      "Plan & bisheriger Verlauf:",
+      ...(ausgelassen > 0
+        ? [`(${ausgelassen} frühere ${ausgelassen === 1 ? "Übung" : "Übungen"} ausgelassen)`]
+        : []),
+      ...zeilen.filter((z) => z !== ""),
+      "",
+      ...tail,
+    ].join("\n");
+  for (let i = 0; i < items.length && baue().length > TRANSKRIPT_MAX; i++) {
+    if (!items[i].aktuell) zeilen[i] = items[i].kurz;
+  }
+  for (let i = 0; i < items.length && baue().length > TRANSKRIPT_MAX; i++) {
+    if (items[i].aktuell) continue;
+    zeilen[i] = "";
+    ausgelassen++;
+  }
+  let out = baue();
+  if (out.length > TRANSKRIPT_MAX) {
+    // Äußerster Fall (eine einzige, riesige Übung): die Mitte kappen, das Ende
+    // mit „AKTUELL“ behalten.
+    const ende = `\n\n${tail.join("\n")}`;
+    out = out.slice(0, Math.max(0, TRANSKRIPT_MAX - ende.length)) + ende;
+  }
   return out;
 }
 
@@ -153,6 +195,7 @@ export function buildDebriefFacts(opts: {
     if (done) lines.push(`${i + 1}. ${ex.name}: ${done}.`);
   });
   let out = lines.join("\n");
+  // Server-Grenze: 3500 Zeichen (app/api/atlas/debrief/route.ts).
   if (out.length > 3000) out = out.slice(0, 3000);
   return out;
 }

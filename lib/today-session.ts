@@ -1,4 +1,8 @@
-import { buildCoachContext } from "@/lib/coach-context";
+import { atlasKopf, fehlerAus, geraeteDatum } from "@/lib/atlas/client";
+import type { AtlasFehlerArt } from "@/lib/atlas/fehler";
+import { buildCoachContext, lageBlock } from "@/lib/coach-context";
+import { fatigueState } from "@/lib/fatigue";
+import type { PhaseState } from "@/lib/periodization";
 import { reqOk, stressesInjury } from "@/lib/progression";
 import { muscleOf, MUSCLE_LABEL } from "@/lib/volume";
 import type { DailySession, SessionVariant } from "@/lib/session-model";
@@ -63,18 +67,20 @@ export interface AtlasSessionRequest {
   /** Trainingsort heute (Name + Geräte-Namen) — für Begründung und Briefing;
    *  die harte Grenze bleibt `availableIds`. */
   ort?: { name: string; geraete: string[]; nurGeraete?: boolean };
+  /** Stand im Trainingsblock und laufende Entlastungswoche (lib/coach-context.ts). */
+  phase?: PhaseState;
+  deloadActive?: boolean;
 }
 
 /**
- * Warum die Anfrage scheiterte — der Aufrufer soll es SAGEN können.
- * Vorher lieferte diese Funktion für jeden Fall `null`: offline, Rate-Limit,
- * Timeout und „kein Key“ waren ununterscheidbar, und der Nutzer sah bloß
- * „ATLAS war nicht erreichbar“, während er in Wahrheit im Stundenlimit hing.
+ * Warum die Anfrage scheiterte — der Aufrufer soll es SAGEN können. Die Arten
+ * kommen vom Server (lib/atlas/fehler.ts); dazu `zeit`, wenn die Oberfläche
+ * selbst nicht länger gewartet hat.
  *
  * `abgebrochen` ist KEIN Fehler: so endet jede Anfrage, die von einer neueren
  * verdrängt wurde (Weiterklicken am Zeitregler) — dazu gehört keine Meldung.
  */
-export type AtlasFehler = "limit" | "zeit" | "netz" | "aus" | "abgebrochen";
+export type AtlasFehler = AtlasFehlerArt | "zeit";
 
 export type AtlasSessionErgebnis =
   | { session: DailySession }
@@ -86,12 +92,11 @@ export async function requestAtlasSession(
   req: AtlasSessionRequest,
   opts: { timeoutMs?: number; signal?: AbortSignal } = {},
 ): Promise<AtlasSessionErgebnis> {
-  // Der Timeout lag bei 25 s und damit UNTER der echten Laufzeit einer
-  // Komposition (Opus, ungestreamt, 20–60 s) — er hat funktionierende
-  // Anfragen abgeschnitten. Gefahrlos höher: der Basisplan steht längst,
-  // und die Oberfläche ist währenddessen nicht gesperrt.
+  // Ein Plan mit Nachdenken braucht 20 s bis über eine Minute. Die Geduld
+  // darf darüber liegen: der Basisplan steht längst, und die Oberfläche ist
+  // währenddessen nicht gesperrt.
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 60_000);
+  const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 120_000);
   const weiterreichen = () => ctrl.abort();
   opts.signal?.addEventListener("abort", weiterreichen);
   const vonAussen = () => opts.signal?.aborted === true;
@@ -117,17 +122,23 @@ export async function requestAtlasSession(
         exerciseNotes: req.exerciseNotes,
       }),
       recentUseBlock(req.log, req.allLib),
+      lageBlock({
+        phase: req.phase,
+        deloadActive: req.deloadActive,
+        fatigue: fatigueState(req.log, req.cardio),
+      }),
       req.readinessLine ?? "",
       req.backSafe
-        ? "WICHTIG: Rückenschonung aktiv — keine belasteten Beugen/Hinges, Core als Stabilisation."
+        ? "Rückenschonung aktiv: Belastete Kniebeugen und Hüftbeugen stehen heute nicht zur Wahl, der Rumpf arbeitet stabilisierend."
         : "",
     ].filter(Boolean);
 
     const res = await fetch("/api/atlas/session", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: atlasKopf(),
       signal: ctrl.signal,
       body: JSON.stringify({
+        datum: geraeteDatum(),
         availableIds: avail.map((e) => e.id),
         customExercises: avail
           .filter((e) => e.custom)
@@ -148,20 +159,19 @@ export async function requestAtlasSession(
         ort: req.ort,
       }),
     });
-    if (res.status === 429) return { fehler: "limit" };
-    if (!res.ok) return { fehler: "netz" };
-    const data = (await res.json()) as {
+    const data = (await res.json().catch(() => null)) as {
       ok?: boolean;
       configured?: boolean;
+      fehler?: unknown;
       session?: {
         name: string;
         focus: string;
         briefing: string;
         items: DailySession["items"];
       };
-    };
-    if (data.configured === false) return { fehler: "aus" };
-    if (!data.ok || !data.session?.items?.length) return { fehler: "netz" };
+    } | null;
+    if (!res.ok || !data?.ok) return { fehler: fehlerAus(res.status, data) };
+    if (!data.session?.items?.length) return { fehler: "unbrauchbar" };
     const now = new Date();
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     return {
@@ -183,7 +193,8 @@ export async function requestAtlasSession(
     // Der ganze Rumpf liegt im try — vorher standen availableExercises,
     // buildCoachContext und recentUseBlock DAVOR und konnten die Promise
     // rejecten; dann blieb der Ladezustand des Aufrufers für immer stehen.
-    return { fehler: vonAussen() ? "abgebrochen" : "zeit" };
+    // Abbruch von außen, eigene Geduld zu Ende, oder die Verbindung riss ab.
+    return { fehler: vonAussen() ? "abgebrochen" : ctrl.signal.aborted ? "zeit" : "netz" };
   } finally {
     clearTimeout(t);
     opts.signal?.removeEventListener("abort", weiterreichen);

@@ -1,6 +1,6 @@
 /**
  * Alle Playwright-Prüfungen nacheinander (sie teilen sich Port 3199; die
- * Offline-Prüfung belegt zusätzlich 3198).
+ * Offline-Prüfung belegt zusätzlich 3198, die ATLAS-Prüfung 3197).
  *
  *   npm run build && npm run pruefe
  *
@@ -31,6 +31,7 @@ const SKRIPTE = [
   "scripts/pruefe-ort.mjs",
   "scripts/pruefe-offline.mjs",
   "scripts/pruefe-daten.mjs",
+  "scripts/pruefe-atlas.mjs",
   "scripts/tempo.mjs",
 ];
 

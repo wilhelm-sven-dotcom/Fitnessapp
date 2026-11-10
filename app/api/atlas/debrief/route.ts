@@ -1,17 +1,15 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { ATLAS_MODEL } from "@/lib/atlas/models";
+import { atlasTextAntwort } from "@/lib/atlas/call";
+import { atlasEingang, text } from "@/lib/atlas/eingang";
 import { atlasSystem } from "@/lib/atlas/prompts";
-import { textStreamResponse } from "@/lib/atlas/stream";
-import { allowRequest, clientKey } from "@/lib/rate-limit";
 
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
-const DEBRIEF_RULES = `Der Athlet hat GERADE eine Einheit beendet — unten stehen die Fakten. Gib dein Debrief: GENAU drei kurze Zeilen, jede für sich stehend (durch Zeilenumbruch getrennt, ohne Nummerierung oder Spiegelstriche).
-Zeile 1: das Urteil zur Einheit — konkret, mit einer echten Zahl.
-Zeile 2: die wichtigste Beobachtung (stärkster Satz, auffälligster Verlauf, RIR-Muster).
-Zeile 3: der eine Auftrag für die nächste Einheit.
-Keine Floskeln, keine Emojis, Du-Form.`;
+const DEBRIEF_RULES = `Der Athlet hat gerade eine Einheit beendet; die Nachricht enthält die Fakten. Schreib dein Fazit als genau drei kurze Zeilen, jede in einer eigenen Zeile, ohne Nummern und ohne Spiegelstriche. Die App zeigt diese drei Zeilen untereinander auf dem Abschlussbild.
+Zeile 1: dein Urteil zur Einheit, mit einer echten Zahl.
+Zeile 2: die wichtigste Beobachtung (stärkster Satz, auffälligster Verlauf, Muster beim RIR).
+Zeile 3: der eine Auftrag für die nächste Einheit.`;
 
 interface DebriefBody {
   facts?: string;
@@ -19,32 +17,24 @@ interface DebriefBody {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return Response.json({ configured: false });
-  if (!allowRequest(`atlas-debrief:${clientKey(req)}`, 10, 60_000)) {
+  const ein = await atlasEingang<DebriefBody>(req, "debrief", 10);
+  if (!ein.ok) return ein.antwort;
+  const { body, apiKey, v2 } = ein;
+
+  const facts = text(body.facts, 3500).trim();
+  if (!facts) {
     return Response.json(
-      { error: "Zu viele Anfragen — kurz warten." },
-      { status: 429 },
+      { ok: false, fehler: "anfrage", error: "Keine Fakten." },
+      { status: 400 },
     );
   }
 
-  let body: DebriefBody;
-  try {
-    body = (await req.json()) as DebriefBody;
-  } catch {
-    return Response.json({ error: "bad request" }, { status: 400 });
-  }
-  const facts = (body.facts ?? "").toString().slice(0, 3500).trim();
-  if (!facts) return Response.json({ error: "no facts" }, { status: 400 });
-  const persona = (body.persona ?? "").toString().slice(0, 400);
-
-  const dynamic = [DEBRIEF_RULES, persona].filter(Boolean).join("\n\n");
-  const client = new Anthropic({ apiKey });
-  const stream = client.messages.stream({
-    model: ATLAS_MODEL,
-    max_tokens: 500,
-    system: atlasSystem(dynamic),
+  return atlasTextAntwort({
+    apiKey,
+    aufgabe: "auswertung",
+    system: atlasSystem([DEBRIEF_RULES, text(body.persona, 400)].filter(Boolean).join("\n\n")),
     messages: [{ role: "user", content: facts }],
+    signal: req.signal,
+    v2,
   });
-  return textStreamResponse(stream);
 }

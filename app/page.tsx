@@ -75,6 +75,8 @@ export default function HomePage() {
     waehleOrt,
     saveActiveSession,
     discardActive,
+    phase,
+    deloadActive,
   } = useTraining();
 
   const has = useMemo(
@@ -243,6 +245,8 @@ export default function HomePage() {
           persona: athletePersona(effectiveProfile(settings, body), settings.userName),
           readinessLine,
           disabled: disabledExercises,
+          phase,
+          deloadActive,
           ort: activeGym
             ? {
                 name: activeGym.name,

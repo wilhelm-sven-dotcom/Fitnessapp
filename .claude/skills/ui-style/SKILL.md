@@ -363,9 +363,21 @@ Sheets 50.
   Wdh`); `×` nur zwischen Kilo und Wiederholungen. Prompt
   (`lib/atlas/live-tool.ts`) und Datenformat (`lib/atlas/transcript.ts`) ändern
   sich zusammen.
-- Ein Auslöser, ein `AbortController`; Fehler mit Grund
-  (`limit | zeit | netz | aus | abgebrochen`, `abgebrochen` zeigt nichts);
-  während einer Anfrage nichts sperren; Timeouts 60 s.
+- Ein Auslöser, ein `AbortController`; während einer Anfrage nichts sperren.
+- **Fehler haben eine Art** (`lib/atlas/fehler.ts`: `aus | schluessel | zugang
+  | limit | ablehnung | abgeschnitten | ueberlastet | anfrage | unbrauchbar |
+  netz | abgebrochen`, dazu `zeit` beim Plan). Die Oberfläche zeigt den Satz
+  aus `ATLAS_FEHLER_TEXT`; `abgebrochen` zeigt nichts. Ein Fehlersatz steht nie
+  im Chatverlauf: bleibt eine Frage ohne Antwort, steht darunter eine Zeile
+  (`role="alert"`) mit dem Grund und dem Knopf „Erneut senden“.
+- **Ein Weg zu Claude:** `lib/atlas/call.ts` (`atlasJson`, `atlasTextAntwort`),
+  Modelle und Grenzen in `lib/atlas/models.ts`, Anfragen der Oberfläche über
+  `lib/atlas/client.ts` (`atlasKopf`, `atlasStrom`). Keine Route und keine
+  Komponente ruft das SDK oder `fetch("/api/atlas/…")` am Helfer vorbei.
+- **Prompts** in normaler Lautstärke, mit Grund: keine Großbuchstaben, kein
+  „NIE/GENAU“; Längenangaben nur, wo die Oberfläche den Platz vorgibt. Der
+  feste Teil (`STATIC_PREFIX`) enthält nichts Persönliches und nichts, was
+  sich je Anfrage ändert (Datum, Profil, Daten kommen danach).
 
 ## Trainingsort
 

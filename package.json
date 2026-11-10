@@ -14,6 +14,7 @@
     "pruefe:ort": "node scripts/pruefe-ort.mjs",
     "pruefe:offline": "node scripts/pruefe-offline.mjs",
     "pruefe:daten": "node scripts/pruefe-daten.mjs",
+    "pruefe:atlas": "node scripts/pruefe-atlas.mjs",
     "tempo": "node scripts/tempo.mjs",
     "pruefe": "node scripts/pruefe-alle.mjs",
     "pruefe:tokens": "node scripts/pruefe-tokens.mjs",

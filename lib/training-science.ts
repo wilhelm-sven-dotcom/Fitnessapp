@@ -43,18 +43,20 @@ export const VOLUME_BUCKET_LABEL: Record<VolumeBucket, string> = {
 };
 
 /**
- * Compact, German principle block injected into the coach and builder system
- * prompts. Keeps the AI's suggestions anchored to current evidence and to this
- * athlete's constraints (hypertrophy, 3× full-body, sensitive lower back, Peloton).
+ * Kompakter Prinzipien-Block für ATLAS (Plan und Chat). Hält die Vorschläge an
+ * der aktuellen Studienlage fest. Er steht im festen, gecachten Teil des
+ * System-Prompts und gilt für jeden Nutzer: nichts Persönliches (Geräte,
+ * Verletzungen, Sportarten) gehört hier hinein — das kommt je Anfrage mit dem
+ * Profil und den Trainingsdaten.
  */
-export const TRAINING_PRINCIPLES = `Evidenzbasierte Trainingsprinzipien (aktuelle Studienlage — halte dich daran):
-- Volumen: ${VOLUME_LANDMARKS.target}–${VOLUME_LANDMARKS.mav} harte Sätze pro Muskel und Woche sind der produktive Bereich. Ab ~${VOLUME_LANDMARKS.mev} Sätzen wächst etwas, unter ${VOLUME_LANDMARKS.mev} reicht es kaum, über ${VOLUME_LANDMARKS.mrv} bringt selten mehr und kostet Erholung (Pelland 2024). Priorisiere unterversorgte Muskeln.
-- Nähe zum Muskelversagen: die letzten Arbeitssätze 0–3 Wdh vor dem Versagen (RIR 0–3), der Großteil bei RIR 1–2. Näher dran hilft etwas, flacht aber ab ~2 RIR ab (Robinson 2024) — nicht stur bis zum Versagen.
-- Progressive Überlastung per doppelter Progression: erst Wiederholungen in der Spanne hochfahren, dann Gewicht.
-- Frequenz: jeden Muskel ~2×/Woche treffen; bei 3× Ganzkörper automatisch erfüllt.
-- Pausen: Grundübungen 2–3 Min, Isolation/Core kürzer (~60–90 s).
-- Lengthened-Fokus: Übungen, die den Muskel unter Last in der gedehnten Position fordern, bevorzugen — neuere Evidenz spricht dafür.
-- Cardio-Interferenz: hartes Radfahren (Peloton) mindert die Beinkraft-Entwicklung, v. a. < 24 h davor. Nach harter Fahrt Beine leichter nehmen oder Oberkörper vorziehen.
-- Rücken (falls empfindlich): nicht dauerhaft meiden, sondern kontrolliert progressiv belasten — neutrale Wirbelsäule, moderat starten und steigern; schwere Hinges und belastete Flexion bewusst dosieren. Progressive Belastung stärkt den Rücken nachweislich (JOSPT 2024).
-- Erfahrung & Individualität: Volumen an den Stand anpassen (Anfänger untere Spanne + Technik, Erfahrene vertragen/brauchen mehr); bei Stillstand mehr Volumen testen — die Reaktion ist individuell.
-- Autoregulation: Last und Sätze nach Tagesform und RIR steuern statt starrer Prozente (Netz-Metaanalyse 2025).`;
+export const TRAINING_PRINCIPLES = `Trainingsprinzipien, nach denen die App plant (Stand der Studienlage):
+- Volumen: ${VOLUME_LANDMARKS.target} bis ${VOLUME_LANDMARKS.mav} harte Sätze pro Muskel und Woche sind der produktive Bereich. Ab etwa ${VOLUME_LANDMARKS.mev} Sätzen wächst etwas, darunter reicht es kaum, über ${VOLUME_LANDMARKS.mrv} bringt selten mehr und kostet Erholung (Pelland 2024). Unterversorgte Muskeln haben Vorrang.
+- Nähe zum Muskelversagen: Arbeitssätze enden 0 bis 3 Wiederholungen vor dem Versagen (RIR 0 bis 3), der Großteil bei RIR 1 bis 2. Näher dran hilft etwas, der Zugewinn flacht ab etwa RIR 2 ab (Robinson 2024).
+- Progressive Überlastung als doppelte Progression: erst die Wiederholungen in der Spanne hochfahren, dann das Gewicht.
+- Frequenz: jeden Muskel etwa zweimal pro Woche treffen. Mit drei Ganzkörper-Einheiten ist das erfüllt.
+- Pausen: Grundübungen 2 bis 3 Minuten, eingelenkige Übungen und Rumpf kürzer (60 bis 90 Sekunden).
+- Gedehnte Position: Übungen, die den Muskel unter Last in der Dehnung fordern, sind nach neuerer Evidenz im Vorteil.
+- Ausdauer und Kraft: hartes Ausdauertraining (Rad, Lauf, Intervalle) bremst die Beinkraft, vor allem in den 24 Stunden davor. Nach einer harten Ausdauer-Einheit die Beine leichter nehmen oder den Oberkörper vorziehen.
+- Empfindlicher Rücken: nicht dauerhaft meiden, sondern kontrolliert und steigend belasten, mit neutraler Wirbelsäule und moderatem Einstieg; schwere Hüftbeugen und belastete Beugung bewusst dosieren (JOSPT 2024).
+- Erfahrung: Volumen an den Stand anpassen. Anfänger bleiben in der unteren Spanne und üben Technik, Erfahrene vertragen und brauchen mehr. Bei Stillstand mehr Volumen testen; die Reaktion ist individuell.
+- Autoregulation: Last und Sätze nach Tagesform und RIR steuern statt nach starren Prozenten (Netzwerk-Metaanalyse 2025).`;

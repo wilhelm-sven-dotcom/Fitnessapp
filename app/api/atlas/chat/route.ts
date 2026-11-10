@@ -1,78 +1,76 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { ATLAS_MODEL } from "@/lib/atlas/models";
+import { atlasTextAntwort } from "@/lib/atlas/call";
+import { atlasEingang, heuteZeile, text } from "@/lib/atlas/eingang";
 import { atlasSystem } from "@/lib/atlas/prompts";
-import { textStreamResponse } from "@/lib/atlas/stream";
-import { allowRequest, clientKey } from "@/lib/rate-limit";
 
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
-/** Chat-Regeln — dynamischer Block nach dem gecachten Präfix. */
-const CHAT_RULES = `Du bist im Gespräch mit deinem Athleten. Kurz und konkret antworten — keine Romane, keine Floskeln, kein Smalltalk. Beziehe dich auf die echten Daten unten; nenne, wenn sinnvoll, konkrete Zahlen (Gewicht, Sätze, Wiederholungen).
+/** Chat-Regeln — veränderlicher Block nach dem gecachten Präfix. Die fünf
+ *  Zeilenanfänge der Protokollform müssen mit
+ *  `components/coach/ProtokollBubble.tsx` übereinstimmen. */
+const CHAT_RULES = `Du bist im Gespräch mit deinem Athleten. Antworte so lang, wie die Frage es braucht, meist ein paar Sätze. Stütz dich auf seine Daten unten und nenne Zahlen (Gewicht, Sätze, Wiederholungen), wo sie die Antwort tragen.
 
-Protokollform: Wo es der Antwort hilft, strukturiere sie als Protokollzeilen — jede Zeile beginnt mit „Beobachtung:", „Einschätzung:", „Plan:", „Anpassung:" oder „Hinweis:" und steht für sich (die App hebt solche Zeilen hervor). Kurze Rückfragen oder ein einzelner Satz brauchen kein Präfix.
+Protokollform: Wo es der Antwort hilft, gliedere sie in Zeilen, die mit „Beobachtung:“, „Einschätzung:“, „Plan:“, „Anpassung:“ oder „Hinweis:“ beginnen. Jede steht für sich, die App hebt sie hervor. Eine kurze Rückfrage oder ein einzelner Satz braucht das nicht.
 
-Sicherheit: Du bist kein Arzt. War der untere Rücken zweimal in Folge „rot", rate klar zu Arzt oder Physiotherapie statt zu Trainingstipps. Bei Schmerzen immer zu ärztlichem Rat raten.
+Gesundheit: Du bist kein Arzt. Bei Schmerzen rätst du zu ärztlichem Rat. War der untere Rücken zweimal hintereinander „rot“, rätst du klar zu Arzt oder Physiotherapie statt zu Trainingstipps.
 
-Plan-Treue: Die heutige Einheit stellst DU zusammen (im Kontext als „Nächste geplante Einheit"). Empfiehlst du Übungen, nimm sie aus dem Katalog oder den protokollierten Einheiten — erfinde nichts außerhalb davon. Umbau-Ideen kennzeichne als Vorschlag; umgesetzt wird auf der Startseite (Wunsch-Feld oder Bearbeiten).
+Plan: Die heutige Einheit stellst du zusammen; sie steht unten als „Nächste geplante Einheit“. Übungen empfiehlst du aus dem Katalog oder aus den protokollierten Einheiten, denn nur die kann die App übernehmen. Umbau-Ideen nennst du als Vorschlag; umgesetzt wird auf der Startseite über das Wunschfeld oder „Bearbeiten“.
 
-Begriffe: RIR heißt „Reps in Reserve" — wie viele Wiederholungen nach dem Satz noch im Tank waren, NICHT die Zahl der gemachten Wiederholungen.
+RIR heißt „Reps in Reserve“: wie viele Wiederholungen nach dem Satz noch möglich gewesen wären, nicht die Zahl der gemachten.
 
-Hilfsmittel: Stehen im Kontext Hilfsmittel-Notizen je Übung (z. B. „Unterstützungsband" = assistierte, leichtere Ausführung), berücksichtige sie — Leistungen mit und ohne Hilfsmittel sind nicht 1:1 vergleichbar.
+Hilfsmittel: Stehen unten Notizen zu einer Übung (etwa „Unterstützungsband“ für eine assistierte, leichtere Ausführung), rechne sie ein. Leistungen mit und ohne Hilfsmittel sind nicht direkt vergleichbar.
 
-Ausdauer/Strava: Stehen unten Ausdauer-Einheiten (Läufe, Intervalle, Fahrten), plane sie aktiv mit ein: harte Fahrt < 24 h vor einem beinlastigen Tag → Beine leichter oder Oberkörper vorziehen. Achte auf die Wochenbalance Kraft vs. Ausdauer.`;
+Ausdauer: Stehen unten Läufe, Intervalle oder Fahrten, plane sie mit ein. Nach einer harten Ausdauer-Einheit in den letzten 24 Stunden die Beine leichter nehmen oder den Oberkörper vorziehen, und die Wochenbalance aus Kraft und Ausdauer im Blick behalten.`;
 
 interface ChatBody {
-  messages?: { role: "user" | "assistant"; content: string }[];
+  messages?: { role?: unknown; content?: unknown }[];
   context?: string;
   /** Profil-Zeile (athletePersona). */
   persona?: string;
+  /** Datum des Geräts, JJJJ-MM-TT. */
+  datum?: string;
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return Response.json({ configured: false });
-  if (!allowRequest(`atlas-chat:${clientKey(req)}`, 20, 60_000)) {
-    return Response.json(
-      { error: "Zu viele Anfragen — kurz warten." },
-      { status: 429 },
-    );
-  }
+  const ein = await atlasEingang<ChatBody>(req, "chat", 20);
+  if (!ein.ok) return ein.antwort;
+  const { body, apiKey, v2 } = ein;
 
-  let body: ChatBody;
-  try {
-    body = (await req.json()) as ChatBody;
-  } catch {
-    return Response.json({ error: "bad request" }, { status: 400 });
-  }
-
-  const messages = (body.messages ?? [])
+  const messages = (Array.isArray(body.messages) ? body.messages : [])
     .filter((m) => m && typeof m.content === "string" && m.content.trim())
     .slice(-16)
     .map((m) => ({
       role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
-      content: m.content.slice(0, 4000),
+      content: (m.content as string).slice(0, 4000),
     }));
+  // Die Unterhaltung muss mit einer Nutzer-Nachricht enden: ein offener
+  // Assistenten-Text am Ende wäre ein Vorschreiben der Antwort, und das weisen
+  // die Modelle ab.
+  while (messages.length && messages[messages.length - 1].role === "assistant") messages.pop();
+  while (messages.length && messages[0].role === "assistant") messages.shift();
   if (!messages.length) {
-    return Response.json({ error: "no messages" }, { status: 400 });
+    return Response.json(
+      { ok: false, fehler: "anfrage", error: "Keine Nachricht." },
+      { status: 400 },
+    );
   }
 
-  const persona = (body.persona ?? "").toString().slice(0, 400);
-  const context = (body.context ?? "").toString().slice(0, 9000);
   const dynamic = [
     CHAT_RULES,
-    persona,
-    `Aktuelle Trainingsdaten:\n${context.trim() || "keine"}`,
+    heuteZeile(body.datum),
+    text(body.persona, 400),
+    `Aktuelle Trainingsdaten:\n${text(body.context, 9000).trim() || "keine"}`,
   ]
     .filter(Boolean)
     .join("\n\n");
 
-  const client = new Anthropic({ apiKey });
-  const stream = client.messages.stream({
-    model: ATLAS_MODEL,
-    max_tokens: 1024,
+  return atlasTextAntwort({
+    apiKey,
+    aufgabe: "chat",
     system: atlasSystem(dynamic),
     messages,
+    signal: req.signal,
+    v2,
   });
-  return textStreamResponse(stream);
 }

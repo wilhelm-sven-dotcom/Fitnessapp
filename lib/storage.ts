@@ -106,6 +106,8 @@ export const KEYS = {
   active: "wilhelm-training-active",
   // ATLAS-Chatverlauf (gekappt, synct mit).
   chat: "wilhelm-training-chat",
+  // Wochen-Rückblick von ATLAS, je Kalenderwoche einer ({ woche, text }).
+  rapport: "wilhelm-training-rapport",
 } as const;
 
 /** Keys, die NIE in die Cloud gespiegelt werden (gerätelokaler Live-State). */

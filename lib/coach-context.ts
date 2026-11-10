@@ -1,4 +1,6 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
+import type { FatigueState } from "@/lib/fatigue";
+import type { PhaseState } from "@/lib/periodization";
 import { hoursSince, lastRide, weeklyCardio } from "@/lib/cardio";
 import { intensityLabel, kmLabel, sportLabel } from "@/lib/cardio-sport";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
@@ -44,6 +46,35 @@ function nextSessionLines(n: NextSessionInfo): string[] {
       .map((e) => (e.sets > 0 ? `${e.name} (${e.sets} Sätze)` : e.name))
       .join(", "),
   ];
+}
+
+/**
+ * Wo der Athlet im Trainingsblock steht und wie belastet er gerade ist — für
+ * Plan und Chat. Vorher wusste ATLAS beim Planen weder von einer laufenden
+ * Entlastungswoche (die App rechnet dann selbst die Gewichte herunter) noch
+ * von einer hohen Belastung der letzten Tage.
+ */
+export function lageBlock(o: {
+  phase?: PhaseState;
+  deloadActive?: boolean;
+  fatigue?: FatigueState;
+}): string {
+  const zeilen: string[] = [];
+  if (o.phase)
+    zeilen.push(
+      `Trainingsblock: Woche ${o.phase.cycleWeek} von ${o.phase.cycleLength}, Phase „${o.phase.title}“ (${o.phase.focus}).`,
+    );
+  if (o.deloadActive)
+    zeilen.push(
+      "Entlastungswoche läuft: Die App rechnet die Gewichte auf 60 Prozent herunter und nimmt je Übung einen Satz weg. Plane entsprechend leicht.",
+    );
+  else if (o.phase?.due)
+    zeilen.push("Eine Entlastungswoche ist fällig; gestartet hat der Athlet sie noch nicht.");
+  if (o.fatigue?.enough)
+    zeilen.push(
+      `Belastung der letzten 7 Tage: ${o.fatigue.band} (${o.fatigue.ratio.toFixed(2).replace(".", ",")}-fach des Wochenschnitts der letzten 4 Wochen).`,
+    );
+  return zeilen.length ? `Lage:\n${zeilen.join("\n")}` : "";
 }
 
 /**

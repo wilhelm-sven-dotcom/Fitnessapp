@@ -66,6 +66,7 @@ import { pauseStufe, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
 import { primeAudio } from "@/lib/beep";
 import { swapPoolFor } from "@/lib/swap-pool";
+import { atlasKopf, atlasStrom, fehlerAus } from "@/lib/atlas/client";
 import { toast } from "@/lib/toast";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
@@ -578,14 +579,22 @@ export function SessionRunner() {
     try {
       const res = await fetch("/api/atlas/set", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: atlasKopf(),
         body: JSON.stringify({ transcript, persona }),
       });
       const data = (await res.json().catch(() => null)) as
-        | { ok?: boolean; call?: { say?: string; adjustment?: CoachReactAdjustment }; configured?: boolean }
+        | {
+            ok?: boolean;
+            call?: { say?: string; adjustment?: CoachReactAdjustment };
+            configured?: boolean;
+            fehler?: unknown;
+          }
         | null;
-      if (data?.configured === false) {
-        coachOffRef.current = true;
+      // Ohne Schlüssel oder ohne gültigen Zugangscode hilft kein weiterer
+      // Versuch in dieser Einheit: nicht nach jedem Satz erneut fragen.
+      if (!data?.ok) {
+        const art = fehlerAus(res.status, data);
+        if (art === "aus" || art === "zugang" || art === "schluessel") coachOffRef.current = true;
         return;
       }
       // Inzwischen neuer Satz/Sprung? Dann verfällt die Antwort.
@@ -756,36 +765,33 @@ export function SessionRunner() {
   const streamDebrief = async (state: ActiveSessionState, summary: SessionSummary) => {
     if (settings.coachLive === false) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    const toLines = (t: string) =>
+      t
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    let facts: string;
     try {
-      const facts = buildDebriefFacts({ state, allLib, summary });
-      const res = await fetch("/api/atlas/debrief", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ facts, persona }),
-      });
-      if (res.headers.get("content-type")?.includes("application/json")) return;
-      const reader = res.body?.getReader();
-      if (!reader) return;
-      const dec = new TextDecoder();
-      let acc = "";
-      const toLines = (s: string) =>
-        s
-          .split("\n")
-          .map((l) => l.trim())
-          .filter((l) => l && !l.startsWith("("))
-          .slice(0, 3);
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += dec.decode(value, { stream: true });
-        const lines = toLines(acc);
-        if (lines.length) setComplete((c) => (c ? { ...c, debrief: lines } : c));
-      }
-      const lines = toLines(acc);
-      if (lines.length >= 2) amendLastDebrief(lines);
+      facts = buildDebriefFacts({ state, allLib, summary });
     } catch {
-      /* deterministisches Debrief bleibt stehen */
+      return; // die festen Zeilen bleiben stehen
     }
+    const erg = await atlasStrom(
+      "/api/atlas/debrief",
+      { facts, persona },
+      {
+        beiText: (bisher) => {
+          const lines = toLines(bisher);
+          if (lines.length) setComplete((c) => (c ? { ...c, debrief: lines } : c));
+        },
+      },
+    );
+    const lines = toLines(erg.text);
+    // Nur eine vollständige Antwort bleibt: ist der Strom abgerissen oder hat
+    // ATLAS abgelehnt, kommen die festen Zeilen zurück.
+    if (erg.ok && lines.length >= 2) amendLastDebrief(lines);
+    else setComplete((c) => (c ? { ...c, debrief: summary.debrief } : c));
   };
 
   const doSave = async (backTraffic: TrafficLight | null, note: string) => {

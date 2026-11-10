@@ -284,6 +284,8 @@ interface TrainingContextValue {
   coach: CoachCard[];
   cardioAdvice: CardioAdvice;
   phase: PhaseState;
+  /** Läuft gerade eine Entlastungswoche (sieben Tage ab Start)? */
+  deloadActive: boolean;
   trainer: TrainerState;
   mission: StoredMission | null;
   weekCount: number;
@@ -1842,6 +1844,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       coach,
       cardioAdvice: cardioTip,
       phase,
+      deloadActive,
       trainer,
       mission,
       weekCount,

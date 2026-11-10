@@ -1,46 +1,42 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { ATLAS_MODEL } from "@/lib/atlas/models";
+import { atlasTextAntwort } from "@/lib/atlas/call";
+import { atlasEingang, heuteZeile, text } from "@/lib/atlas/eingang";
 import { atlasSystem } from "@/lib/atlas/prompts";
-import { textStreamResponse } from "@/lib/atlas/stream";
-import { allowRequest, clientKey } from "@/lib/rate-limit";
 
 // Needs the Node runtime for the Anthropic SDK and a long-lived stream.
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
-const RAPPORT_RULES = `Schreibe den Wochen-Rückblick für deinen Athleten — unten stehen die Fakten der Woche. Form: 4–6 kurze Sätze Fließtext (keine Listen, keine Überschriften). Inhalt: was die Woche wirklich war (mit 1–2 echten Zahlen), was auffiel, und der klare Fokus für die kommende Woche. Bezieh dich, wenn vorhanden, auf die Missions-Bilanz. Keine Floskeln, Du-Form.`;
+const RAPPORT_RULES = `Schreib den Wochen-Rückblick für deinen Athleten; die Nachricht enthält die Fakten der Woche. Vier bis sechs Sätze Fließtext, ohne Listen und Überschriften (die App zeigt ihn als einen Absatz in einer Karte). Inhalt: was die Woche war, mit ein bis zwei echten Zahlen, was auffiel, und der klare Schwerpunkt für die kommende Woche. Steht eine Bilanz der Wochen-Mission in den Fakten, geh darauf ein.`;
 
 interface BriefingBody {
   facts?: string;
   persona?: string;
+  /** Datum des Geräts, JJJJ-MM-TT. */
+  datum?: string;
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return Response.json({ configured: false });
-  if (!allowRequest(`atlas-briefing:${clientKey(req)}`, 6, 60_000)) {
+  const ein = await atlasEingang<BriefingBody>(req, "briefing", 6);
+  if (!ein.ok) return ein.antwort;
+  const { body, apiKey, v2 } = ein;
+
+  const facts = text(body.facts, 9000).trim();
+  if (!facts) {
     return Response.json(
-      { error: "Zu viele Anfragen — kurz warten." },
-      { status: 429 },
+      { ok: false, fehler: "anfrage", error: "Keine Fakten." },
+      { status: 400 },
     );
   }
 
-  let body: BriefingBody;
-  try {
-    body = (await req.json()) as BriefingBody;
-  } catch {
-    return Response.json({ error: "bad request" }, { status: 400 });
-  }
-  const facts = (body.facts ?? "").toString().slice(0, 9000).trim();
-  if (!facts) return Response.json({ error: "no facts" }, { status: 400 });
-  const persona = (body.persona ?? "").toString().slice(0, 400);
-
-  const dynamic = [RAPPORT_RULES, persona].filter(Boolean).join("\n\n");
-  const client = new Anthropic({ apiKey });
-  const stream = client.messages.stream({
-    model: ATLAS_MODEL,
-    max_tokens: 600,
+  const dynamic = [RAPPORT_RULES, heuteZeile(body.datum), text(body.persona, 400)]
+    .filter(Boolean)
+    .join("\n\n");
+  return atlasTextAntwort({
+    apiKey,
+    aufgabe: "bericht",
     system: atlasSystem(dynamic),
     messages: [{ role: "user", content: facts }],
+    signal: req.signal,
+    v2,
   });
-  return textStreamResponse(stream);
 }
