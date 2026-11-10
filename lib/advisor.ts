@@ -1,8 +1,10 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
 import type { FatigueBand } from "@/lib/fatigue";
+import { ENTLASTUNG_PROZENT } from "@/lib/periodization";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS, volumeBucket } from "@/lib/training-science";
-import { MUSCLE_LABEL, muscleOf, type MuscleVolume, weekStartMon } from "@/lib/volume";
+import { MUSCLE_LABEL, muscleOf, type MuscleVolume } from "@/lib/volume";
+import { TAG_MS, weekStartMon } from "@/lib/zeit";
 import type {
   AppSettings,
   BodyMetric,
@@ -34,10 +36,9 @@ export interface CoachCard {
   action?: "deload" | "exam" | "back-reset";
 }
 
-const DAY = 86400000;
 function weeksSince(dateIso?: string): number {
   if (!dateIso) return Infinity;
-  return (Date.now() - new Date(dateIso).getTime()) / (7 * DAY);
+  return (Date.now() - new Date(dateIso).getTime()) / (7 * TAG_MS);
 }
 
 /**
@@ -53,7 +54,7 @@ export function deloadSignal(
   const wks = weeksSince(settings.lastDeloadDate);
   if (wks < 2) return null;
   const now = Date.now();
-  const recent = log.filter((s) => now - new Date(s.date).getTime() < 14 * DAY);
+  const recent = log.filter((s) => now - new Date(s.date).getTime() < 14 * TAG_MS);
   let signals = 0;
 
   if (recent.filter((s) => s.backTraffic === "red").length >= 2) signals++;
@@ -78,8 +79,8 @@ export function deloadSignal(
     severity: "warn",
     title: "Zeit für eine Entlastungswoche",
     body: overdue
-      ? "Über sechs Wochen ohne Deload. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück."
-      : "Mehrere Zeichen für Ermüdung. Eine leichtere Woche (~60 % Last, ein Satz weniger) bringt dich stärker zurück.",
+      ? `Über sechs Wochen ohne Deload. Eine leichtere Woche (~${ENTLASTUNG_PROZENT} % Last, ein Satz weniger) bringt dich stärker zurück.`
+      : `Mehrere Zeichen für Ermüdung. Eine leichtere Woche (~${ENTLASTUNG_PROZENT} % Last, ein Satz weniger) bringt dich stärker zurück.`,
     action: "deload",
   };
 }
@@ -158,7 +159,7 @@ export function recompSignal(body: BodyMetric[]): CoachCard | null {
   const wsts = body.filter((b) => b.waistCm != null);
   if (wts.length < 2 || wsts.length < 2) return null;
   const spanDays =
-    (new Date(wts[wts.length - 1].date).getTime() - new Date(wts[0].date).getTime()) / DAY;
+    (new Date(wts[wts.length - 1].date).getTime() - new Date(wts[0].date).getTime()) / TAG_MS;
   if (spanDays < 14) return null;
   const dW = (wts[wts.length - 1].weightKg as number) - (wts[0].weightKg as number);
   const dWaist = (wsts[wsts.length - 1].waistCm as number) - (wsts[0].waistCm as number);

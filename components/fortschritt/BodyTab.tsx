@@ -17,7 +17,7 @@ import { fmtDateShort, fmtDelta } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
 import { prTimeline } from "@/lib/records";
 import { toast } from "@/lib/toast";
-import { weekStartMon } from "@/lib/volume";
+import { WOCHE_MS, weekStartMon } from "@/lib/zeit";
 import { cn } from "@/lib/utils";
 
 /** 87.5 → "87,5" (deutsches Komma, wie Readout). */
@@ -125,7 +125,7 @@ export function BodyTab() {
           1,
           Math.round(
             (new Date(after.date).getTime() - new Date(before.date).getTime()) /
-              (7 * 86400000),
+              WOCHE_MS,
           ),
         )
       : 0;

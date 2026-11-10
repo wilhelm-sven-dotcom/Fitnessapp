@@ -21,6 +21,7 @@ import { fmtKg } from "@/lib/format";
 import { REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { sessionVolume } from "@/lib/stats";
 import { cn } from "@/lib/utils";
+import { WOCHE_MS, weekStartMon } from "@/lib/zeit";
 
 type Zeitraum = "4w" | "6m" | "1j";
 const ZEITRAEUME = [
@@ -30,14 +31,6 @@ const ZEITRAEUME = [
 ] as const;
 
 const VERLAEUFE_VORSCHAU = 6;
-const WOCHE = 7 * 86_400_000;
-
-const montag = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-  return x;
-};
 
 /** Tonnage je Woche (4 Wo / 6 Mon) bzw. je Monat (1 J), älteste zuerst. */
 function volumenReihe(
@@ -59,10 +52,10 @@ function volumenReihe(
     return { werte, links: monat(erster), rechts: monat(jetzt), je: "Monat" };
   }
   const n = zeitraum === "4w" ? 4 : 26;
-  const start = montag(jetzt).getTime() - (n - 1) * WOCHE;
+  const start = weekStartMon(jetzt).getTime() - (n - 1) * WOCHE_MS;
   const werte = Array.from({ length: n }, () => 0);
   log.forEach((s, i) => {
-    const idx = Math.round((montag(new Date(s.date)).getTime() - start) / WOCHE);
+    const idx = Math.round((weekStartMon(new Date(s.date)).getTime() - start) / WOCHE_MS);
     if (idx >= 0 && idx < n) werte[idx] += vol(i);
   });
   return {

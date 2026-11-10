@@ -75,11 +75,18 @@ const localStorageAdapter: StorageAdapter = {
 // --- Supabase seam: swap this one line for a `supabaseAdapter` later. ---
 const adapter: StorageAdapter = localStorageAdapter;
 
-/** Storage keys — unchanged from the original prototype, plus `body`. */
+/**
+ * Storage keys — unchanged from the original prototype, plus `body`.
+ *
+ * Zwei Schlüssel des alten festen Tagesplans gibt es nicht mehr:
+ * `wilhelm-training-days` (selbst gebaute Tage) und `wilhelm-training-choices`
+ * (getauschte Plätze). Beides schrieb und las seit der täglichen Einheit
+ * niemand mehr. Was davon noch auf einem Gerät oder in der Cloud liegt, bleibt
+ * unberührt liegen und verschwindet mit „Alle Daten löschen“.
+ */
 export const KEYS = {
   log: "wilhelm-training-log",
   equip: "wilhelm-training-equip",
-  choices: "wilhelm-training-choices",
   custom: "wilhelm-training-custom",
   body: "wilhelm-training-body",
   settings: "wilhelm-training-settings",
@@ -90,7 +97,6 @@ export const KEYS = {
   // Deaktivierte Übungen (Ids) — fliegen aus Planung und Tausch-Vorschlägen,
   // bleiben aber im Katalog (reaktivierbar) und in der Historie sichtbar.
   disabledExercises: "wilhelm-training-disabled",
-  days: "wilhelm-training-days",
   gyms: "wilhelm-training-gyms",
   exerciseVideos: "wilhelm-training-exercise-videos",
   warmupVideos: "wilhelm-training-warmup-videos",
@@ -112,8 +118,6 @@ export const KEYS = {
 
 /** Keys, die NIE in die Cloud gespiegelt werden (gerätelokaler Live-State). */
 export const LOCAL_ONLY_KEYS: ReadonlySet<string> = new Set([KEYS.active]);
-
-export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
 
 /** Alles, was die App in localStorage ablegt, beginnt so. */
 const PRAEFIX = "wilhelm-training-";

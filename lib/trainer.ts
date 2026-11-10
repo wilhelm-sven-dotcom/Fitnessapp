@@ -18,7 +18,7 @@ import type { CardioLevel } from "@/lib/coaching";
 import { fmtKg, fmtPct, isoWeek } from "@/lib/format";
 import { projectionTargets } from "@/lib/projection-targets";
 import type { FatigueState } from "@/lib/fatigue";
-import type { PhaseState } from "@/lib/periodization";
+import { ENTLASTUNG_PROZENT, deloadAktiv, type PhaseState } from "@/lib/periodization";
 import { band, type ReadinessScale } from "@/lib/readiness";
 import {
   beatsRecord,
@@ -29,14 +29,15 @@ import {
 } from "@/lib/records";
 import { weeklySetCount, type WeeklySetStats } from "@/lib/set-plan";
 import { isFilled, weeklyStreak, workSets } from "@/lib/stats";
+import { WOCHENZIEL } from "@/lib/training-science";
 import {
   MUSCLE_LABEL,
   underservedMuscles,
   VOLUME_TARGET,
   weeklyMuscleVolume,
-  weekStartMon,
   type MuscleVolume,
 } from "@/lib/volume";
+import { TAG_MS, weekStartMon } from "@/lib/zeit";
 import type {
   AppSettings,
   CardioSession,
@@ -148,14 +149,13 @@ export interface TrainerInput {
 
 /* ────────────────────────── Helfer ────────────────────────── */
 
-const DAY = 86_400_000;
 
 function pick<T>(pool: T[], seed: number): T {
   const n = pool.length;
   return pool[((seed % n) + n) % n];
 }
 
-const daySeed = (ref: Date) => Math.floor(ref.getTime() / DAY);
+const daySeed = (ref: Date) => Math.floor(ref.getTime() / TAG_MS);
 
 /** Montag der Woche als lokaler ISO-Datums-Key ("2026-06-29"). */
 export function weekKeyOf(ref: Date = new Date()): string {
@@ -253,15 +253,12 @@ function directiveFor(input: TrainerInput, ref: Date, seed: number): TrainerDire
       kind: "deload",
       severity: "warn",
       text: pick(["Diese Woche entlasten.", "Runterfahren — bewusst."], seed),
-      reason: `Woche ${Math.min(phase.weeksSinceDeload, 9)} seit der letzten Entlastung — 60 Prozent Last, ein Satz weniger.`,
+      reason: `Woche ${Math.min(phase.weeksSinceDeload, 9)} seit der letzten Entlastung — ${ENTLASTUNG_PROZENT} Prozent Last, ein Satz weniger.`,
     };
   }
 
   // 2b · Deload läuft.
-  const deloadActive =
-    !!settings.lastDeloadDate &&
-    (ref.getTime() - new Date(settings.lastDeloadDate).getTime()) / DAY < 7;
-  if (deloadActive) {
+  if (deloadAktiv(settings, ref)) {
     return {
       kind: "deload-active",
       severity: "info",
@@ -384,7 +381,7 @@ export function generateMissionTargets(
   return {
     weekKey: weekKeyOf(ref),
     kw: isoWeek(ref),
-    sessionsTarget: 3,
+    sessionsTarget: WOCHENZIEL,
     setsTarget: input.weekSets.target,
     focusMuscle: under[0]?.muscle,
     focusTarget: under.length ? VOLUME_TARGET.min : undefined,
@@ -518,7 +515,7 @@ export function trainerState(input: TrainerInput): TrainerState {
       ? "Ich lerne dich noch kennen — ab der ersten Einheit wird es genauer."
       : pick(
           [
-            `Alles im Blick — ${input.weekCount}/3 Einheiten erfasst.`,
+            `Alles im Blick — ${input.weekCount}/${WOCHENZIEL} Einheiten erfasst.`,
             "Ich beobachte. Du lieferst.",
             `Mission bei ${fmtPct(mission.pct)} — Kurs halten.`,
             "Signale laufen. Ich melde mich, wenn etwas kippt.",

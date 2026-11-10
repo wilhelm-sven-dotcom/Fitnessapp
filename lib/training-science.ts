@@ -34,13 +34,12 @@ export function volumeBucket(sets: number): VolumeBucket {
   return "excess";
 }
 
-export const VOLUME_BUCKET_LABEL: Record<VolumeBucket, string> = {
-  low: "zu wenig",
-  maintain: "Erhalt",
-  optimal: "Wachstum",
-  high: "viel",
-  excess: "zu viel",
-};
+/**
+ * Wochenziel: so viele Krafteinheiten je Woche. Daran messen sich
+ * Wochenleiste, Serie („Wochen in Folge“), Mission, Wochen-Rückblick und der
+ * Kontext für ATLAS — vorher stand die 3 an acht Stellen fest im Code.
+ */
+export const WOCHENZIEL = 3;
 
 /**
  * Kompakter Prinzipien-Block für ATLAS (Plan und Chat). Hält die Vorschläge an

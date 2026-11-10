@@ -3,23 +3,15 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { SPRING } from "@/lib/motion";
+import { WOCHENZIEL } from "@/lib/training-science";
 import type { LoggedSession } from "@/lib/types";
-
-const GOAL = 3;
-
-function weekStart(d: Date) {
-  const off = (d.getDay() + 6) % 7;
-  const m = new Date(d);
-  m.setHours(0, 0, 0, 0);
-  m.setDate(d.getDate() - off);
-  return m;
-}
+import { weekStartMon } from "@/lib/zeit";
 
 /** Wochenraster München ’72: gefüllte Quadrate je Einheit — Grün, wenn das
  *  Wochenziel steht, Blau auf dem Weg dorthin. Ruhig, keine Glows. */
 export function StreakCalendar({ log }: { log: LoggedSession[] }) {
   const reduce = useReducedMotion();
-  const thisStart = weekStart(new Date());
+  const thisStart = weekStartMon();
   const weeks = Array.from({ length: 5 }, (_, i) => {
     const start = new Date(thisStart);
     start.setDate(thisStart.getDate() - (4 - i) * 7);
@@ -38,12 +30,12 @@ export function StreakCalendar({ log }: { log: LoggedSession[] }) {
         <p className="font-mono text-3xs font-bold text-muted">
           Diese & letzte Wochen
         </p>
-        <span className="text-xs text-muted">Ziel 3× / Woche</span>
+        <span className="text-xs text-muted">Ziel {WOCHENZIEL}× / Woche</span>
       </div>
       <div className="flex items-end justify-between gap-2">
         {weeks.map((w, wi) => {
-          const goalMet = w.count >= GOAL;
-          const cells = Math.max(GOAL, w.count);
+          const goalMet = w.count >= WOCHENZIEL;
+          const cells = Math.max(WOCHENZIEL, w.count);
           return (
             <div key={wi} className="flex flex-1 flex-col items-center gap-2">
               <div className="flex flex-col-reverse gap-1.5">

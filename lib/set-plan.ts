@@ -5,15 +5,7 @@
 
 import { isFilled, workSets } from "@/lib/stats";
 import type { LoggedSession } from "@/lib/types";
-
-/** Monday 00:00 of the week containing `ref`. */
-function weekStartMon(ref: Date): Date {
-  const d = new Date(ref);
-  d.setHours(0, 0, 0, 0);
-  const off = (d.getDay() + 6) % 7; // Mon = 0
-  d.setDate(d.getDate() - off);
-  return d;
-}
+import { weekStartMon } from "@/lib/zeit";
 
 /** Working, filled sets logged in the Monday-based week containing `ref`. */
 export function weeklySetCount(log: LoggedSession[], ref: Date): number {

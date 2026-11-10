@@ -12,7 +12,7 @@ import {
 import { DEFAULT_EQUIP, EQUIP_LIST, LIB } from "@/lib/exercises";
 import { coachCards, type CoachCard } from "@/lib/advisor";
 import { fatigueState } from "@/lib/fatigue";
-import { phaseState, type PhaseState } from "@/lib/periodization";
+import { deloadAktiv, phaseState, type PhaseState } from "@/lib/periodization";
 import {
   generateMissionTargets,
   reviewMission,
@@ -29,7 +29,8 @@ import {
   todayKey,
   type DailySession,
 } from "@/lib/session-model";
-import { istLiegengeblieben, type ActiveSessionState } from "@/lib/active-session";
+import { istLiegengeblieben, withDeload, type ActiveSessionState } from "@/lib/active-session";
+import { TAG_MS, WOCHE_MS, weekStartMon } from "@/lib/zeit";
 import {
   ergaenze,
   nachDatum,
@@ -150,7 +151,6 @@ export interface ExportEnvelope {
   exportedAt: string;
   log: LoggedSession[];
   equip: EquipKey[];
-  choices: Record<string, string>;
   custom: Exercise[];
   body: BodyMetric[];
   cardio: CardioSession[];
@@ -176,19 +176,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: "light",
 };
 
-/** A deload overrides readiness with a clearly lighter week. */
-function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
-  return deloadActive
-    ? { setDelta: -1, loadMult: Math.min(base.loadMult, 0.6), cap: true }
-    : base;
-}
-
 /** Import-Fenster: die letzten 4 Wochen an Strava-Einheiten behalten —
  *  so lange schaut die Belastungs-Kurve zurück (lib/fatigue.ts). Mit 2 Wochen
  *  zählte Ausdauer voll in die letzten 7 Tage, aber nur halb in den
  *  4-Wochen-Schnitt: die Kurve zeigte dauerhaft zu viel Belastung.
  *  Manuell Eingetragenes bleibt IMMER (das hat der Nutzer selbst erfasst). */
-const IMPORT_WINDOW_MS = 28 * 86_400_000;
+const IMPORT_WINDOW_MS = 28 * TAG_MS;
 function pruneOldImports(list: CardioSession[]): CardioSession[] {
   const cutoff = Date.now() - IMPORT_WINDOW_MS;
   return list.filter(
@@ -435,7 +428,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   // Flache Geräteliste: nur noch Spiegel/Fallback. Die Wahrheit sind die
   // Geräte des aktiven Orts (siehe `equip` weiter unten, lib/orte.ts).
   const [equipFlat, setEquipFlat] = useState<EquipKey[]>(DEFAULT_EQUIP);
-  const [choices, setChoices] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Exercise[]>([]);
   const [body, setBody] = useState<BodyMetric[]>([]);
   const [cardio, setCardio] = useState<CardioSession[]>([]);
@@ -470,10 +462,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const [mission, setMission] = useState<StoredMission | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [l, e, c, cu, b, s, ca, hc, gy, ev, mi, en, td, dx, wv] = await Promise.all([
+    const [l, e, cu, b, s, ca, hc, gy, ev, mi, en, td, dx, wv] = await Promise.all([
       storage.getJSON<LoggedSession[]>(KEYS.log, []),
       storage.getJSON<EquipKey[]>(KEYS.equip, DEFAULT_EQUIP),
-      storage.getJSON<Record<string, string>>(KEYS.choices, {}),
       storage.getJSON<Exercise[]>(KEYS.custom, []),
       storage.getJSON<BodyMetric[]>(KEYS.body, []),
       storage.getJSON<AppSettings>(KEYS.settings, DEFAULT_SETTINGS),
@@ -538,7 +529,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       void storage.setJSON(KEYS.equip, equipLoaded);
     }
     setEquipFlat(equipLoaded);
-    setChoices(sanitizeStringMap(c));
     setCustom(sanitizeCustom(cu));
     setBody(sanitizeBody(b));
     settingsRef.current = settingsLoaded;
@@ -895,9 +885,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     log[log.length - 1].backTraffic === "red" &&
     log[log.length - 2].backTraffic === "red";
 
-  const deloadActive =
-    !!settings.lastDeloadDate &&
-    Date.now() - new Date(settings.lastDeloadDate).getTime() < 7 * 86400000;
+  const deloadActive = deloadAktiv(settings);
 
   const readinessScale = useMemo(
     () =>
@@ -939,15 +927,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
   const lastDate = log.length ? new Date(log[log.length - 1].date) : null;
   const daysAgo = lastDate
-    ? Math.floor((Date.now() - lastDate.getTime()) / 86400000)
+    ? Math.floor((Date.now() - lastDate.getTime()) / TAG_MS)
     : null;
 
   const weekCount = useMemo(() => {
-    const now = new Date();
-    const off = (now.getDay() + 6) % 7;
-    const mon = new Date(now);
-    mon.setHours(0, 0, 0, 0);
-    mon.setDate(now.getDate() - off);
+    const mon = weekStartMon();
     return log.filter((s) => new Date(s.date) >= mon).length;
   }, [log]);
 
@@ -963,7 +947,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const minDate = log.length
       ? Math.min(...log.map((s) => new Date(s.date).getTime()))
       : Date.now();
-    return phaseState(settings, fatigue.band, (Date.now() - minDate) / (7 * 86_400_000));
+    return phaseState(settings, fatigue.band, (Date.now() - minDate) / WOCHE_MS);
   }, [settings, fatigue, log]);
   const weekSetStats = useMemo(() => weeklySetStats(log), [log]);
 
@@ -1694,7 +1678,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       exportedAt: new Date().toISOString(),
       log,
       equip,
-      choices,
       custom,
       body,
       cardio,
@@ -1724,8 +1707,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const nextLog = nachDatum(dazu ? ergaenze(log, dLog, (x) => x.date) : dLog);
       const nextEquipRaw =
         !dazu && Array.isArray(d.equip) ? (d.equip as EquipKey[]) : equip;
-      const dChoices = d.choices !== undefined ? sanitizeStringMap(d.choices) : null;
-      const nextChoices = dChoices ? (dazu ? { ...dChoices, ...choices } : dChoices) : choices;
       const dCustom = d.custom !== undefined ? sanitizeCustom(d.custom) : null;
       const nextCustom = dCustom ? (dazu ? ergaenze(custom, dCustom, (x) => x.id) : dCustom) : custom;
       const dBody = d.body !== undefined ? sanitizeBody(d.body) : null;
@@ -1799,7 +1780,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       await storage.sichereJetzt(KEYS.body);
       setLog(nextLog);
       setEquipFlat(nextEquip);
-      setChoices(nextChoices);
       setCustom(nextCustom);
       setBody(nextBody);
       setCardio(nextCardio);
@@ -1815,7 +1795,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       const ergebnisse = await Promise.all([
         storage.setJSON(KEYS.log, nextLog, still),
         storage.setJSON(KEYS.equip, nextEquip, still),
-        storage.setJSON(KEYS.choices, nextChoices, still),
         storage.setJSON(KEYS.custom, nextCustom, still),
         storage.setJSON(KEYS.body, nextBody, still),
         storage.setJSON(KEYS.cardio, nextCardio, still),
@@ -1923,7 +1902,6 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [
     log,
     equip,
-    choices,
     custom,
     exerciseVideos,
     warmupVideos,

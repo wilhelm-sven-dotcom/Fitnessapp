@@ -1,5 +1,7 @@
 import { isFilled, sessionVolume, workSets } from "@/lib/stats";
 import type { CardioSession, LoggedSession } from "@/lib/types";
+import { TAG_MS } from "@/lib/zeit";
+import { ENTLASTUNG_LAST } from "@/lib/periodization";
 
 /**
  * Belastungs-Index — a forward-looking load monitor. Built on the acute:chronic
@@ -23,7 +25,6 @@ export interface FatigueState {
   enough: boolean; // enough history for the ratio to mean anything
 }
 
-const DAY = 86_400_000;
 
 function avgSessionRir(s: LoggedSession): number | null {
   const rirs: number[] = [];
@@ -43,7 +44,7 @@ function effortMult(rir: number | null): number {
 
 function strengthLoad(s: LoggedSession): number {
   const base = sessionVolume(s) / 1000; // tonnes
-  return base * effortMult(avgSessionRir(s)) * (s.isDeload ? 0.6 : 1);
+  return base * effortMult(avgSessionRir(s)) * (s.isDeload ? ENTLASTUNG_LAST : 1);
 }
 
 function cardioLoad(c: CardioSession): number {
@@ -72,7 +73,7 @@ export function fatigueState(
   let acute = 0;
   let chronic = 0;
   const add = (dateStr: string, load: number) => {
-    const age = (now - new Date(dateStr).getTime()) / DAY;
+    const age = (now - new Date(dateStr).getTime()) / TAG_MS;
     if (age < 0) return;
     if (age <= 7) acute += load;
     if (age <= 28) chronic += load;
@@ -85,7 +86,7 @@ export function fatigueState(
     (min, x) => Math.min(min, new Date(x.date).getTime()),
     now,
   );
-  const spanDays = (now - oldest) / DAY;
+  const spanDays = (now - oldest) / TAG_MS;
   const enough = spanDays >= 14 && chronicWeekly > 0;
 
   const roh = chronicWeekly > 0 ? acute / chronicWeekly : 0;

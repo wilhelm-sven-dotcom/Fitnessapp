@@ -1,4 +1,5 @@
 import { pauseStufe } from "@/lib/progression";
+import { WOCHENZIEL } from "@/lib/training-science";
 
 export type ChipTone = "amber" | "emerald" | "info";
 export interface Chip {
@@ -19,7 +20,7 @@ export function homeChips(opts: { daysAgo: number | null; weekCount: number }): 
   } else if (pause === "ruhig") {
     chips.push({ tone: "info", text: "Länger pausiert. Wir steigen heute ruhig ein." });
   }
-  if (opts.weekCount >= 3) {
+  if (opts.weekCount >= WOCHENZIEL) {
     chips.push({ tone: "emerald", text: "Starke Woche. Ein Ruhetag tut den Muskeln gut." });
   }
   return chips;

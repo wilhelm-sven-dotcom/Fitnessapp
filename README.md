@@ -20,15 +20,17 @@ Reiz je Muskel), abwechslungsreich (am längsten nicht verwendete Übung je
 Muster) und passend zum Zeitbudget. Keine festen Pläne, keine Vorlagen. Die
 Einheit ist frei editierbar (tauschen, ergänzen, Sätze ändern, Wunsch-Feld
 „heute bitte Oberkörper"), Varianten: Rücken-Reset (gewichtsfrei) und
-„Die Prüfung" (Maximalkraft-Test). Der Kopf trägt Nummer und Datum, das
-**Phasenband** zeigt die Einheit als Filmstreifen.
+„Die Prüfung" (Maximalkraft-Test). Oben stehen Wochentag und Fokus, darunter
+die Wochenleiste (Montag bis Sonntag, Wochenziel drei Einheiten); Zeit und
+„Los geht’s“ liegen im Dock über der Tab-Leiste.
 
-**Training (`/workout`)** — läuft IMMER dunkel (Theme-Lock): Check-in
+**Training (`/workout`)** — folgt der Einstellung Hell oder Dunkel: Check-in
 (Tagesform) → geführtes Aufwärmen → eine Übung nach der anderen (mit
 animierter Phasenfigur) → Abschluss. Sätze werden lokal gepuffert eingetragen
-(kein Re-Render pro Tastendruck), die Satzpause läuft inline als fallende
-Striche, und der Live-Zustand ist bei jedem Commit gerätelokal persistiert —
-ein Reload oder Crash mitten im Satz kostet nichts (Resume). ATLAS reagiert
+(kein Re-Render pro Tastendruck), die Satzpause läuft unten im Dock und
+rechnet aus der Uhr, und der Live-Zustand ist bei jedem Commit gerätelokal
+persistiert — ein Reload oder Crash mitten im Satz kostet nichts (Resume).
+Meldungen stehen oben unter dem Kopf, nie über „Satz eintragen“. ATLAS reagiert
 auf **jeden Satz**: sofort deterministisch, und mit Server-Key ersetzt die
 KI-Reaktion die Zeile — mit Blick auf das komplette Transkript der Einheit,
 inklusive übernehmbarer Eingriffe (Gewicht, Pause). Ein neuer Rekord bekommt
@@ -49,7 +51,7 @@ Schema, Cues) — sie fließen automatisch in Pools, Wochenvolumen und ATLAS'
 Auswahl.
 
 **Fortschritt (`/fortschritt`)** — vier Register: Übersicht (Level, Phase,
-Rekorde, Volumen je Woche, Übungs-Trends als Treppen-Charts), Verlauf
+Rekorde, Volumen je Woche, Verläufe je Übung als Liste mit Mini-Kurve), Verlauf
 (Timeline für Kraft **und** Ausdauer inkl. Strava-Importe, jede Einheit mit
 Mini-Phasenband), Körper (Gewicht, Bauchumfang, Vorher/Nachher-Fotos) und
 Muskeln (Wochenarbeit in vier Blaustufen).
@@ -146,6 +148,19 @@ wartet, bis die Seite ihn freigibt, und das tut sie nie in `/workout`
 
 Nachweis: `npm run pruefe:offline` und `npm run pruefe:daten`.
 
+## Sicherheit
+
+- Der Anthropic-Schlüssel liegt nur auf dem Server. Mit `ATLAS_ZUGANGSCODE`
+  nimmt der Server ATLAS-Anfragen nur mit diesem Code an.
+- Jede Antwort trägt Sicherheits-Header (`next.config.mjs`): kein Erraten des
+  Dateityps, keine Einbettung in fremde Seiten, fremde Adressen erfahren nur
+  die Herkunft, und Kamera, Mikrofon, Standort, Zahlung und USB sind
+  abgeschaltet. HTTPS erzwingt Vercel. Eine vollständige
+  Content-Security-Policy gibt es bewusst nicht: sie verlangte eine Kennung je
+  Antwort, dann wäre keine Seite mehr statisch und ließe sich nicht für das
+  Training ohne Netz vorladen.
+- Der Export enthält keine Zugänge zu Strava und Spotify.
+
 ## Design
 
 „spotter“ — der Kumpel an der Bank: Weiß und Tinte, Elektroblau für
@@ -189,6 +204,12 @@ npm run kontrast          # WCAG-Kontrast der Farb-Tokens, hell und dunkel
 npm run pruefe:tokens     # Fundstellen alter Token-Namen (Look-Wechsel)
 ```
 
+Bei GitHub läuft für jeden Pull Request und jeden Stand des
+Produktions-Branches `.github/workflows/pruefung.yml`: Lint, Typen,
+Unit-Tests, Build, Kontrast und Token-Namen. Die Prüfungen im Browser
+(`npm run pruefe`) laufen lokal vor jedem Push; sie messen Zeiten, und die
+schwanken auf den geteilten Rechnern von GitHub zu stark.
+
 ## Umgebungsvariablen
 
 Siehe `.env.local.example`. Für ATLAS' KI wird `ANTHROPIC_API_KEY`
@@ -227,9 +248,20 @@ Foto-Bucket — stehen zum Kopieren in **[`supabase/SETUP.md`](supabase/SETUP.md
 - `lib/` — Session-Modell (`session-model`, `session-fallback`,
   `active-session`), ATLAS (`atlas/*`), Übungskatalog, Progression (RIR),
   Volumen/Trainer-Engine, Einheiten-Nummern (`platte.ts`), Storage
+- `tests/` — Unit-Tests der Logik; `scripts/` — Prüfungen im Browser, Fotos,
+  Kontrast
 
-Daten-Schlüssel: `wilhelm-training-{log,equip,custom,body,cardio,gyms,settings,
-mission,jumps,today,chat}` (synct) und `wilhelm-training-active` (bewusst nur
+Regeln, die mehrere Bildschirme teilen, stehen je an einer Stelle:
+Wochenanfang (Montag) und Tag/Woche in Millisekunden in `lib/zeit.ts`, das
+Wochenziel von drei Einheiten in `lib/training-science.ts`, die
+Entlastungswoche (sieben Tage, 60 % Last, ein Satz weniger) in
+`lib/periodization.ts`, Satzpause und Zeitmodell in `lib/session-time.ts`,
+Steigerung und Trainingslücke in `lib/progression.ts`, die Gewichtsstufe je Ort
+in `lib/orte.ts`.
+
+Daten-Schlüssel: `wilhelm-training-{log,equip,custom,body,cardio,cardio-hidden,
+disabled,gyms,settings,exercise-videos,warmup-videos,exercise-notes,mission,
+jumps,today,chat,rapport}` (synct) und `wilhelm-training-active` (bewusst nur
 lokal — der Live-Zustand einer laufenden Einheit). Dazu nur lokal:
 `…-sicherung`, `…-sicherung-tag`, `…-defekt` und die Vermerke
 `…-cloud-{offen,konto,leeren}`. „Alle Daten löschen“ entfernt alles mit dem

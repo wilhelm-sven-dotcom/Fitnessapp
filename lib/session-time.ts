@@ -146,7 +146,6 @@ export function fitToBudget(
   budgetMin: number,
   opts: {
     protectCore?: boolean;
-    choices?: Record<string, string>;
     /** Nur kürzen, nie Sätze oder Übungen ergänzen — für Einheiten, deren
      *  Umfang jemand bewusst gesetzt hat (ATLAS-Plan). */
     nurKuerzen?: boolean;
@@ -218,14 +217,8 @@ export function fitToBudget(
         const donor = slots.find((s) => s.ex.pattern === pat && s.pool.length > 1);
         if (!donor) continue;
         const slotKey = `${donor.slotKey.split(":")[0]}:x${extraNo + 1}`;
-        // Ein manueller Tausch dieses Zusatz-Slots gewinnt (sofern verfügbar und
-        // noch nicht in der Session), sonst der erste unbenutzte Pool-Eintrag.
-        const chosenId = opts.choices?.[slotKey];
-        const chosen =
-          chosenId && !used.has(chosenId)
-            ? donor.pool.find((e) => e.id === chosenId)
-            : undefined;
-        const cand = chosen ?? donor.pool.find((e) => !used.has(e.id));
+        // Der erste Pool-Eintrag, der noch nicht in der Einheit steht.
+        const cand = donor.pool.find((e) => !used.has(e.id));
         if (!cand) continue;
         extraNo += 1;
         slots.push({

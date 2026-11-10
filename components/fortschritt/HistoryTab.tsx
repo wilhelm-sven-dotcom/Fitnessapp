@@ -37,7 +37,7 @@ import {
 import { fmtDate, fmtSatz, isoWeek } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
 import { plattenNummern } from "@/lib/platte";
-import { weekStartMon } from "@/lib/volume";
+import { weekStartMon } from "@/lib/zeit";
 import { cn } from "@/lib/utils";
 import type { CardioSession, LoggedSession, TrafficLight } from "@/lib/types";
 

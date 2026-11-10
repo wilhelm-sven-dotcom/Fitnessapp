@@ -1,6 +1,7 @@
 import { fmtGewicht } from "@/lib/format";
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import type { Exercise, LoggedSession, SetEntry } from "@/lib/types";
+import { weekStartMon } from "@/lib/zeit";
 
 /**
  * Personal-record history. A PR is a working set that beats the all-time best
@@ -87,14 +88,6 @@ function setLabel(kind: RecordKind, st: SetEntry | null): string {
 export function sessionBest(kind: RecordKind, sets: SetEntry[]): { value: number; label: string } {
   const { value, set } = bestSet(kind, sets);
   return { value, label: setLabel(kind, set) };
-}
-
-function weekStartMon(d: Date): Date {
-  const off = (d.getDay() + 6) % 7;
-  const m = new Date(d);
-  m.setHours(0, 0, 0, 0);
-  m.setDate(d.getDate() - off);
-  return m;
 }
 
 /*

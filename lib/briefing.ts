@@ -5,13 +5,14 @@ import { fatigueState, type FatigueState } from "@/lib/fatigue";
 import { phaseState, type PhaseState } from "@/lib/periodization";
 import { weeklyPrs, type PrEvent } from "@/lib/records";
 import { sessionVolume } from "@/lib/stats";
+import { WOCHENZIEL } from "@/lib/training-science";
 import {
   coverageCount,
   MUSCLE_LABEL,
   underservedMuscles,
-  weekStartMon,
   weeklyMuscleVolume,
 } from "@/lib/volume";
+import { TAG_MS, weekStartMon } from "@/lib/zeit";
 import type { BodyMetric, CardioSession, Exercise, LoggedSession } from "@/lib/types";
 
 /**
@@ -34,7 +35,6 @@ export interface Briefing {
   coachNote: string;
 }
 
-const DAY = 86_400_000;
 
 export function buildBriefing(opts: {
   log: LoggedSession[];
@@ -61,7 +61,7 @@ export function buildBriefing(opts: {
         return t >= from && t < to;
       })
       .reduce((a, s) => a + sessionVolume(s), 0);
-  const far = new Date(ref.getTime() + 7 * DAY);
+  const far = new Date(ref.getTime() + 7 * TAG_MS);
   const volThisKg = sumVol(monThis, far);
   const volLastKg = sumVol(monLast, monThis);
   const volT = Math.round(volThisKg / 100) / 10;
@@ -75,14 +75,14 @@ export function buildBriefing(opts: {
   const prs = weeklyPrs(log, ref);
   const fatigue = fatigueState(log, cardio, ref);
   const minDate = log.length ? Math.min(...log.map((s) => new Date(s.date).getTime())) : ref.getTime();
-  const historyWeeks = (ref.getTime() - minDate) / (7 * DAY);
+  const historyWeeks = (ref.getTime() - minDate) / (7 * TAG_MS);
   const phase = phaseState(settings as never, fatigue.band, historyWeeks, ref);
 
   // Deterministic coach note (fallback / always present).
   const prPart = prs.length
     ? `${prs.length} ${prs.length === 1 ? "neuer Rekord" : "neue Rekorde"} diese Woche — stark. `
     : "";
-  const volPart = `${weekCount}/3 Einheiten, ${String(volT).replace(".", ",")} t bewegt${
+  const volPart = `${weekCount}/${WOCHENZIEL} Einheiten, ${String(volT).replace(".", ",")} t bewegt${
     volDeltaT ? ` (${volDeltaT > 0 ? "+" : ""}${String(volDeltaT).replace(".", ",")} t ggü. Vorwoche)` : ""
   }. `;
   const loadPart = fatigue.enough ? `${fatigue.title}. ` : "";
@@ -98,7 +98,7 @@ export function buildBriefing(opts: {
   const facts = [
     buildCoachContext({ log, allLib, body, cardio, exerciseNotes: opts.exerciseNotes }),
     "",
-    `Diese Woche: ${weekCount}/3 Einheiten, ${String(volT).replace(".", ",")} t (${
+    `Diese Woche: ${weekCount}/${WOCHENZIEL} Einheiten, ${String(volT).replace(".", ",")} t (${
       volDeltaT >= 0 ? "+" : ""
     }${String(volDeltaT).replace(".", ",")} t ggü. Vorwoche), Abdeckung ${coverage.hit}/${coverage.total}.`,
     prs.length

@@ -7,6 +7,7 @@ import { isoWeek } from "@/lib/format";
 import { exercise1RMHistory, MIN_POINTS, project, weeksToTarget } from "@/lib/projection";
 import { exerciseRecords } from "@/lib/records";
 import type { Exercise, LoggedSession } from "@/lib/types";
+import { WOCHE_MS } from "@/lib/zeit";
 
 export type ProjectionState =
   /** Trend positiv, Ziel in Reichweite → ETA-KW wird genannt. */
@@ -60,7 +61,7 @@ export function projectionTargets(
       etaWeeks == null ? "flach" : etaWeeks > HORIZON_WEEKS ? "fern" : "kurs";
     const etaKw =
       state === "kurs" && etaWeeks != null
-        ? isoWeek(new Date(ref.getTime() + etaWeeks * 7 * 86400000))
+        ? isoWeek(new Date(ref.getTime() + etaWeeks * WOCHE_MS))
         : null;
     return {
       exId: r.exId,

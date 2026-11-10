@@ -11,6 +11,8 @@
  * Fenster immer sofort.
  */
 
+import { WOCHE_MS } from "@/lib/zeit";
+
 export interface JumpSample {
   /** Zeitstempel in ms (performance.now()). */
   t: number;
@@ -114,7 +116,7 @@ export function analyzeJump(raw: JumpSample[]): JumpAnalysis {
 
 /** Mittel der letzten 7 Tage (mindestens 2 Messungen, sonst null). */
 export function jumpBaseline(jumps: JumpEntry[], ref: Date = new Date()): number | null {
-  const cutoff = ref.getTime() - 7 * 86400000;
+  const cutoff = ref.getTime() - WOCHE_MS;
   const recent = jumps.filter((j) => {
     const t = new Date(j.date).getTime();
     return Number.isFinite(t) && t >= cutoff && j.heightCm > 0;

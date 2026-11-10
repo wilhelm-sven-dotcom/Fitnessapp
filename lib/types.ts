@@ -94,25 +94,6 @@ export interface Template {
   slots: Pattern[];
 }
 
-/** One exercise inside a user-built day, with optional per-exercise scheme. */
-export interface DayItem {
-  exerciseId: string;
-  sets?: number;
-  repLow?: number;
-  repHigh?: number;
-  /** Items sharing a group number are trained as a superset (reserved). */
-  supersetGroup?: number;
-}
-
-/** A user-built training day (custom template), startable like A/B/C. */
-export interface WorkoutDay {
-  id: string;
-  name: string;
-  focus: string;
-  items: DayItem[];
-  createdAt: string;
-}
-
 /** Ein Trainingsort mit seinen Geräten — z. B. Zuhause, Studio, Reise.
  *  Die Oberfläche sagt „Ort“, der Code bleibt bei GymProfile. */
 export interface GymProfile {

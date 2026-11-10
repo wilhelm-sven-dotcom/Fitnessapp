@@ -1,5 +1,6 @@
 import type { EffectiveProfile } from "@/lib/athlete";
 import { aufwaermPlan } from "@/lib/aufwaermsaetze";
+import { ENTLASTUNG_LAST, deloadAktiv } from "@/lib/periodization";
 import { pauseStufe, presc, warmupSets, type PauseStufe } from "@/lib/progression";
 import { NEUTRAL_SCALE, band, scaleFor, type ReadinessScale } from "@/lib/readiness";
 import { startWeight } from "@/lib/start-weight";
@@ -166,10 +167,11 @@ export function clearActiveState(): Promise<void> {
   return storage.remove(KEYS.active);
 }
 
-/** A deload overrides readiness with a clearly lighter week. */
-function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
+/** Eine Entlastungswoche geht vor der Tagesform: ein Satz weniger und
+ *  höchstens `ENTLASTUNG_LAST` der Last. */
+export function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
   return deloadActive
-    ? { setDelta: -1, loadMult: Math.min(base.loadMult, 0.6), cap: true }
+    ? { setDelta: -1, loadMult: Math.min(base.loadMult, ENTLASTUNG_LAST), cap: true }
     : base;
 }
 
@@ -178,12 +180,9 @@ export function startScale(
   settings: AppSettings,
   readiness: Readiness | undefined | null,
 ): ReadinessScale {
-  const deloadActive =
-    !!settings.lastDeloadDate &&
-    Date.now() - new Date(settings.lastDeloadDate).getTime() < 7 * 86_400_000;
   return withDeload(
     settings.autoregOn && readiness ? scaleFor(band(readiness.score)) : NEUTRAL_SCALE,
-    deloadActive,
+    deloadAktiv(settings),
   );
 }
 

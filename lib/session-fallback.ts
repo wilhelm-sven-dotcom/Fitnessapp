@@ -1,6 +1,7 @@
 import { poolFor, stressesInjury } from "@/lib/progression";
 import { fitToBudget } from "@/lib/session-time";
-import { muscleOf, MUSCLE_LABEL, volumeTargetFor, weekStartMon } from "@/lib/volume";
+import { muscleOf, MUSCLE_LABEL, volumeTargetFor } from "@/lib/volume";
+import { TAG_MS, weekStartMon } from "@/lib/zeit";
 import { workSets } from "@/lib/stats";
 import {
   todayKey,
@@ -106,7 +107,7 @@ function daysSinceMuscle(
   const m = new Map<Muscle, number>();
   const now = Date.now();
   for (const s of log) {
-    const days = (now - new Date(s.date).getTime()) / 86400000;
+    const days = (now - new Date(s.date).getTime()) / TAG_MS;
     for (const se of s.exercises ?? []) {
       const ex = byId.get(se.id);
       if (!ex || ex.pattern === "cardio") continue;

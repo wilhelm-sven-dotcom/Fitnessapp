@@ -16,7 +16,6 @@ import type {
   LoggedSession,
   SessionExercise,
   SetEntry,
-  WorkoutDay,
 } from "@/lib/types";
 
 const isObj = (x: unknown): x is Record<string, unknown> =>
@@ -77,19 +76,13 @@ export function sanitizeBody(x: unknown): BodyMetric[] {
   return arr(x).filter((b): b is BodyMetric => isObj(b) && typeof b.date === "string");
 }
 
-export function sanitizeDays(x: unknown): WorkoutDay[] {
-  return arr(x)
-    .filter((d): d is Record<string, unknown> => isObj(d) && typeof d.id === "string")
-    .map((d) => ({ ...(d as unknown as WorkoutDay), items: arr(d.items) as WorkoutDay["items"] }));
-}
-
 export function sanitizeGyms(x: unknown): GymProfile[] {
   return arr(x)
     .filter((g): g is Record<string, unknown> => isObj(g) && typeof g.id === "string")
     .map((g) => ({ ...(g as unknown as GymProfile), equip: arr(g.equip) as GymProfile["equip"] }));
 }
 
-/** key→string map (choices). Non-string values are dropped. */
+/** key→string map (Notizen je Übung). Non-string values are dropped. */
 export function sanitizeStringMap(x: unknown): Record<string, string> {
   if (!isObj(x)) return {};
   const out: Record<string, string> = {};
@@ -154,10 +147,8 @@ export function repairPersistedData(): void {
     ["wilhelm-training-log", sanitizeSessions],
     ["wilhelm-training-cardio", sanitizeCardio],
     ["wilhelm-training-body", sanitizeBody],
-    ["wilhelm-training-days", sanitizeDays],
     ["wilhelm-training-gyms", sanitizeGyms],
     ["wilhelm-training-custom", sanitizeCustom],
-    ["wilhelm-training-choices", sanitizeStringMap],
     ["wilhelm-training-exercise-videos", sanitizeVideoMap],
     ["wilhelm-training-warmup-videos", sanitizeVideoMap],
     ["wilhelm-training-exercise-notes", sanitizeStringMap],

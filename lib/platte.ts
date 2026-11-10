@@ -1,4 +1,4 @@
-import type { Exercise, LoggedSession } from "@/lib/types";
+import type { LoggedSession } from "@/lib/types";
 
 /**
  * Platten-Nummerierung „Platte 311": jede gespeicherte Einheit ist eine
@@ -20,19 +20,6 @@ export function plattenNummern(log: LoggedSession[]): Map<LoggedSession, number>
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
   return new Map(sorted.map((s, i) => [s, i + 1]));
-}
-
-/** Katalognummern des Übungsregisters: „Nr. 311-07" — Bibliotheks-Übungen in
- *  Lib-Reihenfolge, eigene dahinter (abgeleitet aus der Position, nie
- *  persistiert; wie die Plattennummer renummeriert Löschen die Folgenden). */
-export function katalogNummern(allLib: Exercise[]): Map<string, number> {
-  const sorted = [...allLib.filter((e) => !e.custom), ...allLib.filter((e) => e.custom)];
-  return new Map(sorted.map((e, i) => [e.id, i + 1]));
-}
-
-/** Formatiert eine Katalognummer als Registerschild. */
-export function fmtKatalogNr(n: number | undefined): string {
-  return n == null ? "Nr. –" : `Nr. ${String(n).padStart(2, "0")}`;
 }
 
 /** Katalogschild-Datum: „SO 17. AUG" — versal gesetzt via CSS. */

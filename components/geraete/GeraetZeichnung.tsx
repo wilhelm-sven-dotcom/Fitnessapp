@@ -258,5 +258,3 @@ export function GeraetZeichnung({
     </svg>
   );
 }
-
-export const GERAET_KEYS = Object.keys(ZEICHNUNG) as GeraetKey[];

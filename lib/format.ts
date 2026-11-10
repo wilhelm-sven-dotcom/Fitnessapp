@@ -1,3 +1,5 @@
+import { TAG_MS } from "@/lib/zeit";
+
 export const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("de-DE", {
     weekday: "short",
@@ -69,17 +71,6 @@ export function fmtDelta(d: number, unit: string): string {
 
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
-/** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,
- *  damit „gestern Abend → heute früh" nicht auf 0 Tage kippt. Nie negativ. */
-export function daysSince(iso: string): number {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return 0;
-  d.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.max(0, Math.round((today.getTime() - d.getTime()) / 86_400_000));
-}
-
 /** ISO-Kalenderwoche (Mo-basiert) — von lib/trainer re-exportiert. */
 export function isoWeek(ref: Date = new Date()): number {
   const t = new Date(ref.getTime());
@@ -89,7 +80,7 @@ export function isoWeek(ref: Date = new Date()): number {
   return (
     1 +
     Math.round(
-      ((t.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7,
+      ((t.getTime() - week1.getTime()) / TAG_MS - 3 + ((week1.getDay() + 6) % 7)) / 7,
     )
   );
 }

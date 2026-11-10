@@ -4,8 +4,9 @@ import type { PhaseState } from "@/lib/periodization";
 import { hoursSince, lastRide, weeklyCardio } from "@/lib/cardio";
 import { intensityLabel, kmLabel, sportLabel } from "@/lib/cardio-sport";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
-import { VOLUME_LANDMARKS } from "@/lib/training-science";
+import { VOLUME_LANDMARKS, WOCHENZIEL } from "@/lib/training-science";
 import { MUSCLE_LABEL, underservedMuscles, weeklyMuscleVolume } from "@/lib/volume";
+import { weekStartMon } from "@/lib/zeit";
 import type {
   BodyMetric,
   CardioSession,
@@ -102,14 +103,10 @@ export function buildCoachContext(opts: {
   const lines: string[] = [];
 
   // Frequency this week (Monday-based, same as the home rings).
-  const now = new Date();
-  const off = (now.getDay() + 6) % 7;
-  const mon = new Date(now);
-  mon.setHours(0, 0, 0, 0);
-  mon.setDate(now.getDate() - off);
+  const mon = weekStartMon();
   const weekCount = log.filter((s) => new Date(s.date) >= mon).length;
   lines.push(
-    `Diese Woche: ${weekCount} von 3 Einheiten. Insgesamt ${log.length} protokolliert.`,
+    `Diese Woche: ${weekCount} von ${WOCHENZIEL} Einheiten. Insgesamt ${log.length} protokolliert.`,
   );
 
   lines.push("", "Letzte Einheiten:");

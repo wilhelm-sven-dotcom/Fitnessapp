@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { prStreakWeeks, prTimeline } from "@/lib/records";
 import { isFilled, sessionVolume, weeklyStreak, workSets } from "@/lib/stats";
-import { coverageCount, weeklyMuscleVolume, weeklyVolume, weekStartMon } from "@/lib/volume";
+import { coverageCount, weeklyMuscleVolume, weeklyVolume } from "@/lib/volume";
+import { weekStartMon } from "@/lib/zeit";
 import type { AppSettings, Exercise, LoggedSession } from "@/lib/types";
 
 /**
