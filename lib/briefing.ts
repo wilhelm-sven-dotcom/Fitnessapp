@@ -35,7 +35,6 @@ export interface Briefing {
   coachNote: string;
 }
 
-
 export function buildBriefing(opts: {
   log: LoggedSession[];
   cardio: CardioSession[];

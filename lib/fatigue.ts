@@ -1,7 +1,7 @@
+import { ENTLASTUNG_LAST } from "@/lib/periodization";
 import { isFilled, sessionVolume, workSets } from "@/lib/stats";
 import type { CardioSession, LoggedSession } from "@/lib/types";
 import { TAG_MS } from "@/lib/zeit";
-import { ENTLASTUNG_LAST } from "@/lib/periodization";
 
 /**
  * Belastungs-Index — a forward-looking load monitor. Built on the acute:chronic
@@ -24,7 +24,6 @@ export interface FatigueState {
   message: string;
   enough: boolean; // enough history for the ratio to mean anything
 }
-
 
 function avgSessionRir(s: LoggedSession): number | null {
   const rirs: number[] = [];

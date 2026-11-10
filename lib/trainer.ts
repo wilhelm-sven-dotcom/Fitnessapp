@@ -149,7 +149,6 @@ export interface TrainerInput {
 
 /* ────────────────────────── Helfer ────────────────────────── */
 
-
 function pick<T>(pool: T[], seed: number): T {
   const n = pool.length;
   return pool[((seed % n) + n) % n];
