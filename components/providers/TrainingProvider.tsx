@@ -722,7 +722,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   const cloudFehler = (msg: string): string => {
     const m = msg.toLowerCase();
     if (m.includes("rate limit") || m.includes("too many requests"))
-      return "Mail-Limit erreicht — Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Leg stattdessen ein Konto mit Passwort an, das kommt ohne Mail aus.";
+      return "Mail-Limit erreicht: Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Ohne Mail geht es mit Passwort. Hat dein Konto noch keins, lässt es sich im Supabase-Dashboard setzen (supabase/SETUP.md, Abschnitt E).";
     if (m.includes("invalid") && (m.includes("token") || m.includes("otp")))
       return "Code stimmt nicht oder ist abgelaufen — er gilt nur wenige Minuten.";
     if (m.includes("link") && (m.includes("invalid") || m.includes("expired")))

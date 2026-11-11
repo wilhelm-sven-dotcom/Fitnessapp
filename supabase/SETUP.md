@@ -215,6 +215,31 @@ ohne Safari.
 
 ---
 
+## E · Passwort setzen, ohne eine Mail
+
+Für ein Konto, das per Anmelde-Mail entstanden ist und noch kein Passwort hat,
+wenn gerade das Mail-Limit greift. Danach meldest du dich in der App mit
+E-Mail und Passwort an, auch in der App auf dem Home-Bildschirm.
+
+Dashboard → **SQL Editor** → New query → Adresse und Passwort einsetzen → Run:
+
+```sql
+update auth.users
+set encrypted_password = extensions.crypt('VORLAEUFIGES-PASSWORT', extensions.gen_salt('bf')),
+    email_confirmed_at = coalesce(email_confirmed_at, now())
+where email = 'deine@mail.de'
+returning email;
+```
+
+Erwartet: eine Zeile mit deiner Adresse. Keine Zeile heißt: zu dieser Adresse
+gibt es noch kein Konto, dann in der App „Konto anlegen“ (Abschnitt B).
+
+Der SQL Editor bewahrt Abfragen auf. Setz deshalb nach dem Anmelden in der App
+unter Einstellungen → Dienste ein neues Passwort; dann taugt das im Editor
+stehende nichts mehr.
+
+---
+
 ## Woran du merkst, dass es steht
 
 App → **Einstellungen** → **Dienste** → E-Mail und Passwort eintragen →
