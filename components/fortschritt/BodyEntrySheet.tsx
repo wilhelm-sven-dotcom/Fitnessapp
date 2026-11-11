@@ -127,7 +127,7 @@ export function BodyEntrySheet({
           <Pressable
             onClick={clearPhoto}
             aria-label="Foto entfernen"
-            className="rounded-card p-1.5 text-muted focus:outline-none"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted focus:outline-none"
           >
             <X size={16} />
           </Pressable>

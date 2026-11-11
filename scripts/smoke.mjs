@@ -115,7 +115,8 @@ try {
       k("referrer-policy") === "strict-origin-when-cross-origin" || "Referrer-Policy",
       k("x-frame-options") === "DENY" || "X-Frame-Options",
       /frame-ancestors 'none'/.test(k("content-security-policy")) || "Content-Security-Policy",
-      /camera=\(\)/.test(k("permissions-policy")) || "Permissions-Policy",
+      (/microphone=\(\)/.test(k("permissions-policy")) && !/camera/.test(k("permissions-policy"))) ||
+        "Permissions-Policy (Mikrofon aus, Kamera frei für Fortschrittsfotos)",
       !r.headers.has("x-powered-by") || "X-Powered-By steht noch da",
     ].filter((x) => x !== true);
     if (fehlt.length) throw new Error(`${pfad}: ${fehlt.join(", ")}`);

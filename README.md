@@ -154,8 +154,8 @@ Nachweis: `npm run pruefe:offline` und `npm run pruefe:daten`.
   nimmt der Server ATLAS-Anfragen nur mit diesem Code an.
 - Jede Antwort trägt Sicherheits-Header (`next.config.mjs`): kein Erraten des
   Dateityps, keine Einbettung in fremde Seiten, fremde Adressen erfahren nur
-  die Herkunft, und Kamera, Mikrofon, Standort, Zahlung und USB sind
-  abgeschaltet. HTTPS erzwingt Vercel. Eine vollständige
+  die Herkunft, und Mikrofon, Standort, Zahlung und USB sind abgeschaltet
+  (die Kamera nicht: Fortschrittsfotos nutzen sie). HTTPS erzwingt Vercel. Eine vollständige
   Content-Security-Policy gibt es bewusst nicht: sie verlangte eine Kennung je
   Antwort, dann wäre keine Seite mehr statisch und ließe sich nicht für das
   Training ohne Netz vorladen.

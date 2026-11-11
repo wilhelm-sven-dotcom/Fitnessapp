@@ -22,11 +22,13 @@ const SICHERHEIT = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   // Was die App nie braucht, ist abgeschaltet — auch für eingebettete Videos.
   // Nicht genannt und damit weiter erlaubt: Bewegungssensor (Sprungtest),
-  // Wachhalten des Bildschirms, Vollbild und Bild-in-Bild der Videos. Fotos
-  // kommen über die Dateiauswahl und brauchen keine Kamera-Freigabe.
+  // Wachhalten des Bildschirms, Vollbild und Bild-in-Bild der Videos, und die
+  // Kamera: Fortschrittsfotos öffnen sie über die Dateiauswahl
+  // (`capture="environment"`). Chromium lässt das auch bei gesperrter Kamera
+  // zu; wie Safari auf dem iPhone damit umgeht, ließ sich hier nicht prüfen.
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+    value: "microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
   },
 ];
 

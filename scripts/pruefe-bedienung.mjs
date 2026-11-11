@@ -4,7 +4,10 @@
  *   A  Auf jedem Bildschirm und in jedem Blatt hat jedes Bedienelement einen
  *      Namen (für Screenreader und Sprachsteuerung) und eine Tippfläche von
  *      mindestens 44 × 44 px. Ein Platzhalter im Feld zählt nicht als Name.
- *      Ausgenommen sind nur Verweise mitten im Fließtext.
+ *      Ausgenommen sind nur Verweise mitten im Fließtext. Dazu Knöpfe, die
+ *      erst in einem bestimmten Zustand erscheinen: angehängtes Foto,
+ *      verknüpftes Video, eingetragenes Hilfsmittel. (Die Spotify-Steuerung
+ *      erscheint nur mit eingerichtetem Spotify und ist hier nicht messbar.)
  *   B  Meldungen verdecken nie den Knopf, den man als Nächstes braucht: auf
  *      Heute stehen sie über Dock und Leiste, im Training oben unter dem Kopf
  *      statt über „Satz eintragen“. Der Ansage-Bereich steht schon vor der
@@ -18,13 +21,15 @@
  * Aufruf: npm run build && node scripts/pruefe-bedienung.mjs
  */
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { LOG, SETTINGS, starteServer } from "./lib/testdaten.mjs";
 
 const PORT = 3199;
 const exe = process.env.PW_CHROMIUM || "/opt/pw-browsers/chromium";
 const ZIEL = 44;
+/** Alle Übungen des Katalogs — für Video-Link und Hilfsmittel an jeder. */
+const UEBUNGEN = [...readFileSync("lib/exercises.ts", "utf8").matchAll(/\bid: "([a-z0-9_]+)"/g)].map((m) => m[1]);
 
 if (!existsSync(".next/BUILD_ID")) {
   console.error("Kein Build gefunden – zuerst `npm run build`.");
@@ -136,6 +141,18 @@ const bild = async (seite, wo, hin) => {
   );
   for (const f of ohne.slice(0, 8)) console.log(`       ohne Namen: ${f.was}`);
   for (const f of klein.slice(0, 8)) console.log(`       zu klein:   ${f.was}`);
+};
+
+/** Ein einzelner Knopf, auch wenn er weiter unten im Blatt liegt. */
+const knopfMass = async (seite, name) => {
+  const k = seite.getByLabel(name, { exact: true }).first();
+  await k.waitFor({ timeout: 6000 });
+  await k.scrollIntoViewIfNeeded();
+  const b = await k.boundingBox();
+  pruefe(
+    !!b && b.width >= ZIEL && b.height >= ZIEL,
+    `A · „${name}“: ${Math.round(b?.width ?? 0)} × ${Math.round(b?.height ?? 0)} px`,
+  );
 };
 
 const zu = async (seite) => {
@@ -298,8 +315,21 @@ try {
     await pg.getByRole("button", { name: /Körperdaten eintragen/ }).first().click();
     await blatt(pg);
   });
+  await bild(pg, "Fortschritt · Körper · Eintragen · Foto angehängt", async () => {
+    // Ein echtes PNG als Foto: ein Ausschnitt des Bildschirms.
+    const foto = await pg.screenshot({ clip: { x: 0, y: 0, width: 120, height: 120 } });
+    const wahl = pg.waitForEvent("filechooser", { timeout: 6000 });
+    await pg.locator("[data-sheet]").getByRole("button", { name: /Fortschritts-Foto/ }).click();
+    await (await wahl).setFiles({ name: "fortschritt.png", mimeType: "image/png", buffer: foto });
+    await pg.getByText("Foto angehängt").waitFor({ timeout: 8000 });
+  });
+  await knopfMass(pg, "Foto entfernen");
   await zu(pg);
-  await bild(pg, "Fortschritt · Muskeln", () => reiter(pg, "Muskeln").click());
+  await bild(pg, "Fortschritt · Muskeln", async () => {
+    await reiter(pg, "Muskeln").click();
+    // Die Muskelpunkte der Körperkarte sind antippbar und erscheinen verzögert.
+    await pg.getByRole("button", { name: /^Brust: / }).first().waitFor({ timeout: 6000 });
+  });
 
   // ── A · Katalog ───────────────────────────────────────────────────────
   await bild(pg, "Katalog", () => pg.goto(BASE + "/uebungen", { waitUntil: "networkidle" }));
@@ -310,6 +340,22 @@ try {
   await bild(pg, "Katalog · Übungsdetail · Verlauf", () =>
     pg.locator("[data-sheet]").getByRole("button", { name: "Verlauf", exact: true }).click(),
   );
+  await zu(pg);
+  await bild(pg, "Katalog · Übungsdetail mit Video-Link und Hilfsmittel", async () => {
+    // Kein Abruf bei YouTube: das eingebettete Video bleibt leer.
+    await ctx.route(/youtube|ytimg|googlevideo/, (r) => r.abort());
+    await pg.evaluate((ids) => {
+      const je = (wert) => JSON.stringify(Object.fromEntries(ids.map((id) => [id, wert])));
+      localStorage.setItem("wilhelm-training-exercise-videos", je("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+      localStorage.setItem("wilhelm-training-exercise-notes", je("Unterstützungsband"));
+    }, UEBUNGEN);
+    await pg.reload({ waitUntil: "networkidle" });
+    await pg.locator("button.min-h-14").first().click();
+    await blatt(pg);
+    await pg.getByLabel("Hilfsmittel entfernen", { exact: true }).first().waitFor({ timeout: 6000 });
+  });
+  for (const name of ["Link ändern", "Link entfernen", "Hilfsmittel ändern", "Hilfsmittel entfernen"])
+    await knopfMass(pg, name);
   await zu(pg);
   await bild(pg, "Katalog · Filter Muster", async () => {
     await pg.getByRole("button", { name: /^Muster/ }).first().click();
