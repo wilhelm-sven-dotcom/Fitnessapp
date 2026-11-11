@@ -220,8 +220,13 @@ try {
   sucheDateien(".next/static");
   const dateiFehlt = aufPlatte.filter((d) => !drin.has(d));
   pruefe(dateiFehlt.length === 0, `A · alle ${aufPlatte.length} Skripte und Styles des Builds vorgeladen${dateiFehlt.length ? ` (fehlt: ${dateiFehlt.slice(0, 3).join(", ")})` : ""}`);
-  const bilder = readdirSync("public/geraete").filter((f) => f.endsWith(".webp"));
-  pruefe(bilder.every((b) => drin.has(`/geraete/${b}`)), `A · alle ${bilder.length} Gerätebilder vorgeladen`);
+  for (const ordner of ["geraete", "bewegung", "momente"]) {
+    const bilder = readdirSync(`public/${ordner}`).filter((f) => f.endsWith(".webp"));
+    pruefe(
+      bilder.length > 0 && bilder.every((b) => drin.has(`/${ordner}/${b}`)),
+      `A · alle ${bilder.length} Bilder aus public/${ordner} vorgeladen`,
+    );
+  }
   pruefe(![...drin].some((p) => p.startsWith("/api/")), "A · nichts von /api/ im Cache");
   pruefe(await hatMarke(), "A · erste Installation lädt die Seite nicht neu");
 
@@ -237,6 +242,13 @@ try {
       .then(() => true, () => false);
     pruefe(ok, `B · ohne Netz nach ${ziel}`);
   }
+  // Bilder kommen ohne Netz aus dem Cache, auch mit Versions-Anhang (`?v=`).
+  const bildOffline = await page.evaluate(async () => {
+    const urls = ["/bewegung/goblet-klein.webp?v=1", "/bewegung/march_high.webp?v=1", "/momente/rekord.webp?v=1", "/geraete/m_beinpresse-klein.webp?v=1"];
+    const r = await Promise.all(urls.map((u) => fetch(u).then((x) => x.ok, () => false)));
+    return r.every(Boolean);
+  });
+  pruefe(bildOffline, "B · Bewegungs-, Moment- und Gerätebilder kommen ohne Netz aus dem Cache");
 
   // ── C · Ohne Netz trainieren ───────────────────────────────────────────
   await page.getByText("Los geht", { exact: false }).first().click();

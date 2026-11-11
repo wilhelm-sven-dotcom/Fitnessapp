@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Camera, Plus, ShieldCheck, Star, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { BeforeAfter } from "@/components/progress/BeforeAfter";
 import { BodyEntrySheet } from "@/components/fortschritt/BodyEntrySheet";
@@ -175,7 +175,7 @@ export function BodyTab() {
         </div>
       ) : body.length === 0 ? (
         <EmptyState
-          icon={Camera}
+          bild="koerper-leer"
           title="Noch keine Körperdaten"
           description="Halte Gewicht, Bauchumfang und ein Ausgangsfoto fest — künftige Vergleiche zeigen den Fortschritt, den die Waage verschweigt."
           action={

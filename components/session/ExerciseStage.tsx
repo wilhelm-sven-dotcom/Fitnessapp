@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeftRight, BookOpen, Check, ChevronRight, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BewegungsBild } from "@/components/bewegung/BewegungsBild";
 import { useGeraetFoto } from "@/components/geraete/GeraetBild";
 import { GeraetZeichnung } from "@/components/geraete/GeraetZeichnung";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
@@ -14,6 +15,7 @@ import { beatsRecord, setMetric } from "@/lib/records";
 import type { ExRecord } from "@/lib/records";
 import { fmtSatz } from "@/lib/format";
 import { SPRING } from "@/lib/motion";
+import { hatBewegung } from "@/lib/bewegung";
 import { geraetBildUrl, geraetVon } from "@/lib/geraete";
 import { figurFor } from "@/lib/phasen/figuren";
 import { isFilled } from "@/lib/stats";
@@ -106,6 +108,9 @@ export function ExerciseStage({
   const foto = useGeraetFoto(geraet);
   // Ohne eigenes Foto: das mitgelieferte Bild (kleine Datei) als Kachel.
   const bild = foto ? null : geraetBildUrl(geraet, true);
+  // Bewegungsbild als Kachel rechts — außer ein eigenes Gerätefoto füllt die
+  // Karte (das hat Vorrang, wie bisher).
+  const bewegt = !cardio && !foto && hatBewegung(ex.id);
   const timed = ex.unit === "Sek";
 
   const activeSetIdx = sets.findIndex((s) => !s.warmup && (s.reps === "" || s.reps == null));
@@ -193,7 +198,7 @@ export function ExerciseStage({
             <div className="absolute inset-0 bg-bild-scrim" />
           </div>
         )}
-        {!cardio && !(geraet && !foto) && (
+        {!cardio && !bewegt && !(geraet && !foto) && (
           <div className="relative w-14 shrink-0" aria-hidden>
             <PhasenFigur
               figur={figur}
@@ -217,9 +222,19 @@ export function ExerciseStage({
             {zielLabel && !alleErledigt ? ` · ${zielLabel}` : ""}
           </p>
         </div>
+        {/* Bewegungsbild als Kachel rechts; erledigt oder mit Figuren aus
+            steht es still. */}
+        {bewegt && (
+          <div
+            aria-hidden
+            className="pointer-events-none relative aspect-bild w-28 shrink-0 overflow-hidden rounded-kachel border-dick border-rand bg-surface-1"
+          >
+            <BewegungsBild id={ex.id} klein steht={alleErledigt || zoetropOn === false} />
+          </div>
+        )}
         {/* Gerät ohne eigenes Foto: das mitgelieferte Bild als Kachel
             rechts, sonst die Zeichnung in Weiß auf Blau. */}
-        {geraet && !foto && bild && (
+        {!bewegt && geraet && !foto && bild && (
           <div
             aria-hidden
             className="pointer-events-none relative aspect-bild w-28 shrink-0 overflow-hidden rounded-kachel border-dick border-rand bg-surface-1"
@@ -234,7 +249,7 @@ export function ExerciseStage({
             />
           </div>
         )}
-        {geraet && !foto && !bild && (
+        {!bewegt && geraet && !foto && !bild && (
           <div aria-hidden className="relative w-28 shrink-0 self-end">
             <GeraetZeichnung geraet={geraet} variante="auf-blau" />
           </div>

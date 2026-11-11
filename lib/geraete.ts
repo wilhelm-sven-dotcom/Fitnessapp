@@ -39,6 +39,12 @@ const MIT_BILD: ReadonlySet<GeraetKey> = new Set<GeraetKey>([
   "m_rudern",
   "m_schulterpresse",
   "m_butterfly",
+  "m_beinpresse",
+  "m_hacksquat",
+  "m_beinstrecker",
+  "m_beinbeuger",
+  "m_rueckenstrecker",
+  "m_brustpresse",
 ]);
 
 /** Hochzählen, wenn ein Bild ersetzt wird: der Service Worker cacht die URL

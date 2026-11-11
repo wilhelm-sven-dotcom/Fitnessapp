@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Pause, Play, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { BewegungsBild } from "@/components/bewegung/BewegungsBild";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +11,7 @@ import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { EASE_OUT } from "@/lib/motion";
 import { beep, beepEnd, beepStart, primeAudio, setCueVolume as setBeepCueVolume } from "@/lib/beep";
+import { hatBewegung } from "@/lib/bewegung";
 import { useOffline } from "@/lib/use-offline";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
@@ -306,6 +308,20 @@ export function WarmupPlayer({
                 referrerPolicy="strict-origin-when-cross-origin"
                 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
               />
+            </div>
+          ) : hatBewegung(showing.id) ? (
+            // Bewegungsbild: die Übung mit Person, vier Phasen im Wechsel.
+            <div className="mb-3 w-72 rounded-card border-dick border-rand bg-surface-1 p-3">
+              <p className="px-1 text-left text-3xs font-bold text-muted">
+                Übung {index + (switching ? 2 : 1)}
+              </p>
+              <div className="mt-2 aspect-bild w-full overflow-hidden rounded-inner">
+                <BewegungsBild
+                  id={showing.id}
+                  steht={settings.zoetrope === false}
+                  titel={`Bewegung: ${showing.name}`}
+                />
+              </div>
             </div>
           ) : fig ? (
             <div className="mb-3 w-72 rounded-card border-dick border-rand bg-surface-1 p-3">

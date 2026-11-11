@@ -11,6 +11,7 @@ import { EASE_OUT } from "@/lib/motion";
 import type { Experience, TrainingGoal } from "@/lib/types";
 import { MARKE } from "@/lib/grundfarben";
 import { APP_NAME } from "@/lib/marke";
+import { momentUrl } from "@/lib/momente";
 
 // Die Stufe steuert die Startgewichte (lib/start-weight.ts, EXP_MULT 0,7 ·
 // 1,0 · 1,25) und steht im Profil, das ATLAS bekommt.
@@ -95,6 +96,14 @@ export function Welcome() {
             stellt die nächste Einheit zusammen. Jede Körperregion hat ihre
             Kachel: Beine Orange, Druck Blau, Zug Gelb, Rumpf Weiß.
           </p>
+          {/* Der Name als Bild: der Spotter an der Bank sichert die Stange. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={momentUrl("begruessung")}
+            alt="Zwei Trainingspartner an der Hantelbank: einer drückt, der andere sichert die Stange."
+            draggable={false}
+            className="mt-6 aspect-bild w-full rounded-card border-dick border-rand object-cover"
+          />
         </motion.div>
 
         <motion.div

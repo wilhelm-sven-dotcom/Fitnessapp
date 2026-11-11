@@ -219,7 +219,7 @@ export default function ExerciseCatalogPage() {
 
       {groups.length === 0 ? (
         <EmptyState
-          icon={Search}
+          bild="nichts-gefunden"
           title="Nichts gefunden"
           description="Kein Treffer für diese Kombination — Filter lockern oder eine eigene Übung anlegen."
           action={

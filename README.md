@@ -58,6 +58,10 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 
 ## Weitere Features
 
+- **Bewegungsbilder** — 23 Übungen und Aufwärmübungen zeigen eine
+  Illustration mit Person, die in vier Phasen die Bewegung vormacht: groß im
+  Übungsdetail und beim Aufwärmen, als Kachel auf der Trainingskarte. Übungen
+  ohne Bild zeigen die Phasenfigur (`public/bewegung/README.md`).
 - **Steigerung** — doppelte Progression: Gewicht hoch, sobald alle Sätze die
   obere Wiederholungsgrenze schaffen und mindestens 1 in Reserve bleibt (oder
   bei 3 in Reserve). Entlastungs- und Test-Einheiten sind kein Ausgangswert.
@@ -126,7 +130,7 @@ Modell antwortet, wie schnell, und woran es sonst hängt.
 
 **Service Worker.** `/sw.js` entsteht beim Bauen: `app/sw.js/route.ts` stellt
 vor die Logik (`worker.js`) die Liste aller Skripte, Styles, Schriften und
-Gerätebilder des Builds samt Fingerabdruck. Der Worker lädt beim Installieren
+Bilder (Geräte, Bewegungen, Momente) des Builds samt Fingerabdruck. Der Worker lädt beim Installieren
 diese Liste und die sechs Hauptseiten vor; fehlt etwas, bleibt der bisherige
 Worker im Amt. Seitenaufrufe gehen zuerst ins Netz, höchstens 3 s, dann kommt
 die vorgeladene Seite; `/api/` fasst der Worker nie an. Ein neuer Build

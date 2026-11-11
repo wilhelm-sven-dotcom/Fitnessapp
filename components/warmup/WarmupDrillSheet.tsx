@@ -1,10 +1,12 @@
 "use client";
 
+import { BewegungsBild } from "@/components/bewegung/BewegungsBild";
 import { FigurePanel } from "@/components/figures/FigurePanel";
 import { FIG } from "@/components/figures/figureData";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { VideoLinkEditor } from "@/components/workout/VideoLinkEditor";
 import { Sheet } from "@/components/ui/sheet";
+import { hatBewegung } from "@/lib/bewegung";
 import { useOffline } from "@/lib/use-offline";
 import { cn } from "@/lib/utils";
 import type { WarmupDrill } from "@/lib/warmup";
@@ -31,7 +33,7 @@ export function WarmupDrillSheet({
   onClose: () => void;
   drill: WarmupDrill | null;
 }) {
-  const { warmupVideos, setWarmupVideo } = useTraining();
+  const { warmupVideos, setWarmupVideo, settings } = useTraining();
   const offline = useOffline();
   const fig = drill ? FIG[drill.figure ?? drill.id] : undefined;
   const badge = drill ? phaseBadge(drill.phase) : null;
@@ -51,7 +53,15 @@ export function WarmupDrillSheet({
             </span>
           )}
 
-          {fig && (
+          {drill && hatBewegung(drill.id) ? (
+            <div className="mb-3 aspect-bild w-full overflow-hidden rounded-card border-dick border-rand bg-surface-1">
+              <BewegungsBild
+                id={drill.id}
+                steht={settings.zoetrope === false}
+                titel={`Bewegung: ${drill.name}`}
+              />
+            </div>
+          ) : fig && (
             <div className="mx-auto mb-3 w-48 rounded-card border border-line bg-surface-0 p-2">
               <FigurePanel label="" fig={fig} viewKey="side" periodMs={drill.periodMs} />
             </div>

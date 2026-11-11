@@ -312,6 +312,49 @@ body {
   }
 }
 
+/* ── Bewegungsbilder (public/bewegung/) ──────────────────────────────────────
+   Vier Phasen nebeneinander in EINER Datei, gezeigt über background-position.
+   Folge 1-2-3-4-3-2, hart (step-end): Start und Umkehrpunkt je 600 ms, die
+   Zwischenphasen je 300 ms, 2,4 s je Wiederholung. Ohne Animation (reduced
+   motion, Figuren aus, Übung erledigt) steht Phase 1. */
+@keyframes bewegung {
+  0% {
+    background-position: 0% 0;
+  }
+  25% {
+    background-position: 33.3333% 0;
+  }
+  37.5% {
+    background-position: 66.6667% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+  75% {
+    background-position: 66.6667% 0;
+  }
+  87.5% {
+    background-position: 33.3333% 0;
+  }
+  100% {
+    background-position: 0% 0;
+  }
+}
+.bewegung {
+  background-repeat: no-repeat;
+  background-size: 400% 100%;
+  background-position: 0% 0;
+  animation: bewegung 2.4s step-end infinite;
+}
+.bewegung-steht {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bewegung {
+    animation: none;
+  }
+}
+
 /* Skeleton: hartes Blinken 35 ↔ 14 % (step-end, 1 s) — kein weicher Puls.
    Reduced motion: statisch bei 24 % (Motion-Handoff). */
 @keyframes skel-blink {

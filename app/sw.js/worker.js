@@ -1,10 +1,10 @@
 // Offline-Service-Worker — die Vorlage. `route.ts` daneben liefert sie als
 // `/sw.js` aus und setzt beim Bauen eine Zeile davor:
 //
-//   const BAU = { v: "<Kennung>", dateien: ["/_next/static/…", "/geraete/…"] };
+//   const BAU = { v: "<Kennung>", dateien: ["/_next/static/…", "/geraete/…", "/bewegung/…", "/momente/…"] };
 //
-// `dateien` sind ALLE Skripte, Styles, Schriften und Gerätebilder dieses
-// Builds, `v` ist ein Fingerabdruck davon. Ein neuer Build ergibt also ein
+// `dateien` sind ALLE Skripte, Styles, Schriften und Bilder (Geräte,
+// Bewegungen, Momente) dieses Builds, `v` ist ein Fingerabdruck davon. Ein neuer Build ergibt also ein
 // anderes `/sw.js` — daran erkennt der Browser das Update.
 //
 // Wozu: Die App wird im Studio benutzt, oft mit schlechtem Netz. Alles, was
@@ -222,6 +222,6 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return;
   if (request.mode === "navigate") event.respondWith(seite(event, url));
   else if (request.headers.get("RSC") === "1") event.respondWith(seitenDaten(request));
-  else if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/geraete/"))
+  else if (/^\/(?:_next\/static|geraete|bewegung|momente)\//.test(url.pathname))
     event.respondWith(datei(request));
 });
