@@ -4,6 +4,7 @@ import { Cloud, LogOut, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Pressable } from "@/components/ui/pressable";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { leseAnmeldeEingabe } from "@/lib/anmeldung";
 import { toast } from "@/lib/toast";
 import { Kicker } from "@/components/ui/Kicker";
 
@@ -46,13 +47,16 @@ export function CloudSyncSection() {
     );
   }
 
+  // Code oder kopierter Link aus der Mail (`lib/anmeldung.ts`).
+  const eingabe = leseAnmeldeEingabe(code);
+
   const sendLink = async () => {
     setMsg("");
     const res = await cloud.signIn(email);
     if (res.ok) setSperre(60);
     setMsg(
       res.ok
-        ? "Mail unterwegs — je nach Einstellung steht darin ein Link oder ein 6-stelliger Code."
+        ? "Mail unterwegs. Steht ein Code drin, tipp ihn unten ein. Steht nur ein Link drin: in der Mail lange auf den Link drücken, „Link kopieren“ und unten einfügen."
         : res.error
           ? `Fehler: ${res.error}`
           : "Hat nicht geklappt.",
@@ -224,15 +228,16 @@ export function CloudSyncSection() {
               autoComplete="one-time-code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="6-stelliger Code"
+              placeholder="Code oder Link aus der Mail"
+              aria-label="Code oder Link aus der Anmelde-Mail"
               className={`min-w-0 flex-1 text-center font-mono tabular-nums placeholder:tracking-normal ${inputCls}`}
             />
             <Pressable
               onClick={() => void confirmCode()}
-              disabled={cloud.busy || !email.trim() || code.trim().length < 6}
+              disabled={cloud.busy || !eingabe || (eingabe.art === "code" && !email.trim())}
               className="shrink-0 rounded-card bg-surface-2 px-4 py-2.5 text-sm font-medium text-fg focus:outline-none disabled:opacity-40"
             >
-              Code einlösen
+              {eingabe?.art === "link" ? "Link einlösen" : "Code einlösen"}
             </Pressable>
           </div>
           {msg && <p className="text-xs text-muted">{msg}</p>}

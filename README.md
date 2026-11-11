@@ -58,10 +58,12 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 
 ## Weitere Features
 
-- **Bewegungsbilder** — 56 Übungen und Aufwärmübungen zeigen eine
-  Illustration mit Person, die in vier Phasen die Bewegung vormacht: groß im
-  Übungsdetail und beim Aufwärmen, als Kachel auf der Trainingskarte. Übungen
-  ohne Bild zeigen die Phasenfigur (`public/bewegung/README.md`).
+- **Bewegungsbilder** — alle Studio-Übungen (22), alle Aufwärmübungen (24)
+  und 33 der 93 freien Übungen zeigen eine Illustration mit Person, die in vier
+  Phasen die Bewegung vormacht: groß im Übungsdetail und beim Aufwärmen, als
+  Kachel auf der Trainingskarte. Übungen ohne Bild zeigen die Phasenfigur
+  (`public/bewegung/README.md`, Prompt für die übrigen:
+  `docs/bewegungsbilder-prompt-zuhause.md`).
 - **Steigerung** — doppelte Progression: Gewicht hoch, sobald alle Sätze die
   obere Wiederholungsgrenze schaffen und mindestens 1 in Reserve bleibt (oder
   bei 3 in Reserve). Entlastungs- und Test-Einheiten sind kein Ausgangswert.
@@ -235,8 +237,12 @@ Ohne Konfiguration bleiben die Daten lokal.
 Der **eingebaute Supabase-Mailer hat eine harte Stundenrate** (eine Handvoll
 Mails, projektweit). Das ist eine Projekt-Einstellung, keine Code-Frage — im
 Repo lässt sie sich nicht ändern. Die App umgeht sie deshalb: Anmelden **und**
-Kontoanlegen laufen über E-Mail + Passwort und brauchen gar keine Mail. Der
-Magic-Link bleibt nur als Notausgang.
+Kontoanlegen laufen über E-Mail + Passwort und brauchen gar keine Mail. Die
+Anmelde-Mail bleibt nur als Notausgang. Damit der auch in der App auf dem
+Home-Bildschirm funktioniert, sollte die Mail einen Code statt eines Links
+enthalten (Vorlage umstellen: `supabase/SETUP.md`, Abschnitt D). Kommt doch ein
+Link, nimmt das Code-Feld auch den kopierten Link und meldet direkt in der App
+an (`lib/anmeldung.ts`).
 
 Damit das Anlegen wirklich mailfrei durchläuft, müssen im Supabase-Projekt zwei
 Auth-Schalter stehen. Die Befehle dafür — und das SQL für Tabelle und

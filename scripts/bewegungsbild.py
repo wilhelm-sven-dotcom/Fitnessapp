@@ -2,6 +2,7 @@
 
     python3 scripts/bewegungsbild.py <raster.png> <id> [<raster.png> <id> ...]
     python3 scripts/bewegungsbild.py --ziel <ordner> <raster.png> <id> ...
+    python3 scripts/bewegungsbild.py --anker x0,y0,x1,y1 <raster.png> <id> ...
 
 Braucht Pillow und numpy (`pip install pillow numpy`).
 
@@ -18,6 +19,13 @@ Ablauf je Bild:
 Danach die Kennung in `lib/bewegung.ts` eintragen. Ob die Geräte still
 stehen, zeigt `--zwiebel <datei.png>`: alle vier Phasen übereinander; was
 doppelt erscheint, ist verrutscht.
+
+`--anker x0,y0,x1,y1` (gilt für das nächste Raster): statt an der Bodenlinie
+an einem feststehenden Teil ausrichten, z. B. Box, Wand oder Pfosten. Das
+Rechteck steht in Pixeln von Feld 1 (oben links) und darf nur Feststehendes
+enthalten; in den anderen Feldern wird die beste Deckung im Umkreis von 40 px
+gesucht. Nötig, wenn ChatGPT das Gerät gegenüber der Bodenlinie versetzt
+zeichnet oder ein Fuß die Bodenlinie unterbricht.
 """
 import sys
 from pathlib import Path
@@ -74,7 +82,8 @@ def bodenlinie(f: np.ndarray) -> tuple[int, int]:
     while oben - 1 >= 0 and anteil[oben - 1] > 0.45:
         oben -= 1
     xs = np.where(dunkel[(oben + y) // 2])[0]
-    # längster zusammenhängender Lauf
+    # längster zusammenhängender Lauf (unterbricht ein Fuß die Linie, hilft
+    # `--anker`)
     best, start, prev = (int(xs[0]), int(xs[0])), int(xs[0]), int(xs[0])
     for x in [int(v) for v in xs[1:]] + [None]:
         if x is None or x != prev + 1:
@@ -97,12 +106,32 @@ def _verschiebe(f: np.ndarray, dx: int, dy: int) -> np.ndarray:
     return out
 
 
-def phasen(pfad: Path) -> tuple[list[Image.Image], list[tuple[int, int]]]:
+def anker_versatz(ref: np.ndarray, f: np.ndarray, box: tuple[int, int, int, int], radius: int = 40) -> tuple[int, int]:
+    """Verschiebung für `f`, damit der Inhalt von `box` (in `ref`) deckungsgleich liegt."""
+    x0, y0, x1, y1 = box
+    vorlage = ref[y0:y1, x0:x1].astype(np.int32)
+    best = None
+    for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+            ys, xs = y0 + dy, x0 + dx
+            if ys < 0 or xs < 0 or ys + (y1 - y0) > f.shape[0] or xs + (x1 - x0) > f.shape[1]:
+                continue
+            d = np.abs(f[ys:ys + (y1 - y0), xs:xs + (x1 - x0)].astype(np.int32) - vorlage).mean()
+            if best is None or d < best[0]:
+                best = (d, dx, dy)
+    return -best[1], -best[2]
+
+
+def phasen(pfad: Path, anker: tuple[int, int, int, int] | None = None) -> tuple[list[Image.Image], list[tuple[int, int]]]:
     """Ausgerichtete Phasen im gemeinsamen 3:2-Ausschnitt und der Versatz je Feld."""
     fs = felder(pfad)
-    linien = [bodenlinie(f) for f in fs]
-    (rx0, ry), h, w = linien[0], min(f.shape[0] for f in fs), min(f.shape[1] for f in fs)
-    versatz = [(rx0 - x, ry - y) for x, y in linien]
+    h, w = min(f.shape[0] for f in fs), min(f.shape[1] for f in fs)
+    if anker:
+        versatz = [(0, 0)] + [anker_versatz(fs[0], f, anker) for f in fs[1:]]
+    else:
+        linien = [bodenlinie(f) for f in fs]
+        rx0, ry = linien[0]
+        versatz = [(rx0 - x, ry - y) for x, y in linien]
     ausgerichtet = [_verschiebe(f[:h, :w], dx, dy) for f, (dx, dy) in zip(fs, versatz)]
     mx = max(abs(dx) for dx, _ in versatz) + 2
     my = max(abs(dy) for _, dy in versatz) + 2
@@ -139,7 +168,9 @@ def zwiebel(bilder: list[Image.Image], datei: Path) -> None:
 def main(argv: list[str]) -> int:
     ziel = Path(__file__).resolve().parent.parent / "public" / "bewegung"
     zwiebel_datei = None
-    rest = []
+    auftraege: list[tuple[str, str, tuple[int, int, int, int] | None]] = []
+    rest: list[str] = []
+    anker = None
     i = 0
     while i < len(argv):
         if argv[i] == "--ziel":
@@ -148,14 +179,23 @@ def main(argv: list[str]) -> int:
         elif argv[i] == "--zwiebel":
             zwiebel_datei = Path(argv[i + 1])
             i += 2
+        elif argv[i] == "--anker":
+            anker = tuple(int(v) for v in argv[i + 1].split(","))
+            if len(anker) != 4:
+                print("--anker braucht x0,y0,x1,y1")
+                return 2
+            i += 2
         else:
             rest.append(argv[i])
+            if len(rest) == 2:
+                auftraege.append((rest[0], rest[1], anker))
+                rest, anker = [], None
             i += 1
-    if not rest or len(rest) % 2:
+    if not auftraege or rest:
         print(__doc__)
         return 2
-    for raster, kennung in zip(rest[::2], rest[1::2]):
-        bilder, versatz = phasen(Path(raster))
+    for raster, kennung, anker in auftraege:
+        bilder, versatz = phasen(Path(raster), anker)
         dateien = speichere(bilder, ziel, kennung)
         if zwiebel_datei:
             zwiebel(bilder, zwiebel_datei.with_name(f"{zwiebel_datei.stem}-{kennung}{zwiebel_datei.suffix}"))

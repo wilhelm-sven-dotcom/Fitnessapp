@@ -24,7 +24,14 @@ python3 scripts/bewegungsbild.py S01_Beinpresse.png leg_press
 
 Es schneidet die Felder an den weißen Stegen, richtet sie an der Bodenlinie
 von Feld 1 aus (ChatGPT versetzt die Felder um einige Pixel, bei Z02 um 15 px)
-und schneidet alle auf denselben 3:2-Ausschnitt. Mit `--zwiebel probe.png`
+und schneidet alle auf denselben 3:2-Ausschnitt. Zeichnet ChatGPT Box, Wand
+oder Pfosten gegenüber der Bodenlinie versetzt, oder unterbricht ein Fuß die
+Linie, richtet `--anker x0,y0,x1,y1` stattdessen an diesem feststehenden Teil
+aus (Rechteck in Pixeln von Feld 1, nur Feststehendes darin):
+
+```bash
+python3 scripts/bewegungsbild.py --anker 160,330,230,428 Z16_Kniebeuge_zur_Box.png box_squat
+``` Mit `--zwiebel probe.png`
 legt es alle vier Phasen übereinander ab: was doppelt erscheint, ist
 verrutscht und springt beim Abspielen.
 
@@ -47,6 +54,25 @@ die alte Datei.
 | Z9 | `lateral` | Seitheben |
 | Z10 | `crunch` | Crunches |
 | Z11 | `calf_raise_bw` | Wadenheben (Körpergewicht) |
+| Z12 | `squat_bw` | Kniebeuge (Körpergewicht) |
+| Z13 | `squat_bar` | Langhantel-Kniebeuge |
+| Z14 | `front_squat` | Frontkniebeuge (Langhantel) |
+| Z15 | `squat_db` | Kurzhantel-Kniebeuge |
+| Z16 | `box_squat` | Kniebeuge zur Box (Anker: Box) |
+| Z18 | `bss` | Bulgarian Split Squat |
+| Z20 | `stepup` | Step-ups |
+| Z21 | `split_squat` | Split Squat (statisch) |
+| Z24 | `pistol_box` | Einbeinige Kniebeuge zur Box (Anker: Box) |
+| Z25 | `glutebridge` | Glute Bridge mit Gewicht |
+| Z26 | `hip_thrust` | Hip Thrust |
+| Z27 | `deadlift` | Kreuzheben (Langhantel) |
+| Z28 | `rdl_bar` | Rumänisches Kreuzheben (Langhantel) |
+| Z29 | `kb_swing` | Kettlebell Swing |
+| Z30 | `good_morning` | Good Morning (Langhantel) |
+| Z31 | `rdl_single` | Einbeiniges Kreuzheben (KH) |
+| Z32 | `sumo_deadlift` | Sumo-Kreuzheben |
+| Z33 | `calf_raise_db` | Wadenheben mit Kurzhantel (Anker: Pfosten) |
+| Z34 | `calf_single` | Einbeiniges Wadenheben (Anker: Pfosten) |
 | S1 | `leg_press` | Beinpresse |
 | S2 | `hack_squat` | Hack Squat (Maschine) |
 | S3 | `leg_extension` | Beinstrecker (Maschine) |
@@ -98,7 +124,15 @@ Geliefert, aber nicht eingebaut: Z6 (Kurzhantelrudern vorgebeugt, beidarmig).
 Der Katalog hat diese Übung nicht; einarmiges und brustgestütztes Rudern
 sehen anders aus.
 
-Damit sind alle Motive der Blöcke S und A eingebaut. Kleine Restfehler, beim
+Damit sind alle Motive der Blöcke S und A eingebaut: alle 22 Studio-Übungen
+und alle 24 Aufwärmübungen haben ein Bild. Im freien Bereich (Kurzhantel,
+Langhantel, Kettlebell, Band, Ringe, Box, Bank, Körpergewicht) sind es 33 von
+93; Bird Dog und Dead Bug aus dem Katalog nutzen dabei die Bilder der
+gleichnamigen Aufwärmübungen (`GLEICH_WIE` in `lib/bewegung.ts`). Der Prompt
+für die übrigen steht in `docs/bewegungsbilder-prompt-zuhause.md` (Z12 bis
+Z90). Aus Teil 1 neu nötig, weil die Füße zwischen den Phasen rutschen: Z17
+Wandsitz, Z19 Ausfallschritt rückwärts, Z22 Seitlicher Ausfallschritt, Z23
+Cossack Squat. Teile 2 bis 4 (Z35 bis Z90) stehen noch aus. Kleine Restfehler, beim
 Abspielen kaum sichtbar: S5 rundet unten den Rücken (Abrollen statt neutraler
 Rücken), bei S18 setzt das Kabel am Ende der Stange an statt in der Mitte, bei
 S21 endet in Phase 3 ein Seilende an der Schulter statt in der Hand.
