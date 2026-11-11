@@ -73,6 +73,57 @@ die alte Datei.
 | Z32 | `sumo_deadlift` | Sumo-Kreuzheben |
 | Z33 | `calf_raise_db` | Wadenheben mit Kurzhantel (Anker: Pfosten) |
 | Z34 | `calf_single` | Einbeiniges Wadenheben (Anker: Pfosten) |
+| Z35 | `floorpress` | Kurzhantel Floor Press |
+| Z36 | `pushup` | Liegestütze |
+| Z37 | `dips` | Dips an den Ringen |
+| Z38 | `bench_bar` | Langhantel-Bankdrücken |
+| Z39 | `bench_incline` | Schrägbankdrücken mit Langhantel |
+| Z40 | `incline_db` | Schrägbankdrücken mit Kurzhanteln |
+| Z41 | `db_fly` | Fliegende mit Kurzhanteln |
+| Z42 | `pushup_deficit` | Liegestütze mit tiefem Dehnweg |
+| Z43 | `ohp_seat` | Schulterdrücken sitzend mit Kurzhanteln |
+| Z44 | `pike_pushup` | Pike-Liegestütz |
+| Z45 | `ohp_bar` | Langhantel-Schulterdrücken, stehend |
+| Z46 | `arnold_press` | Arnold Press, Frontansicht |
+| Z47 | `push_press` | Push Press mit Langhantel |
+| Z48 | `ohp_kb` | Einarmiges Kettlebell-Drücken, Frontansicht |
+| Z49 | `row1` | Einarmiges Rudern, abgestützt |
+| Z50 | `ringrow` | Ring-Rudern |
+| Z51 | `band_row` | Rudern mit Band |
+| Z52 | `row_bar` | Langhantelrudern (Anker: Füße) |
+| Z53 | `chest_row_db` | Brustgestütztes Kurzhantelrudern |
+| Z54 | `kb_row` | Kettlebell-Rudern |
+| Z55 | `renegade_row` | Renegade Row |
+| Z56 | `shrug_db` | Schulterheben mit Kurzhanteln, Frontansicht |
+| Z57 | `chinup` | Chin-ups im Untergriff, Frontansicht |
+| Z58 | `band_pulldown` | Latzug mit Band, Frontansicht |
+| Z61 | `pullover_db` | Überzüge mit Kurzhantel |
+| Z62 | `hammer_curl` | Hammer Curls |
+| Z63 | `tri_oh` | Trizeps über Kopf mit Kurzhantel |
+| Z64 | `incline_curl` | Schrägbank-Curls |
+| Z65 | `concentration_curl` | Konzentrations-Curls, Frontansicht |
+| Z66 | `curl_bar` | Langhantel-Curls |
+| Z67 | `skull_crusher` | French Press liegend mit Kurzhanteln |
+| Z68 | `diamond_pushup` | Enge Liegestütze |
+| Z69 | `bench_dips` | Dips an der Bank |
+| Z70 | `wrist_curl` | Handgelenk-Curls |
+| Z72 | `face_pull` | Face Pull mit Band |
+| Z73 | `band_lateral` | Seitheben mit Band, Frontansicht |
+| Z74 | `reverse_fly_db` | Reverse Flys vorgebeugt, Frontansicht |
+| Z75 | `front_raise` | Frontheben |
+| Z76 | `upright_row` | Aufrechtes Rudern, Frontansicht |
+| Z77 | `rear_delt_row` | Rudern für die hintere Schulter, Frontansicht |
+| Z78 | `plank` | Unterarmstütz |
+| Z79 | `sideplank` | Seitstütz, Frontansicht |
+| Z80 | `suitcase` | Koffertragen |
+| Z81 | `hollow_hold` | Hollow Hold |
+| Z82 | `hanging_knee_raise` | Hängendes Knieheben |
+| Z83 | `db_chop` | Holzfäller mit Kurzhantel, Frontansicht |
+| Z84 | `around_world` | Around the World, Frontansicht, im Kreis |
+| Z86 | `reverse_crunch` | Reverse Crunch |
+| Z87 | `russian_twist` | Russian Twist, Frontansicht |
+| Z89 | `superman` | Rückenschwimmer (Superman) |
+| Z90 | `farmer_carry` | Farmer's Walk |
 | S1 | `leg_press` | Beinpresse |
 | S2 | `hack_squat` | Hack Squat (Maschine) |
 | S3 | `leg_extension` | Beinstrecker (Maschine) |
@@ -126,13 +177,17 @@ sehen anders aus.
 
 Damit sind alle Motive der Blöcke S und A eingebaut: alle 22 Studio-Übungen
 und alle 24 Aufwärmübungen haben ein Bild. Im freien Bereich (Kurzhantel,
-Langhantel, Kettlebell, Band, Ringe, Box, Bank, Körpergewicht) sind es 33 von
+Langhantel, Kettlebell, Band, Ringe, Box, Bank, Körpergewicht) sind es 84 von
 93; Bird Dog und Dead Bug aus dem Katalog nutzen dabei die Bilder der
-gleichnamigen Aufwärmübungen (`GLEICH_WIE` in `lib/bewegung.ts`). Der Prompt
-für die übrigen steht in `docs/bewegungsbilder-prompt-zuhause.md` (Z12 bis
-Z90). Aus Teil 1 neu nötig, weil die Füße zwischen den Phasen rutschen: Z17
-Wandsitz, Z19 Ausfallschritt rückwärts, Z22 Seitlicher Ausfallschritt, Z23
-Cossack Squat. Teile 2 bis 4 (Z35 bis Z90) stehen noch aus. Kleine Restfehler, beim
+gleichnamigen Aufwärmübungen (`GLEICH_WIE` in `lib/bewegung.ts`). Prompts in
+`docs/bewegungsbilder-prompt-zuhause.md`.
+
+Noch offen (Nachlieferung, Prompt im selben Dokument): Z17 Wandsitz, Z19
+Ausfallschritt rückwärts, Z22 seitlicher Ausfallschritt, Z23 Cossack Squat
+(Füße rutschen), Z59 Negativ-Klimmzüge (Füße unter der Bodenlinie), Z60
+Schulterblatt-Klimmzüge (keine sichtbare Bewegung), Z71 Reverse Curls
+(Langhantel statt Kurzhanteln), Z85 Scheibenwischer (Phasen springen), Z88
+Mountain Climbers (kein Beinwechsel). Kleine Restfehler, beim
 Abspielen kaum sichtbar: S5 rundet unten den Rücken (Abrollen statt neutraler
 Rücken), bei S18 setzt das Kabel am Ende der Stange an statt in der Mitte, bei
 S21 endet in Phase 3 ein Seilende an der Schulter statt in der Hand.

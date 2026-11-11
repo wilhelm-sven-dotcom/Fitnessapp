@@ -40,6 +40,60 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "sumo_deadlift",
   "calf_raise_db",
   "calf_single",
+  // Zuhause, Teil 2: Drücken (Z35 bis Z48)
+  "floorpress",
+  "pushup",
+  "dips",
+  "bench_bar",
+  "bench_incline",
+  "incline_db",
+  "db_fly",
+  "pushup_deficit",
+  "ohp_seat",
+  "pike_pushup",
+  "ohp_bar",
+  "arnold_press",
+  "push_press",
+  "ohp_kb",
+  // Zuhause, Teil 3: Ziehen und Arme (Z49 bis Z71; Z59, Z60, Z71 fehlen noch)
+  "row1",
+  "ringrow",
+  "band_row",
+  "row_bar",
+  "chest_row_db",
+  "kb_row",
+  "renegade_row",
+  "shrug_db",
+  "chinup",
+  "band_pulldown",
+  "pullover_db",
+  "hammer_curl",
+  "tri_oh",
+  "incline_curl",
+  "concentration_curl",
+  "curl_bar",
+  "skull_crusher",
+  "diamond_pushup",
+  "bench_dips",
+  "wrist_curl",
+  // Zuhause, Teil 4: Schultern und Rumpf (Z72 bis Z90; Z85, Z88 fehlen noch)
+  "face_pull",
+  "band_lateral",
+  "reverse_fly_db",
+  "front_raise",
+  "upright_row",
+  "rear_delt_row",
+  "plank",
+  "sideplank",
+  "suitcase",
+  "hollow_hold",
+  "hanging_knee_raise",
+  "db_chop",
+  "around_world",
+  "reverse_crunch",
+  "russian_twist",
+  "superman",
+  "farmer_carry",
   // Studio (S)
   "leg_press",
   "hack_squat",
@@ -91,11 +145,11 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Bewegungen im Kreis (Kurbel, Hüfte, Arme): Phase 4 geht wieder in Phase 1
+ * Bewegungen im Kreis (Kurbel, Hüfte, Arme, Hantel um den Kopf): Phase 4 geht wieder in Phase 1
  * über, also Folge 1-2-3-4 statt hin und zurück. Hin und zurück liefe die
  * Kurbel rückwärts.
  */
-const IM_KREIS: ReadonlySet<string> = new Set(["bike_easy", "hip_circles", "shoulder_circles"]);
+const IM_KREIS: ReadonlySet<string> = new Set(["bike_easy", "hip_circles", "shoulder_circles", "around_world"]);
 
 /**
  * Katalog-Übungen, die genau so aussehen wie eine Aufwärmübung mit Bild, und
