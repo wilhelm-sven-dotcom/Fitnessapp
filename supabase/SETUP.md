@@ -162,9 +162,62 @@ Kontoanlegen laufen über Passwort und rühren den Mailer gar nicht an.
 
 ---
 
+## D · Mail mit Code statt Link
+
+Für „Passwort vergessen“ schickt die App eine Anmelde-Mail. Ob darin ein
+**Code** oder ein **Link** steht, legt allein die Mail-Vorlage im
+Supabase-Projekt fest, nicht die App. Ab Werk enthält sie nur den Link
+(`{{ .ConfirmationURL }}`). Der hilft in der App auf dem Home-Bildschirm
+nicht: iOS öffnet ihn in Safari, und Safari hat einen eigenen Speicher, die
+Anmeldung landet dort und nicht in der App. Mit Code (`{{ .Token }}`) bleibt
+alles in der App.
+
+**Zum Klicken:** Dashboard → **Authentication** → **Emails** (in älteren
+Ständen „Email Templates“) → Vorlage **Magic Link** → Betreff und Text
+ersetzen → Save:
+
+- Betreff: `Dein Anmeldecode für spotter`
+- Text (HTML):
+
+```html
+<h2>Dein Anmeldecode für spotter</h2>
+<p>Gib diesen Code in der App ein (Einstellungen → Dienste → Cloud-Sync):</p>
+<h1>{{ .Token }}</h1>
+<p>Nicht angefordert? Dann ignorier diese Mail.</p>
+```
+
+Dasselbe in der Vorlage **Confirm signup**: je nach Projekt-Einstellung nimmt
+Supabase die, wenn es zur Adresse noch kein Konto gibt.
+
+**Als Befehl** — dasselbe über die Management-API:
+
+```bash
+export SUPABASE_ACCESS_TOKEN="sbp_…"
+export PROJECT_REF="…"
+TEXT='<h2>Dein Anmeldecode für spotter</h2><p>Gib diesen Code in der App ein (Einstellungen → Dienste → Cloud-Sync):</p><h1>{{ .Token }}</h1><p>Nicht angefordert? Dann ignorier diese Mail.</p>'
+
+curl -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"mailer_subjects_magic_link\": \"Dein Anmeldecode für spotter\",
+    \"mailer_templates_magic_link_content\": \"$TEXT\",
+    \"mailer_subjects_confirmation\": \"Dein Anmeldecode für spotter\",
+    \"mailer_templates_confirmation_content\": \"$TEXT\"
+  }"
+```
+
+Die App nimmt Codes mit 6 bis 10 Ziffern (Supabase-Einstellung „Email OTP
+Length“). Kommt trotzdem ein Link, geht es auch so: in der Mail lange auf den
+Link drücken, „Link kopieren“, in der App ins Code-Feld einfügen, „Link
+einlösen“. Die App liest Token und Typ aus dem Link und meldet sich direkt an,
+ohne Safari.
+
+---
+
 ## Woran du merkst, dass es steht
 
-App → **Einstellungen** → **Verbindungen** → E-Mail und Passwort eintragen →
+App → **Einstellungen** → **Dienste** → E-Mail und Passwort eintragen →
 **Konto anlegen**.
 
 | Was passiert | Bedeutung |

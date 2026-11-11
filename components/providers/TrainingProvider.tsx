@@ -85,6 +85,7 @@ import {
 import { toast } from "@/lib/toast";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import { isCloudConfigured, loadSupabase } from "@/lib/supabase";
+import { leseAnmeldeEingabe } from "@/lib/anmeldung";
 import { deletePhoto, leereCloudFotos, leereFotos } from "@/lib/photo-store";
 import { applyTheme, type ThemePref } from "@/lib/theme";
 import { mergeCardio } from "@/lib/cardio";
@@ -724,6 +725,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       return "Mail-Limit erreicht — Supabase verschickt nur wenige Anmelde-Mails pro Stunde. Leg stattdessen ein Konto mit Passwort an, das kommt ohne Mail aus.";
     if (m.includes("invalid") && (m.includes("token") || m.includes("otp")))
       return "Code stimmt nicht oder ist abgelaufen — er gilt nur wenige Minuten.";
+    if (m.includes("link") && (m.includes("invalid") || m.includes("expired")))
+      return "Der Link ist abgelaufen oder wurde schon benutzt. Fordere eine neue Mail an.";
     if (m.includes("invalid login credentials"))
       return "E-Mail oder Passwort stimmt nicht.";
     if (m.includes("already registered") || m.includes("already been registered"))
@@ -759,18 +762,22 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         setCloudBusy(false);
       }
     },
+    // Nimmt den Code ODER den kopierten Link aus der Mail (`lib/anmeldung.ts`):
+    // In der App auf dem Home-Bildschirm öffnet der Link sonst nur Safari.
     verifyCode: async (email, token) => {
       const sb = await loadSupabase();
       if (!sb) return { ok: false, error: "Cloud-Sync ist nicht konfiguriert." };
-      if (!email.trim() || !token.trim())
+      const eingabe = leseAnmeldeEingabe(token);
+      if (!eingabe)
+        return { ok: false, error: "Das ist weder ein Code noch ein Anmelde-Link aus der Mail." };
+      if (eingabe.art === "code" && !email.trim())
         return { ok: false, error: "Bitte E-Mail und Code eingeben." };
       setCloudBusy(true);
       try {
-        const { error } = await sb.auth.verifyOtp({
-          email: email.trim(),
-          token: token.trim(),
-          type: "email",
-        });
+        const { error } =
+          eingabe.art === "link"
+            ? await sb.auth.verifyOtp({ token_hash: eingabe.tokenHash, type: eingabe.typ })
+            : await sb.auth.verifyOtp({ email: email.trim(), token: eingabe.code, type: "email" });
         return error ? { ok: false, error: cloudFehler(error.message) } : { ok: true };
       } catch (e) {
         return { ok: false, error: e instanceof Error ? e.message : "Netzwerkfehler" };

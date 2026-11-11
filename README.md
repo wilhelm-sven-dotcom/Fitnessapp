@@ -235,8 +235,12 @@ Ohne Konfiguration bleiben die Daten lokal.
 Der **eingebaute Supabase-Mailer hat eine harte Stundenrate** (eine Handvoll
 Mails, projektweit). Das ist eine Projekt-Einstellung, keine Code-Frage — im
 Repo lässt sie sich nicht ändern. Die App umgeht sie deshalb: Anmelden **und**
-Kontoanlegen laufen über E-Mail + Passwort und brauchen gar keine Mail. Der
-Magic-Link bleibt nur als Notausgang.
+Kontoanlegen laufen über E-Mail + Passwort und brauchen gar keine Mail. Die
+Anmelde-Mail bleibt nur als Notausgang. Damit der auch in der App auf dem
+Home-Bildschirm funktioniert, sollte die Mail einen Code statt eines Links
+enthalten (Vorlage umstellen: `supabase/SETUP.md`, Abschnitt D). Kommt doch ein
+Link, nimmt das Code-Feld auch den kopierten Link und meldet direkt in der App
+an (`lib/anmeldung.ts`).
 
 Damit das Anlegen wirklich mailfrei durchläuft, müssen im Supabase-Projekt zwei
 Auth-Schalter stehen. Die Befehle dafür — und das SQL für Tabelle und
