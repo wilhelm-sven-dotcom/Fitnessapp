@@ -307,7 +307,7 @@ export function GuideSheet({
                     setNoteEditing(true);
                   }}
                   aria-label="Hilfsmittel ändern"
-                  className="shrink-0 rounded-pill p-1.5 text-muted"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted"
                 >
                   <Pencil size={14} />
                 </Pressable>
@@ -315,7 +315,7 @@ export function GuideSheet({
                   type="button"
                   onClick={() => setExerciseNote(ex.id, null)}
                   aria-label="Hilfsmittel entfernen"
-                  className="shrink-0 rounded-pill p-1.5 text-muted"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted"
                 >
                   <Trash2 size={14} />
                 </Pressable>
@@ -327,7 +327,7 @@ export function GuideSheet({
                   setNoteDraft("");
                   setNoteEditing(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-pill px-2 py-1 text-xs text-muted"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-2 text-sm text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
               >
                 <Wrench size={14} /> Hilfsmittel notieren
               </Pressable>

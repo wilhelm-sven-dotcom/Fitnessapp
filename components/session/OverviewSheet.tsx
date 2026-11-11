@@ -56,7 +56,7 @@ export function OverviewSheet({
                 onClose();
               }}
               className={cn(
-                "flex w-full items-center gap-2 rounded-card border px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+                "flex min-h-11 w-full items-center gap-2 rounded-card border px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                 isCurrent
                   ? "border-accent bg-surface-2"
                   : "border-line bg-surface-1",

@@ -41,7 +41,7 @@ export function WishBar({
         onClick={submit}
         disabled={disabled || !wish.trim()}
         aria-label="Wunsch an ATLAS senden"
-        className="shrink-0 rounded-pill bg-surface-2 px-3 py-2.5 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-surface-2 text-sm font-medium text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-40"
       >
         <CornerDownLeft size={16} />
       </Pressable>

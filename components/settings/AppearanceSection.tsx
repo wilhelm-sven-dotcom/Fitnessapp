@@ -36,6 +36,7 @@ export function AppearanceSection() {
         onChange={(e) => setName(e.target.value)}
         onBlur={() => setUserName(name)}
         placeholder="z. B. J. Weber"
+        aria-label="Dein Name"
         className="min-h-11 w-full rounded-inner border-dick border-rand bg-surface-1 px-3 py-2.5 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
       />
       <p className="mb-5 mt-1.5 text-sm text-muted">So spricht ATLAS dich an.</p>

@@ -5,9 +5,9 @@
  * cloud copy silently overwrote local — losing unsynced sessions.
  *
  * Rules:
- * - history arrays union: log/cardio/body dedupe by `date`, days/gyms/custom
+ * - history arrays union: log/cardio/body dedupe by `date`, gyms/custom
  *   by `id` — the cloud entry wins on a collision (it was saved first).
- * - per-key maps (choices, exerciseVideos, exerciseNotes) merge with LOCAL
+ * - per-key maps (exerciseVideos, warmupVideos, exerciseNotes) merge with LOCAL
  *   winning — the device's edits are the newest intent.
  * - settings: cloud wins, but device cosmetics stay local (skin, theme, icon,
  *   accentColor) and `onboarded` is sticky-true.
@@ -41,9 +41,8 @@ function unionBy<T>(local: T[], cloud: T[], key: (x: T) => string): T[] {
 
 export function mergeCloudLocal(cloud: RawMap, local: RawMap): RawMap {
   const byDate = new Set<string>([KEYS.log, KEYS.cardio, KEYS.body]);
-  const byId = new Set<string>([KEYS.days, KEYS.gyms, KEYS.custom]);
+  const byId = new Set<string>([KEYS.gyms, KEYS.custom]);
   const byKey = new Set<string>([
-    KEYS.choices,
     KEYS.exerciseVideos,
     KEYS.warmupVideos,
     KEYS.exerciseNotes,

@@ -12,8 +12,8 @@ Ausführungs-Guide (`GuideSheet`), ohne Code-Änderung.
   Premium-2D-Figur. Kein Eintrag in `lib/exercises.ts` nötig.
 - Alternativ kann pro Übung eine explizite (auch externe) URL über
   `Exercise.videoUrl` gesetzt werden — die hat Vorrang.
-- Der Service Worker cacht gleichartige (same-origin) GET-Requests → die Clips
-  sind nach dem ersten Abspielen **offline** verfügbar.
+- Die Clips liegen nicht im Offline-Cache (der Service Worker lädt nur den
+  Code und die Gerätebilder vor). Ohne Netz zeigt der Guide die Figur.
 
 ## Format-Empfehlung
 - Kurz (~3–6 s), loop-fähig, **stumm** (wird `loop muted` abgespielt).

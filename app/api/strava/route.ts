@@ -5,6 +5,7 @@ import {
   type RawStravaActivity,
 } from "@/lib/strava";
 import type { CardioSession } from "@/lib/types";
+import { TAG_MS } from "@/lib/zeit";
 
 // Needs the Node runtime to read the server-only client secret.
 export const runtime = "nodejs";
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
       // Nur die letzten 2 Wochen laden — ältere Aktivitäten interessieren den
       // Coach nicht (Ermüdung/Interferenz sind Kurzzeit-Fenster) und blähen die
       // Liste auf. `after` = Unix-Sekunden, Strava liefert alles danach.
-      const afterTs = Math.floor((Date.now() - 14 * 86_400_000) / 1000);
+      const afterTs = Math.floor((Date.now() - 14 * TAG_MS) / 1000);
       const res = await fetch(
         `${STRAVA_API}/athlete/activities?per_page=50&page=1&after=${afterTs}`,
         { headers: { Authorization: `Bearer ${accessToken}` } },

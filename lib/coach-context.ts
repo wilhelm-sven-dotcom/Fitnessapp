@@ -1,9 +1,12 @@
 import { cardioAdvice } from "@/lib/cardio-advice";
+import type { FatigueState } from "@/lib/fatigue";
+import type { PhaseState } from "@/lib/periodization";
 import { hoursSince, lastRide, weeklyCardio } from "@/lib/cardio";
 import { intensityLabel, kmLabel, sportLabel } from "@/lib/cardio-sport";
 import { isFilled, oneRm, sessionVolume, workSets } from "@/lib/stats";
-import { VOLUME_LANDMARKS } from "@/lib/training-science";
+import { VOLUME_LANDMARKS, WOCHENZIEL } from "@/lib/training-science";
 import { MUSCLE_LABEL, underservedMuscles, weeklyMuscleVolume } from "@/lib/volume";
+import { weekStartMon } from "@/lib/zeit";
 import type {
   BodyMetric,
   CardioSession,
@@ -47,6 +50,35 @@ function nextSessionLines(n: NextSessionInfo): string[] {
 }
 
 /**
+ * Wo der Athlet im Trainingsblock steht und wie belastet er gerade ist — für
+ * Plan und Chat. Vorher wusste ATLAS beim Planen weder von einer laufenden
+ * Entlastungswoche (die App rechnet dann selbst die Gewichte herunter) noch
+ * von einer hohen Belastung der letzten Tage.
+ */
+export function lageBlock(o: {
+  phase?: PhaseState;
+  deloadActive?: boolean;
+  fatigue?: FatigueState;
+}): string {
+  const zeilen: string[] = [];
+  if (o.phase)
+    zeilen.push(
+      `Trainingsblock: Woche ${o.phase.cycleWeek} von ${o.phase.cycleLength}, Phase „${o.phase.title}“ (${o.phase.focus}).`,
+    );
+  if (o.deloadActive)
+    zeilen.push(
+      "Entlastungswoche läuft: Die App rechnet die Gewichte auf 60 Prozent herunter und nimmt je Übung einen Satz weg. Plane entsprechend leicht.",
+    );
+  else if (o.phase?.due)
+    zeilen.push("Eine Entlastungswoche ist fällig; gestartet hat der Athlet sie noch nicht.");
+  if (o.fatigue?.enough)
+    zeilen.push(
+      `Belastung der letzten 7 Tage: ${o.fatigue.band} (${o.fatigue.ratio.toFixed(2).replace(".", ",")}-fach des Wochenschnitts der letzten 4 Wochen).`,
+    );
+  return zeilen.length ? `Lage:\n${zeilen.join("\n")}` : "";
+}
+
+/**
  * Compact, token-limited training summary for the KI-Coach system prompt.
  * Pure — derived entirely from the user's own log/body. Kept short (last few
  * sessions, weekly volume, top lifts, weight trend) so the prompt stays cheap.
@@ -71,14 +103,10 @@ export function buildCoachContext(opts: {
   const lines: string[] = [];
 
   // Frequency this week (Monday-based, same as the home rings).
-  const now = new Date();
-  const off = (now.getDay() + 6) % 7;
-  const mon = new Date(now);
-  mon.setHours(0, 0, 0, 0);
-  mon.setDate(now.getDate() - off);
+  const mon = weekStartMon();
   const weekCount = log.filter((s) => new Date(s.date) >= mon).length;
   lines.push(
-    `Diese Woche: ${weekCount} von 3 Einheiten. Insgesamt ${log.length} protokolliert.`,
+    `Diese Woche: ${weekCount} von ${WOCHENZIEL} Einheiten. Insgesamt ${log.length} protokolliert.`,
   );
 
   lines.push("", "Letzte Einheiten:");

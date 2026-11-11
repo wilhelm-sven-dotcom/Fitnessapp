@@ -3,11 +3,11 @@
 import { Check } from "lucide-react";
 import { useMemo } from "react";
 import { Sticker } from "@/components/ui/Sticker";
+import { WOCHENZIEL } from "@/lib/training-science";
 import { cn } from "@/lib/utils";
 import type { LoggedSession } from "@/lib/types";
+import { weekStartMon } from "@/lib/zeit";
 
-/** Wochenziel — dasselbe wie im Wochenraster („Ziel 3× / Woche“). */
-const ZIEL = 3;
 const KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const LANG = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
@@ -20,9 +20,7 @@ const tagKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
  */
 export function WochenLeiste({ log, now = new Date() }: { log: LoggedSession[]; now?: Date }) {
   const { tage, anzahl } = useMemo(() => {
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    const start = weekStartMon(now);
     const ende = new Date(start);
     ende.setDate(start.getDate() + 7);
     const trainiert = new Set<string>();
@@ -50,7 +48,7 @@ export function WochenLeiste({ log, now = new Date() }: { log: LoggedSession[]; 
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold text-muted">Diese Woche</p>
         <Sticker drehung={-3} className="tabular-nums">
-          {anzahl} von {ZIEL} Einheiten
+          {anzahl} von {WOCHENZIEL} Einheiten
         </Sticker>
       </div>
       <ol className="mt-2 grid grid-cols-7 gap-1">

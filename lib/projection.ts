@@ -1,5 +1,6 @@
 import { isFilled, oneRm, workSets } from "@/lib/stats";
 import type { Exercise, LoggedSession } from "@/lib/types";
+import { WOCHE_MS } from "@/lib/zeit";
 
 export interface SeriesPoint {
   date: string;
@@ -27,12 +28,11 @@ export function linearFit(points: { x: number; y: number }[]): LinearFit {
   return { slope, intercept };
 }
 
-const WEEK_MS = 7 * 86400000;
 function toWeeks(series: SeriesPoint[]): { x: number; y: number }[] {
   if (!series.length) return [];
   const t0 = new Date(series[0].date).getTime();
   return series.map((p) => ({
-    x: (new Date(p.date).getTime() - t0) / WEEK_MS,
+    x: (new Date(p.date).getTime() - t0) / WOCHE_MS,
     y: p.value,
   }));
 }

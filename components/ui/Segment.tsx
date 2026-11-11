@@ -54,7 +54,7 @@ export function Segment<T extends string | number>({
             aria-pressed={active}
             aria-label={o.ariaLabel}
             className={cn(
-              "min-h-10 min-w-0 flex-1 truncate rounded-pill px-2 py-2 font-display text-sm font-extrabold",
+              "min-h-11 min-w-0 flex-1 truncate rounded-pill px-1.5 py-2 font-display text-sm font-extrabold",
               active ? "bg-strong text-on-strong" : "text-fg",
             )}
           >

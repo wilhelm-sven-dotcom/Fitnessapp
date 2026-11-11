@@ -16,7 +16,6 @@ import type {
   LoggedSession,
   SessionExercise,
   SetEntry,
-  WorkoutDay,
 } from "@/lib/types";
 
 const isObj = (x: unknown): x is Record<string, unknown> =>
@@ -57,19 +56,24 @@ export function sanitizeSessions(x: unknown): LoggedSession[] {
 }
 
 export function sanitizeCardio(x: unknown): CardioSession[] {
-  return arr(x).filter(
-    (s): s is CardioSession => isObj(s) && typeof s.id === "string" && typeof s.date === "string",
-  );
+  return arr(x)
+    .filter(
+      (s): s is Record<string, unknown> =>
+        isObj(s) && typeof s.id === "string" && typeof s.date === "string",
+    )
+    .map((s) => {
+      // Dauer immer als endliche Zahl ≥ 0: alles, was damit rechnet (Minuten,
+      // Tempo, Belastung), bekäme sonst NaN.
+      const d = Number(s.durationSec);
+      return {
+        ...(s as unknown as CardioSession),
+        durationSec: Number.isFinite(d) && d > 0 ? d : 0,
+      };
+    });
 }
 
 export function sanitizeBody(x: unknown): BodyMetric[] {
   return arr(x).filter((b): b is BodyMetric => isObj(b) && typeof b.date === "string");
-}
-
-export function sanitizeDays(x: unknown): WorkoutDay[] {
-  return arr(x)
-    .filter((d): d is Record<string, unknown> => isObj(d) && typeof d.id === "string")
-    .map((d) => ({ ...(d as unknown as WorkoutDay), items: arr(d.items) as WorkoutDay["items"] }));
 }
 
 export function sanitizeGyms(x: unknown): GymProfile[] {
@@ -78,7 +82,7 @@ export function sanitizeGyms(x: unknown): GymProfile[] {
     .map((g) => ({ ...(g as unknown as GymProfile), equip: arr(g.equip) as GymProfile["equip"] }));
 }
 
-/** key→string map (choices). Non-string values are dropped. */
+/** key→string map (Notizen je Übung). Non-string values are dropped. */
 export function sanitizeStringMap(x: unknown): Record<string, string> {
   if (!isObj(x)) return {};
   const out: Record<string, string> = {};
@@ -105,10 +109,32 @@ export function sanitizeVideoMap(x: unknown): Record<string, string> {
  * writes the cleaned value back, so ANY build — old or new — reads renderable
  * data on the next load. Pure DOM localStorage access (no Supabase-heavy storage
  * layer import), every step guarded → never throws. Valid data incl. video URLs
- * is preserved 1:1; only structurally-broken entries are dropped.
+ * is preserved 1:1; only structurally-broken entries are dropped. Ein Wert,
+ * der sich gar nicht lesen lässt, wird beiseitegelegt statt gelöscht.
  *
  * Key strings MUST match KEYS in lib/storage.ts.
  */
+/**
+ * Ein unlesbarer Wert wird nicht gelöscht, sondern unter `…-defekt`
+ * beiseitegelegt. Für Verlauf und Körperwerte springt die Sicherung ein
+ * (`…-sicherung`, siehe lib/storage.ts — die Endungen müssen übereinstimmen).
+ */
+function legeBeiseite(ls: Storage, key: string, raw: string): void {
+  try {
+    ls.setItem(`${key}-defekt`, raw);
+  } catch {
+    /* kein Platz — dann bleibt nur das Entfernen */
+  }
+  ls.removeItem(key);
+  if (key !== "wilhelm-training-log" && key !== "wilhelm-training-body") return;
+  try {
+    const kopie = ls.getItem(`${key}-sicherung`);
+    if (kopie != null && Array.isArray(JSON.parse(kopie))) ls.setItem(key, kopie);
+  } catch {
+    /* Sicherung selbst unlesbar */
+  }
+}
+
 export function repairPersistedData(): void {
   let ls: Storage;
   try {
@@ -121,10 +147,8 @@ export function repairPersistedData(): void {
     ["wilhelm-training-log", sanitizeSessions],
     ["wilhelm-training-cardio", sanitizeCardio],
     ["wilhelm-training-body", sanitizeBody],
-    ["wilhelm-training-days", sanitizeDays],
     ["wilhelm-training-gyms", sanitizeGyms],
     ["wilhelm-training-custom", sanitizeCustom],
-    ["wilhelm-training-choices", sanitizeStringMap],
     ["wilhelm-training-exercise-videos", sanitizeVideoMap],
     ["wilhelm-training-warmup-videos", sanitizeVideoMap],
     ["wilhelm-training-exercise-notes", sanitizeStringMap],
@@ -137,7 +161,7 @@ export function repairPersistedData(): void {
       try {
         parsed = JSON.parse(raw);
       } catch {
-        ls.removeItem(key);
+        legeBeiseite(ls, key, raw);
         continue;
       }
       const next = JSON.stringify(fn(parsed));
@@ -156,7 +180,7 @@ export function repairPersistedData(): void {
       try {
         parsed = JSON.parse(raw);
       } catch {
-        ls.removeItem(key);
+        legeBeiseite(ls, key, raw);
         continue;
       }
       const okObj = !!parsed && typeof parsed === "object" && !Array.isArray(parsed);

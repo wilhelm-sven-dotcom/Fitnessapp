@@ -88,7 +88,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(moveItem(session, it.id, -1))}
                     disabled={i === 0}
                     aria-label="Nach oben"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                   >
                     <ArrowUp size={18} />
                   </Pressable>
@@ -96,7 +96,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(moveItem(session, it.id, 1))}
                     disabled={i === session.items.length - 1}
                     aria-label="Nach unten"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                   >
                     <ArrowDown size={18} />
                   </Pressable>
@@ -107,7 +107,7 @@ export function SessionEditSheet({
                       onClick={() => onChange(setItemSets(session, it.id, it.sets - 1))}
                       disabled={it.sets <= 1}
                       aria-label="Ein Satz weniger"
-                      className="flex h-10 w-10 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                      className="flex h-11 w-11 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                     >
                       <Minus size={16} />
                     </Pressable>
@@ -118,7 +118,7 @@ export function SessionEditSheet({
                       onClick={() => onChange(setItemSets(session, it.id, it.sets + 1))}
                       disabled={it.sets >= 6}
                       aria-label="Ein Satz mehr"
-                      className="flex h-10 w-10 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                      className="flex h-11 w-11 items-center justify-center rounded-pill text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                     >
                       <Plus size={16} />
                     </Pressable>
@@ -126,7 +126,7 @@ export function SessionEditSheet({
                   <Pressable
                     onClick={() => setSwapFor(it.id)}
                     aria-label={`${ex.name} tauschen`}
-                    className="ml-auto flex min-h-10 items-center gap-1.5 rounded-pill border border-line px-3 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+                    className="ml-auto flex min-h-11 items-center gap-1.5 rounded-pill border border-line px-3 text-sm font-semibold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                   >
                     <ArrowLeftRight size={15} aria-hidden /> Tauschen
                   </Pressable>
@@ -134,7 +134,7 @@ export function SessionEditSheet({
                     onClick={() => onChange(removeItem(session, it.id))}
                     disabled={session.items.length <= 1}
                     aria-label={`${ex.name} entfernen`}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill text-gefahr focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-gefahr focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-30"
                   >
                     <Trash2 size={18} />
                   </Pressable>

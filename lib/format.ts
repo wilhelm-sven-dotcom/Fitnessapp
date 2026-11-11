@@ -1,3 +1,5 @@
+import { TAG_MS } from "@/lib/zeit";
+
 export const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("de-DE", {
     weekday: "short",
@@ -25,13 +27,20 @@ export function fmtKg(kg: number): string {
   return (Math.round(kg * 10) / 10).toString().replace(".", ",");
 }
 
+// EIN Formatierer für alle Gewichte: `toLocaleString` baut ihn bei jedem
+// Aufruf neu, das kostete im Verlauf mit vielen Einheiten Sekunden.
+const GEWICHT_FORMAT = new Intl.NumberFormat("de-DE", {
+  maximumFractionDigits: 2,
+  useGrouping: false,
+});
+
 /** Ladbares Gewicht (Hantelstufe 1,25/2,5/5) mit Komma: „20“, „22,5“,
  *  „81,25“. Anders als `fmtKg` NICHT auf eine Stelle gerundet — sonst
  *  stünde bei 1,25er-Stufen „81,3“ da, was keine Scheibe hergibt. */
 export function fmtGewicht(kg: number | string): string {
   const n = typeof kg === "number" ? kg : parseFloat(String(kg).replace(",", "."));
   if (!Number.isFinite(n)) return String(kg);
-  return n.toLocaleString("de-DE", { maximumFractionDigits: 2, useGrouping: false });
+  return GEWICHT_FORMAT.format(n);
 }
 
 /** Ein Satz in einer Schreibweise für Zeile, Karte, Dock und Abschluss:
@@ -62,17 +71,6 @@ export function fmtDelta(d: number, unit: string): string {
 
 export const fmtPct = (x: number) => `${Math.round(x * 100)} %`;
 
-/** Ganze Kalendertage seit ISO-Datum — auf lokale Mitternacht normalisiert,
- *  damit „gestern Abend → heute früh" nicht auf 0 Tage kippt. Nie negativ. */
-export function daysSince(iso: string): number {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return 0;
-  d.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.max(0, Math.round((today.getTime() - d.getTime()) / 86_400_000));
-}
-
 /** ISO-Kalenderwoche (Mo-basiert) — von lib/trainer re-exportiert. */
 export function isoWeek(ref: Date = new Date()): number {
   const t = new Date(ref.getTime());
@@ -82,7 +80,7 @@ export function isoWeek(ref: Date = new Date()): number {
   return (
     1 +
     Math.round(
-      ((t.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7,
+      ((t.getTime() - week1.getTime()) / TAG_MS - 3 + ((week1.getDay() + 6) % 7)) / 7,
     )
   );
 }

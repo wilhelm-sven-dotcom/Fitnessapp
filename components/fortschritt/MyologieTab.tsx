@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { muskelStufen, type MyologieStufe } from "@/lib/heat";
 import { weeklyMuscleVolume } from "@/lib/volume";
+import { WOCHE_MS } from "@/lib/zeit";
 
 const STUFEN: MyologieStufe[] = [1, 2, 3, 4];
 const ROEMISCH = ["I", "II", "III", "IV"];
@@ -22,7 +23,7 @@ export function MyologieTab() {
   const stufen = useMemo(() => muskelStufen(muscleVolumes), [muscleVolumes]);
   // Vorwochen-Volumen für die gestrichelte Kontur im Radar.
   const prevMuscleVolumes = useMemo(
-    () => weeklyMuscleVolume(log, allLib, new Date(Date.now() - 7 * 86400000)),
+    () => weeklyMuscleVolume(log, allLib, new Date(Date.now() - WOCHE_MS)),
     [log, allLib],
   );
 

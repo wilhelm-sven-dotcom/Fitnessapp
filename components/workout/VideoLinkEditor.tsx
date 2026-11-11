@@ -113,7 +113,7 @@ export function VideoLinkEditor({
           type="button"
           onClick={() => startEdit(url)}
           aria-label="Link ändern"
-          className="shrink-0 rounded-pill p-1.5 text-muted"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted"
         >
           <Pencil size={14} />
         </Pressable>
@@ -121,7 +121,7 @@ export function VideoLinkEditor({
           type="button"
           onClick={() => onChange(null)}
           aria-label="Link entfernen"
-          className="shrink-0 rounded-pill p-1.5 text-muted"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-muted"
         >
           <Trash2 size={14} />
         </Pressable>
@@ -164,7 +164,7 @@ export function VideoLinkEditor({
     <Pressable
       type="button"
       onClick={() => startEdit("")}
-      className="inline-flex items-center gap-1.5 rounded-pill px-2 py-1 text-xs text-muted"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-2 text-sm text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
     >
       <Youtube size={14} /> YouTube-Link hinzufügen
     </Pressable>

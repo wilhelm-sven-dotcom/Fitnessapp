@@ -33,6 +33,12 @@ export function Sheet({
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
+  // `onClose` kommt bei den meisten Aufrufern als Inline-Funktion und ist
+  // damit bei jedem Render neu. Hinge der Effekt daran, liefe er bei jedem
+  // Render der Elternseite neu (Fokus zurück zum Auslöser, dann wieder aufs
+  // Blatt) — ein Feld im Blatt verlor so den Fokus und die Tastatur.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -41,7 +47,7 @@ export function Sheet({
     // Focus after the mount frame so the enter animation doesn't fight it.
     const t = window.setTimeout(() => panelRef.current?.focus(), 30);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
       if (e.key !== "Tab") return;
       const panel = panelRef.current;
       if (!panel) return;
@@ -73,7 +79,7 @@ export function Sheet({
       window.clearTimeout(t);
       restoreRef.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>

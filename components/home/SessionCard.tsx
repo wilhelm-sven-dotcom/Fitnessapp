@@ -24,11 +24,18 @@ import type { Exercise } from "@/lib/types";
 /** Warum nur der Basisplan steht — vorher hieß JEDER Ausgang „nicht
  *  erreichbar“, auch das Minuten-Limit, gegen das Weiterklicken nicht hilft. */
 const FEHLER_TEXT: Record<AtlasFehler, string> = {
-  limit: "Plan: Basisplan — ATLAS ist ausgelastet, in einer Minute nochmal",
-  zeit: "Plan: Basisplan — ATLAS brauchte zu lange",
-  netz: "Plan: Basisplan — ATLAS war nicht erreichbar",
-  aus: "Plan: Basisplan — ATLAS ist nicht eingerichtet",
-  abgebrochen: "Plan: Basisplan — ATLAS war nicht erreichbar",
+  limit: "Plan: Basisplan. ATLAS ist ausgelastet, in einer Minute nochmal",
+  zeit: "Plan: Basisplan. ATLAS brauchte zu lange",
+  netz: "Plan: Basisplan. ATLAS war nicht erreichbar",
+  ueberlastet: "Plan: Basisplan. ATLAS ist gerade überlastet",
+  aus: "Plan: Basisplan. ATLAS ist nicht eingerichtet",
+  schluessel: "Plan: Basisplan. Der Schlüssel für ATLAS wird nicht angenommen",
+  zugang: "Plan: Basisplan. ATLAS braucht den Zugangscode (Einstellungen)",
+  ablehnung: "Plan: Basisplan. ATLAS hat die Anfrage abgelehnt",
+  abgeschnitten: "Plan: Basisplan. Der Plan von ATLAS kam unvollständig an",
+  unbrauchbar: "Plan: Basisplan. Der Plan von ATLAS war nicht zu gebrauchen",
+  anfrage: "Plan: Basisplan. ATLAS hat die Anfrage nicht angenommen",
+  abgebrochen: "Plan: Basisplan. ATLAS war nicht erreichbar",
 };
 
 /** Ziel-Schema einer Zeile: „4 × 6–10 Wdh“ bzw. „3 × 30–45 s“. */
@@ -66,7 +73,7 @@ export function SessionCard({
   /** Slot für den „Rücken schonen"-Schalter der Startseite. */
   spareSlot?: React.ReactNode;
 }) {
-  const { lastPerf, settings, body } = useTraining();
+  const { lastPerf, settings, body, weightStep } = useTraining();
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
 
   // Gewichts-Vorschlag je Übung (presc; ohne Historie: Startgewichts-Engine)
@@ -79,9 +86,9 @@ export function SessionCard({
       const lp = lastPerf(ex.id);
       const startW =
         !lp && ex.weighted
-          ? startWeight(ex, profile, { step: settings.weightStep })?.w
+          ? startWeight(ex, profile, { step: weightStep })?.w
           : undefined;
-      const p = presc(ex, lp, { step: settings.weightStep, startW });
+      const p = presc(ex, lp, { step: weightStep, startW });
       const weight = ex.weighted && p.suggestedWeight ? p.suggestedWeight : null;
       const lastTop = lp
         ? Math.max(0, ...lp.sets.filter((s) => !s.warmup).map((s) => Number(s.weight) || 0))
@@ -95,7 +102,7 @@ export function SessionCard({
         ziel: zielVon(it.sets, it.repLow, it.repHigh, ex.unit === "Sek"),
       };
     });
-  }, [session.items, byId, lastPerf, settings, body]);
+  }, [session.items, byId, lastPerf, settings, body, weightStep]);
 
   const quelle = regenerating
     ? "Plan: Basisplan steht — ATLAS stellt gerade um"

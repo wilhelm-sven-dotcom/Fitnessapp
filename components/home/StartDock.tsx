@@ -51,7 +51,7 @@ export function StartDock({
 
   const chip = (aktiv: boolean) =>
     cn(
-      "flex h-10 min-w-0 flex-1 items-center justify-center rounded-pill border-dick border-rand font-display text-sm font-extrabold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+      "flex h-11 min-w-0 flex-1 items-center justify-center rounded-pill border-dick border-rand font-display text-sm font-extrabold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
       aktiv ? "bg-strong text-on-strong" : "bg-surface-1 text-fg",
     );
 

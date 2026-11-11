@@ -1,105 +1,222 @@
 "use client";
 
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 
-import { purgeCachesAndWorkers } from "@/lib/pwa-reset";
+const imTraining = () => window.location.pathname.startsWith("/workout");
+/** Schreibt der Nutzer gerade etwas? Dann wird nicht neu geladen. */
+const tipptGerade = () => {
+  const el = document.activeElement;
+  return (
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    (el instanceof HTMLElement && el.isContentEditable)
+  );
+};
+/** So oft fragt eine offene App höchstens nach einem neueren Build. */
+const PRUEF_ABSTAND_MS = 10 * 60 * 1000;
+/** So lange nach Laden oder Seitenwechsel wartet die Freigabe, bis die Seite
+ *  ihre eigenen Abrufe hinter sich hat. */
+const RUHE_MS = 1200;
+const CHUNK_RE =
+  /ChunkLoadError|Loading chunk [\w-]+ failed|error loading dynamically imported module|Importing a module script failed/i;
+
+/** Die Skripte, die dieses Fenster geladen hat (Pfad ohne Anhang). */
+function eigeneSkripte(): string[] {
+  const out = new Set<string>();
+  for (const s of Array.from(document.scripts)) {
+    if (!s.src) continue;
+    try {
+      const u = new URL(s.src);
+      if (u.origin === window.location.origin && u.pathname.startsWith("/_next/static/"))
+        out.add(u.pathname);
+    } catch {
+      /* keine Adresse */
+    }
+  }
+  return [...out];
+}
+
+/** Fragt den Worker, ob in diesem Fenster schon sein Build läuft. Ohne Antwort
+ *  gilt das Fenster als veraltet. */
+function istVeraltet(worker: ServiceWorker): Promise<boolean> {
+  return new Promise((fertig) => {
+    const kanal = new MessageChannel();
+    const frist = window.setTimeout(() => fertig(true), 3000);
+    kanal.port1.onmessage = (e: MessageEvent<{ ja?: unknown }>) => {
+      window.clearTimeout(frist);
+      fertig(e.data?.ja !== true);
+    };
+    try {
+      worker.postMessage({ type: "GEHOERT_ZU_DIR", skripte: eigeneSkripte() }, [kanal.port2]);
+    } catch {
+      window.clearTimeout(frist);
+      fertig(true);
+    }
+  });
+}
 
 /**
- * Registers the service worker AND keeps it fresh — without this, an installed
- * PWA (especially iOS standalone, which resumes a suspended session) can run an
- * old cached bundle forever and never show new deploys. We:
- *  · register with `updateViaCache: "none"` so the browser always revalidates sw.js,
- *  · call `registration.update()` on load and whenever the app returns to the
- *    foreground, so a new worker is discovered promptly,
- *  · reload once when a new worker takes control (`controllerchange`) — gated on a
- *    controller having already existed, so a first install doesn't reload/flash.
+ * Meldet den Service Worker an und hält die App aktuell — ohne je mitten im
+ * Training oder mitten im Tippen neu zu laden.
+ *
+ *  · `/sw.js` enthält die Kennung des Builds (app/sw.js/route.ts). Nach einem
+ *    Deployment ist es ein anderes Skript; der Browser installiert es im
+ *    Hintergrund, der neue Worker lädt alles vor und WARTET.
+ *  · Freigegeben (`SKIP_WAITING`) wird er nur außerhalb von `/workout`, und
+ *    erst wenn die Seite ruhig ist: kurz nach dem Laden, nach einem
+ *    Seitenwechsel, beim Zurückkommen in die App. Kommt die Freigabe mitten in
+ *    die eigenen Abrufe der Seite, läuft der alte Worker im selben Augenblick
+ *    wieder an, und der Browser verschiebt die Übernahme um Minuten.
+ *  · Übernimmt der neue Worker, fragt die Seite ihn, ob in ihr schon sein
+ *    Build läuft (`GEHOERT_ZU_DIR`). Meist ja: die Seite kam frisch aus dem
+ *    Netz, dann passiert nichts. Kam sie aus dem Cache des alten Builds, lädt
+ *    sie einmal neu — sofort, wenn nichts stört, sonst beim nächsten
+ *    Seitenwechsel, beim Verlassen des Eingabefelds oder beim Zurückkommen.
+ *  · Eine App, die tagelang offen bleibt (iOS weckt die alte Seite wieder
+ *    auf), ruft nie eine neue Seite ab. Darum fragt sie beim Zurückkommen
+ *    selbst nach einem neuen `/sw.js` — höchstens alle zehn Minuten und nie
+ *    im Training.
+ *  · Lädt ein Stück Code nicht (`ChunkLoadError`), wird sofort nach einem
+ *    neuen Build gefragt. Geleert wird dabei nichts: der Cache des laufenden
+ *    Builds ist vollständig, und ohne ihn ginge im Studio gar nichts mehr.
  */
 export function ServiceWorkerRegister() {
+  const pathname = usePathname();
+  /** Was der Effekt unten dem Seitenwechsel anbietet. */
+  const beiWechsel = useRef<(() => void) | null>(null);
+
+  // Seitenwechsel (z. B. raus aus dem Training): Aufgeschobenes nachholen.
+  useEffect(() => {
+    beiWechsel.current?.();
+  }, [pathname]);
+
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    const sw = navigator.serviceWorker;
+    let reg: ServiceWorkerRegistration | null = null;
 
-    // A controller already present means this is a returning visit — a later
-    // controllerchange is then an UPDATE, so reload to pick up the new code.
-    const hadController = !!navigator.serviceWorker.controller;
-    let refreshing = false;
-    const onControllerChange = () => {
-      if (refreshing || !hadController) return;
-      refreshing = true;
+    // ── Neu laden, wenn das Fenster alten Code hat und nichts stört ──
+    let neuLadenOffen = false;
+    let laedtNeu = false;
+    const ladeNeuWennMoeglich = () => {
+      if (!neuLadenOffen || laedtNeu) return;
+      if (imTraining() || tipptGerade()) return;
+      laedtNeu = true;
       window.location.reload();
     };
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
-    let reg: ServiceWorkerRegistration | null = null;
-    const checkForUpdate = () => {
-      reg?.update().catch(() => {});
-    };
-    const onVisible = () => {
-      if (document.visibilityState === "visible") checkForUpdate();
-    };
-
-    const register = async () => {
-      reg = await navigator.serviceWorker
-        .register("/sw.js", { updateViaCache: "none" })
-        .catch(() => null);
-      if (!reg) return;
-      checkForUpdate();
-      document.addEventListener("visibilitychange", onVisible);
-    };
-
-    if (document.readyState === "complete") void register();
-    else window.addEventListener("load", () => void register(), { once: true });
-
-    // Auto-heal stale code-chunk errors after a deploy: an old open session can
-    // request chunk files that no longer exist on the new build → a ChunkLoadError
-    // on (lazy) navigation. We PURGE every cache + unregister the worker, then
-    // hard-reload — so the reload can't be served the same stale build again and
-    // comes back internally consistent. A sessionStorage one-shot prevents a
-    // reload loop if the build is genuinely broken (then the global-error boundary
-    // shows instead); it's cleared after a stable load so a FUTURE deploy can
-    // auto-recover again.
-    const CHUNK_RE =
-      /ChunkLoadError|Loading chunk [\w-]+ failed|error loading dynamically imported module|Importing a module script failed/i;
-    const KEY = "chunk-reload";
-    let tried = false;
-    const recover = () => {
-      if (tried) return;
-      tried = true;
-      let alreadyReloaded = false;
-      try {
-        alreadyReloaded = !!sessionStorage.getItem(KEY);
-        if (!alreadyReloaded) sessionStorage.setItem(KEY, "1");
-      } catch {
-        /* storage unavailable */
+    // Die erste Übernahme einer Seite ohne Worker ist die Erstinstallation.
+    // Bei jeder weiteren entscheidet der neue Worker, ob das Fenster alt ist.
+    let kontrolliert = !!sw.controller;
+    const onControllerChange = () => {
+      if (!kontrolliert) {
+        kontrolliert = true;
+        return;
       }
-      if (alreadyReloaded) return; // a prior purge+reload didn't fix it → let it surface
-      void purgeCachesAndWorkers().finally(() => window.location.reload());
+      const neu = sw.controller;
+      if (!neu) return;
+      void istVeraltet(neu).then((alt) => {
+        if (!alt) return;
+        neuLadenOffen = true;
+        ladeNeuWennMoeglich();
+      });
+    };
+    sw.addEventListener("controllerchange", onControllerChange);
+
+    // ── Wartenden Worker freigeben, sobald die Seite ruhig ist ──
+    let freigabeTimer = 0;
+    const planeFreigabe = () => {
+      window.clearTimeout(freigabeTimer);
+      freigabeTimer = window.setTimeout(() => {
+        if (imTraining()) return;
+        reg?.waiting?.postMessage({ type: "SKIP_WAITING" });
+      }, RUHE_MS);
+    };
+    const beobachte = (r: ServiceWorkerRegistration) => {
+      reg = r;
+      const warteAuf = (w: ServiceWorker | null) => {
+        if (!w) return;
+        w.addEventListener("statechange", () => {
+          if (w.state === "installed") planeFreigabe();
+        });
+      };
+      warteAuf(r.installing);
+      r.addEventListener("updatefound", () => warteAuf(r.installing));
+      if (r.waiting) planeFreigabe();
+    };
+    const registriere = async () => {
+      const r = await sw.register("/sw.js", { updateViaCache: "none" }).catch(() => null);
+      if (r) beobachte(r);
+    };
+
+    let zuletztGefragt = Date.now();
+    const frageNachUpdate = (sofort = false) => {
+      if (!reg || navigator.onLine === false || imTraining()) return;
+      if (!sofort && Date.now() - zuletztGefragt < PRUEF_ABSTAND_MS) return;
+      zuletztGefragt = Date.now();
+      void reg.update().catch(() => {
+        /* kein Netz — beim nächsten Mal */
+      });
+    };
+
+    beiWechsel.current = () => {
+      ladeNeuWennMoeglich();
+      if (reg?.waiting) planeFreigabe();
+    };
+    const onSichtbarkeit = () => {
+      // Beim Verlassen UND beim Zurückkommen: beides sind Momente, in denen
+      // ein Neuladen niemanden unterbricht.
+      ladeNeuWennMoeglich();
+      if (document.visibilityState !== "visible") return;
+      if (reg?.waiting) planeFreigabe();
+      frageNachUpdate();
+    };
+    const onOnline = () => frageNachUpdate();
+    // Das Eingabefeld ist verlassen: einen Moment später nachsehen (der Fokus
+    // kann gleich ins nächste Feld springen).
+    const onFokusWeg = () => {
+      if (neuLadenOffen) window.setTimeout(ladeNeuWennMoeglich, 300);
+    };
+
+    if (document.readyState === "complete") void registriere();
+    else window.addEventListener("load", () => void registriere(), { once: true });
+    document.addEventListener("visibilitychange", onSichtbarkeit);
+    document.addEventListener("focusout", onFokusWeg);
+    window.addEventListener("online", onOnline);
+
+    const beiChunkFehler = () => {
+      // Das Fenster ist als veraltet bekannt und findet seinen Code nicht
+      // mehr: jetzt neu laden (außer im Training), statt auf später zu warten.
+      if (neuLadenOffen && !imTraining() && !laedtNeu) {
+        laedtNeu = true;
+        window.location.reload();
+        return;
+      }
+      frageNachUpdate(true);
     };
     const onError = (e: ErrorEvent) => {
       if (CHUNK_RE.test(e.message || "") || CHUNK_RE.test((e.error as Error)?.message || ""))
-        recover();
+        beiChunkFehler();
     };
     const onRejection = (e: PromiseRejectionEvent) => {
       const r = e.reason;
       const msg = typeof r === "string" ? r : (r as Error)?.message;
-      if (CHUNK_RE.test(msg || "")) recover();
+      if (CHUNK_RE.test(msg || "")) beiChunkFehler();
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);
-    const clearFlag = window.setTimeout(() => {
-      try {
-        sessionStorage.removeItem(KEY);
-      } catch {
-        /* ignore */
-      }
-    }, 8000);
 
     return () => {
-      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
-      document.removeEventListener("visibilitychange", onVisible);
+      beiWechsel.current = null;
+      window.clearTimeout(freigabeTimer);
+      sw.removeEventListener("controllerchange", onControllerChange);
+      document.removeEventListener("visibilitychange", onSichtbarkeit);
+      document.removeEventListener("focusout", onFokusWeg);
+      window.removeEventListener("online", onOnline);
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onRejection);
-      window.clearTimeout(clearFlag);
     };
   }, []);
   return null;

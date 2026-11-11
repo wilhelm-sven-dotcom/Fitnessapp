@@ -1,66 +1,68 @@
-import type Anthropic from "@anthropic-ai/sdk";
 import type { PlannedExercise, SessionVariant } from "@/lib/session-model";
 
 /**
- * Tool-Vertrag der täglichen Einheiten-Komposition. Evolution des früheren
- * `build_session`: zusätzlich pro Übung `why` (Warum heute?) und `intro`
- * (Coach-Ansage beim Start) sowie ein Session-`briefing` — so bekommt jede
- * Übung ATLAS-Coaching OHNE weitere API-Calls zur Laufzeit.
+ * Form der täglichen Einheit, wie ATLAS sie liefert (`output_config.format`).
+ * Zu jeder Übung gehören `why` (warum heute) und `intro` (Ansage beim Start)
+ * sowie ein `briefing` für die ganze Einheit — so bekommt jede Übung ihren
+ * ATLAS-Satz ohne weitere Anfrage während des Trainings.
+ *
+ * Das Schema sichert die FORM. Die Werte prüft `sanitizeDailySession`
+ * (erlaubte Ids, Grenzen, Längen). Zahlen- und Längengrenzen stehen nur in
+ * den Beschreibungen: strukturierte Ausgabe kennt kein `minimum`/`maxLength`.
+ * Die Längen sind keine Stilvorgabe, sondern Platz in der Oberfläche; was
+ * länger ist, schneidet der Sanitizer ab.
  */
-export const BUILD_DAILY_SESSION_TOOL: Anthropic.Tool = {
-  name: "build_daily_session",
-  description:
-    "Stelle die heutige Trainingseinheit zusammen: Name, Fokus, ein kurzes Briefing (warum die Einheit heute so aussieht) und die geordnete Übungsliste. Wähle Übungen ausschließlich über ihre exakte id aus der erlaubten Liste. Zu jeder Übung: Sätze, Wiederholungs-Spanne, ein kurzes Warum (bezogen auf Historie/Bedarf) und eine kurze Ansage für den Start der Übung.",
-  input_schema: {
-    type: "object",
-    properties: {
-      name: {
-        type: "string",
-        description: "Kurzer, konkreter Name, z. B. „Ganzkörper · Zug-Fokus”.",
-      },
-      focus: {
-        type: "string",
-        description: "Fokus in 1–3 Wörtern, z. B. „Rücken & Schultern”.",
-      },
-      briefing: {
-        type: "string",
-        description:
-          "2–3 Sätze an den Athleten: warum diese Einheit heute so aussieht (Bedarf, Erholung, Tagesform). Max 400 Zeichen.",
-      },
+export const DAILY_SESSION_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  properties: {
+    name: {
+      type: "string",
+      description: "Kurzer, konkreter Name der Einheit, zum Beispiel „Ganzkörper · Zug“. Höchstens 60 Zeichen.",
+    },
+    focus: {
+      type: "string",
+      description: "Schwerpunkt in ein bis drei Wörtern, zum Beispiel „Rücken & Schultern“.",
+    },
+    briefing: {
+      type: "string",
+      description:
+        "Zwei bis drei Sätze an den Athleten: warum die Einheit heute so aussieht (Bedarf, Erholung, Tagesform). Höchstens 400 Zeichen, die App zeigt es in einer Sprechblase.",
+    },
+    items: {
+      type: "array",
+      description:
+        "Übungen in der Reihenfolge des Trainings: große, mehrgelenkige zuerst, eingelenkige und Rumpf danach.",
       items: {
-        type: "array",
-        description:
-          "Übungen in Trainingsreihenfolge — große, komplexe zuerst, Isolation und Core danach.",
-        items: {
-          type: "object",
-          properties: {
-            exerciseId: {
-              type: "string",
-              description: "Exakte id aus der erlaubten Liste.",
-            },
-            sets: { type: "integer", description: "Arbeitssätze, 1 bis 6." },
-            repLow: { type: "integer", description: "Untere Wdh-/Sekunden-Grenze, ≥ 1." },
-            repHigh: { type: "integer", description: "Obere Grenze, ≥ repLow." },
-            why: {
-              type: "string",
-              description:
-                "Ein Satz: warum DIESE Übung heute (Bedarf, Abwechslung, Schwachstelle). Max 140 Zeichen.",
-            },
-            intro: {
-              type: "string",
-              description:
-                "Ansage beim Start der Übung: worauf heute achten, was zählt. Max 200 Zeichen.",
-            },
+        type: "object",
+        properties: {
+          exerciseId: {
+            type: "string",
+            description: "Exakte id aus der Liste der heute verfügbaren Übungen.",
           },
-          required: ["exerciseId", "sets", "repLow", "repHigh", "why", "intro"],
-          additionalProperties: false,
+          sets: { type: "integer", description: "Arbeitssätze, 1 bis 6." },
+          repLow: {
+            type: "integer",
+            description: "Untere Grenze der Wiederholungen (bei Halteübungen Sekunden), mindestens 1.",
+          },
+          repHigh: { type: "integer", description: "Obere Grenze, mindestens so groß wie repLow." },
+          why: {
+            type: "string",
+            description:
+              "Ein Satz mit dem konkreten Grund für diese Übung heute: Rückstand in der Woche, Tage seit dem letzten Reiz, Wunsch, Rücken. Höchstens 140 Zeichen.",
+          },
+          intro: {
+            type: "string",
+            description:
+              "Ansage beim Start der Übung: worauf es bei ihr heute ankommt. Höchstens 200 Zeichen.",
+          },
         },
+        required: ["exerciseId", "sets", "repLow", "repHigh", "why", "intro"],
+        additionalProperties: false,
       },
     },
-    required: ["name", "focus", "briefing", "items"],
-    additionalProperties: false,
   },
-  strict: true,
+  required: ["name", "focus", "briefing", "items"],
+  additionalProperties: false,
 };
 
 const clampInt = (v: unknown, lo: number, hi: number, fallback: number): number => {
@@ -83,9 +85,9 @@ export interface SanitizedDailySession {
 }
 
 /**
- * Server-seitige Härtung hinter dem forced tool call: ID-Allowlist, Dedupe,
- * Clamps, String-Caps. `null`, wenn zu wenig Brauchbares übrig bleibt — der
- * Client fällt dann auf den deterministischen Generator zurück.
+ * Serverseitige Härtung der Antwort: nur erlaubte Ids, keine Dubletten,
+ * Zahlen in ihren Grenzen, Texte gekappt. `null`, wenn zu wenig Brauchbares
+ * übrig bleibt — die App bleibt dann beim Basisplan.
  */
 export function sanitizeDailySession(
   raw: unknown,
@@ -114,7 +116,7 @@ export function sanitizeDailySession(
       repLow,
       repHigh: Math.max(repLow, clampInt(r.repHigh, 1, 999, repLow)),
       why: trim(r.why, 140, "Gehört heute in den Plan."),
-      intro: trim(r.intro, 200, "Sauber und kontrolliert — Qualität vor Last."),
+      intro: trim(r.intro, 200, "Sauber und kontrolliert. Qualität vor Last."),
     });
   }
   if (items.length < (variant === "reset" ? 2 : MIN_ITEMS)) return null;

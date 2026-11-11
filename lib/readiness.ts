@@ -1,4 +1,5 @@
 import type { LoggedSession, Readiness } from "@/lib/types";
+import { TAG_MS } from "@/lib/zeit";
 
 export type ReadinessBand = "low" | "mid" | "high";
 
@@ -44,7 +45,7 @@ export function lastReadiness(
     const r = s.readiness;
     if (!r || !STUFE(r.sleep) || !STUFE(r.energy) || !STUFE(r.back)) continue;
     const t = new Date(s.date).getTime();
-    if (!Number.isFinite(t) || now - t > tage * 86_400_000 || t > now) continue;
+    if (!Number.isFinite(t) || now - t > tage * TAG_MS || t > now) continue;
     if (!best || t > best.t) best = { t, r };
   }
   return best ? best.r : null;

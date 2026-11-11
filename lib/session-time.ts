@@ -1,9 +1,15 @@
+import { aufwaermPlan } from "@/lib/aufwaermsaetze";
 import type { Exercise, Pattern, ResolvedSlot, SetEntry } from "@/lib/types";
 
-/** Per-set timing model (seconds). restSec == the live rest duration —
- *  ONE source of truth (they diverged 75 vs 90 before, skewing estimates). */
+/** Per-set timing model (seconds). Die Pausen sind zugleich die echten
+ *  Pausenlängen im Training (`restSecFor`) — ONE source of truth (they
+ *  diverged 75 vs 90 before, skewing estimates). */
 export const TIME = {
+  /** Satzpause bei eingelenkigen Übungen, Rumpf, Halteübungen. */
   restSec: 90,
+  /** Satzpause bei Grundübungen (Nutzer-Entscheid Nov 2026: 2:00 statt 1:30;
+   *  2:30 kostete zu viel Umfang, bei 45 Minuten 13 statt 18 Sätze). */
+  restGrundSec: 120,
   repSetSec: 30,
   timedSetSec: 40,
   warmupSetSec: 20,
@@ -21,6 +27,38 @@ const COMPOUND: Pattern[] = [
   "vpull",
 ];
 const isCompound = (p: Pattern) => COMPOUND.includes(p);
+
+/**
+ * Eingelenkige Übungen in den großen Mustern — sie gehören NICHT zu den
+ * Grundübungen: Beinstrecker steht im Muster „Kniebeuge“, Butterfly im Muster
+ * „Drücken“, bewegt aber nur ein Gelenk und braucht keine lange Pause.
+ */
+const EINGELENKIG: ReadonlySet<string> = new Set([
+  "leg_extension",
+  "leg_curl",
+  "back_ext",
+  "glutebridge",
+  "pull_through",
+  "cable_fly",
+  "db_fly",
+  "pec_deck",
+  "pullover_db",
+  "straight_arm_pulldown",
+  "scap_pullup",
+  "shrug_db",
+]);
+
+/** Grundübung = mehrgelenkig in einem großen Muster (Beine, Drücken, Ziehen):
+ *  Presse, Kniebeuge, Kreuzheben, Bankdrücken, Schulterdrücken, Rudern,
+ *  Latzug, Klimmzug … Halteübungen (Sekunden) zählen nicht dazu. */
+export function istGrunduebung(ex: Pick<Exercise, "id" | "pattern" | "unit">): boolean {
+  return ex.unit !== "Sek" && isCompound(ex.pattern) && !EINGELENKIG.has(ex.id);
+}
+
+/** Länge der Satzpause nach einem Satz dieser Übung, in Sekunden. */
+export function restSecFor(ex: Pick<Exercise, "id" | "pattern" | "unit">): number {
+  return istGrunduebung(ex) ? TIME.restGrundSec : TIME.restSec;
+}
 // Trim priority: accessories first, compounds late, core last.
 const TRIM_ORDER: Pattern[] = [
   "calf",
@@ -37,22 +75,28 @@ const TRIM_ORDER: Pattern[] = [
 ];
 const MIN_SLOTS = 3;
 
-export function estimateSlotMin(ex: Exercise): number {
+/** Minuten für EINE Übung. `aufwaermen`: bekommt sie die zwei Aufwärmsätze?
+ *  (Vorgabe: ja, wenn sie Gewicht trägt — die Einheit weiß es genauer, siehe
+ *  `estimateSessionMin`.) */
+export function estimateSlotMin(ex: Exercise, aufwaermen: boolean = !!ex?.weighted): number {
   // Defensive: a malformed/missing slot exercise contributes no time (never throw).
   if (!ex?.pattern) return 0;
   // Cardio blocks carry their planned duration (minutes) directly.
   if (ex.pattern === "cardio") return ex.repHigh;
   const workSec = ex.unit === "Sek" ? TIME.timedSetSec : TIME.repSetSec;
-  const warm = ex.weighted ? 2 : 0;
+  const warm = ex.weighted && aufwaermen ? 2 : 0;
   const sec =
-    ex.sets * (workSec + TIME.restSec) +
+    ex.sets * (workSec + restSecFor(ex)) +
     warm * (TIME.warmupSetSec + TIME.warmupRestSec) +
     TIME.transitionSec;
   return sec / 60;
 }
 
+/** Minuten für die ganze Einheit — mit derselben Aufwärmsatz-Regel wie die
+ *  Vorbelegung (nur die erste gewichtete Übung je Muskel). */
 export function estimateSessionMin(list: ResolvedSlot[]): number {
-  return Math.round(list.reduce((s, { ex }) => s + estimateSlotMin(ex), 0));
+  const warm = aufwaermPlan(list.map((s) => s.ex));
+  return Math.round(list.reduce((s, { ex }, i) => s + estimateSlotMin(ex, warm[i]), 0));
 }
 
 /**
@@ -74,7 +118,7 @@ export function estimateRemainingMin(
     const open = sets.filter(
       (s) => !s.warmup && (s.reps === "" || s.reps == null),
     ).length;
-    sec += open * (workSec + TIME.restSec);
+    sec += open * (workSec + restSecFor(ex));
   }
   return Math.max(0, Math.round(sec / 60));
 }
@@ -103,7 +147,9 @@ export function fitToBudget(
   budgetMin: number,
   opts: {
     protectCore?: boolean;
-    choices?: Record<string, string>;
+    /** Nur kürzen, nie Sätze oder Übungen ergänzen — für Einheiten, deren
+     *  Umfang jemand bewusst gesetzt hat (ATLAS-Plan). */
+    nurKuerzen?: boolean;
   } = {},
 ): FitResult {
   const slots: ResolvedSlot[] = list.map((s) => ({ ...s, ex: { ...s.ex } }));
@@ -140,7 +186,7 @@ export function fitToBudget(
   const longSession = budgetMin >= LONG_BUDGET_MIN;
   const compoundCap = longSession ? 5 : 4;
   guard = 0;
-  while (est < budgetMin - 4 && guard++ < 40) {
+  while (!opts.nurKuerzen && est < budgetMin - 4 && guard++ < 40) {
     const slot =
       slots.find((s) => isCompound(s.ex.pattern) && s.ex.sets < compoundCap) ??
       (longSession
@@ -158,7 +204,7 @@ export function fitToBudget(
   // Verlängern: reicht das Satz-Polster nicht (45+ min), kommen ZUSÄTZLICHE
   // Übungen aus den vorhandenen Slot-Pools dazu — je Runde eine, dedupe über
   // die ganze Session, EXTEND_ORDER zuerst, dann die übrigen Tages-Muster.
-  if (longSession) {
+  if (longSession && !opts.nurKuerzen) {
     const patternOrder = [
       ...EXTEND_ORDER,
       ...slots.map((s) => s.ex.pattern).filter((p) => !EXTEND_ORDER.includes(p)),
@@ -172,14 +218,8 @@ export function fitToBudget(
         const donor = slots.find((s) => s.ex.pattern === pat && s.pool.length > 1);
         if (!donor) continue;
         const slotKey = `${donor.slotKey.split(":")[0]}:x${extraNo + 1}`;
-        // Ein manueller Tausch dieses Zusatz-Slots gewinnt (sofern verfügbar und
-        // noch nicht in der Session), sonst der erste unbenutzte Pool-Eintrag.
-        const chosenId = opts.choices?.[slotKey];
-        const chosen =
-          chosenId && !used.has(chosenId)
-            ? donor.pool.find((e) => e.id === chosenId)
-            : undefined;
-        const cand = chosen ?? donor.pool.find((e) => !used.has(e.id));
+        // Der erste Pool-Eintrag, der noch nicht in der Einheit steht.
+        const cand = donor.pool.find((e) => !used.has(e.id));
         if (!cand) continue;
         extraNo += 1;
         slots.push({

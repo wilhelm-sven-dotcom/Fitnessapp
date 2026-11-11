@@ -1,8 +1,8 @@
 "use client";
 
-import { Download, RotateCcw, Upload } from "lucide-react";
+import { Download, History, RotateCcw, Upload } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Kicker } from "@/components/ui/Kicker";
@@ -17,7 +17,18 @@ import { GymSection } from "@/components/settings/GymSection";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { Sheet } from "@/components/ui/sheet";
+import type { ImportModus } from "@/lib/datensicherung";
+import { KEYS, storage, type Sicherung } from "@/lib/storage";
 import { toast } from "@/lib/toast";
+
+/** „2026-11-09“ oder ISO-Zeit → „09.11.2026“; leer bei Unlesbarem. */
+const alsDatum = (wert: string) => {
+  const d = new Date(wert.length === 10 ? `${wert}T12:00:00` : wert);
+  return Number.isFinite(d.getTime())
+    ? d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "";
+};
+const einheiten = (n: number) => (n === 1 ? "1 Einheit" : `${n} Einheiten`);
 
 /** Vier ruhige Segmente statt zwölf gestapelter Karten (Muster: Fortschritt).
  *  Körperdaten werden nicht mehr hier erfasst — das lebt bei Fortschritt →
@@ -32,7 +43,7 @@ const SEGMENTS: { key: Segment; label: string }[] = [
 ];
 
 function SettingsContent() {
-  const { resetAll, exportData, importData } = useTraining();
+  const { resetAll, exportData, importData, holeSicherung, log } = useTraining();
   const sp = useSearchParams();
 
   // Segment-Wechsel bleibt lokaler State (keine History-Einträge); nur der
@@ -51,10 +62,22 @@ function SettingsContent() {
   });
 
   const [confirmReset, setConfirmReset] = useState(false);
+  const [loescht, setLoescht] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  /** Eine gewählte, lesbare Export-Datei wartet auf die Frage „ergänzen oder
+   *  ersetzen“. */
+  const [datei, setDatei] = useState<{ inhalt: unknown; vom: string; anzahl: number } | null>(null);
+  /** Die Sicherung des Verlaufs (Stand vor der ersten Änderung des Tages). */
+  const [sicherung, setSicherung] = useState<Sicherung | null>(null);
+  const [confirmSicherung, setConfirmSicherung] = useState(false);
+  const leseSicherung = useCallback(() => {
+    void storage.sicherung(KEYS.log).then(setSicherung);
+  }, []);
+  // Nach jeder Änderung am Verlauf neu nachsehen (Import, Löschen, Tausch).
+  useEffect(leseSicherung, [leseSicherung, log]);
 
-  const exportFile = () => {
-    const blob = new Blob([JSON.stringify(exportData(), null, 2)], {
+  const exportFile = async () => {
+    const blob = new Blob([JSON.stringify(await exportData(), null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
@@ -71,12 +94,32 @@ function SettingsContent() {
     e.target.value = "";
     if (!file) return;
     try {
-      const ok = await importData(JSON.parse(await file.text()));
-      if (ok) toast("Import erfolgreich.", { kind: "success" });
-      else toast("Datei nicht erkannt.", { kind: "error" });
+      const inhalt = JSON.parse(await file.text()) as { log?: unknown; exportedAt?: unknown } | null;
+      if (!inhalt || typeof inhalt !== "object" || !Array.isArray(inhalt.log)) {
+        toast("Datei nicht erkannt.", { kind: "error" });
+        return;
+      }
+      setDatei({
+        inhalt,
+        vom: typeof inhalt.exportedAt === "string" ? alsDatum(inhalt.exportedAt) : "",
+        anzahl: inhalt.log.length,
+      });
     } catch {
       toast("Datei konnte nicht gelesen werden.", { kind: "error" });
     }
+  };
+  const spieleEin = async (modus: ImportModus) => {
+    if (!datei) return;
+    const inhalt = datei.inhalt;
+    setDatei(null);
+    const ok = await importData(inhalt, modus);
+    if (ok) toast(modus === "ergaenzen" ? "Backup ergänzt." : "Backup eingespielt.", { kind: "success" });
+    else toast("Das Backup ließ sich nicht vollständig speichern.", { kind: "error" });
+  };
+  const tauscheSicherung = async () => {
+    setConfirmSicherung(false);
+    const ok = await holeSicherung();
+    toast(ok ? "Verlauf zurückgeholt." : "Keine Sicherung vorhanden.", { kind: ok ? "success" : "error" });
   };
 
   return (
@@ -122,7 +165,7 @@ function SettingsContent() {
               oder spiele ein Backup zurück.
             </p>
             <div className="mb-4 flex flex-col gap-2">
-              <Button variant="secondary" full onClick={exportFile}>
+              <Button variant="secondary" full onClick={() => void exportFile()}>
                 <Download size={16} /> Daten exportieren
               </Button>
               <input
@@ -136,10 +179,69 @@ function SettingsContent() {
                 <Upload size={16} /> Backup einspielen
               </Button>
             </div>
+            {sicherung && (
+              <div className="mb-4 border-t border-dashed border-line-card pt-4">
+                <p className="mb-2 text-xs leading-relaxed text-muted">
+                  Sicherung des Verlaufs{sicherung.tag ? ` vom ${alsDatum(sicherung.tag)}` : ""}:{" "}
+                  {einheiten(sicherung.anzahl)}. Sie entsteht von selbst vor der ersten
+                  Änderung eines Tages.
+                </p>
+                <Button variant="secondary" full onClick={() => setConfirmSicherung(true)}>
+                  <History size={16} /> Sicherung zurückholen
+                </Button>
+              </div>
+            )}
             <Button variant="danger" onClick={() => setConfirmReset(true)}>
               <RotateCcw size={15} /> Alle Daten löschen
             </Button>
           </section>
+
+          <Sheet open={!!datei} onClose={() => setDatei(null)} title="Backup einspielen">
+            <p className="mb-4 text-sm leading-relaxed text-muted">
+              Die Datei{datei?.vom ? ` vom ${datei.vom}` : ""} enthält{" "}
+              {einheiten(datei?.anzahl ?? 0)}.
+            </p>
+            <div className="flex flex-col gap-2 pb-2">
+              <Button variant="strong" full onClick={() => void spieleEin("ergaenzen")}>
+                Ergänzen
+              </Button>
+              <p className="mb-2 text-xs leading-relaxed text-muted">
+                Fügt hinzu, was auf diesem Gerät fehlt. Nichts wird überschrieben oder
+                gelöscht.
+              </p>
+              <Button variant="danger" full onClick={() => void spieleEin("ersetzen")}>
+                Ersetzen
+              </Button>
+              <p className="mb-2 text-xs leading-relaxed text-muted">
+                Setzt das Gerät auf den Stand der Datei. Der jetzige Verlauf bleibt als
+                Sicherung liegen.
+              </p>
+              <Button variant="ghost" full onClick={() => setDatei(null)}>
+                Abbrechen
+              </Button>
+            </div>
+          </Sheet>
+
+          <Sheet
+            open={confirmSicherung}
+            onClose={() => setConfirmSicherung(false)}
+            title="Sicherung zurückholen?"
+          >
+            <p className="mb-4 text-sm leading-relaxed text-muted">
+              Der Verlauf wird auf den Stand
+              {sicherung?.tag ? ` vom ${alsDatum(sicherung.tag)}` : " der Sicherung"} gesetzt (
+              {einheiten(sicherung?.anzahl ?? 0)}). Der jetzige Verlauf wird dabei zur neuen
+              Sicherung, du kannst also zurücktauschen.
+            </p>
+            <div className="flex flex-col gap-2 pb-2">
+              <Button variant="strong" full onClick={() => void tauscheSicherung()}>
+                Zurückholen
+              </Button>
+              <Button variant="ghost" full onClick={() => setConfirmSicherung(false)}>
+                Abbrechen
+              </Button>
+            </div>
+          </Sheet>
 
           {/* Destruktives bestätigt ein Sheet — nie inline (Handoff-Rezept). */}
           <Sheet
@@ -148,19 +250,23 @@ function SettingsContent() {
             title="Wirklich alles löschen?"
           >
             <p className="mb-4 text-sm leading-relaxed text-muted">
-              Alle Einheiten, Rekorde und Verläufe werden unwiderruflich
-              gelöscht. Ein Export vorher sichert alles als Datei.
+              Einheiten, Körperwerte, Cardio, eigene Übungen, Orte, Fotos und
+              Einstellungen werden unwiderruflich gelöscht: auf diesem Gerät und,
+              wenn du angemeldet bist, auch in der Cloud. Die App startet danach
+              wie neu. Ein Export vorher sichert alles als Datei.
             </p>
             <div className="flex flex-col gap-2 pb-2">
               <Button
                 variant="danger"
                 full
+                disabled={loescht}
                 onClick={() => {
-                  void resetAll().then(() => toast("Alle Daten gelöscht."));
-                  setConfirmReset(false);
+                  // Lädt die App am Ende neu — das Blatt bleibt bis dahin stehen.
+                  setLoescht(true);
+                  void resetAll();
                 }}
               >
-                Unwiderruflich löschen
+                {loescht ? "Lösche …" : "Unwiderruflich löschen"}
               </Button>
               <Button variant="ghost" full onClick={() => setConfirmReset(false)}>
                 Abbrechen

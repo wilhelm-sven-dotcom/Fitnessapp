@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronRight, Dumbbell, KeyRound, Sparkles, Trash2 } from "lucide-react";
+import { ChevronRight, Dumbbell, KeyRound, RotateCw, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AtlasEingabe } from "@/components/coach/AtlasEingabe";
 import { useNavSlot } from "@/components/layout/NavSlot";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/pressable";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -13,13 +14,17 @@ import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { ProtokollBubble } from "@/components/coach/ProtokollBubble";
 import { plattenNummer } from "@/lib/platte";
 import { athletePersona, effectiveProfile } from "@/lib/athlete";
+import { atlasStrom, geraeteDatum } from "@/lib/atlas/client";
+import { ATLAS_FEHLER_TEXT, type AtlasFehlerArt } from "@/lib/atlas/fehler";
 import { buildBriefing } from "@/lib/briefing";
-import { buildCoachContext } from "@/lib/coach-context";
+import { buildCoachContext, lageBlock } from "@/lib/coach-context";
+import { fatigueState } from "@/lib/fatigue";
 import { isoWeek } from "@/lib/format";
 import { resolveDailySession } from "@/lib/session-model";
 import { estimateSessionMin } from "@/lib/session-time";
 import { KEYS, storage } from "@/lib/storage";
-import { trainerContextBlock } from "@/lib/trainer";
+import { toast } from "@/lib/toast";
+import { trainerContextBlock, weekKeyOf } from "@/lib/trainer";
 
 interface Msg {
   role: "user" | "assistant";
@@ -54,6 +59,8 @@ export default function CoachPage() {
     todaySession,
     backSafeActive,
     exerciseNotes,
+    phase,
+    deloadActive,
   } = useTraining();
 
   // Die ECHTE nächste Einheit: heute komponiert (todaySession). Ohne sie
@@ -77,13 +84,17 @@ export default function CoachPage() {
 
   const context = useMemo(
     () =>
-      buildCoachContext({ log, allLib, body, cardio, exerciseNotes, nextSession }) +
-      "\n\nATLAS-Status:\n" +
-      trainerContextBlock(trainer) +
-      (backSafeActive
-        ? "\nHeute aktiv: Rücken-Schonmodus — die geplante Einheit ist bereits rückenschonend aufgelöst."
-        : ""),
-    [log, allLib, body, cardio, exerciseNotes, trainer, nextSession, backSafeActive],
+      [
+        buildCoachContext({ log, allLib, body, cardio, exerciseNotes, nextSession }),
+        lageBlock({ phase, deloadActive, fatigue: fatigueState(log, cardio) }),
+        `ATLAS-Status:\n${trainerContextBlock(trainer)}`,
+        backSafeActive
+          ? "Heute aktiv: Rückenschonung. Die geplante Einheit ist schon rückenschonend zusammengestellt."
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+    [log, allLib, body, cardio, exerciseNotes, trainer, nextSession, backSafeActive, phase, deloadActive],
   );
   const persona = useMemo(
     () => athletePersona(effectiveProfile(settings, body), settings.userName),
@@ -109,11 +120,18 @@ export default function CoachPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
+  /** Warum die letzte Frage ohne Antwort blieb (nur in diesem Fenster bekannt). */
+  const [fehler, setFehler] = useState<AtlasFehlerArt | null>(null);
   const [rapport, setRapport] = useState("");
   const [rapportBusy, setRapportBusy] = useState(false);
+  const [rapportFehler, setRapportFehler] = useState<AtlasFehlerArt | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  /** Die eine laufende Anfrage; beim Verlassen der Seite wird sie abgebrochen. */
+  const laeuft = useRef<AbortController | null>(null);
+  useEffect(() => () => laeuft.current?.abort(), []);
+  const woche = weekKeyOf(new Date());
 
-  // Verlauf laden/persistieren — überlebt Navigation und synct mit.
+  // Verlauf und Wochen-Rückblick laden — beides überlebt Navigation und synct mit.
   useEffect(() => {
     let alive = true;
     void storage.getJSON<Msg[]>(KEYS.chat, []).then((m) => {
@@ -124,103 +142,104 @@ export default function CoachPage() {
             (x) =>
               x &&
               (x.role === "user" || x.role === "assistant") &&
-              typeof x.content === "string",
+              typeof x.content === "string" &&
+              x.content.trim() !== "",
           ),
         );
       setLoaded(true);
     });
+    // Der Rückblick dieser Kalenderwoche wird einmal geschrieben und bleibt.
+    // Vorher war er nach jedem Seitenwechsel weg und kostete eine neue Anfrage.
+    void storage
+      .getJSON<{ woche?: unknown; text?: unknown } | null>(KEYS.rapport, null)
+      .then((r) => {
+        if (alive && r && r.woche === woche && typeof r.text === "string") setRapport(r.text);
+      });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [woche]);
   const persistChat = (next: Msg[]) => {
     const capped = next.slice(-CHAT_CAP);
     setMessages(capped);
     void storage.setJSON(KEYS.chat, capped);
   };
 
-  const send = async (text: string) => {
+  /** Steht am Ende eine Frage ohne Antwort? Dann bietet die Seite „Erneut
+   *  senden“ an — auch nach einem Neuladen. */
+  const offeneFrage =
+    !busy && messages.length > 0 && messages[messages.length - 1].role === "user"
+      ? messages[messages.length - 1].content
+      : null;
+
+  const send = async (text: string, erneut = false) => {
     const userText = text.trim();
     if (!userText || busy) return;
-    setInput("");
-    const base = [...messages, { role: "user", content: userText } as Msg];
+    if (!erneut) setInput("");
+    setFehler(null);
+    // „Erneut senden“: die Frage steht schon als letzte Nachricht da.
+    const base: Msg[] = erneut ? messages : [...messages, { role: "user", content: userText }];
     setMessages([...base, { role: "assistant", content: "" }]);
     setBusy(true);
-    try {
-      const res = await fetch("/api/atlas/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: base.slice(-12), context, persona }),
-      });
-      if (res.headers.get("content-type")?.includes("application/json")) {
-        const j = (await res.json()) as { configured?: boolean };
-        if (j.configured === false) {
-          setNotConfigured(true);
-          setMessages(messages);
-          return;
-        }
-      }
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error("no stream");
-      const dec = new TextDecoder();
-      let acc = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += dec.decode(value, { stream: true });
-        setMessages((prev) => {
-          const copy = prev.slice();
-          copy[copy.length - 1] = { role: "assistant", content: acc };
-          return copy;
-        });
-        endRef.current?.scrollIntoView({ block: "end" });
-      }
-      persistChat([...base, { role: "assistant", content: acc }]);
-    } catch {
-      setMessages((prev) => {
-        const copy = prev.slice();
-        copy[copy.length - 1] = {
-          role: "assistant",
-          content: "Es hat gerade nicht geklappt. Versuch es nochmal.",
-        };
-        return copy;
-      });
-    } finally {
-      setBusy(false);
-      endRef.current?.scrollIntoView({ block: "end" });
+    const ctrl = new AbortController();
+    laeuft.current = ctrl;
+    const erg = await atlasStrom(
+      "/api/atlas/chat",
+      { messages: base.slice(-12), context, persona, datum: geraeteDatum() },
+      {
+        signal: ctrl.signal,
+        beiText: (bisher) => {
+          setMessages([...base, { role: "assistant", content: bisher }]);
+          endRef.current?.scrollIntoView({ block: "end" });
+        },
+      },
+    );
+    if (ctrl.signal.aborted) return; // Seite verlassen
+    setBusy(false);
+    const antwort = erg.text.trim();
+    if (erg.ok && antwort) {
+      persistChat([...base, { role: "assistant", content: antwort }]);
+    } else if (!erg.ok && erg.fehler === "abgeschnitten" && antwort) {
+      // Zu lang geworden: der Text bis dahin ist brauchbar und bleibt.
+      persistChat([...base, { role: "assistant", content: antwort }]);
+      toast(ATLAS_FEHLER_TEXT.abgeschnitten);
+    } else if (!erg.ok && erg.fehler === "aus") {
+      setNotConfigured(true);
+      setMessages(messages);
+    } else {
+      // Keine Antwort: die Frage bleibt stehen, in den Verlauf kommt kein
+      // Fehlersatz. Früher stand dort „Es hat gerade nicht geklappt“ oder ein
+      // halber Text samt Fehlerzeile, und beides ging als Antwort mit in die
+      // nächste Anfrage.
+      persistChat(base);
+      setFehler(erg.ok ? "unbrauchbar" : erg.fehler);
     }
+    endRef.current?.scrollIntoView({ block: "end" });
   };
 
   const loadRapport = async () => {
     if (rapportBusy) return;
     setRapportBusy(true);
+    setRapportFehler(null);
+    const vorher = rapport;
     setRapport("");
-    try {
-      const res = await fetch("/api/atlas/briefing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ facts: briefing.facts, persona }),
-      });
-      if (res.headers.get("content-type")?.includes("application/json")) {
-        const j = (await res.json().catch(() => null)) as { configured?: boolean } | null;
-        if (j?.configured === false) setNotConfigured(true);
-        return;
-      }
-      const reader = res.body?.getReader();
-      if (!reader) return;
-      const dec = new TextDecoder();
-      let acc = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += dec.decode(value, { stream: true });
-        setRapport(acc);
-      }
-    } catch {
-      setRapport("");
-    } finally {
-      setRapportBusy(false);
+    const erg = await atlasStrom(
+      "/api/atlas/briefing",
+      { facts: briefing.facts, persona, datum: geraeteDatum() },
+      { beiText: setRapport },
+    );
+    setRapportBusy(false);
+    const text = erg.text.trim();
+    if (erg.ok && text) {
+      setRapport(text);
+      void storage.setJSON(KEYS.rapport, { woche, text });
+      return;
     }
+    // Ein halber Rückblick ist keiner: zurück zum bisherigen Stand.
+    setRapport(vorher);
+    if (!erg.ok && erg.fehler === "aus") setNotConfigured(true);
+    else if (!erg.ok && erg.fehler !== "abgebrochen") setRapportFehler(erg.fehler);
+    else if (erg.ok) setRapportFehler("unbrauchbar");
   };
 
   const buildEl = (
@@ -278,16 +297,19 @@ export default function CoachPage() {
         <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-fg">
           {rapport || briefing.coachNote}
         </p>
-        {!rapport && (
-          <Pressable
-            onClick={() => void loadRapport()}
-            disabled={rapportBusy}
-            className="mt-3 flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-50"
-          >
-            <Sparkles size={16} aria-hidden />
-            {rapportBusy ? "ATLAS schreibt …" : "Ausführlicher Rückblick"}
-          </Pressable>
+        {rapportFehler && (
+          <p role="alert" className="mt-2 text-sm text-gefahr">
+            {ATLAS_FEHLER_TEXT[rapportFehler]}
+          </p>
         )}
+        <Pressable
+          onClick={() => void loadRapport()}
+          disabled={rapportBusy}
+          className="mt-3 flex min-h-11 items-center gap-2 rounded-pill border-dick border-rand bg-surface-1 px-4 font-display text-sm font-extrabold text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus disabled:opacity-50"
+        >
+          <Sparkles size={16} aria-hidden />
+          {rapportBusy ? "ATLAS schreibt …" : rapport ? "Neu schreiben" : "Ausführlicher Rückblick"}
+        </Pressable>
       </Card>
 
       {/* Gespräch — die Fragen stehen als Chips über dem Feld im Dock. */}
@@ -311,6 +333,24 @@ export default function CoachPage() {
             ) : (
               <ProtokollBubble key={i} text={m.content} busy={busy && i === messages.length - 1} />
             ),
+          )}
+          {/* Frage ohne Antwort: sagen, warum, und den zweiten Versuch anbieten. */}
+          {offeneFrage && (
+            <div
+              role="alert"
+              className="flex items-center justify-between gap-3 rounded-inner border-dick border-rand bg-surface-2 px-4 py-3"
+            >
+              <p className="min-w-0 text-sm leading-snug text-fg">
+                {fehler ? ATLAS_FEHLER_TEXT[fehler] : "Auf diese Frage kam keine Antwort."}
+              </p>
+              <Button
+                variant="secondary"
+                className="shrink-0"
+                onClick={() => void send(offeneFrage, true)}
+              >
+                <RotateCw size={16} aria-hidden /> Erneut senden
+              </Button>
+            </div>
           )}
           {/* Scroll-Ziel mit Abstand zum Dock (Höhe aus der AppShell). */}
           <div ref={endRef} style={{ scrollMarginBottom: "calc(var(--nav-h, 0px) + 16px)" }} />

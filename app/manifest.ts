@@ -9,6 +9,10 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: APP_NAME,
     description: BESCHREIBUNG,
     lang: "de",
+    // Feste Kennung der installierten App: ohne sie nimmt der Browser die
+    // Start-Adresse als Kennung, und eine spätere Änderung daran ergäbe eine
+    // zweite App auf dem Home-Bildschirm.
+    id: "/",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -25,6 +29,12 @@ export default function manifest(): MetadataRoute.Manifest {
     // Das `?v=` ist Pflicht, nicht Kosmetik: diese Routen sind — anders als
     // /icon und /apple-icon — von Next NICHT gehasht. Ohne wechselnde URL
     // behalten CDN, Service Worker und Homescreen das alte PNG.
+    // Kurzbefehle beim langen Druck auf das Icon (Android; iOS zeigt sie nicht).
+    shortcuts: [
+      { name: "Training", short_name: "Training", description: "Die heutige Einheit starten oder fortsetzen", url: "/workout" },
+      { name: "Fortschritt", short_name: "Fortschritt", url: "/fortschritt" },
+      { name: "ATLAS fragen", short_name: "ATLAS", url: "/coach" },
+    ],
     icons: [
       { src: `/manifest-icon/192?v=${ICON_VERSION}`, sizes: "192x192", type: "image/png", purpose: "any" },
       { src: `/manifest-icon/192?v=${ICON_VERSION}`, sizes: "192x192", type: "image/png", purpose: "maskable" },

@@ -94,25 +94,6 @@ export interface Template {
   slots: Pattern[];
 }
 
-/** One exercise inside a user-built day, with optional per-exercise scheme. */
-export interface DayItem {
-  exerciseId: string;
-  sets?: number;
-  repLow?: number;
-  repHigh?: number;
-  /** Items sharing a group number are trained as a superset (reserved). */
-  supersetGroup?: number;
-}
-
-/** A user-built training day (custom template), startable like A/B/C. */
-export interface WorkoutDay {
-  id: string;
-  name: string;
-  focus: string;
-  items: DayItem[];
-  createdAt: string;
-}
-
 /** Ein Trainingsort mit seinen Geräten — z. B. Zuhause, Studio, Reise.
  *  Die Oberfläche sagt „Ort“, der Code bleibt bei GymProfile. */
 export interface GymProfile {
@@ -122,6 +103,9 @@ export interface GymProfile {
   /** Hier wird nur an Geräten trainiert (Maschinen + Kabelzug): Planung,
    *  Tauschen und Katalog lassen freie Gewichte und Körpergewicht weg. */
   nurGeraete?: boolean;
+  /** Kleinste Gewichtsstufe an diesem Ort in kg (Zuhause oft 2,5, an
+   *  Maschinen 5). Fehlt sie, gilt die allgemeine aus den Einstellungen. */
+  weightStep?: number;
 }
 
 export interface EquipItem {
@@ -306,6 +290,10 @@ export interface AppSettings {
     /** Unix seconds when the access token expires. */
     expiresAt: number;
     athleteName?: string;
+    /** Letzter gelungener Abgleich (Epoch-Millisekunden). */
+    syncedAt?: number;
+    /** Strava hat die Anmeldung zurückgewiesen: neu verbinden. */
+    reauth?: boolean;
   };
   /** Spotify connection (OAuth PKCE, public client — no server secret). */
   spotify?: {

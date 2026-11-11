@@ -1,4 +1,6 @@
+import { WOCHENZIEL } from "@/lib/training-science";
 import type { LoggedSession, SetEntry } from "@/lib/types";
+import { weekStartMon } from "@/lib/zeit";
 
 /** A set counts as "done" once reps are entered. */
 export const isFilled = (s: SetEntry) => s.reps !== "" && s.reps != null;
@@ -24,16 +26,8 @@ export function sessionVolume(s: LoggedSession): number {
 /** Epley estimated 1RM. */
 export const oneRm = (w: number, r: number) => w * (1 + r / 30);
 
-function weekStartMon(d: Date): Date {
-  const off = (d.getDay() + 6) % 7;
-  const m = new Date(d);
-  m.setHours(0, 0, 0, 0);
-  m.setDate(d.getDate() - off);
-  return m;
-}
-
 /**
- * Consecutive weeks meeting the 3×/week goal. The current (in-progress) week
+ * Consecutive weeks meeting the weekly goal (`WOCHENZIEL`). The current (in-progress) week
  * counts only if already met and never breaks the streak; older weeks must hit
  * the goal to keep it going.
  */
@@ -47,10 +41,10 @@ export function weeklyStreak(log: LoggedSession[], ref: Date = new Date()): numb
     }).length;
   };
   const week = weekStartMon(ref);
-  let streak = inWeek(week) >= 3 ? 1 : 0;
+  let streak = inWeek(week) >= WOCHENZIEL ? 1 : 0;
   for (let i = 0; i < 260; i++) {
     week.setDate(week.getDate() - 7);
-    if (inWeek(week) >= 3) streak++;
+    if (inWeek(week) >= WOCHENZIEL) streak++;
     else break;
   }
   return streak;

@@ -1,4 +1,5 @@
 import type { CardioSession } from "@/lib/types";
+import { weekStartMon } from "@/lib/zeit";
 
 /**
  * Source-agnostic cardio helpers. A `CardioSession` can come from Strava
@@ -15,16 +16,8 @@ export interface CardioWeek {
   distance: number;
 }
 
-const weekStart = (ref: Date) => {
-  const off = (ref.getDay() + 6) % 7;
-  const m = new Date(ref);
-  m.setHours(0, 0, 0, 0);
-  m.setDate(ref.getDate() - off);
-  return m;
-};
-
 export function weeklyCardio(cardio: CardioSession[], ref: Date = new Date()): CardioWeek {
-  const mon = weekStart(ref);
+  const mon = weekStartMon(ref);
   const end = new Date(mon);
   end.setDate(mon.getDate() + 7);
   let count = 0;

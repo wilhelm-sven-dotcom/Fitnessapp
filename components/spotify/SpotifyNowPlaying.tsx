@@ -11,6 +11,9 @@ import { useSpotify } from "./useSpotify";
  * for everyone else). Controls need Premium — a free account still sees the
  * track and gets a gentle hint instead of controls silently failing.
  */
+/** Tippfläche 44 × 44 px, das Symbol bleibt klein. */
+const KNOPF = "flex h-11 w-11 items-center justify-center rounded-pill";
+
 export function SpotifyNowPlaying() {
   const { connected, now, controlBlocked, play, pause, next, prev } = useSpotify();
   if (!connected) return null;
@@ -39,20 +42,20 @@ export function SpotifyNowPlaying() {
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-0.5">
-        <Pressable onClick={prev} aria-label="Vorheriger Titel" className="rounded-pill p-2 text-muted">
+      <div className="flex shrink-0 items-center">
+        <Pressable onClick={prev} aria-label="Vorheriger Titel" className={KNOPF + " text-muted"}>
           <SkipBack size={16} />
         </Pressable>
         {now?.isPlaying ? (
-          <Pressable onClick={pause} aria-label="Pause" className="rounded-pill p-2 text-fg">
+          <Pressable onClick={pause} aria-label="Pause" className={KNOPF + " text-fg"}>
             <Pause size={17} />
           </Pressable>
         ) : (
-          <Pressable onClick={play} aria-label="Abspielen" className="rounded-pill p-2 text-fg">
+          <Pressable onClick={play} aria-label="Abspielen" className={KNOPF + " text-fg"}>
             <Play size={17} />
           </Pressable>
         )}
-        <Pressable onClick={next} aria-label="Nächster Titel" className="rounded-pill p-2 text-muted">
+        <Pressable onClick={next} aria-label="Nächster Titel" className={KNOPF + " text-muted"}>
           <SkipForward size={16} />
         </Pressable>
       </div>

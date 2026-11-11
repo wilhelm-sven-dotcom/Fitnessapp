@@ -1,5 +1,7 @@
 import type { EffectiveProfile } from "@/lib/athlete";
-import { presc, warmupSets } from "@/lib/progression";
+import { aufwaermPlan } from "@/lib/aufwaermsaetze";
+import { ENTLASTUNG_LAST, deloadAktiv } from "@/lib/periodization";
+import { pauseStufe, presc, warmupSets, type PauseStufe } from "@/lib/progression";
 import { NEUTRAL_SCALE, band, scaleFor, type ReadinessScale } from "@/lib/readiness";
 import { startWeight } from "@/lib/start-weight";
 import type { DailySession, PlannedExercise } from "@/lib/session-model";
@@ -31,39 +33,133 @@ export interface ActiveSessionState {
   backSafe: boolean;
   backTraffic?: TrafficLight | null;
   note?: string;
+  /** Laufende Satzpause — gehört zum Live-Stand, damit sie ein Neuladen
+   *  übersteht. */
+  rest?: RestState;
   schemaVersion: 1;
+}
+
+/**
+ * Satzpause als ENDZEIT statt als Zähler: die Restzeit ergibt sich aus der
+ * Uhr. Ein heruntergezählter Zähler blieb stehen, sobald das iPhone gesperrt
+ * oder die App im Hintergrund war (Timer schlafen dort).
+ */
+export interface RestState {
+  itemId: string;
+  setIdx: number;
+  /** Ende der Pause, Epoch-Millisekunden. */
+  endsAt: number;
+  /** Geplante Länge in Sekunden (für „von 1:30“ und den Balken). */
+  total: number;
+}
+
+/** Eine Pause, die länger als das vorbei ist, zeigt nach dem Neuladen niemand
+ *  mehr an. */
+const REST_STALE_MS = 5 * 60 * 1000;
+
+function gueltigePause(r: unknown): RestState | undefined {
+  if (!r || typeof r !== "object") return undefined;
+  const x = r as Partial<RestState>;
+  if (
+    typeof x.itemId !== "string" ||
+    !Number.isFinite(x.setIdx) ||
+    !Number.isFinite(x.endsAt) ||
+    !Number.isFinite(x.total)
+  )
+    return undefined;
+  if (Date.now() - (x.endsAt as number) > REST_STALE_MS) return undefined;
+  return { itemId: x.itemId, setIdx: x.setIdx as number, endsAt: x.endsAt as number, total: x.total as number };
 }
 
 /** Länger unterbrochen als das ist keine Pause mehr, sondern ein Abbruch. */
 export const RESUME_WINDOW_MS = 6 * 60 * 60 * 1000;
 
-export async function loadActiveState(): Promise<ActiveSessionState | null> {
+/** Steht in der Einheit schon ein eingetragener Arbeitssatz? */
+export function hatEingetrageneSaetze(s: Pick<ActiveSessionState, "entries">): boolean {
+  return Object.values(s.entries ?? {}).some(
+    (saetze) =>
+      Array.isArray(saetze) && saetze.some((x) => !x.warmup && x.reps !== "" && x.reps != null),
+  );
+}
+
+/** Begann die Einheit vor mehr als sechs Stunden? */
+export function istLiegengeblieben(startedAt: string, now = Date.now()): boolean {
+  const alter = now - new Date(startedAt).getTime();
+  return !Number.isFinite(alter) || alter > RESUME_WINDOW_MS;
+}
+
+/**
+ * Liest den gespeicherten Live-Stand. `alt`: die Einheit begann vor mehr als
+ * sechs Stunden. So eine Einheit wird nicht mehr still fortgesetzt — aber
+ * auch nicht mehr still gelöscht, wenn schon Sätze drinstehen (früher waren
+ * die dann weg). Die Heute-Seite fragt: speichern oder verwerfen.
+ */
+async function leseAktiv(): Promise<{ state: ActiveSessionState; alt: boolean } | null> {
   const raw = await storage.getJSON<ActiveSessionState | null>(KEYS.active, null);
   if (!raw || raw.schemaVersion !== 1) return null;
   if (
     !raw.session ||
     !Array.isArray(raw.session.items) ||
     raw.session.items.length === 0 ||
-    typeof raw.entries !== "object"
+    typeof raw.entries !== "object" ||
+    raw.entries === null
   )
     return null;
-  const age = Date.now() - new Date(raw.startedAt).getTime();
-  if (!Number.isFinite(age) || age > RESUME_WINDOW_MS) {
+  const alt = istLiegengeblieben(raw.startedAt);
+  if (alt && (!hatEingetrageneSaetze(raw) || !Number.isFinite(new Date(raw.startedAt).getTime()))) {
+    // Nichts eingetragen: da geht nichts verloren.
     void storage.remove(KEYS.active);
     return null;
   }
+  const { rest: gespeichertePause, ...ohnePause } = raw;
+  const rest = alt ? undefined : gueltigePause(gespeichertePause);
   return {
-    ...raw,
-    currentIndex: Math.max(
-      0,
-      Math.min(raw.session.items.length - 1, raw.currentIndex ?? 0),
-    ),
-    phase:
-      raw.phase === "warmup" || raw.phase === "finish" ? raw.phase : "exercise",
+    alt,
+    state: {
+      ...ohnePause,
+      ...(rest ? { rest } : {}),
+      currentIndex: Math.max(
+        0,
+        Math.min(raw.session.items.length - 1, raw.currentIndex ?? 0),
+      ),
+      phase:
+        raw.phase === "warmup" || raw.phase === "finish" ? raw.phase : "exercise",
+    },
   };
 }
 
-export function persistActiveState(s: ActiveSessionState): Promise<void> {
+/** Die laufende Einheit zum Fortsetzen — `null`, wenn keine läuft oder sie
+ *  liegengeblieben ist. */
+export async function loadActiveState(): Promise<ActiveSessionState | null> {
+  const g = await leseAktiv();
+  return g && !g.alt ? g.state : null;
+}
+
+/** Eine liegengebliebene Einheit mit eingetragenen Sätzen (älter als 6 h). */
+export async function loadLiegengeblieben(): Promise<ActiveSessionState | null> {
+  const g = await leseAktiv();
+  return g?.alt ? g.state : null;
+}
+
+/** Pause ab jetzt um `sek` verlängern bzw. (negativ) kürzen. Eine abgelaufene
+ *  Pause startet bei „+“ neu ab jetzt; gekürzt wird nie unter jetzt. */
+export function shiftRest(r: RestState, sek: number, now = Date.now()): RestState {
+  if (sek >= 0) {
+    return { ...r, endsAt: Math.max(now, r.endsAt) + sek * 1000, total: r.total + sek };
+  }
+  return {
+    ...r,
+    endsAt: Math.max(now, r.endsAt + sek * 1000),
+    total: Math.max(15, r.total + sek),
+  };
+}
+
+/** Restsekunden einer Pause (aufgerundet, nie negativ). */
+export function restLeft(endsAt: number, now = Date.now()): number {
+  return Math.max(0, Math.ceil((endsAt - now) / 1000));
+}
+
+export function persistActiveState(s: ActiveSessionState): Promise<boolean> {
   return storage.setJSONLocal(KEYS.active, s);
 }
 
@@ -71,10 +167,11 @@ export function clearActiveState(): Promise<void> {
   return storage.remove(KEYS.active);
 }
 
-/** A deload overrides readiness with a clearly lighter week. */
-function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
+/** Eine Entlastungswoche geht vor der Tagesform: ein Satz weniger und
+ *  höchstens `ENTLASTUNG_LAST` der Last. */
+export function withDeload(base: ReadinessScale, deloadActive: boolean): ReadinessScale {
   return deloadActive
-    ? { setDelta: -1, loadMult: Math.min(base.loadMult, 0.6), cap: true }
+    ? { setDelta: -1, loadMult: Math.min(base.loadMult, ENTLASTUNG_LAST), cap: true }
     : base;
 }
 
@@ -83,12 +180,9 @@ export function startScale(
   settings: AppSettings,
   readiness: Readiness | undefined | null,
 ): ReadinessScale {
-  const deloadActive =
-    !!settings.lastDeloadDate &&
-    Date.now() - new Date(settings.lastDeloadDate).getTime() < 7 * 86_400_000;
   return withDeload(
     settings.autoregOn && readiness ? scaleFor(band(readiness.score)) : NEUTRAL_SCALE,
-    deloadActive,
+    deloadAktiv(settings),
   );
 }
 
@@ -123,13 +217,19 @@ export interface PrefillOpts {
   profile?: EffectiveProfile;
 }
 
-/** Normale Vorbelegung: Aufwärmsätze + leere Arbeitssätze mit Gewichtsvorschlag. */
-function initSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
+/** Normale Vorbelegung: Aufwärmsätze (nur wenn `aufwaermen`) + leere
+ *  Arbeitssätze mit Gewichtsvorschlag. */
+function initSetsFor(
+  ex: Exercise,
+  sets: number,
+  o: PrefillOpts,
+  aufwaermen: boolean,
+): SetEntry[] {
   const lp = o.lastPerf(ex.id);
   const startW =
     !lp && o.profile ? startWeight(ex, o.profile, { step: o.weightStep })?.w : undefined;
   const p = presc(ex, lp, {
-    lighter: o.daysAgo != null && o.daysAgo > 5,
+    pause: pauseStufe(o.daysAgo),
     loadMult: o.scale.loadMult,
     cap: o.scale.cap,
     step: o.weightStep,
@@ -140,7 +240,7 @@ function initSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
     reps: "",
   }));
   const warm =
-    ex.weighted && p.w && Number(p.w) > 0
+    aufwaermen && ex.weighted && p.w && Number(p.w) > 0
       ? warmupSets(Number(p.w), o.weightStep)
       : [];
   return [...warm, ...working];
@@ -159,7 +259,7 @@ function examSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
           .map((s) => Number(s.weight) || 0),
       )
     : 0;
-  if (!ex.weighted || !isFinite(best) || best <= 0) return initSetsFor(ex, sets, o);
+  if (!ex.weighted || !isFinite(best) || best <= 0) return initSetsFor(ex, sets, o, true);
   const step = o.weightStep ?? 2.5;
   // Strikt aufsteigend, Rundung darf die Stufen nicht kollabieren lassen;
   // der Test-Satz liegt einen Schritt ÜBER der letzten Bestleistung.
@@ -175,16 +275,25 @@ function examSetsFor(ex: Exercise, sets: number, o: PrefillOpts): SetEntry[] {
   return [...warmupSets(w5, o.weightStep), ...working];
 }
 
-/** Vorbelegung für EIN Item (auch beim Tausch/Hinzufügen mitten in der Einheit). */
+/** Vorbelegung für EIN Item (auch beim Tausch/Hinzufügen mitten in der
+ *  Einheit). `aufwaermen`: bekommt die Übung Aufwärmsätze? Das entscheidet die
+ *  Reihenfolge der Einheit (`aufwaermPlan`) — nur die erste gewichtete Übung
+ *  je Muskel. Die Prüfung bringt ihre eigene Rampe mit. */
 export function prefillFor(
   item: PlannedExercise,
   ex: Exercise,
   o: PrefillOpts,
+  aufwaermen = true,
 ): SetEntry[] {
   if (ex.pattern === "cardio") return [{ weight: "", reps: "" }];
   return o.variant === "exam"
     ? examSetsFor(ex, item.sets, o)
-    : initSetsFor(ex, item.sets, o);
+    : initSetsFor(ex, item.sets, o, aufwaermen);
+}
+
+/** Aufwärmsatz-Plan einer Einheit, je Item in Reihenfolge. */
+function aufwaermenJeItem(session: DailySession, byId: Map<string, Exercise>): boolean[] {
+  return aufwaermPlan(session.items.map((it) => byId.get(it.exerciseId)));
 }
 
 /** Komplette Vorbelegung beim Einheiten-Start, je Item-Instanz-Id. */
@@ -193,11 +302,12 @@ export function prefillEntries(
   o: PrefillOpts,
 ): Record<string, SetEntry[]> {
   const byId = new Map(o.allLib.map((e) => [e.id, e]));
+  const warm = aufwaermenJeItem(session, byId);
   const out: Record<string, SetEntry[]> = {};
-  for (const it of session.items) {
+  session.items.forEach((it, i) => {
     const ex = byId.get(it.exerciseId);
-    if (ex) out[it.id] = prefillFor(it, ex, { ...o, variant: session.variant });
-  }
+    if (ex) out[it.id] = prefillFor(it, ex, { ...o, variant: session.variant }, warm[i]);
+  });
   return out;
 }
 
@@ -236,15 +346,16 @@ export function reconcileEntries(
 ): Record<string, SetEntry[]> {
   const byId = new Map(o.allLib.map((e) => [e.id, e]));
   const prevItems = new Map(prevSession.items.map((it) => [it.id, it]));
+  const aufwaermen = aufwaermenJeItem(next, byId);
   const out: Record<string, SetEntry[]> = {};
-  for (const item of next.items) {
+  for (const [idx, item] of next.items.entries()) {
     const ex = byId.get(item.exerciseId);
     if (!ex) continue;
     const opts: PrefillOpts = { ...o, variant: next.variant };
     const old = prev[item.id];
     const was = prevItems.get(item.id);
     if (!old || !was) {
-      out[item.id] = prefillFor(item, ex, opts);
+      out[item.id] = prefillFor(item, ex, opts, aufwaermen[idx]);
       continue;
     }
     if (was.exerciseId !== item.exerciseId) {
@@ -252,10 +363,10 @@ export function reconcileEntries(
       // neue Übung (deren Gewichtsvorschlag; alte Warmups wären irreführend).
       const filled = old.filter((s) => !s.warmup && filledSet(s));
       if (!filled.length) {
-        out[item.id] = prefillFor(item, ex, opts);
+        out[item.id] = prefillFor(item, ex, opts, aufwaermen[idx]);
         continue;
       }
-      const freshWork = prefillFor(item, ex, opts).filter((s) => !s.warmup);
+      const freshWork = prefillFor(item, ex, opts, false).filter((s) => !s.warmup);
       out[item.id] = [...filled, ...freshWork.slice(filled.length)];
       continue;
     }
@@ -324,8 +435,8 @@ export function itemExercise(base: Exercise, item: PlannedExercise): Exercise {
 export interface PrescCtx {
   lastPerf: (id: string) => LastPerf | null;
   profile?: EffectiveProfile;
-  /** Lange Pause (> 5 Tage) → ruhiger Einstieg. */
-  lighter: boolean;
+  /** Einstieg nach einer Trainingslücke (ab 14 Tagen ruhig, ab 28 leichter). */
+  pause?: PauseStufe;
   scale: ReadinessScale;
   weightStep?: number;
 }
@@ -338,7 +449,7 @@ export function prescForItem(ex: Exercise, ctx: PrescCtx, lp = ctx.lastPerf(ex.i
       ? undefined
       : startWeight(ex, ctx.profile, { step: ctx.weightStep })?.w;
   return presc(ex, lp, {
-    lighter: ctx.lighter,
+    pause: ctx.pause,
     loadMult: ctx.scale.loadMult,
     cap: ctx.scale.cap,
     step: ctx.weightStep,

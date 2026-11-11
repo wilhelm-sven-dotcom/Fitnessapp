@@ -52,6 +52,20 @@ export function StravaSection() {
               Verbunden{strava.athlete ? ` als ${strava.athlete}` : ""} · {rides} Einheiten
             </span>
           </div>
+          {strava.needsReauth && (
+            <div className="rounded-inner border-dick border-rand bg-surface-2 p-3">
+              <p className="mb-2 text-xs leading-relaxed text-fg">
+                Strava hat die Anmeldung beendet. Neue Fahrten kommen erst wieder an, wenn du
+                dich neu verbindest.
+              </p>
+              <Pressable
+                onClick={connect}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-card bg-strong px-3 text-sm font-medium text-on-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+              >
+                <Activity size={16} /> Neu verbinden
+              </Pressable>
+            </div>
+          )}
           <div className="flex gap-2">
             <Pressable
               onClick={() => void sync()}

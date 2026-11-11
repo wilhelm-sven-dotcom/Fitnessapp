@@ -1,6 +1,7 @@
 import { poolFor, stressesInjury } from "@/lib/progression";
 import { fitToBudget } from "@/lib/session-time";
-import { muscleOf, MUSCLE_LABEL, VOLUME_TARGET, weekStartMon } from "@/lib/volume";
+import { muscleOf, MUSCLE_LABEL, volumeTargetFor } from "@/lib/volume";
+import { TAG_MS, weekStartMon } from "@/lib/zeit";
 import { workSets } from "@/lib/stats";
 import {
   todayKey,
@@ -106,7 +107,7 @@ function daysSinceMuscle(
   const m = new Map<Muscle, number>();
   const now = Date.now();
   for (const s of log) {
-    const days = (now - new Date(s.date).getTime()) / 86400000;
+    const days = (now - new Date(s.date).getTime()) / TAG_MS;
     for (const se of s.exercises ?? []) {
       const ex = byId.get(se.id);
       if (!ex || ex.pattern === "cardio") continue;
@@ -155,6 +156,27 @@ function pickFromPool(
   // Am längsten nicht verwendet zuerst (nie verwendet = ganz vorn).
   pool.sort((a, b) => (lastUsed.get(a.id) ?? 0) - (lastUsed.get(b.id) ?? 0));
   return pool[0] ?? null;
+}
+
+/**
+ * Pool für ZUSATZ-Übungen (Auffüllen langer Einheiten): dieselben Schon-Regeln
+ * wie die Hauptauswahl, aber streng — bleibt nichts Schonendes übrig, ist der
+ * Pool leer. Die Hauptauswahl darf im Notfall auf den vollen Pool
+ * zurückfallen (lieber eine Übung als keine); eine Zusatz-Übung ist nie nötig
+ * und darf den Rückenschutz deshalb nicht aufweichen. Vorher kamen hier ab
+ * 45 Minuten trotz Schonung Kreuzheben, Hip Thrust oder Crunches dazu.
+ */
+function sichererPool(pattern: Pattern, opts: FallbackOpts): Exercise[] {
+  let pool = poolFor(pattern, opts.has, opts.allLib, blockedOf(opts));
+  if (opts.backSafe) {
+    pool =
+      pattern === "core"
+        ? pool.filter((e) => e.backStabilizer)
+        : pool.filter((e) => !e.backCaution && !HEAVY_HINGE.has(e.id));
+  }
+  const injuries = opts.injuries ?? [];
+  if (injuries.length) pool = pool.filter((e) => !injuries.some((i) => stressesInjury(e, i)));
+  return pool;
 }
 
 function whyLine(
@@ -222,7 +244,10 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
     const since = daysSinceMuscle(opts.log, opts.allLib);
     const need = new Map<Muscle, { deficit: number; days: number; score: number }>();
     for (const m of Object.keys(MUSCLE_PATTERNS) as Muscle[]) {
-      const deficit = Math.max(0, VOLUME_TARGET.min - (weekSets.get(m) ?? 0));
+      // Zielband je Muskel: kleine Muskeln (Bizeps, Trizeps, Waden,
+      // Unterarme) brauchen weniger direkte Sätze. Mit EINEM Ziel für alle
+      // standen sie dauerhaft ganz oben im Bedarf.
+      const deficit = Math.max(0, volumeTargetFor(m).min - (weekSets.get(m) ?? 0));
       const days = Math.min(7, since.get(m) ?? 7);
       need.set(m, { deficit, days, score: deficit * 2 + days });
     }
@@ -234,18 +259,27 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
       for (const [m, n] of need) if (MUSCLE_PATTERNS[m].includes(p)) s = Math.max(s, n.score);
       return s;
     };
-    const bestOf = (cands: Pattern[]): Pattern =>
-      [...cands].sort((a, b) => patternNeed(b) - patternNeed(a))[0];
+    // Nur Muster, für die es am Ort überhaupt Übungen gibt. Im Studio „nur
+    // an Geräten“ gibt es z. B. keinen Ausfallschritt — gewann er den
+    // Vergleich, blieb der Platz der Unterkörper-Hauptübung leer.
+    const hatUebungen = (p: Pattern): boolean =>
+      poolFor(p, opts.has, opts.allLib, blockedOf(opts)).length > 0;
+    const bestOf = (cands: Pattern[]): Pattern | null => {
+      const da = cands.filter(hatUebungen);
+      return da.length ? [...da].sort((a, b) => patternNeed(b) - patternNeed(a))[0] : null;
+    };
 
     const patterns: Pattern[] = [
       bestOf(["squat", "lunge", "hinge"]),
       bestOf(["hpush", "vpush"]),
       bestOf(["hpull", "vpull"]),
-    ];
+    ].filter((p): p is Pattern => p !== null);
     // Füllen nach Muskel-Bedarf, ohne Muster zu doppeln; Core kommt ans Ende.
     for (const [m] of ranked) {
       if (patterns.length >= 5) break;
-      const cand = MUSCLE_PATTERNS[m].find((p) => p !== "core" && !patterns.includes(p));
+      const cand = MUSCLE_PATTERNS[m].find(
+        (p) => p !== "core" && !patterns.includes(p) && hatUebungen(p),
+      );
       if (cand) patterns.push(cand);
     }
     patterns.push("core");
@@ -272,7 +306,7 @@ export function generateFallbackSession(opts: FallbackOpts): DailySession {
   const slots: ResolvedSlot[] = picked.map((ex, i) => ({
     ex: { ...ex },
     slotKey: `today:i${i + 1}`,
-    pool: poolFor(ex.pattern, opts.has, opts.allLib, blockedOf(opts)),
+    pool: sichererPool(ex.pattern, opts),
   }));
   const fitted =
     variant === "normal"

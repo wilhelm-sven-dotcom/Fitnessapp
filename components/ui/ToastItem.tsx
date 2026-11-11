@@ -56,7 +56,8 @@ export function ToastItem({ t }: { t: ToastRecord }) {
   return (
     <div
       onClick={() => setLeaving(true)}
-      className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-pill bg-strong px-4 py-3 text-left text-sm font-semibold text-on-strong"
+      role={t.kind === "error" ? "alert" : undefined}
+      className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-card bg-strong px-4 py-3 text-left text-sm font-semibold text-on-strong"
       style={{
         opacity: shown ? 1 : 0,
         transform: reduce ? undefined : shown ? "translateY(0)" : "translateY(12px)",

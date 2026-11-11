@@ -105,6 +105,24 @@ try {
   await waitForServer();
   console.log("Server läuft — Smoke beginnt.\n");
 
+  // ── 0 · Sicherheits-Header an Seite, Datei und API (next.config.mjs) ──
+  step = "kopf";
+  for (const pfad of ["/", "/sw.js", "/api/atlas/status"]) {
+    const r = await fetch(BASE + pfad);
+    const k = (name) => r.headers.get(name) ?? "";
+    const fehlt = [
+      k("x-content-type-options") === "nosniff" || "X-Content-Type-Options",
+      k("referrer-policy") === "strict-origin-when-cross-origin" || "Referrer-Policy",
+      k("x-frame-options") === "DENY" || "X-Frame-Options",
+      /frame-ancestors 'none'/.test(k("content-security-policy")) || "Content-Security-Policy",
+      (/microphone=\(\)/.test(k("permissions-policy")) && !/camera/.test(k("permissions-policy"))) ||
+        "Permissions-Policy (Mikrofon aus, Kamera frei für Fortschrittsfotos)",
+      !r.headers.has("x-powered-by") || "X-Powered-By steht noch da",
+    ].filter((x) => x !== true);
+    if (fehlt.length) throw new Error(`${pfad}: ${fehlt.join(", ")}`);
+  }
+  console.log("OK kopf: Sicherheits-Header an Seite, Service Worker und API");
+
   // ── 1 · Boot ohne Splash: Inhalt < 1,5 s nach DOM-Ready ──
   step = "boot";
   const t0 = Date.now();

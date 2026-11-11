@@ -41,8 +41,9 @@ export const SETTINGS = (theme) => ({
 });
 
 
-/** Startet `next start` auf `port` und wartet, bis die Seite antwortet. */
-export async function starteServer(spawn, port) {
+/** Startet `next start` auf `port` und wartet, bis die Seite antwortet.
+ *  `env` ergänzt die Umgebung (z. B. ein nachgestellter Anthropic-Server). */
+export async function starteServer(spawn, port, env = {}) {
   try {
     await fetch(`http://127.0.0.1:${port}/`);
     throw new Error(`Port ${port} ist belegt (alter Server?) – erst beenden.`);
@@ -51,7 +52,7 @@ export async function starteServer(spawn, port) {
   }
   const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], {
     stdio: "ignore",
-    env: { ...process.env, ANTHROPIC_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, ANTHROPIC_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1", ...env },
   });
   const base = `http://127.0.0.1:${port}`;
   for (let i = 0; i < 80; i++) {

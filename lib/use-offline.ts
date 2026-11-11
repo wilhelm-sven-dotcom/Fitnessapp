@@ -2,20 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-/** Live-Offline-Status (navigator.onLine + Events) — ein YouTube-iframe
- *  rendert offline nur einen leeren Block, also fallen Konsumenten dann auf
- *  ihre Offline-Darstellung zurück. */
+/**
+ * Ist das Gerät ohne Netz? Die App läuft dann weiter (Service Worker), aber
+ * ATLAS antwortet nicht und die Cloud bekommt Änderungen erst später — das
+ * soll der Nutzer sehen, statt sich über fehlende ATLAS-Sätze zu wundern.
+ *
+ * `navigator.onLine` kennt nur „verbunden“ oder „nicht verbunden“; ein
+ * verbundenes WLAN ohne Internet bleibt „online“. Der Hinweis ist darum eine
+ * Untergrenze: steht er da, ist das Gerät sicher ohne Netz.
+ */
 export function useOffline(): boolean {
   const [offline, setOffline] = useState(false);
   useEffect(() => {
-    const update = () =>
-      setOffline(typeof navigator !== "undefined" && navigator.onLine === false);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
+    const lies = () => setOffline(navigator.onLine === false);
+    lies();
+    window.addEventListener("online", lies);
+    window.addEventListener("offline", lies);
     return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
+      window.removeEventListener("online", lies);
+      window.removeEventListener("offline", lies);
     };
   }, []);
   return offline;

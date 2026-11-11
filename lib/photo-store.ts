@@ -5,7 +5,7 @@
  * so they follow the user across devices. All cloud calls no-op otherwise.
  */
 
-import { getSupabase, isCloudConfigured } from "@/lib/supabase";
+import { isCloudConfigured, loadSupabase } from "@/lib/supabase";
 
 const DB_NAME = "wilhelm-training-photos";
 const STORE = "photos";
@@ -78,6 +78,15 @@ export async function deletePhoto(id: string): Promise<void> {
   void deleteCloudPhoto(id);
 }
 
+/** Alle Fotos dieses Geräts löschen („Alle Daten löschen“). */
+export async function leereFotos(): Promise<void> {
+  if (!idbSupported()) return;
+  await new Promise<void>((resolve) => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = req.onerror = req.onblocked = () => resolve();
+  });
+}
+
 /** Shrink an uploaded image to a sane size before storing. Falls back to the original. */
 export async function downscaleImage(
   file: File,
@@ -108,7 +117,7 @@ export async function downscaleImage(
 
 async function cloudPath(id: string): Promise<{ path: string } | null> {
   if (!isCloudConfigured()) return null;
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   if (!sb) return null;
   const {
     data: { session },
@@ -118,7 +127,7 @@ async function cloudPath(id: string): Promise<{ path: string } | null> {
 }
 
 export async function uploadPhoto(id: string, blob: Blob): Promise<void> {
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   const loc = await cloudPath(id);
   if (!sb || !loc) return;
   try {
@@ -132,7 +141,7 @@ export async function uploadPhoto(id: string, blob: Blob): Promise<void> {
 }
 
 async function deleteCloudPhoto(id: string): Promise<void> {
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   const loc = await cloudPath(id);
   if (!sb || !loc) return;
   try {
@@ -142,11 +151,34 @@ async function deleteCloudPhoto(id: string): Promise<void> {
   }
 }
 
+/** Alle Fotos des angemeldeten Nutzers in der Cloud löschen. `true`: weg
+ *  (oder es gab keine); `false`: ging nicht; `null`: niemand angemeldet. */
+export async function leereCloudFotos(): Promise<boolean | null> {
+  const sb = await loadSupabase();
+  const loc = await cloudPath("");
+  if (!sb || !loc) return null;
+  const ordner = loc.path.replace(/\/$/, "");
+  try {
+    for (let runde = 0; runde < 20; runde++) {
+      const { data, error } = await sb.storage.from(BUCKET).list(ordner, { limit: 100 });
+      if (error) return false;
+      if (!data?.length) return true;
+      const { error: weg } = await sb.storage
+        .from(BUCKET)
+        .remove(data.map((f) => `${ordner}/${f.name}`));
+      if (weg) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Local-first: return the cached blob, else pull it from Storage and cache it. */
 export async function fetchPhoto(id: string): Promise<Blob | null> {
   const local = await getPhoto(id);
   if (local) return local;
-  const sb = getSupabase();
+  const sb = await loadSupabase();
   const loc = await cloudPath(id);
   if (!sb || !loc) return null;
   try {

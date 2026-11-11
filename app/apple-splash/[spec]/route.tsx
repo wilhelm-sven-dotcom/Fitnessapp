@@ -31,8 +31,9 @@ const MASSE = new Set([
   "750x1334", // SE · 8
 ]);
 
-export function GET(_req: Request, { params }: { params: { spec: string } }) {
-  const spec = MASSE.has(params.spec) ? params.spec : "1170x2532";
+export async function GET(_req: Request, { params }: { params: Promise<{ spec: string }> }) {
+  const gewuenscht = (await params).spec;
+  const spec = MASSE.has(gewuenscht) ? gewuenscht : "1170x2532";
   const [w, h] = spec.split("x").map(Number);
   return new ImageResponse(
     (

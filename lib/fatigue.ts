@@ -1,5 +1,7 @@
+import { ENTLASTUNG_LAST } from "@/lib/periodization";
 import { isFilled, sessionVolume, workSets } from "@/lib/stats";
 import type { CardioSession, LoggedSession } from "@/lib/types";
+import { TAG_MS } from "@/lib/zeit";
 
 /**
  * Belastungs-Index — a forward-looking load monitor. Built on the acute:chronic
@@ -23,8 +25,6 @@ export interface FatigueState {
   enough: boolean; // enough history for the ratio to mean anything
 }
 
-const DAY = 86_400_000;
-
 function avgSessionRir(s: LoggedSession): number | null {
   const rirs: number[] = [];
   for (const ex of s.exercises || [])
@@ -43,13 +43,17 @@ function effortMult(rir: number | null): number {
 
 function strengthLoad(s: LoggedSession): number {
   const base = sessionVolume(s) / 1000; // tonnes
-  return base * effortMult(avgSessionRir(s)) * (s.isDeload ? 0.6 : 1);
+  return base * effortMult(avgSessionRir(s)) * (s.isDeload ? ENTLASTUNG_LAST : 1);
 }
 
 function cardioLoad(c: CardioSession): number {
-  const kj = c.kj ?? (c.durationSec / 60) * 8; // ~8 kJ/min fallback
+  // Ein Eintrag ohne Dauer und ohne kJ trägt nichts bei. Vorher wurde daraus
+  // NaN, und NaN fiel durch alle Vergleiche bis in die Stufe „hoch“.
+  const dauerMin = Number.isFinite(c.durationSec) ? c.durationSec / 60 : 0;
+  const kj = Number.isFinite(c.kj) ? (c.kj as number) : dauerMin * 8; // ~8 kJ/min fallback
   const intens = c.intensity === "hard" ? 1.2 : c.intensity === "easy" ? 0.85 : 1;
-  return (kj / 1000) * 1.5 * intens;
+  const last = (kj / 1000) * 1.5 * intens;
+  return Number.isFinite(last) && last > 0 ? last : 0;
 }
 
 const COPY: Record<FatigueBand, { title: string; message: string }> = {
@@ -68,7 +72,7 @@ export function fatigueState(
   let acute = 0;
   let chronic = 0;
   const add = (dateStr: string, load: number) => {
-    const age = (now - new Date(dateStr).getTime()) / DAY;
+    const age = (now - new Date(dateStr).getTime()) / TAG_MS;
     if (age < 0) return;
     if (age <= 7) acute += load;
     if (age <= 28) chronic += load;
@@ -81,10 +85,11 @@ export function fatigueState(
     (min, x) => Math.min(min, new Date(x.date).getTime()),
     now,
   );
-  const spanDays = (now - oldest) / DAY;
+  const spanDays = (now - oldest) / TAG_MS;
   const enough = spanDays >= 14 && chronicWeekly > 0;
 
-  const ratio = chronicWeekly > 0 ? acute / chronicWeekly : 0;
+  const roh = chronicWeekly > 0 ? acute / chronicWeekly : 0;
+  const ratio = Number.isFinite(roh) ? roh : 0;
   const recent = log
     .filter((s) => s.readiness)
     .slice(-3)

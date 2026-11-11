@@ -59,8 +59,11 @@ export function paceLabel(distanceM?: number, durationSec?: number): string | nu
   if (!distanceM || distanceM < 100 || !durationSec) return null;
   const secPerKm = durationSec / (distanceM / 1000);
   if (!isFinite(secPerKm) || secPerKm <= 0) return null;
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
+  // Erst auf ganze Sekunden runden, dann teilen — sonst wird aus 5:59,6
+  // ein „5:60“.
+  const ganz = Math.round(secPerKm);
+  const m = Math.floor(ganz / 60);
+  const s = ganz % 60;
   return `${m}:${String(s).padStart(2, "0")} /km`;
 }
 

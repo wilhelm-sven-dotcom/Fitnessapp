@@ -1,15 +1,7 @@
 import { isFilled, sessionVolume, workSets } from "@/lib/stats";
 import { VOLUME_LANDMARKS } from "@/lib/training-science";
 import type { Exercise, LoggedSession, Muscle, Pattern } from "@/lib/types";
-
-/** Monday-based week start (same algorithm as the provider's weekCount). */
-export function weekStartMon(d: Date = new Date()): Date {
-  const off = (d.getDay() + 6) % 7;
-  const m = new Date(d);
-  m.setHours(0, 0, 0, 0);
-  m.setDate(d.getDate() - off);
-  return m;
-}
+import { weekStartMon } from "@/lib/zeit";
 
 function volumeInWeek(log: LoggedSession[], start: Date): number {
   const end = new Date(start);

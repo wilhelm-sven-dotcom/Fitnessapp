@@ -8,6 +8,7 @@ import { FinishFlow } from "@/components/session/FinishFlow";
 import { OverviewSheet } from "@/components/session/OverviewSheet";
 import { ProgressHeader } from "@/components/session/ProgressHeader";
 import { DockSlotContext } from "@/components/session/DockSlot";
+import { RestCues } from "@/components/session/RestCues";
 import { RestPanel } from "@/components/session/RestPanel";
 import { SessionEditSheet } from "@/components/home/SessionEditSheet";
 import { SpotifyNowPlaying } from "@/components/spotify/SpotifyNowPlaying";
@@ -32,17 +33,20 @@ import {
   itemDone,
   itemExercise,
   loadActiveState,
+  loadLiegengeblieben,
   nextOpenItemIndex,
   nextSetPreview,
   persistActiveState,
   prefillEntries,
   prescForItem,
   reconcileEntries,
+  shiftRest,
   startScale,
   workSetNo,
   type ActiveSessionState,
   type PrefillOpts,
   type PrescCtx,
+  type RestState,
 } from "@/lib/active-session";
 import type { CoachReactAdjustment } from "@/lib/atlas/live-tool";
 import { buildDebriefFacts, buildSessionTranscript } from "@/lib/atlas/transcript";
@@ -50,12 +54,19 @@ import { athletePersona, effectiveProfile } from "@/lib/athlete";
 import { bandOfActive, regionOf, type Region } from "@/lib/phasen/band";
 import { plattenNummern } from "@/lib/platte";
 import { figurFor, type PhasenFigurDef } from "@/lib/phasen/figuren";
-import { swapItem, type DailySession } from "@/lib/session-model";
-import { estimateRemainingMin, TIME } from "@/lib/session-time";
-import { roundStep } from "@/lib/progression";
+import {
+  passeZeitAn,
+  resolveDailySession,
+  schoneRuecken,
+  swapItem,
+  type DailySession,
+} from "@/lib/session-model";
+import { estimateRemainingMin, estimateSessionMin, restSecFor } from "@/lib/session-time";
+import { pauseStufe, roundStep } from "@/lib/progression";
 import { beatsRecord, exerciseRecords, recordUnit, setMetric } from "@/lib/records";
-import { beep, beepEnd, primeAudio } from "@/lib/beep";
+import { primeAudio } from "@/lib/beep";
 import { swapPoolFor } from "@/lib/swap-pool";
+import { atlasKopf, atlasStrom, fehlerAus } from "@/lib/atlas/client";
 import { toast } from "@/lib/toast";
 import { success, tap } from "@/lib/haptics";
 import { speak } from "@/lib/voice";
@@ -66,13 +77,6 @@ import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import type { Exercise, Readiness, SetEntry, TrafficLight } from "@/lib/types";
 
 type Boot = "loading" | "gate" | "none" | "running";
-
-interface RestState {
-  itemId: string;
-  setIdx: number;
-  left: number;
-  total: number;
-}
 
 /** ATLAS' Live-Reaktion (KI) — ersetzt die deterministische Zeile im Panel. */
 interface LiveCoachCall {
@@ -115,6 +119,7 @@ export function SessionRunner() {
     saveActiveSession,
     amendLastDebrief,
     discardActive,
+    weightStep,
     saving,
     exerciseNotes,
     disabledExercises,
@@ -129,7 +134,6 @@ export function SessionRunner() {
   // Rekord-Tafel des Sieger-Moments — ebenfalls VOR dem Save (recordMap kennt
   // nur das Archiv; nach dem Save wäre die eigene Studie schon der Rekord).
   const [completeSieger, setCompleteSieger] = useState<SiegerTafel | null>(null);
-  const [rest, setRest] = useState<RestState | null>(null);
   /** Gemessene Höhe des Docks (0 = leer) — siehe Wirt unten. */
   const [dockH, setDockH] = useState(0);
   /** Ziel für „Satz eintragen“ (Portal aus der Satzkarte). */
@@ -194,7 +198,24 @@ export function SessionRunner() {
     if (cur) commit(fn(cur));
   };
 
-  const lighter = daysAgo != null && daysAgo > 5;
+  // Die Satzpause lebt im Live-Stand (übersteht ein Neuladen) und trägt nur
+  // ihre ENDZEIT. Der Sekundentakt läuft in RestPanel und RestCues — diese
+  // Seite rendert dadurch nicht mehr jede Sekunde neu.
+  const rest = active?.rest ?? null;
+  const setRest = (
+    next: RestState | null | ((r: RestState | null) => RestState | null),
+  ) =>
+    patch((s) => {
+      const cur = s.rest ?? null;
+      const val = typeof next === "function" ? next(cur) : next;
+      if (val === cur) return s;
+      if (val) return { ...s, rest: val };
+      const { rest: _weg, ...ohne } = s;
+      void _weg;
+      return ohne;
+    });
+
+  const pause = pauseStufe(daysAgo);
   const scale = useMemo(
     () => startScale(settings, active?.readiness ?? null),
     [settings, active?.readiness],
@@ -205,7 +226,7 @@ export function SessionRunner() {
     allLib,
     lastPerf,
     daysAgo,
-    weightStep: settings.weightStep,
+    weightStep,
     scale,
     variant,
     profile,
@@ -238,8 +259,8 @@ export function SessionRunner() {
 
   // Eine Rechenvorschrift für Vorschläge: Bühne und Pausen-Vorschau.
   const prescCtx = useMemo<PrescCtx>(
-    () => ({ lastPerf, profile, lighter, scale, weightStep: settings.weightStep }),
-    [lastPerf, profile, lighter, scale, settings.weightStep],
+    () => ({ lastPerf, profile, pause, scale, weightStep }),
+    [lastPerf, profile, pause, scale, weightStep],
   );
   // Was nach der Pause kommt — neu nur bei neuem Satz oder geändertem
   // Protokoll, nicht jede Sekunde des Countdowns.
@@ -282,12 +303,46 @@ export function SessionRunner() {
       setBoot("none");
       return;
     }
-    const session = applySetDelta(known, allLib, sc);
+    // Rückenschonung als harte Grenze: meldet erst der Check-in „Rücken
+    // schlecht“ (oder hat ATLAS die Schonung nicht umgesetzt), werden
+    // rückenkritische Übungen jetzt getauscht. Bisher änderte der Check-in
+    // nur das Aufwärmen.
+    let basis = known;
+    if (backSafe && base.variant !== "reset" && base.variant !== "exam") {
+      const schon = schoneRuecken(known, allLib, has, disabledExercises);
+      const n = schon.getauscht.length + schon.gestrichen.length;
+      if (n > 0) {
+        basis = schon.session;
+        setTodaySession(schon.session);
+        toast(
+          n === 1
+            ? "Rücken wird geschont: eine Übung angepasst."
+            : `Rücken wird geschont: ${n} Übungen angepasst.`,
+        );
+      }
+    }
+    // Gute Tagesform gibt einen Satz mehr — aber nicht über das gewählte
+    // Zeitfenster hinaus: danach wird, wenn nötig, wieder gekürzt.
+    let session = applySetDelta(basis, allLib, sc);
+    if (
+      sc.setDelta > 0 &&
+      !base.edited &&
+      base.variant !== "reset" &&
+      base.variant !== "exam"
+    ) {
+      // Nie unter den Umfang VOR dem Zusatzsatz kürzen: war der Plan schon
+      // länger als das Zeitfenster, bleibt er, wie er war.
+      const vorher = estimateSessionMin(resolveDailySession(basis, allLib, has));
+      session = passeZeitAn(session, allLib, has, Math.max(settings.timeBudgetMin, vorher), {
+        protectCore: backSafe,
+        nurKuerzen: true,
+      });
+    }
     const entries = prefillEntries(session, {
       allLib,
       lastPerf,
       daysAgo,
-      weightStep: settings.weightStep,
+      weightStep,
       scale: sc,
       profile,
     });
@@ -314,8 +369,14 @@ export function SessionRunner() {
     if (bootedRef.current) return;
     bootedRef.current = true;
     let alive = true;
-    void loadActiveState().then((saved) => {
+    void Promise.all([loadActiveState(), loadLiegengeblieben()]).then(([saved, liegt]) => {
       if (!alive) return;
+      // Eine liegengebliebene Einheit mit Sätzen darf nicht überschrieben
+      // werden: erst auf Heute speichern oder verwerfen.
+      if (!saved && liegt) {
+        setBoot("none");
+        return;
+      }
       if (saved) {
         const items = saved.session.items.filter((it) => byId.has(it.exerciseId));
         if (items.length > 0) {
@@ -405,7 +466,7 @@ export function SessionRunner() {
   // sonst bliebe das Dock unsichtbar.
   useEffect(() => {
     setTippt(istFeld(document.activeElement));
-  }, [active, rest]);
+  }, [active]);
 
   // Deep-Link / PWA-Relaunch mitten ins Training: ohne User-Geste bleibt der
   // AudioContext suspended und die Pausen-Beeps wären stumm. Der ERSTE Tap
@@ -429,34 +490,10 @@ export function SessionRunner() {
     };
   }, []);
 
-  // Pausen-Countdown — als Dock unten, hörbar ohne Blick aufs Display: Tick
-  // in den letzten 3 s, Doppelton bei 0. iOS kennt kein navigator.vibrate —
-  // Audio ist dort das einzige Ende-Signal. Beeps bewusst ungated (cueVolume
-  // regelt die Lautstärke), nur die Stimme hängt an voiceCues. Kein Auto-
-  // Unmount: das Dock bleibt als „Pause vorbei" stehen, bis der Nutzer
-  // weitermacht (+15 s startet neu, Weiter räumt weg).
-  useEffect(() => {
-    if (!rest) return;
-    if (rest.left <= 0) {
-      beepEnd();
-      if (typeof navigator !== "undefined" && navigator.vibrate)
-        navigator.vibrate(200);
-      if (settings.voiceCues) speak("Pause vorbei. Auf geht's.", { interrupt: true });
-      return;
-    }
-    // Musik kurz leiser, damit Endton + Ansage durchkommen (Restore automatisch).
-    if (rest.left === 5) duckFor(7000);
-    if (rest.left <= 3) beep();
-    if (settings.voiceCues) {
-      if (rest.left === 10) speak("Noch zehn Sekunden");
-      else if (rest.left <= 3) speak(["", "eins", "zwei", "drei"][rest.left]);
-    }
-    const id = setTimeout(
-      () => setRest((r) => (r ? { ...r, left: r.left - 1 } : r)),
-      1000,
-    );
-    return () => clearTimeout(id);
-  }, [rest, settings.voiceCues, duckFor]);
+  // Pausen-Countdown: hörbar ohne Blick aufs Display (Tick in den letzten
+  // 3 s, Doppelton bei 0) — siehe RestCues im Dock. Kein Auto-Unmount: das
+  // Dock bleibt als „Pause vorbei" stehen, bis der Nutzer weitermacht (+15 s
+  // startet neu, Weiter räumt weg).
 
   /* ── Satz-Handler ── */
 
@@ -511,7 +548,7 @@ export function SessionRunner() {
       return undefined;
     const ref = Number(lastSet.weight);
     if (!Number.isFinite(ref) || ref <= 0) return undefined;
-    const step = settings.weightStep || 2.5;
+    const step = weightStep;
     const bound = Math.max(ref * 0.1, step);
     const clamped = Math.min(ref + bound, Math.max(ref - bound, adj.value));
     const rounded = roundStep(clamped, step);
@@ -543,14 +580,22 @@ export function SessionRunner() {
     try {
       const res = await fetch("/api/atlas/set", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: atlasKopf(),
         body: JSON.stringify({ transcript, persona }),
       });
       const data = (await res.json().catch(() => null)) as
-        | { ok?: boolean; call?: { say?: string; adjustment?: CoachReactAdjustment }; configured?: boolean }
+        | {
+            ok?: boolean;
+            call?: { say?: string; adjustment?: CoachReactAdjustment };
+            configured?: boolean;
+            fehler?: unknown;
+          }
         | null;
-      if (data?.configured === false) {
-        coachOffRef.current = true;
+      // Ohne Schlüssel oder ohne gültigen Zugangscode hilft kein weiterer
+      // Versuch in dieser Einheit: nicht nach jedem Satz erneut fragen.
+      if (!data?.ok) {
+        const art = fehlerAus(res.status, data);
+        if (art === "aus" || art === "zugang" || art === "schluessel") coachOffRef.current = true;
         return;
       }
       // Inzwischen neuer Satz/Sprung? Dann verfällt die Antwort.
@@ -600,9 +645,7 @@ export function SessionRunner() {
     if (!call?.adjustment) return;
     const adj = call.adjustment;
     if (adj.kind === "rest") {
-      setRest((r) =>
-        r ? { ...r, left: r.left + adj.value, total: r.total + adj.value } : r,
-      );
+      setRest((r) => (r ? shiftRest(r, adj.value) : r));
     } else {
       const st = activeRef.current;
       const sets = st?.entries[call.itemId] ?? [];
@@ -642,7 +685,14 @@ export function SessionRunner() {
     }
     // Direkt vorm Pausenstart wecken — der Countdown tönt dann auch aus Timern.
     primeAudio();
-    setRest({ itemId, setIdx: i, left: TIME.restSec, total: TIME.restSec });
+    // Grundübungen pausieren 2:00, alles andere 1:30 (lib/session-time.ts).
+    const pauseSek = restSecFor(ex);
+    setRest({
+      itemId,
+      setIdx: i,
+      endsAt: Date.now() + pauseSek * 1000,
+      total: pauseSek,
+    });
     scheduleCoachCall(itemId, i);
   };
 
@@ -716,36 +766,33 @@ export function SessionRunner() {
   const streamDebrief = async (state: ActiveSessionState, summary: SessionSummary) => {
     if (settings.coachLive === false) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    const toLines = (t: string) =>
+      t
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    let facts: string;
     try {
-      const facts = buildDebriefFacts({ state, allLib, summary });
-      const res = await fetch("/api/atlas/debrief", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ facts, persona }),
-      });
-      if (res.headers.get("content-type")?.includes("application/json")) return;
-      const reader = res.body?.getReader();
-      if (!reader) return;
-      const dec = new TextDecoder();
-      let acc = "";
-      const toLines = (s: string) =>
-        s
-          .split("\n")
-          .map((l) => l.trim())
-          .filter((l) => l && !l.startsWith("("))
-          .slice(0, 3);
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += dec.decode(value, { stream: true });
-        const lines = toLines(acc);
-        if (lines.length) setComplete((c) => (c ? { ...c, debrief: lines } : c));
-      }
-      const lines = toLines(acc);
-      if (lines.length >= 2) amendLastDebrief(lines);
+      facts = buildDebriefFacts({ state, allLib, summary });
     } catch {
-      /* deterministisches Debrief bleibt stehen */
+      return; // die festen Zeilen bleiben stehen
     }
+    const erg = await atlasStrom(
+      "/api/atlas/debrief",
+      { facts, persona },
+      {
+        beiText: (bisher) => {
+          const lines = toLines(bisher);
+          if (lines.length) setComplete((c) => (c ? { ...c, debrief: lines } : c));
+        },
+      },
+    );
+    const lines = toLines(erg.text);
+    // Nur eine vollständige Antwort bleibt: ist der Strom abgerissen oder hat
+    // ATLAS abgelehnt, kommen die festen Zeilen zurück.
+    if (erg.ok && lines.length >= 2) amendLastDebrief(lines);
+    else setComplete((c) => (c ? { ...c, debrief: summary.debrief } : c));
   };
 
   const doSave = async (backTraffic: TrafficLight | null, note: string) => {
@@ -802,7 +849,18 @@ export function SessionRunner() {
     }
     setCompleteSieger(sieger);
     commit(final);
-    const summary = await saveActiveSession(final);
+    let summary: Awaited<ReturnType<typeof saveActiveSession>>;
+    try {
+      summary = await saveActiveSession(final);
+    } catch {
+      // Das Gerät konnte nicht speichern. Die Einheit bleibt offen und liegt
+      // weiter im Live-Stand — nichts ist verloren, „Speichern“ geht erneut.
+      toast("Speichern hat nicht geklappt: Der Speicher des Geräts ist voll. Deine Einheit bleibt offen.", {
+        kind: "error",
+        duration: 8000,
+      });
+      return;
+    }
     activeRef.current = null;
     setActive(null);
     if (summary) {
@@ -989,7 +1047,7 @@ export function SessionRunner() {
         record={recordMap.get(ex.id) ?? null}
         isExam={isExam}
         aidNote={exerciseNotes[ex.id]}
-        weightStep={settings.weightStep ?? 2.5}
+        weightStep={weightStep}
         zoetropOn={settings.zoetrope !== false}
         onOpenGuide={() => setGuideOpen(true)}
         onSwap={
@@ -1071,9 +1129,17 @@ export function SessionRunner() {
           per Portal aus der Satzkarte). Beim Tippen in ein Feld unsichtbar:
           die iOS-Tastatur schiebt feste Elemente sonst mitten ins Bild. */}
       <div ref={dockRef} className={cn("fixed inset-x-0 bottom-0 z-30", tippt && "invisible")}>
+        {rest && (
+          <RestCues
+            key={`${rest.itemId}:${rest.setIdx}`}
+            endsAt={rest.endsAt}
+            voice={!!settings.voiceCues}
+            duckFor={duckFor}
+          />
+        )}
         {rest ? (
           <RestPanel
-            left={rest.left}
+            endsAt={rest.endsAt}
             total={rest.total}
             set={restSet}
             timed={restEx?.unit === "Sek"}
@@ -1084,16 +1150,8 @@ export function SessionRunner() {
             onIntensity={(v) =>
               rest && setFieldEffort(rest.itemId, rest.setIdx, "intensity", v)
             }
-            onAdd={() =>
-              setRest((r) => (r ? { ...r, left: r.left + 15, total: r.total + 15 } : r))
-            }
-            onSub={() =>
-              setRest((r) =>
-                r
-                  ? { ...r, left: Math.max(0, r.left - 15), total: Math.max(15, r.total - 15) }
-                  : r,
-              )
-            }
+            onAdd={() => setRest((r) => (r ? shiftRest(r, 15) : r))}
+            onSub={() => setRest((r) => (r ? shiftRest(r, -15) : r))}
             onSkip={() => setRest(null)}
           />
         ) : (

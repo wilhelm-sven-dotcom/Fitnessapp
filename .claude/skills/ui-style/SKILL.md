@@ -16,7 +16,7 @@ description: >-
 
 # UI-Style — Design-System „spotter“
 
-Stack: **Next.js 14 App Router · React 18 · TypeScript strict · Tailwind 3.4 ·
+Stack: **Next.js 15.5 App Router · React 19 · TypeScript strict · Tailwind 3.4 ·
 Framer Motion 11 · lucide-react · `cn()` (clsx + tailwind-merge)**. Mobile-first
 PWA, Container `max-w-md`, Touch-/Press-zentriert.
 
@@ -141,7 +141,8 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
 - **Segment** (genau eine Wahl): Pille mit Rand, aktives Segment Tinte-Fläche,
   inaktiv `text-fg`; `aria-pressed`; Knopfname = sichtbarer Text
   (Test-Anker Ortsumschalter).
-- **Toggle:** Pille mit Rand, an Blau, aus Weiß; `role="switch"`.
+- **Toggle:** Pille mit Rand (52 × 32 px), an Blau, aus Weiß; `role="switch"`.
+  Die Tippfläche ist 44 px hoch (der Knopf ist größer als die Pille).
 - **Sticker** (`Sticker`): `rounded-kachel border-dick border-rand`, Bricolage
   800 14 px, Töne `sonne` (Standard), `orange` (nur Rekord), `blau`, `weiss`,
   statisch gedreht (−3° Standard, ±6° max). Kurze Etiketten, nie Fließtext.
@@ -157,9 +158,19 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
 - **Felder:** `rounded-inner border-dick border-rand bg-surface-1 px-3`,
   `text-base`, Fokus `focus-visible:ring-2 focus-visible:ring-fokus`.
 - **Pressable / PressableLink:** Druck `scale .985`, Fokusring `ring-fokus`.
-- **Toast:** `bg-strong text-on-strong rounded-pill`. **Skeleton:** `bg-surface-2`.
-- **Fokus & Ziele:** immer `focus-visible:`, Ziele ≥ 44 px, `aria-pressed`
-  an Auswahl, `disabled:opacity-40`.
+- **Toast:** `bg-strong text-on-strong rounded-card` (einzeilig wirkt er wie
+  eine Pille, mehrzeilig bleiben die Ecken ruhig). Er sitzt über Leiste und
+  Dock (`--nav-h`), im Training OBEN unter dem Kopf — nie über „Satz
+  eintragen“. Fehler tragen `role="alert"`. **Skeleton:** `bg-surface-2`.
+- **Fokus & Ziele:** immer `focus-visible:`, Ziele ≥ 44 px (`min-h-11`,
+  `h-11 w-11`; darf die Zeichnung kleiner sein, wächst die Tippfläche über
+  Polster, wie beim Übersichts-Balken im Training), `aria-pressed` an Auswahl,
+  `disabled:opacity-40`. Knöpfe nur mit Symbol tragen ein `aria-label`,
+  Felder ein `aria-label` oder ein `<label>` (der Platzhalter ist kein Name).
+  `npm run pruefe:bedienung` misst beides auf jedem Bildschirm.
+- **Offline:** ohne Netz steht im Kopf ein Sonnen-Etikett „Offline“ (im
+  Training klein unter der Restzeit), `lib/use-offline.ts`. Der Inhalt jeder
+  Seite liegt in `<main>` (AppShell).
 
 ## Signatur-Elemente
 
@@ -241,6 +252,11 @@ Sheets 50.
   Die AppShell misst Leiste + Dock und gibt dem Inhalt so viel Auslauf.
 - Ortsfrage: zwei Kacheln (Zuhause/Studio) mit Rand und kleinem harten
   Schatten, Figur, Übungszahl, Geräte.
+- **Offene Einheit** (`components/home/OffeneEinheit.tsx`): Karte über der
+  Einheitskarte, wenn eine Einheit vor mehr als sechs Stunden begann und
+  schon Sätze drinstehen — „Speichern“ (Tinte) und „Verwerfen“ (`danger`,
+  mit Rückfrage im Blatt). Solange sie steht, gibt es kein Start-Dock.
+  Test-Anker: `role="region"` mit Namen „Offene Einheit“.
 
 ## Fortschritt und Übungsdetail
 
@@ -279,6 +295,11 @@ Sheets 50.
 - **Geräte am Ort:** ChipToggle mit Haken, Ort-Segment „Studio · 10“.
 - **Formularfelder** mit `text-base` (≥ 16 px, sonst zoomt iOS) und dem
   Feld-Rezept; Erfahrungsstufen tragen je einen erklärenden Satz.
+- **Einstellungen → Daten:** „Daten exportieren“, „Backup einspielen“ (Blatt
+  mit „Ergänzen“ als Tinte-Knopf und „Ersetzen“ als `danger`, je ein Satz
+  Erklärung darunter), „Sicherung zurückholen“ (nur wenn es eine gibt, mit
+  Datum und Zahl der Einheiten), „Alle Daten löschen“ (`danger`, Rückfrage im
+  Blatt). Die Knopfnamen sind Test-Anker (`scripts/pruefe-daten.mjs`).
 - **ATLAS-Seite:** Kopf „ATLAS · dein Trainingspartner“ (Bricolage) mit der
   Tages-Direktive, Wochen-Rückblick als Karte; im Gespräch spricht ATLAS mit
   Avatar „A“ und Blase links (Protokollzeilen in Blau), die eigenen Nachrichten
@@ -317,8 +338,13 @@ Sheets 50.
   kürzt sich das Wort, nie die Werte.
 - **Feste Abstände zu `fixed`-Docks sind verboten — Höhe MESSEN**
   (ResizeObserver am Wirt → `paddingBottom` an `session-root`). Gilt für jedes Dock.
-- **Pause:** Blatt mit dickem Rand oben, Restzeit `font-display` readout,
-  „von 1:30“, dicker blauer Balken mit Rand, „Als Nächstes“ gestrichelt
+- **Pause:** Länge je Übung (`restSecFor`, `lib/session-time.ts`):
+  Grundübungen 2:00, sonst 1:30. Die Pause trägt ihre ENDZEIT im Live-Stand
+  (`RestState.endsAt`, `lib/active-session.ts`); die Restzeit kommt aus der
+  Uhr (`lib/use-countdown.ts`) und stimmt deshalb nach Sperre, Hintergrund
+  und Neuladen. Nur `RestPanel` (Anzeige) und `RestCues` (Töne) ticken, nie
+  die Trainingsseite. Blatt mit dickem Rand oben, Restzeit `font-display`
+  readout, „von 2:00“, dicker blauer Balken mit Rand, „Als Nächstes“ gestrichelt
   (gleiche Übung: „Satz 2 · 22,5 kg × 12“, sonst nächste offene Übung, Cardio
   in Minuten, zuletzt „Abschluss“), −15 s / +15 s / „Pause beenden“ (bei 0
   blau), dann die EINE Frage „Wie schwer war Satz N?“ (Kacheln mit Rand,
@@ -348,9 +374,21 @@ Sheets 50.
   Wdh`); `×` nur zwischen Kilo und Wiederholungen. Prompt
   (`lib/atlas/live-tool.ts`) und Datenformat (`lib/atlas/transcript.ts`) ändern
   sich zusammen.
-- Ein Auslöser, ein `AbortController`; Fehler mit Grund
-  (`limit | zeit | netz | aus | abgebrochen`, `abgebrochen` zeigt nichts);
-  während einer Anfrage nichts sperren; Timeouts 60 s.
+- Ein Auslöser, ein `AbortController`; während einer Anfrage nichts sperren.
+- **Fehler haben eine Art** (`lib/atlas/fehler.ts`: `aus | schluessel | zugang
+  | limit | ablehnung | abgeschnitten | ueberlastet | anfrage | unbrauchbar |
+  netz | abgebrochen`, dazu `zeit` beim Plan). Die Oberfläche zeigt den Satz
+  aus `ATLAS_FEHLER_TEXT`; `abgebrochen` zeigt nichts. Ein Fehlersatz steht nie
+  im Chatverlauf: bleibt eine Frage ohne Antwort, steht darunter eine Zeile
+  (`role="alert"`) mit dem Grund und dem Knopf „Erneut senden“.
+- **Ein Weg zu Claude:** `lib/atlas/call.ts` (`atlasJson`, `atlasTextAntwort`),
+  Modelle und Grenzen in `lib/atlas/models.ts`, Anfragen der Oberfläche über
+  `lib/atlas/client.ts` (`atlasKopf`, `atlasStrom`). Keine Route und keine
+  Komponente ruft das SDK oder `fetch("/api/atlas/…")` am Helfer vorbei.
+- **Prompts** in normaler Lautstärke, mit Grund: keine Großbuchstaben, kein
+  „NIE/GENAU“; Längenangaben nur, wo die Oberfläche den Platz vorgibt. Der
+  feste Teil (`STATIC_PREFIX`) enthält nichts Persönliches und nichts, was
+  sich je Anfrage ändert (Datum, Profil, Daten kommen danach).
 
 ## Trainingsort
 
@@ -398,8 +436,9 @@ wählen nur den BEARBEITETEN Ort.
   (Scheiben Blau).
 - **Icon:** `lib/icon-art.tsx` auf Elektroblau, Scheiben Orange, Blase im
   Maskable-Kreis. Bei JEDER Änderung `ICON_VERSION` hochzählen und
-  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen, dazu
-  `CACHE` in `public/sw.js`.
+  „ICON-FASSUNG N“ in `app/icon.tsx` und `app/apple-icon.tsx` mitziehen. Der
+  Service Worker braucht keine Pflege von Hand: `/sw.js` entsteht beim Bauen
+  (`app/sw.js/route.ts` + `worker.js`) und fasst Icons und Manifest nicht an.
 - **Startbild:** Elektroblau, Blase genau mittig bei 45 vw wie im
   iOS-Startbild (`app/apple-splash/[spec]`), die Blase nickt, die Scheiben
   pumpen, dann Wortmarke (Bricolage 52 px weiß) und Sticker mit dem Claim („Eine geht noch.“);

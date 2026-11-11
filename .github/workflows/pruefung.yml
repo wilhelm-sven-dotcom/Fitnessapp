@@ -1,0 +1,41 @@
+# Prüft jeden Pull Request und jeden Stand des Produktions-Branches: Lint,
+# Typen, Unit-Tests, Build, Kontrast und Token-Namen. Rund drei Minuten.
+#
+# Die Prüfungen im Browser (npm run pruefe: ohne Netz, Daten, ATLAS, Bedienung,
+# Tempo) laufen bewusst nicht hier, sondern lokal vor jedem Push: sie messen
+# Zeiten, und auf den geteilten Rechnern von GitHub schwanken die zu stark.
+name: Prüfung
+
+on:
+  pull_request:
+  push:
+    branches:
+      - claude/epic-wright-42h05o
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pruefung-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefung:
+    name: Lint, Typen, Tests, Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build
+      - run: npm run kontrast -- --streng
+      - run: npm run pruefe:tokens -- --streng

@@ -1,18 +1,16 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { ATLAS_MODEL } from "@/lib/atlas/models";
-import { atlasSystem } from "@/lib/atlas/prompts";
-import {
-  BUILD_DAILY_SESSION_TOOL,
-  sanitizeDailySession,
-} from "@/lib/atlas/session-tool";
+import { AtlasFehler, alsAtlasFehler, atlasJson } from "@/lib/atlas/call";
+import { atlasEingang, fehlerAntwort, heuteZeile, text } from "@/lib/atlas/eingang";
+import { atlasSystem, zeitmodell } from "@/lib/atlas/prompts";
+import { DAILY_SESSION_SCHEMA, sanitizeDailySession } from "@/lib/atlas/session-tool";
 import { ALLE_GERAETE } from "@/lib/exercises";
-import { allowRequest, clientKey } from "@/lib/rate-limit";
 import type { SessionVariant } from "@/lib/session-model";
 
 // Needs the Node runtime for the Anthropic SDK.
 export const runtime = "nodejs";
+/** Ein Plan mit Nachdenken kann über eine Minute brauchen. */
+export const maxDuration = 300;
 
-/** Key-Status-Probe für die Einstellungen. */
+/** Schlüssel-Status für ältere Fenster; neu: `/api/atlas/status`. */
 export function GET() {
   return Response.json({ configured: !!process.env.ANTHROPIC_API_KEY });
 }
@@ -20,8 +18,8 @@ export function GET() {
 interface SessionReqBody {
   /** Ids der heute verfügbaren Übungen (Equipment-gefiltert, inkl. eigener). */
   availableIds?: string[];
-  /** Eigene Übungen des Nutzers — stehen nicht im statischen Katalog. */
-  customExercises?: { id?: string; name?: string; pattern?: string; muscle?: string }[];
+  /** Eigene Übungen des Nutzers — stehen nicht im festen Katalog. */
+  customExercises?: { id?: unknown; name?: unknown; pattern?: unknown; muscle?: unknown }[];
   budgetMin?: number;
   wish?: string;
   variant?: SessionVariant;
@@ -31,72 +29,74 @@ interface SessionReqBody {
   persona?: string;
   /** Trainingsort heute: Name + Geräte-Namen (lib/orte.ts geraeteLabels). */
   ort?: { name?: unknown; geraete?: unknown; nurGeraete?: unknown };
+  /** Datum des Geräts, JJJJ-MM-TT. */
+  datum?: string;
 }
 
 const GERAETE_LABELS = new Set(ALLE_GERAETE.map((e) => e.label));
 
 const VARIANT_TASK: Record<SessionVariant, string> = {
   normal:
-    "Baue die HEUTIGE Einheit: bedarfsgerecht (unterversorgte Muskeln und lange nicht gesetzte Reize zuerst), abwechslungsreich (nutze die Breite des Katalogs, wiederhole nicht einfach die letzte Einheit), realistisch fürs Zeitfenster.",
+    "Stell die Einheit für heute zusammen. Sie richtet sich nach dem Bedarf (unterversorgte Muskeln und lange nicht gesetzte Reize zuerst), bringt Abwechslung (nutze die Breite des Katalogs statt die letzte Einheit zu wiederholen) und passt ins Zeitfenster.",
   reset:
-    "Baue einen RÜCKEN-RESET: gewichtsfreie bzw. sehr leichte Stabi-Einheit, die den unteren Rücken beruhigt. Keine belasteten Beugen oder Hinges.",
+    "Stell einen Rücken-Reset zusammen: eine Einheit ohne oder mit sehr leichtem Gewicht, die den unteren Rücken beruhigt und stabilisiert. Belastete Kniebeugen und Hüftbeugen gehören heute nicht hinein.",
   exam:
-    "Baue einen MAXIMALKRAFT-TESTTAG: 3–5 vertraute Grundübungen, je 3 Arbeitssätze mit niedriger Wiederholungszahl (3–6). Technik vor Rekord.",
+    "Stell einen Krafttest zusammen: 3 bis 5 vertraute Grundübungen mit je 3 Arbeitssätzen und wenigen Wiederholungen (3 bis 6). Saubere Technik geht vor Rekord.",
 };
 
-export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return Response.json({ configured: false });
-  if (!allowRequest(`atlas-session:${clientKey(req)}`, 10, 60_000)) {
-    return Response.json(
-      { ok: false, error: "Zu viele Anfragen — kurz warten." },
-      { status: 429 },
-    );
-  }
+/** Einzeiliger, gekappter Text ohne Zeilenumbrüche — für Namen, die in eine
+ *  Liste im Prompt wandern. */
+const kurz = (v: unknown, max: number) =>
+  typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "";
 
-  let body: SessionReqBody;
-  try {
-    body = (await req.json()) as SessionReqBody;
-  } catch {
-    return Response.json({ ok: false, error: "Ungültige Anfrage." }, { status: 400 });
-  }
+export async function POST(req: Request) {
+  const ein = await atlasEingang<SessionReqBody>(req, "session", 10);
+  if (!ein.ok) return ein.antwort;
+  const { body, apiKey } = ein;
 
   const availableIds = (Array.isArray(body.availableIds) ? body.availableIds : [])
-    .filter((x): x is string => typeof x === "string")
+    .filter((x): x is string => typeof x === "string" && x.length <= 80)
     .slice(0, 400);
   if (availableIds.length < 5) {
     return Response.json(
-      { ok: false, error: "Zu wenige verfügbare Übungen." },
+      { ok: false, fehler: "anfrage", error: "Zu wenige verfügbare Übungen." },
       { status: 400 },
     );
   }
 
   const custom = (Array.isArray(body.customExercises) ? body.customExercises : [])
-    .filter((e) => e && typeof e.id === "string" && typeof e.name === "string")
+    .map((e) => ({
+      id: kurz(e?.id, 80),
+      name: kurz(e?.name, 60),
+      pattern: kurz(e?.pattern, 30),
+      muscle: kurz(e?.muscle, 30),
+    }))
+    .filter((e) => e.id && e.name)
     .slice(0, 60);
   const budgetMin = Number.isFinite(body.budgetMin)
     ? Math.max(10, Math.min(180, Math.round(Number(body.budgetMin))))
     : 25;
-  const wish = typeof body.wish === "string" ? body.wish.slice(0, 200) : "";
+  const wish = kurz(body.wish, 200);
   const variant: SessionVariant =
     body.variant === "reset" || body.variant === "exam" ? body.variant : "normal";
-  const context = (body.context ?? "").toString().slice(0, 6000);
-  const persona = (body.persona ?? "").toString().slice(0, 400);
+  const context = text(body.context, 6000);
+  const persona = text(body.persona, 400);
   // Ort nur als Klartext-Hinweis — Name gekappt, Geräte nur aus der bekannten
   // Liste (kein freier Text ins Prompt). Die harte Grenze bleibt availableIds.
-  const ortName =
-    typeof body.ort?.name === "string" ? body.ort.name.replace(/\s+/g, " ").trim().slice(0, 40) : "";
+  const ortName = kurz(body.ort?.name, 40);
   const ortGeraete = (Array.isArray(body.ort?.geraete) ? body.ort.geraete : [])
     .filter((g): g is string => typeof g === "string" && GERAETE_LABELS.has(g))
     .slice(0, ALLE_GERAETE.length);
   const ortNurGeraete = body.ort?.nurGeraete === true;
 
-  // Dynamischer Teil NACH dem gecachten Präfix: Aufgabe, Verfügbarkeit, Kontext.
+  // Veränderlicher Teil NACH dem gecachten Präfix: Aufgabe, Zeit, Verfügbarkeit,
+  // Trainingsdaten.
   const dynamic = [
     VARIANT_TASK[variant],
-    `Zeitfenster: GENAU ${budgetMin} Minuten — der Athlet hat diese Zahl bewusst gesetzt, sie ist eine Vorgabe und keine Richtung. Plane die Einheit so, dass sie in ${budgetMin} Minuten fertig ist (Faustregel: ~3–4 Übungen je 15 Min, danach eine weitere je 5–7 Min; im Zweifel eine Übung weniger statt Überziehen).`,
-    "Was in die Zeit passt, entscheidet der BEDARF, nicht die Reihenfolge im Katalog: nimm zuerst die Muskeln mit dem größten Wochendefizit und der längsten Pause seit dem letzten Reiz. Kurze Einheiten sind kein verkleinertes Ganzkörperprogramm, sondern eine Auswahl — begründe jede Übung in ihrem `intro` mit dem konkreten Grund (Defizit, Tage seit Reiz, Wunsch, Rückenlage).",
-    persona ? persona : "",
+    heuteZeile(body.datum),
+    `Zeitfenster: ${budgetMin} Minuten. Der Athlet hat diese Zahl selbst gewählt, die Einheit soll darin fertig werden. ${zeitmodell()}`,
+    "Wähle nach Bedarf: zuerst die Muskeln mit dem größten Rückstand in dieser Woche und der längsten Zeit seit dem letzten Reiz. Eine kurze Einheit ist eine Auswahl, kein verkleinertes Ganzkörperprogramm. Der Grund für jede Übung gehört in ihr Feld why, die Ansage für den Start in intro.",
+    persona,
     custom.length
       ? `Eigene Übungen des Athleten (zusätzlich wählbar):\n${custom
           .map((e) => `- ${e.id} · ${e.name}${e.pattern ? ` · ${e.pattern}` : ""}${e.muscle ? ` · ${e.muscle}` : ""}`)
@@ -105,54 +105,30 @@ export async function POST(req: Request) {
     ortName
       ? `Trainingsort heute: ${ortName}. Geräte dort: ${ortGeraete.length ? ortGeraete.join(", ") : "keine (nur Körpergewicht)"}.${
           ortNurGeraete
-            ? " Hier trainiert der Athlet NUR an Geräten (Maschinen und Kabelzug) — keine freien Gewichte, kein Körpergewicht."
+            ? " Hier trainiert der Athlet nur an Geräten (Maschinen und Kabelzug), ohne freie Gewichte und ohne Körpergewichtsübungen."
             : ""
         }`
       : "",
-    `HEUTE VERFÜGBAR sind ausschließlich diese Übungs-Ids (Equipment-gefiltert):\n${availableIds.join(", ")}`,
+    `Heute verfügbar sind nur diese Übungs-Ids (nach Geräten gefiltert); andere kann die App nicht übernehmen:\n${availableIds.join(", ")}`,
     `Aktuelle Trainingsdaten:\n${context.trim() || "keine"}`,
-    wish ? `Wunsch des Athleten für heute: „${wish}” — beziehe ihn ein, solange er sinnvoll ist.` : "",
-    "Rufe danach das Tool build_daily_session mit der fertigen Einheit auf.",
+    wish ? `Wunsch des Athleten für heute: „${wish}“. Geh darauf ein, soweit es zum Training passt.` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
 
-  const client = new Anthropic({ apiKey });
   try {
-    const msg = await client.messages.create({
-      model: ATLAS_MODEL,
-      max_tokens: 3000,
+    const { wert } = await atlasJson({
+      apiKey,
+      aufgabe: "plan",
       system: atlasSystem(dynamic),
-      tools: [BUILD_DAILY_SESSION_TOOL],
-      tool_choice: { type: "tool", name: "build_daily_session" },
-      messages: [
-        {
-          role: "user",
-          content: "Stell meine heutige Einheit zusammen.",
-        },
-      ],
+      messages: [{ role: "user", content: "Stell meine heutige Einheit zusammen." }],
+      schema: DAILY_SESSION_SCHEMA,
+      signal: req.signal,
     });
-
-    const block = msg.content.find((b) => b.type === "tool_use");
-    if (!block || block.type !== "tool_use") {
-      return Response.json(
-        { ok: false, error: "ATLAS hat keinen Vorschlag geliefert." },
-        { status: 502 },
-      );
-    }
-
-    const session = sanitizeDailySession(block.input, availableIds, variant);
-    if (!session) {
-      return Response.json(
-        { ok: false, error: "Der Vorschlag war unbrauchbar." },
-        { status: 422 },
-      );
-    }
+    const session = sanitizeDailySession(wert, availableIds, variant);
+    if (!session) throw new AtlasFehler("unbrauchbar", "zu wenige gültige Übungen");
     return Response.json({ ok: true, session });
-  } catch {
-    return Response.json(
-      { ok: false, error: "ATLAS gerade nicht erreichbar." },
-      { status: 502 },
-    );
+  } catch (e) {
+    return fehlerAntwort(alsAtlasFehler(e).art);
   }
 }

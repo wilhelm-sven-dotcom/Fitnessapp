@@ -187,7 +187,7 @@ export default function ExerciseCatalogPage() {
             onClick={() => setFilterBlatt(key)}
             aria-haspopup="dialog"
             className={cn(
-              "flex min-h-10 min-w-0 items-center gap-1.5 rounded-pill px-3.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
+              "flex min-h-11 min-w-0 items-center gap-1.5 rounded-pill px-3.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
               aktiv ? "bg-strong text-on-strong" : "border border-line text-fg",
             )}
           >
@@ -210,7 +210,7 @@ export default function ExerciseCatalogPage() {
               setMuscleFilter(null);
               setOnlyAvailable(false);
             }}
-            className="rounded-pill px-2 py-1 font-semibold text-fg underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
+            className="flex min-h-11 items-center rounded-pill px-2 font-semibold text-fg underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           >
             Filter zurücksetzen
           </Pressable>

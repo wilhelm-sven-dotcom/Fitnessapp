@@ -1,8 +1,9 @@
 "use client";
 
-import { Cloud, CloudOff, Settings } from "lucide-react";
+import { Cloud, CloudOff, Settings, WifiOff } from "lucide-react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NavSlotContext } from "./NavSlot";
 import { PressableLink } from "@/components/ui/PressableLink";
 import { Marke } from "@/components/brand/Marke";
@@ -10,9 +11,16 @@ import { APP_NAME } from "@/lib/marke";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useWakeLock } from "@/components/workout/useWakeLock";
 import { useTraining } from "@/components/providers/TrainingProvider";
+import { useOffline } from "@/lib/use-offline";
 import { BottomNav } from "./BottomNav";
 import { PageTransition } from "./PageTransition";
-import { Welcome } from "@/components/onboarding/Welcome";
+
+// Die Begrüßung sieht man genau einmal — sie gehört nicht ins Bündel, das
+// jede Seite bei jedem Start lädt.
+const Welcome = dynamic(
+  () => import("@/components/onboarding/Welcome").then((m) => m.Welcome),
+  { ssr: false },
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loading, cloud, settings, log, body } = useTraining();
@@ -45,6 +53,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
   const firstRun =
     !settings.onboarded && !cloud.email && log.length === 0 && body.length === 0;
+  const offline = useOffline();
+
+  // Die gemessene Höhe von Leiste und Dock auch am Wurzelelement ablegen: der
+  // Toaster sitzt NEBEN der AppShell und richtet sich danach aus.
+  useEffect(() => {
+    const wurzel = document.documentElement;
+    if (!hideChrome && navH > 0) wurzel.style.setProperty("--nav-h", `${navH}px`);
+    else wurzel.style.removeProperty("--nav-h");
+    return () => {
+      wurzel.style.removeProperty("--nav-h");
+    };
+  }, [hideChrome, navH]);
+
+  // Den Browser bitten, die Daten der App nicht von sich aus zu räumen
+  // (Verlauf, Fotos, Offline-Cache). Fragt nicht nach und schadet nicht, wenn
+  // er ablehnt; erst nach der Einrichtung, damit ein bloßer Besuch nichts
+  // anfordert.
+  useEffect(() => {
+    if (!settings.onboarded) return;
+    void navigator.storage?.persist?.().catch(() => {});
+  }, [settings.onboarded]);
 
   // Zweite Reihe hinter dem Startbild: Das Splash-Overlay (components/start)
   // deckt den Kaltstart ab, dieses Gerüst nur noch den einen Frame, den
@@ -78,6 +107,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="font-display text-2xl font-extrabold">{APP_NAME}</span>
                 </div>
                 <div className="flex items-center gap-1">
+                  {offline && (
+                    <span
+                      role="status"
+                      className="mr-1 inline-flex items-center gap-1.5 rounded-pill border-dick border-rand bg-sonne px-2.5 py-1 text-3xs font-bold text-sonne-auf"
+                    >
+                      <WifiOff size={14} aria-hidden /> Offline
+                    </span>
+                  )}
                   {cloud.configured &&
                     (cloud.email ? (
                       <PressableLink
@@ -109,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </header>
           )}
           <NavSlotContext.Provider value={hideChrome ? null : navSlot}>
-            <div
+            <main
               className="mx-auto max-w-md px-5 pb-28 pt-5"
               style={
                 !hideChrome && navH > 0
@@ -118,7 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }
             >
               <PageTransition>{children}</PageTransition>
-            </div>
+            </main>
           </NavSlotContext.Provider>
           {!hideChrome && <BottomNav navRef={navRef} slotRef={setNavSlot} />}
         </div>

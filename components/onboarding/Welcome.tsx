@@ -109,6 +109,7 @@ export function Welcome() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="z. B. J. Weber"
+            aria-label="Dein Name"
             className="mb-4 min-h-12 w-full rounded-inner border-dick border-rand bg-surface-1 px-3 py-3 text-base text-fg placeholder:text-faint focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
           />
 

@@ -37,7 +37,7 @@ import {
 import { fmtDate, fmtSatz, isoWeek } from "@/lib/format";
 import { sessionVolume } from "@/lib/stats";
 import { plattenNummern } from "@/lib/platte";
-import { weekStartMon } from "@/lib/volume";
+import { weekStartMon } from "@/lib/zeit";
 import { cn } from "@/lib/utils";
 import type { CardioSession, LoggedSession, TrafficLight } from "@/lib/types";
 
@@ -78,6 +78,9 @@ function metricsLine(c: CardioSession): string {
   return parts.join(" · ");
 }
 
+/** Einträge je „Seite“ im Verlauf. */
+const SEITE = 30;
+
 type TimelineItem =
   | { kind: "strength"; date: string; s: LoggedSession; realIdx: number }
   | { kind: "cardio"; date: string; c: CardioSession };
@@ -101,6 +104,9 @@ export function HistoryTab() {
   const router = useRouter();
   /** Aufgeklappte Einheit: `s-‹Index›` (Kraft) bzw. `c-‹Id›` (Cardio). */
   const [expanded, setExpanded] = useState<string | null>(null);
+  /** So viele Einträge stehen im Blatt; „Mehr laden“ legt je 30 nach. Der
+   *  ganze Verlauf auf einmal hieß nach einem Jahr hunderte Karten. */
+  const [sichtbar, setSichtbar] = useState(SEITE);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -248,7 +254,7 @@ export function HistoryTab() {
       </Pressable>
 
       <div className="space-y-2">
-        {items.map((it, idx) => {
+        {items.slice(0, sichtbar).map((it, idx) => {
           const dateOf = (x: (typeof items)[number]) =>
             x.kind === "cardio" ? x.c.date : x.s.date;
           const wk = weekStartMon(new Date(dateOf(it))).getTime();
@@ -392,9 +398,20 @@ export function HistoryTab() {
         })}
       </div>
 
+      {items.length > sichtbar && (
+        <Button
+          variant="secondary"
+          full
+          className="mt-3"
+          onClick={() => setSichtbar((n) => n + SEITE)}
+        >
+          Mehr laden · noch {items.length - sichtbar}
+        </Button>
+      )}
+
       <Link
         href="/settings?seg=verbindungen"
-        className="mt-5 block text-center text-xs text-muted underline-offset-2 hover:underline"
+        className="mt-3 flex min-h-11 items-center justify-center text-center text-xs text-muted underline-offset-2 hover:underline"
       >
         Strava verbinden für automatische Läufe und Fahrten →
       </Link>
@@ -409,7 +426,7 @@ export function HistoryTab() {
                   key={sp}
                   onClick={() => setSport(sp)}
                   className={cn(
-                    "rounded-pill px-3 py-1.5 text-sm font-medium",
+                    "flex min-h-11 items-center rounded-pill px-3.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus",
                     sport === sp ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                   )}
                 >
@@ -469,8 +486,9 @@ export function HistoryTab() {
                 <Pressable
                   key={i.v}
                   onClick={() => setIntensity(i.v)}
+                  aria-pressed={intensity === i.v}
                   className={cn(
-                    "flex-1 rounded-pill py-2 text-sm font-medium",
+                    "min-h-11 flex-1 rounded-pill py-2 text-sm font-medium",
                     intensity === i.v ? "bg-strong text-on-strong" : "bg-surface-2 text-muted",
                   )}
                 >

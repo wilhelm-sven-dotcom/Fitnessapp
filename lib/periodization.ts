@@ -1,5 +1,6 @@
 import type { FatigueBand } from "@/lib/fatigue";
 import type { AppSettings } from "@/lib/types";
+import { TAG_MS } from "@/lib/zeit";
 
 /**
  * Lightweight periodization: where you are in a ~6-week training block and when
@@ -21,12 +22,33 @@ export interface PhaseState {
   focus: string;
 }
 
-const DAY = 86_400_000;
 const CYCLE = 6;
+
+/** So viele Tage gilt eine bestätigte Entlastungswoche. */
+export const ENTLASTUNG_TAGE = 7;
+/** Anteil der Last in der Entlastungswoche (dazu ein Satz weniger). Derselbe
+ *  Faktor gewichtet eine Entlastungs-Einheit in der Belastungskurve. */
+export const ENTLASTUNG_LAST = 0.6;
+/** Derselbe Anteil für Texte („~60 % Last“). */
+export const ENTLASTUNG_PROZENT = Math.round(ENTLASTUNG_LAST * 100);
+
+/**
+ * Läuft gerade eine Entlastungswoche? Die EINE Stelle für diese Frage —
+ * vorher rechneten Provider, Einheiten-Start und Tages-Direktive je für sich.
+ */
+export function deloadAktiv(
+  settings: Pick<AppSettings, "lastDeloadDate">,
+  ref: Date = new Date(),
+): boolean {
+  return (
+    !!settings.lastDeloadDate &&
+    ref.getTime() - new Date(settings.lastDeloadDate).getTime() < ENTLASTUNG_TAGE * TAG_MS
+  );
+}
 
 export function weeksSinceDeload(settings: AppSettings, ref: Date = new Date()): number {
   if (!settings.lastDeloadDate) return Infinity;
-  return (ref.getTime() - new Date(settings.lastDeloadDate).getTime()) / (7 * DAY);
+  return (ref.getTime() - new Date(settings.lastDeloadDate).getTime()) / (7 * TAG_MS);
 }
 
 const COPY: Record<Phase, { title: string; focus: string }> = {
@@ -40,7 +62,7 @@ const COPY: Record<Phase, { title: string; focus: string }> = {
   },
   entlastung: {
     title: "Entlastungswoche",
-    focus: "~60 % Last, ein Satz weniger — Erholung für den nächsten Sprung.",
+    focus: `~${ENTLASTUNG_PROZENT} % Last, ein Satz weniger — Erholung für den nächsten Sprung.`,
   },
 };
 

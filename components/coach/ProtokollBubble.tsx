@@ -23,7 +23,7 @@ function parseBloecke(text: string): Block[] {
     .map((zeile): Block => {
       const m = zeile.match(LABEL_RE);
       return m
-        ? { label: m[1].toUpperCase(), text: m[2] }
+        ? { label: m[1], text: m[2] }
         : { label: null, text: zeile.trim() };
     })
     .filter((b) => b.label != null || b.text !== "");

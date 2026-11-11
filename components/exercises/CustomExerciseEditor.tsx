@@ -142,6 +142,7 @@ export function CustomExerciseEditor({
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="z. B. Landmine Press"
+        aria-label="Name der Übung"
         className={inputClass}
       />
 
@@ -211,7 +212,7 @@ export function CustomExerciseEditor({
               key={u}
               onClick={() => setUnit(u)}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium focus:outline-none",
+                "flex min-h-11 items-center px-4 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fokus",
                 unit === u ? "bg-accent text-on-accent" : "text-muted",
               )}
             >
@@ -223,7 +224,7 @@ export function CustomExerciseEditor({
       <div className="mt-2 flex items-center gap-2">
         <span className="font-mono text-xs text-faint">Sätze</span>
         {[1, 2, 3, 4, 5].map((n) => (
-          <ChipToggle key={n} active={sets === n} onClick={() => setSets(n)}>
+          <ChipToggle key={n} active={sets === n} onClick={() => setSets(n)} className="min-w-11">
             {n}
           </ChipToggle>
         ))}
@@ -269,6 +270,7 @@ export function CustomExerciseEditor({
         value={cue}
         onChange={(e) => setCue(e.target.value)}
         placeholder="Worauf kommt es an?"
+        aria-label="Kurz-Cue, eine Zeile"
         className={inputClass}
       />
 
@@ -278,6 +280,7 @@ export function CustomExerciseEditor({
         onChange={(e) => setSteps(e.target.value)}
         rows={3}
         placeholder={"Ausgangsposition…\nBewegung…\nZurück…"}
+        aria-label="Ausführung, ein Schritt pro Zeile"
         className={cn(inputClass, "resize-none")}
       />
 
@@ -286,6 +289,7 @@ export function CustomExerciseEditor({
         value={back}
         onChange={(e) => setBack(e.target.value)}
         placeholder="Worauf der Rücken achten sollte"
+        aria-label="Rücken-Hinweis, optional"
         className={inputClass}
       />
 
@@ -294,6 +298,7 @@ export function CustomExerciseEditor({
         value={easier}
         onChange={(e) => setEasier(e.target.value)}
         placeholder="Wie man die Übung vereinfacht"
+        aria-label="Leichtere Variante, optional"
         className={inputClass}
       />
 
