@@ -180,10 +180,22 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
   laufende Satz („Satz 2“, Orange), Wochenstand („1 von 3“), Rekord („PR!“,
   „+2 kg“).
 - **Sprechblase:** ATLAS-Sätze auf Heute, im Training, beim Rekord, im Chat.
+- **Bewegungsbilder** (`components/bewegung/BewegungsBild.tsx`,
+  `lib/bewegung.ts`, Dateien in `public/bewegung/`): Illustration mit Person,
+  vier Phasen in EINER Datei, hart abgespielt 1-2-3-4-3-2 (CSS `.bewegung`,
+  2,4 s), Kreisbewegungen 1-2-3-4 (`.bewegung-kreis`, 1,6 s, `IM_KREIS`). Immer in einer Box `aspect-bild`; groß im Übungsdetail (statt
+  Gerätebild und Figur), im Aufwärm-Player und -Blatt, als Kachel `w-28`
+  rechts auf der Trainingskarte (statt Figur bzw. Gerätebild; ein eigenes
+  Gerätefoto hat Vorrang). Steht still bei Figuren aus, reduced motion und
+  erledigter Übung (Phase 1).
 - **Phasenfiguren** (`components/phasen/PhasenFigur.tsx`): die
-  Übungs-Piktogramme, in Tinte (`var(--fg)`) bzw. Weiß auf blauer Übungskarte;
+  Übungs-Piktogramme für alles ohne Bewegungsbild und für Listen (Heute,
+  Katalog), in Tinte (`var(--fg)`) bzw. Weiß auf blauer Übungskarte;
   **kein Raster**. Zoetrop nur im Training, Doppel-Gate
   `settings.zoetrope !== false` UND reduced-motion.
+- **Momentbilder** (`lib/momente.ts`, `public/momente/`): Sticker mit weißer
+  Außenkante für Rekord (PR-Karte), gespeicherte Einheit und die leeren
+  Seiten (`EmptyState bild=…`); Querformate für Begrüßung und Ortsfrage.
 - **Navigation:** BottomNav mit 4 Reitern (Heute, Katalog, Fortschritt, ATLAS),
   je lucide-Symbol + Text 11 px; aktiv als blaue Pille.
 
@@ -219,7 +231,7 @@ Anführungszeichen „…“.
 - Zahlen-Readouts `tabular-nums`; Gewichte in der Oberfläche über
   `fmtGewicht` (Komma), Eingabefelder bleiben `type="number"`.
 - lucide nur als Werkzeug-/Nav-Symbol (16–22 px, ein Strichgewicht);
-  Übungsbilder sind immer Phasenfiguren.
+  Übungsbilder sind Bewegungsbilder oder, ohne Bild, Phasenfiguren.
 
 ## Plattform
 
@@ -251,7 +263,8 @@ Sheets 50.
   nicht für eine erledigte Einheit; läuft eine Einheit, nur „Weiter geht’s“.
   Die AppShell misst Leiste + Dock und gibt dem Inhalt so viel Auslauf.
 - Ortsfrage: zwei Kacheln (Zuhause/Studio) mit Rand und kleinem harten
-  Schatten, Figur, Übungszahl, Geräte.
+  Schatten, Bild des Orts (Studio für Orte mit Maschinen oder Kabelzug, sonst
+  die Ecke zuhause), Übungszahl, Geräte.
 - **Offene Einheit** (`components/home/OffeneEinheit.tsx`): Karte über der
   Einheitskarte, wenn eine Einheit vor mehr als sechs Stunden begann und
   schon Sätze drinstehen — „Speichern“ (Tinte) und „Verwerfen“ (`danger`,
@@ -317,9 +330,10 @@ Sheets 50.
   dickem Rand; Tipp = Übersicht) → **Übungskarte** blau mit Rand und hartem
   Schatten, Figur weiß 56 px, Name `font-display` 2xl (bei Wörtern > 12
   Zeichen xl), Unterzeile „Satz 1 von 3 · Ziel 10–15 Wdh“, Muskel als
-  Sonnen-Sticker an der Kartenkante; bei Geräte-Übungen das eigene Foto als
-  Hintergrund mit `bg-bild-scrim`, sonst statt der Figur die weiße Zeichnung
-  rechts; wischen blättert → Pillen „Anleitung“ /
+  Sonnen-Sticker an der Kartenkante; mit Bewegungsbild statt der Figur die
+  Bewegung als Kachel rechts; bei Geräte-Übungen das eigene Foto als
+  Hintergrund mit `bg-bild-scrim`, sonst statt der Figur das Gerätebild bzw.
+  die weiße Zeichnung rechts; wischen blättert → Pillen „Anleitung“ /
   „Tauschen“ (Rand, Bricolage) → Satzliste → ATLAS-Blase → „Danach ‹Übung›“
   (gestrichelt) → Blättern.
 - **Satzliste:** eingetragen = Pille mit Rand und blauem Haken-Kreis, Rekord
@@ -358,10 +372,10 @@ Sheets 50.
 - Abschluss vor dem Speichern: Dauer · Sätze · Bewegt und je Übung eine Zeile
   (Regions-Quadrat 16 px); danach der Moment nach dem Speichern: **mit Rekord**
   die ganze Fläche Orange (Schrift Tinte), die weiße PR-Karte (Rand, harter
-  Schatten, „PR!“ blau, Übungsname, Figur) springt EINMAL gedreht auf (Feder;
+  Schatten, „PR!“ blau, Übungsname, Pokal-Sticker) springt EINMAL gedreht auf (Feder;
   reduced motion steht sie still), Sonnen-Sticker „+7 kg“, darunter der Satz
   groß, Level-Balken (weiß mit Rand, Füllung blau), ATLAS als Sprechblase,
-  „Teilen“ weiß und „Weiter“ Tinte; **ohne Rekord** Grund, Figur, blauer
+  „Teilen“ weiß und „Weiter“ Tinte; **ohne Rekord** Grund, Sticker Hantel mit Haken, blauer
   Sticker „Erledigt!“, Name, Level, Blase, „Weiter“ blau. Keine Zahl doppelt. Gewichtsrekorde zeigen den gehobenen Satz groß
   und „Geschätztes 1RM“ beschriftet darunter, nie eine nackte e1RM-Zahl.
 - Check-in „Tagesform“: vorbelegt wie zuletzt (≤ 7 Tage), sonst mittlere Stufe;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, LineChart, Play } from "lucide-react";
+import { ChevronDown, ChevronRight, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { LevelSheet } from "@/components/progress/LevelSheet";
@@ -125,7 +125,7 @@ export function OverviewTab() {
   if (log.length === 0) {
     return (
       <EmptyState
-        icon={LineChart}
+        bild="uebersicht-leer"
         title="Noch nichts zu zeigen"
         description="Trainiere ein paar Einheiten. Dann stehen hier Level, Rekorde und der Verlauf jeder Übung."
         action={

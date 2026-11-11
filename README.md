@@ -58,6 +58,10 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 
 ## Weitere Features
 
+- **Bewegungsbilder** — 51 Übungen und Aufwärmübungen zeigen eine
+  Illustration mit Person, die in vier Phasen die Bewegung vormacht: groß im
+  Übungsdetail und beim Aufwärmen, als Kachel auf der Trainingskarte. Übungen
+  ohne Bild zeigen die Phasenfigur (`public/bewegung/README.md`).
 - **Steigerung** — doppelte Progression: Gewicht hoch, sobald alle Sätze die
   obere Wiederholungsgrenze schaffen und mindestens 1 in Reserve bleibt (oder
   bei 3 in Reserve). Entlastungs- und Test-Einheiten sind kein Ausgangswert.
@@ -109,7 +113,9 @@ in `lib/atlas/call.ts`:
   (`fallbacks: "default"`).
 - Nimmt ein Modell die Anfrage gar nicht an (400, 403, 404), geht sie einmal an
   das Ersatzmodell. Fable 5.2 verlangt im Anthropic-Konto 30 Tage
-  Datenaufbewahrung und antwortet sonst mit 400.
+  Datenaufbewahrung und antwortet sonst mit 400. Ist das Guthaben im
+  Anthropic-Konto aufgebraucht, sagt die App genau das („ATLAS pausiert“) und
+  fragt kein Ersatzmodell, denn das Guthaben gilt für alle Modelle.
 - Textströme enden mit einer Statuszeile (`lib/atlas/fehler.ts`). Ein
   Fehlersatz steht nie im Text und damit nie im gespeicherten Chat.
 - Jeder Aufruf schreibt eine Zeile ins Server-Protokoll (`[atlas]`): Aufgabe,
@@ -124,7 +130,7 @@ Modell antwortet, wie schnell, und woran es sonst hängt.
 
 **Service Worker.** `/sw.js` entsteht beim Bauen: `app/sw.js/route.ts` stellt
 vor die Logik (`worker.js`) die Liste aller Skripte, Styles, Schriften und
-Gerätebilder des Builds samt Fingerabdruck. Der Worker lädt beim Installieren
+Bilder (Geräte, Bewegungen, Momente) des Builds samt Fingerabdruck. Der Worker lädt beim Installieren
 diese Liste und die sechs Hauptseiten vor; fehlt etwas, bleibt der bisherige
 Worker im Amt. Seitenaufrufe gehen zuerst ins Netz, höchstens 3 s, dann kommt
 die vorgeladene Seite; `/api/` fasst der Worker nie an. Ein neuer Build

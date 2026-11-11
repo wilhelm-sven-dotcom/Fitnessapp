@@ -1,9 +1,8 @@
 "use client";
 
-import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { Pressable } from "@/components/ui/pressable";
 import { PressableLink } from "@/components/ui/PressableLink";
-import { PATTERN_FIGUR } from "@/lib/phasen/figuren";
+import { momentUrl } from "@/lib/momente";
 import { geraeteLabels, hasFuer, ortMuster } from "@/lib/orte";
 import { availableExercises } from "@/lib/today-session";
 import type { Exercise, GymProfile } from "@/lib/types";
@@ -46,9 +45,16 @@ export function OrtFrage({
               onClick={() => onWaehle(g.id)}
               className="flex min-h-11 flex-col items-start rounded-card border-dick border-rand bg-surface-1 p-4 text-left shadow-hart-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
             >
-              <span aria-hidden className="block w-14 text-fg">
-                <PhasenFigur figur={PATTERN_FIGUR[ortMuster(g)]} color="var(--fg)" />
-              </span>
+              {/* Ort mit Maschinen oder Kabelzug zeigt das Studio, sonst die
+                  Ecke zuhause (gilt auch für eigene Orte). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={momentUrl(ortMuster(g) === "vpull" ? "ort-studio" : "ort-zuhause", true)}
+                alt=""
+                aria-hidden
+                draggable={false}
+                className="aspect-bild w-full rounded-inner object-cover"
+              />
               <span className="mt-2 font-display text-xl font-extrabold leading-tight text-fg">
                 {g.name}
               </span>

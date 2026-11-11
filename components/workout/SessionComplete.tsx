@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { PhasenFigur } from "@/components/phasen/PhasenFigur";
+import { momentUrl } from "@/lib/momente";
 import { AtlasMark } from "@/components/trainer/AtlasMark";
 import { Button } from "@/components/ui/Button";
 import { Sprechblase } from "@/components/ui/Sprechblase";
@@ -213,9 +213,14 @@ export function SessionComplete({
                   </p>
                   <p className="mt-1.5 text-sm font-bold leading-snug text-fg">{sieger.exName}</p>
                 </div>
-                <div aria-hidden className="w-16 shrink-0">
-                  <PhasenFigur figur={sieger.figur} mode="freeze" color="var(--fg)" />
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={momentUrl("rekord")}
+                  alt=""
+                  aria-hidden
+                  draggable={false}
+                  className="h-20 w-20 shrink-0"
+                />
               </motion.div>
               {sieger.delta != null && sieger.delta > 0 && (
                 <Sticker drehung={-10} className="absolute -top-4 left-2 text-base">
@@ -260,16 +265,21 @@ export function SessionComplete({
           </>
         ) : (
           <>
-            {figur && (
-              <motion.div
-                initial={reduce ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={stagger(1)}
-                className="mt-8 w-24"
-              >
-                <PhasenFigur figur={figur} mode="freeze" color="var(--fg)" />
-              </motion.div>
-            )}
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={stagger(1)}
+              className="mt-6"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={momentUrl("gespeichert")}
+                alt=""
+                aria-hidden
+                draggable={false}
+                className="h-36 w-36"
+              />
+            </motion.div>
             <motion.div
               initial={reduce ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}

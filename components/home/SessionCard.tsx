@@ -30,6 +30,7 @@ const FEHLER_TEXT: Record<AtlasFehler, string> = {
   ueberlastet: "Plan: Basisplan. ATLAS ist gerade überlastet",
   aus: "Plan: Basisplan. ATLAS ist nicht eingerichtet",
   schluessel: "Plan: Basisplan. Der Schlüssel für ATLAS wird nicht angenommen",
+  guthaben: "Plan: Basisplan. ATLAS pausiert, das Guthaben im Anthropic-Konto ist aufgebraucht",
   zugang: "Plan: Basisplan. ATLAS braucht den Zugangscode (Einstellungen)",
   ablehnung: "Plan: Basisplan. ATLAS hat die Anfrage abgelehnt",
   abgeschnitten: "Plan: Basisplan. Der Plan von ATLAS kam unvollständig an",

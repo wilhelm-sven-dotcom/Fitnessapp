@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Dumbbell, KeyRound, RotateCw, Sparkles, Trash2 } from "lucide-react";
+import { ChevronRight, Dumbbell, RotateCw, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AtlasEingabe } from "@/components/coach/AtlasEingabe";
@@ -259,7 +259,7 @@ export default function CoachPage() {
     return (
       <div>
         <EmptyState
-          icon={KeyRound}
+          bild="atlas-aus"
           title="ATLAS noch nicht eingerichtet"
           description={
             <>

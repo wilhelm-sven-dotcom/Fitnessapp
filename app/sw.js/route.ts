@@ -7,8 +7,9 @@ import path from "node:path";
  *
  * Die Logik steht in `worker.js` daneben. Diese Route stellt eine Zeile davor:
  * die Liste ALLER Dateien, die der Build erzeugt hat (Skripte, Styles,
- * Schriften aus `.next/static`, dazu die Gerätebilder aus `public/geraete`),
- * und einen Fingerabdruck davon als Kennung.
+ * Schriften aus `.next/static`, dazu die Bilder aus `public/geraete`,
+ * `public/bewegung` und `public/momente`), und einen Fingerabdruck davon als
+ * Kennung.
  *
  * Warum so: Der Worker lädt beim Installieren genau diese Liste vor. Die App
  * hat danach ihren ganzen Code im Cache und braucht im Studio kein Netz mehr —
@@ -56,9 +57,16 @@ export async function GET() {
     .map((f) => adresse("/_next/static/", statisch, f))
     .sort();
 
-  const bilderOrdner = ordner("public", "geraete");
-  const bildDateien = (await dateienIn(bilderOrdner)).filter((f) => f.endsWith(".webp")).sort();
-  const bilder = bildDateien.map((f) => adresse("/geraete/", bilderOrdner, f));
+  // Gerätebilder, Bewegungsbilder (Training, Aufwärmen) und Momente: alles,
+  // was die App im Studio zeigt, auch ohne Netz.
+  const bildDateien: string[] = [];
+  const bilder: string[] = [];
+  for (const name of ["geraete", "bewegung", "momente"]) {
+    const dir = ordner("public", name);
+    const dateien = (await dateienIn(dir)).filter((f) => f.endsWith(".webp")).sort();
+    bildDateien.push(...dateien);
+    bilder.push(...dateien.map((f) => adresse(`/${name}/`, dir, f)));
+  }
 
   if (process.env.NODE_ENV === "production" && !build.some((f) => f.endsWith(".js"))) {
     // Ohne Liste gäbe es einen Worker, der nichts vorlädt und sich trotzdem
@@ -69,7 +77,7 @@ export async function GET() {
   const hash = createHash("sha256").update(quelle);
   for (const f of build) hash.update(f);
   // Bilder tragen keinen Hash im Namen: ihr Inhalt zählt mit.
-  for (const f of bildDateien) hash.update(path.basename(f)).update(await readFile(f));
+  for (const f of bildDateien) hash.update(path.relative(ordner("public"), f)).update(await readFile(f));
   const bau = { v: hash.digest("hex").slice(0, 12), dateien: [...build, ...bilder] };
 
   return new Response(`const BAU = ${JSON.stringify(bau)};\n${quelle}`, {

@@ -3,7 +3,6 @@
 import {
   Activity,
   Bike,
-  Dumbbell,
   Footprints,
   Play,
   Plus,
@@ -196,7 +195,7 @@ export function HistoryTab() {
   if (items.length === 0) {
     return (
       <EmptyState
-        icon={Dumbbell}
+        bild="verlauf-leer"
         title="Noch nichts aufgezeichnet"
         description="Starte deine erste Einheit — danach findest du hier Kraft und Ausdauer in einer Timeline."
         action={

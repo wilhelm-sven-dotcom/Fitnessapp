@@ -57,7 +57,7 @@ export function AppearanceSection() {
           checked={settings.zoetrope !== false}
           onChange={setZoetrope}
           label="Figuren animieren"
-          hint="Die Übungsfiguren blättern mit 8 Bildern pro Sekunde durch ihre Bewegung. Aus: stehendes Bild."
+          hint="Übungsbilder und Figuren zeigen die Bewegung. Aus: stehendes Bild."
         />
       </div>
 

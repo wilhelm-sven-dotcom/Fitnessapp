@@ -2,6 +2,7 @@
 
 import { Pencil, Trash2, Wrench, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { BewegungsBild } from "@/components/bewegung/BewegungsBild";
 import { MyologieFigur } from "@/components/phasen/MyologieFigur";
 import { GeraetBild } from "@/components/geraete/GeraetBild";
 import { GeraetFotoAktionen } from "@/components/geraete/GeraetFotoAktionen";
@@ -9,6 +10,7 @@ import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { PATTERN_LABEL } from "@/lib/exercises";
 import type { MyologieStufe } from "@/lib/heat";
+import { hatBewegung } from "@/lib/bewegung";
 import { geraetVon } from "@/lib/geraete";
 import { figurFor } from "@/lib/phasen/figuren";
 import { MUSCLE_LABEL, muscleOf } from "@/lib/volume";
@@ -115,31 +117,44 @@ export function GuideSheet({
   };
 
   const geraet = geraetVon(ex);
+  const bewegung = hatBewegung(ex?.id);
 
   return (
     <Sheet open={open} onClose={onClose} title={ex?.name}>
       {ex && (
         <>
-          {/* Übung an einem Gerät: das Gerät groß oben — eigenes Foto aus dem
-              Studio, sonst das mitgelieferte Bild oder die Zeichnung. Box im
-              Format der Bilder (3:2), damit nichts abgeschnitten wird. */}
-          {geraet && (
+          {/* Oben groß: die Übung als Bewegung, wenn es ein Bild gibt; sonst
+              bei Geräte-Übungen das Gerät (eigenes Foto aus dem Studio, das
+              mitgelieferte Bild oder die Zeichnung). Box im Format der Bilder
+              (3:2), damit nichts abgeschnitten wird. Die Foto-Aktionen bleiben:
+              das eigene Foto erscheint auf der Trainingskarte und im Katalog. */}
+          {(bewegung || geraet) && (
             <div className="mb-4 space-y-2.5">
               <div className="aspect-bild w-full overflow-hidden rounded-card border-dick border-rand bg-surface-1">
-                <GeraetBild geraet={geraet} className="h-full w-full" />
+                {bewegung ? (
+                  <BewegungsBild
+                    id={ex.id}
+                    steht={settings.zoetrope === false}
+                    titel={`Bewegung: ${ex.name}`}
+                  />
+                ) : (
+                  geraet && <GeraetBild geraet={geraet} className="h-full w-full" />
+                )}
               </div>
-              <GeraetFotoAktionen geraet={geraet} />
+              {geraet && <GeraetFotoAktionen geraet={geraet} />}
             </div>
           )}
           <div className="mb-3 flex items-center gap-3">
-            <div className="w-20 shrink-0" aria-hidden>
-              <PhasenFigur
-                figur={figurFor(ex)}
-                mode="zoetrop"
-                color="var(--fg)"
-                zoetropOn={settings.zoetrope !== false}
-              />
-            </div>
+            {!bewegung && (
+              <div className="w-20 shrink-0" aria-hidden>
+                <PhasenFigur
+                  figur={figurFor(ex)}
+                  mode="zoetrop"
+                  color="var(--fg)"
+                  zoetropOn={settings.zoetrope !== false}
+                />
+              </div>
+            )}
             <div className="flex shrink-0 gap-1" aria-hidden>
               <div className="w-10">
                 <MyologieFigur seite="vorn" stufen={stufen} />

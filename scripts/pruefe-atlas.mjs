@@ -16,6 +16,8 @@
  *   E  Wochen-Rückblick bleibt nach dem Neuladen stehen.
  *   F  Selbsttest: nimmt Fable die Anfrage nicht an, antwortet der Ersatz, und
  *      die Einstellungen sagen das.
+ *   G  Leeres Guthaben im Anthropic-Konto: Selbsttest und Heute sagen das,
+ *      und das Ersatzmodell wird nicht vergeblich gefragt.
  *
  * Was das NICHT zeigt: ob Anthropic diese Anfragen so annimmt. Das prüft
  * „ATLAS testen“ in den Einstellungen gegen die echte Schnittstelle.
@@ -43,7 +45,7 @@ const pruefe = (ok, text) => {
 /** Alle Anfragen, die bei „Claude“ ankamen. */
 const anfragen = [];
 /** Drehbuch: was als Nächstes passieren soll. */
-const lage = { fableNimmtNichtAn: false, chatLehntAb: false };
+const lage = { fableNimmtNichtAn: false, chatLehntAb: false, guthabenLeer: false };
 
 const sse = (res, typ, daten) => res.write(`event: ${typ}\ndata: ${JSON.stringify({ type: typ, ...daten })}\n\n`);
 async function antworte(res, model, stuecke, ende = "end_turn") {
@@ -86,6 +88,17 @@ const ki = http.createServer((req, res) => {
     const frage = body.messages?.at(-1)?.content ?? "";
     anfragen.push({ body, system, frage, beta: req.headers["anthropic-beta"] ?? "" });
 
+    if (lage.guthabenLeer) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        type: "error",
+        error: {
+          type: "invalid_request_error",
+          message: "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.",
+        },
+      }));
+      return;
+    }
     if (lage.fableNimmtNichtAn && body.model === "claude-fable-5-2") {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
@@ -311,6 +324,32 @@ try {
     /30 Tage Datenaufbewahrung/.test(await page.locator("body").innerText()),
     "F · mit dem Grund, den Anthropic nennt",
   );
+
+  // ── G · Guthaben aufgebraucht ──────────────────────────────────────────
+  lage.fableNimmtNichtAn = false;
+  lage.guthabenLeer = true;
+  const vorG = anfragen.length;
+  await page.getByRole("button", { name: "ATLAS testen" }).click();
+  const pausiert = await page
+    .getByText(/ATLAS pausiert: Das Guthaben im Anthropic-Konto ist aufgebraucht/)
+    .first()
+    .waitFor({ timeout: 20000 })
+    .then(() => true, () => false);
+  pruefe(
+    pausiert && anfragen.length - vorG === 2,
+    `G · der Selbsttest sagt „Guthaben aufgebraucht“ und fragt kein Ersatzmodell (${anfragen.length - vorG} Anfragen)`,
+  );
+  // Die Einheit aus C läuft noch und sperrt den Plan; für diese Prüfung weg damit.
+  await page.evaluate(() => localStorage.removeItem("wilhelm-training-active"));
+  await page.goto(BASE + "/", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Neu ansetzen" }).click();
+  const heute = await page
+    .getByText(/ATLAS pausiert, das Guthaben im Anthropic-Konto ist aufgebraucht/)
+    .first()
+    .waitFor({ timeout: 20000 })
+    .then(() => true, () => false);
+  pruefe(heute, "G · Heute nennt den Grund, warum nur der Basisplan steht");
+  lage.guthabenLeer = false;
 } catch (e) {
   pruefe(false, `Ablauf abgebrochen: ${String(e).split("\n")[0]}`);
 } finally {

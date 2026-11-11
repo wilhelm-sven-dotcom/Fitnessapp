@@ -38,9 +38,15 @@ im.resize((360, 240), Image.LANCZOS).save("m_beinpresse-klein.webp", "WEBP", qua
 | `m_rudern` | Rudermaschine | ChatGPT, Prompt unten |
 | `m_schulterpresse` | Schulterpresse | ChatGPT, Prompt unten |
 | `m_butterfly` | Butterfly | ChatGPT, Prompt unten |
+| `m_beinpresse` | 45-Grad-Beinpresse | ChatGPT (G1, Nov 2026) |
+| `m_hacksquat` | Hack-Squat-Maschine | ChatGPT (G2, Nov 2026) |
+| `m_beinstrecker` | Beinstrecker | ChatGPT (G3, Nov 2026) |
+| `m_beinbeuger` | Liegender Beinbeuger | ChatGPT (G4, Nov 2026) |
+| `m_rueckenstrecker` | Rückenstrecker 45 Grad | ChatGPT (G5, Nov 2026) |
+| `m_brustpresse` | Brustpresse | ChatGPT (G6, Nov 2026) |
 
-Noch ohne Bild (zeigen die Zeichnung): `m_beinpresse`, `m_hacksquat`,
-`m_beinstrecker`, `m_beinbeuger`, `m_rueckenstrecker`, `m_brustpresse`.
+Alle elf Studiogeräte haben jetzt ein Bild; die Zeichnung bleibt für eigene
+Geräte-Keys ohne Bild und als Rückfall.
 
 ## Prompt
 

@@ -193,6 +193,13 @@ describe("Strukturierte Antwort", () => {
     assert.equal(anfragen.length, 2);
   });
 
+  test("leeres Guthaben → Fehler „guthaben“, ohne vergeblichen Versuch mit dem Ersatz", async () => {
+    const leer = "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.";
+    const { client, anfragen } = attrappe([{ wirft: apiFehler(400, leer) }, { text: ['{"ok":true}'] }]);
+    assert.equal(await art(atlasJson({ client, aufgabe: "plan", system, messages: frage, schema: SCHEMA })), "guthaben");
+    assert.equal(anfragen.length, 1);
+  });
+
   test("zu viele Anfragen (429) und Überlastung (529) lösen keinen Ersatz aus", async () => {
     for (const [status, erwartet] of [
       [429, "limit"],
@@ -213,6 +220,13 @@ describe("Textstrom", () => {
     const { client } = attrappe([{ text: ["Gute ", "Einheit."] }]);
     const roh = await lies(atlasTextAntwort({ client, aufgabe: "chat", system, messages: frage, v2: true }));
     assert.equal(roh, `Gute Einheit.${STROM_ENDE}{"ok":true}`);
+  });
+
+  test("leeres Guthaben kommt als eigene Fehlerart in der Ende-Zeile an", async () => {
+    const { client, anfragen } = attrappe([{ wirft: apiFehler(400, "Your credit balance is too low to access the Anthropic API.") }]);
+    const roh = await lies(atlasTextAntwort({ client, aufgabe: "chat", system, messages: frage, v2: true }));
+    assert.equal(roh, `${STROM_ENDE}{"ok":false,"fehler":"guthaben"}`);
+    assert.equal(anfragen.length, 1);
   });
 
   test("Fehler steht in der Ende-Zeile, nie im Text", async () => {

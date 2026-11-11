@@ -9,6 +9,8 @@ export type AtlasFehlerArt =
   | "aus"
   /** Der Schlüssel wird nicht angenommen. */
   | "schluessel"
+  /** Das Guthaben im Anthropic-Konto ist aufgebraucht. */
+  | "guthaben"
   /** Zugangscode fehlt oder stimmt nicht (ATLAS_ZUGANGSCODE). */
   | "zugang"
   /** Zu viele Anfragen: eigenes Minuten-Limit oder das von Anthropic. */
@@ -32,6 +34,7 @@ export type AtlasFehlerArt =
 export const ATLAS_FEHLER_TEXT: Record<AtlasFehlerArt, string> = {
   aus: "ATLAS ist nicht eingerichtet.",
   schluessel: "Der Schlüssel für ATLAS wird nicht angenommen.",
+  guthaben: "ATLAS pausiert: Das Guthaben im Anthropic-Konto ist aufgebraucht.",
   zugang: "ATLAS braucht den Zugangscode. Trag ihn in den Einstellungen ein.",
   limit: "ATLAS ist ausgelastet. Versuch es in einer Minute nochmal.",
   ablehnung: "Dazu kann ATLAS nichts sagen.",
@@ -51,6 +54,7 @@ export const istFehlerArt = (x: unknown): x is AtlasFehlerArt =>
 export const ATLAS_FEHLER_STATUS: Record<AtlasFehlerArt, number> = {
   aus: 200,
   schluessel: 502,
+  guthaben: 402,
   zugang: 401,
   limit: 429,
   ablehnung: 422,

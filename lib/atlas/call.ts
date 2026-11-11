@@ -125,6 +125,16 @@ export function grundAus(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/**
+ * Ist das Guthaben im Anthropic-Konto aufgebraucht? Anthropic antwortet dann
+ * mit 400 („Your credit balance is too low …“), für jedes Modell gleich. Ohne
+ * diese Erkennung hieß das für den Nutzer „Anfrage nicht angenommen“, und das
+ * Ersatzmodell wurde vergeblich gefragt.
+ */
+function guthabenLeer(e: unknown): boolean {
+  return e instanceof Anthropic.APIError && /credit balance/i.test(grundAus(e));
+}
+
 /** Ordnet einen geworfenen Fehler einer Art zu. */
 export function alsAtlasFehler(e: unknown): AtlasFehler {
   if (e instanceof AtlasFehler) return e;
@@ -135,6 +145,7 @@ export function alsAtlasFehler(e: unknown): AtlasFehler {
   if (e instanceof Anthropic.AuthenticationError) return new AtlasFehler("schluessel", grund);
   if (e instanceof Anthropic.APIConnectionError) return new AtlasFehler("netz", grund);
   if (e instanceof Anthropic.InternalServerError) return new AtlasFehler("ueberlastet", grund);
+  if (guthabenLeer(e)) return new AtlasFehler("guthaben", grund);
   if (e instanceof Anthropic.APIError)
     return new AtlasFehler((e.status ?? 0) >= 500 ? "ueberlastet" : "anfrage", grund);
   return new AtlasFehler("netz", grund);
@@ -143,6 +154,8 @@ export function alsAtlasFehler(e: unknown): AtlasFehler {
 /** Hat das Modell die Anfrage als solche zurückgewiesen (nicht: überlastet,
  *  nicht: zu viele Anfragen)? Dann lohnt der eine Versuch mit dem Ersatz. */
 function nimmtNichtAn(e: unknown): boolean {
+  // Das Guthaben gilt fürs ganze Konto: das Ersatzmodell scheitert genauso.
+  if (guthabenLeer(e)) return false;
   return (
     e instanceof Anthropic.BadRequestError ||
     e instanceof Anthropic.PermissionDeniedError ||
