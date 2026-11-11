@@ -271,6 +271,64 @@ ABGABE
 Wenn alle Bilder dieses Teils fertig sind: alle unverändert als ZIP, Dateinamen nach dem Muster Z72_Face_Pull_mit_Band.png, dazu eine Liste der Nummern, die nicht gelungen sind, mit Grund.
 ```
 
+## Teil 1 · Nachlieferung (Z17, Z19, Z22, Z23)
+
+Teil 1 kam am 11.11.2026, 19 von 23 Bildern sind eingebaut. Diese vier
+müssen neu, weil die Füße zwischen den Phasen rutschen. Anhängen:
+Z01_Kniebeuge_mit_Kurzhantel_vor_der_Brust.png, Z12_Kniebeuge_Koerpergewicht.png,
+Z21_Split_Squat_mit_Kurzhanteln.png (die drei stehen sauber).
+
+```text
+Erstelle mir vier Bewegungsbilder für eine Fitness-App neu, im exakt gleichen Stil wie die angehängten Bilder: gleiche Person, gleiche Linienstärke, gleiche Farben, gleiches 2 × 2-Raster. Erzeuge die Bilder direkt hintereinander ohne Rückfragen, eins nach dem anderen, und schreib über jedes Bild nur Nummer und Name (z. B. „Z17 · Wandsitz“). Wenn du aufhörst und ich „weiter“ schreibe, machst du mit dem nächsten Bild weiter. Gelingt ein Bild nicht, nenne die Nummer und mach mit dem nächsten weiter. Beginne mit Z17. Diese vier sind im ersten Durchgang daran gescheitert, dass die Füße zwischen den Phasen rutschen; die Punkte unter KORREKTUR sind deshalb Pflicht.
+
+STIL
+- Flache Vektor-Illustration, keine Fotografie, keine Verläufe, keine weichen Schatten.
+- Dicke, gleichmäßige Konturlinien in fast Schwarz (#0E0F14).
+- Polster, Matten und Bänder in Elektroblau (#2F45FF), Hantelscheiben und Kettlebells in Sonnengelb (#FFD43B) mit dunkler Kontur, Stangen, Griffe, Gestelle und Box in Weiß bzw. sehr hellem Grau.
+- Hintergrund einfarbig hellgrau (#EEF0F4), keine Szenerie.
+- Kein Text, keine Zahlen, keine Pfeile oder Bewegungslinien, keine Logos.
+
+PERSON
+- In allen Bildern dieselbe Person wie in den angehängten Bildern: kurze dunkle Haare, Shirt in Signalorange (#FF5A1F), dunkle Shorts (#0E0F14), weiße Schuhe.
+- In jedem Feld genau zwei Arme, zwei Hände, zwei Beine, zwei Füße. Jede Hand hängt sichtbar an ihrem Arm und umfasst ihren Griff sichtbar. Was verdeckt ist, bleibt verdeckt; nichts wird doppelt gezeichnet.
+- Technik korrekt: realistische Gelenkwinkel, neutraler Rücken, Füße fest am Boden.
+
+RASTER (wichtig, die App schneidet die Bilder automatisch)
+- PNG im Querformat 1536 × 1024, keine Größenänderung.
+- 2 × 2 gleich große Felder, getrennt durch schmale reinweiße Stege (#FFFFFF, etwa 8 px), außen kein Rahmen.
+- Oben links Phase 1 (Start), oben rechts Phase 2, unten links Phase 3, unten rechts Phase 4 (Umkehrpunkt). Phase 2 und 3 teilen den Weg gleichmäßig.
+- In jedem Feld dieselbe durchgehende dunkle Bodenlinie (#0E0F14), auf gleicher Höhe und über fast die ganze Feldbreite.
+- In allen vier Feldern exakt derselbe Ausschnitt: Bank, Box, Gestell, Pfosten, Matte, Boden und Person gleich groß und an derselben Stelle. Was fest steht, bewegt sich nicht; nur der Körper und die gehaltenen Gewichte bewegen sich.
+- Person und Ausrüstung halten zu allen Feldrändern Abstand, mindestens ein Zehntel der Feldhöhe. Nichts ragt in den Steg.
+- Ansicht seitlich, leicht schräg von vorn (etwa 20 Grad), außer es steht eine andere Ansicht dabei.
+- Übungen am Boden liegen auf der blauen Matte.
+
+AUSRÜSTUNG
+- Kurzhanteln, Flachbank und Klimmzuggestell wie in den angehängten Bildern.
+- Langhantel: lange helle Stange mit je einer großen gelben Scheibe pro Seite.
+- Kettlebell: gelbe Kugel mit dunklem Griff.
+- Box: stabiler weißer Kasten mit dunkler Kontur, etwa kniehoch.
+- Band: elektroblaues Widerstandsband; wo es befestigt ist, an einem weißen Pfosten wie in den angehängten Bildern.
+- Ringe: zwei Turnringe an Gurten, die am Klimmzuggestell hängen.
+- Schrägbank: Flachbank mit schräg gestellter Lehne.
+
+BILDER
+Z17 Wandsitz: eine schlichte weiße Wand als senkrechter Streifen mit dunkler Kontur hinter der Person, mit Abstand zum Feldrand. Füße einen Schritt vor der Wand. 1 stehend, Rücken an der Wand → 4 Oberschenkel waagrecht, Knie im rechten Winkel, Rücken flach an der Wand. Phase 4 ist deutlich tiefer als Phase 3.
+KORREKTUR: Die Schuhe stehen in allen vier Feldern exakt an derselben Stelle, nur Knie, Hüfte und Oberkörper bewegen sich. Die Wand ist in allen vier Feldern gleich hoch, gleich breit und an derselben Stelle.
+
+Z19 Ausfallschritt rückwärts: 1 aufrecht, Füße nebeneinander → 4 ein Bein weit nach hinten gesetzt, hinteres Knie knapp über dem Boden, vorderer Oberschenkel waagrecht, Rumpf aufrecht.
+KORREKTUR: Der vordere Fuß steht in allen vier Feldern exakt an derselben Stelle wie in Phase 1; nur das hintere Bein setzt nach hinten.
+
+Z22 Seitlicher Ausfallschritt, Frontansicht: breiter Stand. 1 aufrecht → 4 in ein Bein gesetzt, Oberschenkel dieses Beins etwa waagrecht, anderes Bein gestreckt, beide Füße flach.
+KORREKTUR: Beide Füße stehen in allen vier Feldern exakt an denselben Stellen, die Standbreite bleibt gleich; nur Hüfte, Knie und Oberkörper bewegen sich. Die Bodenlinie liegt in allen vier Feldern auf derselben Höhe.
+
+Z23 Cossack Squat, Frontansicht: sehr breiter Stand. 1 aufrecht → 4 ganz tief über einem Bein, Po nahe der Ferse, Fuß flach; das andere Bein gestreckt, Ferse am Boden, Zehen zeigen nach oben.
+KORREKTUR: Beide Fersen bleiben in allen vier Feldern exakt an denselben Stellen, die Standbreite bleibt gleich. Der Fuß des gestreckten Beins dreht nur auf der Ferse nach oben, er rutscht nicht nach außen.
+
+ABGABE
+Wenn alle Bilder dieses Teils fertig sind: alle unverändert als ZIP, Dateinamen nach dem Muster Z17_Wandsitz.png, dazu eine Liste der Nummern, die nicht gelungen sind, mit Grund.
+```
+
 ## Zuordnung für den Einbau
 
 | Prompt | Id | Datei |
