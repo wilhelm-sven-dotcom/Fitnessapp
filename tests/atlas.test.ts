@@ -148,7 +148,7 @@ describe("Form der Anfrage", () => {
     assert.equal(a[0].text, b[0].text);
     assert.deepEqual(a[0].cache_control, { type: "ephemeral" });
     assert.equal(a[1].text, "eins");
-    assert.match(a[0].text, /Pause 2:30/);
+    assert.match(a[0].text, /Pause 2:00/);
     assert.equal(/Peloton/.test(a[0].text), false, "nichts Persönliches im festen Teil");
   });
 });
@@ -298,9 +298,9 @@ describe("Schemas und Härtung", () => {
 describe("Kontext", () => {
   test("das Zeitmodell nennt die echten Pausen der App", () => {
     const z = zeitmodell();
-    assert.match(z, /2:30 bei Grundübungen/);
+    assert.match(z, /2:00 bei Grundübungen/);
     assert.match(z, /1:30 bei eingelenkigen/);
-    assert.match(z, /etwa 9,4 Minuten/);
+    assert.match(z, /etwa 7,9 Minuten/);
     assert.match(z, /etwa 6,4 Minuten/);
   });
 

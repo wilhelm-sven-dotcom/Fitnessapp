@@ -68,7 +68,7 @@ Muskeln (Wochenarbeit in vier Blaustufen).
   rückenschonende Auswahl, 2× rot → Arzt-Hinweis; Rücken-Reset-Einheit.
 - **Automatische Aufwärmsätze** (40 %/65 %) bei der ersten Übung je Muskel +
   geführtes Aufwärm-Programm.
-- **Satzpause** — Grundübungen 2:30, sonst 1:30; läuft aus der Uhr und stimmt
+- **Satzpause** — Grundübungen 2:00, sonst 1:30; läuft aus der Uhr und stimmt
   auch nach Sperre oder Neuladen.
 - **Gym-Modus** — Sprach-Ansagen, Wake-Lock, Spotify-Now-Playing.
 - **Gewichtsstufe je Ort** — zuhause 1,25 kg, im Studio 5 kg: Vorschläge und

@@ -79,8 +79,9 @@ die den Muskel in der **gedehnten Position** unter Last fordern, begünstigen Wa
 **In der App.** Als Prinzip in `TRAINING_PRINCIPLES` → Coach/Builder berücksichtigen es.
 Seit Nov 2026 auch im Training selbst (`restSecFor` in `lib/session-time.ts`):
 Grundübungen (mehrgelenkig: Presse, Kniebeuge, Kreuzheben, Drücken, Rudern, Latzug,
-Klimmzug) pausieren 2:30, alles andere 1:30. Die Zeitschätzung rechnet mit denselben
-Pausen — in ein Zeitfenster passen dadurch weniger Sätze (45 Min: 13 statt 18).
+Klimmzug) pausieren 2:00, alles andere 1:30. Zuerst waren es 2:30; das kostete zu
+viel Umfang. Die Zeitschätzung rechnet mit denselben Pausen, in ein Zeitfenster
+passen dadurch weniger Sätze (Basisplan, 45 Min: 15 statt 18, mit 2:30 waren es 13).
 Aufwärmsätze (40 %/65 %) bekommt nur die erste gewichtete Übung je Muskel
 (`lib/aufwaermsaetze.ts`).
 

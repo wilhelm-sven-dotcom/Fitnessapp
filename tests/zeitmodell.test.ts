@@ -19,9 +19,9 @@ const slot = (id: string, sets = 3, pool: string[] = []): ResolvedSlot => ({
 });
 
 describe("Pause nach Übungsart", () => {
-  it("gibt Grundübungen 2:30", () => {
+  it("gibt Grundübungen 2:00", () => {
     for (const id of ["leg_press", "hack_squat", "chest_press_machine", "shoulder_press_machine", "row_machine", "lat_pulldown", "bench_db", "pullup"])
-      assert.equal(restSecFor(ex(id)), 150, id);
+      assert.equal(restSecFor(ex(id)), 120, id);
   });
 
   it("lässt eingelenkige Übungen, Arme, Schultern, Waden und Rumpf bei 1:30", () => {
@@ -58,7 +58,7 @@ describe("Aufwärmsätze", () => {
 });
 
 describe("Zeitschätzung", () => {
-  it("rechnet Grundübungen mit 2:30 Pause und eingelenkige mit 1:30", () => {
+  it("rechnet Grundübungen mit 2:00 Pause und eingelenkige mit 1:30", () => {
     const grund = estimateSlotMin(ex("leg_press", { sets: 3 }), false);
     const iso = estimateSlotMin(ex("leg_extension", { sets: 3 }), false);
     assert.equal(Math.round((grund - iso) * 60), 3 * (TIME.restGrundSec - TIME.restSec));

@@ -339,12 +339,12 @@ Sheets 50.
 - **Feste Abstände zu `fixed`-Docks sind verboten — Höhe MESSEN**
   (ResizeObserver am Wirt → `paddingBottom` an `session-root`). Gilt für jedes Dock.
 - **Pause:** Länge je Übung (`restSecFor`, `lib/session-time.ts`):
-  Grundübungen 2:30, sonst 1:30. Die Pause trägt ihre ENDZEIT im Live-Stand
+  Grundübungen 2:00, sonst 1:30. Die Pause trägt ihre ENDZEIT im Live-Stand
   (`RestState.endsAt`, `lib/active-session.ts`); die Restzeit kommt aus der
   Uhr (`lib/use-countdown.ts`) und stimmt deshalb nach Sperre, Hintergrund
   und Neuladen. Nur `RestPanel` (Anzeige) und `RestCues` (Töne) ticken, nie
   die Trainingsseite. Blatt mit dickem Rand oben, Restzeit `font-display`
-  readout, „von 2:30“, dicker blauer Balken mit Rand, „Als Nächstes“ gestrichelt
+  readout, „von 2:00“, dicker blauer Balken mit Rand, „Als Nächstes“ gestrichelt
   (gleiche Übung: „Satz 2 · 22,5 kg × 12“, sonst nächste offene Übung, Cardio
   in Minuten, zuletzt „Abschluss“), −15 s / +15 s / „Pause beenden“ (bei 0
   blau), dann die EINE Frage „Wie schwer war Satz N?“ (Kacheln mit Rand,

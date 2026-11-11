@@ -7,8 +7,9 @@ import type { Exercise, Pattern, ResolvedSlot, SetEntry } from "@/lib/types";
 export const TIME = {
   /** Satzpause bei eingelenkigen Übungen, Rumpf, Halteübungen. */
   restSec: 90,
-  /** Satzpause bei Grundübungen (Nutzer-Entscheid Nov 2026: 2:30 statt 1:30). */
-  restGrundSec: 150,
+  /** Satzpause bei Grundübungen (Nutzer-Entscheid Nov 2026: 2:00 statt 1:30;
+   *  2:30 kostete zu viel Umfang, bei 45 Minuten 13 statt 18 Sätze). */
+  restGrundSec: 120,
   repSetSec: 30,
   timedSetSec: 40,
   warmupSetSec: 20,

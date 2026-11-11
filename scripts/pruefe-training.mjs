@@ -5,7 +5,7 @@
  *   B  Das Pausen-Dock verdeckt die Satzliste nicht mehr — per Bounding-Box
  *      gemessen, nicht nach Augenmaß.
  *   C  Ist die Übung fertig, steht der Knopf zur nächsten Übung da.
- *   D  Die Satzpause rechnet aus der Uhr: Grundübungen pausieren 2:30, die
+ *   D  Die Satzpause rechnet aus der Uhr: Grundübungen pausieren 2:00, die
  *      Pause übersteht ein Neuladen und holt nach einem Zeitsprung (iPhone
  *      gesperrt) sofort auf.
  *   E  Meldet der Check-in „Rücken schlecht“, sind rückenkritische Übungen
@@ -187,7 +187,7 @@ if (SHOTS) await page.screenshot({ path: `${SHOTS}/fertig.png` });
   };
   // Die erste Übung des Basisplans ist eine Grundübung (Kniebeuge-Muster).
   const von = (await pause.innerText()).match(/von (\d+:\d+)/)?.[1];
-  pruefe(von === "2:30", `D · Grundübung pausiert 2:30 (Dock sagt „von ${von}“)`);
+  pruefe(von === "2:00", `D · Grundübung pausiert 2:00 (Dock sagt „von ${von}“)`);
   const a = await uhr();
   await pg.waitForTimeout(2100);
   const b = await uhr();

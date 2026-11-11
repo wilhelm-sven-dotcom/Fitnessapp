@@ -685,7 +685,7 @@ export function SessionRunner() {
     }
     // Direkt vorm Pausenstart wecken — der Countdown tönt dann auch aus Timern.
     primeAudio();
-    // Grundübungen pausieren 2:30, alles andere 1:30 (lib/session-time.ts).
+    // Grundübungen pausieren 2:00, alles andere 1:30 (lib/session-time.ts).
     const pauseSek = restSecFor(ex);
     setRest({
       itemId,

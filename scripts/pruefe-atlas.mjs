@@ -195,7 +195,7 @@ try {
   pruefe(
     /Heute ist \p{L}+, der \d+\. \p{L}+ \d{4}\./u.test(plan?.system ?? "") &&
       /Zeitfenster: 25 Minuten/.test(plan.system) &&
-      /2:30 bei Grundübungen/.test(plan.system) &&
+      /2:00 bei Grundübungen/.test(plan.system) &&
       /Trainingsblock: Woche/.test(plan.system),
     "B · im Prompt stehen Datum, Zeitfenster, das echte Zeitmodell und die Lage im Block",
   );
