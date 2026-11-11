@@ -21,13 +21,41 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "crunch",
   "calf_raise_bw",
   // Studio (S)
+  "leg_press",
+  "hack_squat",
+  "leg_extension",
+  "leg_curl",
+  "chest_press_machine",
   "pec_deck",
   "reverse_fly_machine",
+  "shoulder_press_machine",
+  "row_machine",
+  "calf_seated",
   "pull_through",
+  "cable_fly",
+  "cable_row",
+  "lat_pulldown",
   "straight_arm_pulldown",
+  "cable_curl",
+  "tri_cable_oh",
+  "cable_lateral",
+  "cable_chop",
   // Aufwärmen (A)
+  "bike_easy",
+  "jumping_jacks",
   "march_high",
   "cat_cow",
+  "hip_circles",
+  "ankle_rocks",
+  "thoracic_open",
+  "shoulder_circles",
+  "worlds_greatest",
+  "squat_pry",
+  "arm_crossswings",
+  "glute_bridge",
+  "gb_march",
+  "bird_dog",
+  "dead_bug",
   "side_plank_dip",
   "scap_pushup",
   "band_pullapart",
@@ -37,6 +65,13 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "pallof",
 ]);
 
+/**
+ * Bewegungen im Kreis (Kurbel, Hüfte, Arme): Phase 4 geht wieder in Phase 1
+ * über, also Folge 1-2-3-4 statt hin und zurück. Hin und zurück liefe die
+ * Kurbel rückwärts.
+ */
+const IM_KREIS: ReadonlySet<string> = new Set(["bike_easy", "hip_circles", "shoulder_circles"]);
+
 /** Hochzählen, wenn ein Bild ersetzt wird: der Service Worker cacht die URL
  *  dauerhaft, erst ein neuer `?v=` holt die neue Datei. */
 const BEWEGUNG_STAND = 1;
@@ -44,6 +79,11 @@ const BEWEGUNG_STAND = 1;
 /** Gibt es zu dieser Übung ein Bewegungsbild? */
 export function hatBewegung(id: string | null | undefined): boolean {
   return !!id && MIT_BEWEGUNG.has(id);
+}
+
+/** Läuft die Bewegung im Kreis (1-2-3-4) statt hin und zurück (1-2-3-4-3-2)? */
+export function imKreis(id: string | null | undefined): boolean {
+  return hatBewegung(id) && IM_KREIS.has(id as string);
 }
 
 /** URL des Bewegungsbilds oder null. `klein` = Phasen je 360 × 240 (Kachel
@@ -55,3 +95,5 @@ export function bewegungUrl(id: string | null | undefined, klein = false): strin
 
 /** Alle Kennungen mit Bild (für Tests und Prüfskripte). */
 export const BEWEGUNGEN: readonly string[] = [...MIT_BEWEGUNG];
+/** Kennungen, die im Kreis laufen (für Tests). */
+export const KREISE: readonly string[] = [...IM_KREIS];

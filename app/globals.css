@@ -315,8 +315,9 @@ body {
 /* ── Bewegungsbilder (public/bewegung/) ──────────────────────────────────────
    Vier Phasen nebeneinander in EINER Datei, gezeigt über background-position.
    Folge 1-2-3-4-3-2, hart (step-end): Start und Umkehrpunkt je 600 ms, die
-   Zwischenphasen je 300 ms, 2,4 s je Wiederholung. Ohne Animation (reduced
-   motion, Figuren aus, Übung erledigt) steht Phase 1. */
+   Zwischenphasen je 300 ms, 2,4 s je Wiederholung. Kreisbewegungen
+   (`.bewegung-kreis`: Kurbel, Hüfte, Arme) laufen 1-2-3-4 durch, je 400 ms.
+   Ohne Animation (reduced motion, Figuren aus, Übung erledigt) steht Phase 1. */
 @keyframes bewegung {
   0% {
     background-position: 0% 0;
@@ -345,6 +346,27 @@ body {
   background-size: 400% 100%;
   background-position: 0% 0;
   animation: bewegung 2.4s step-end infinite;
+}
+@keyframes bewegung-kreis {
+  0% {
+    background-position: 0% 0;
+  }
+  25% {
+    background-position: 33.3333% 0;
+  }
+  50% {
+    background-position: 66.6667% 0;
+  }
+  75%,
+  100% {
+    background-position: 100% 0;
+  }
+}
+/* Reihenfolge zählt: `.bewegung-steht` und reduced motion stehen danach und
+   schalten auch den Kreis ab. */
+.bewegung-kreis {
+  animation-name: bewegung-kreis;
+  animation-duration: 1.6s;
 }
 .bewegung-steht {
   animation: none;

@@ -183,7 +183,7 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
 - **Bewegungsbilder** (`components/bewegung/BewegungsBild.tsx`,
   `lib/bewegung.ts`, Dateien in `public/bewegung/`): Illustration mit Person,
   vier Phasen in EINER Datei, hart abgespielt 1-2-3-4-3-2 (CSS `.bewegung`,
-  2,4 s). Immer in einer Box `aspect-bild`; groß im Übungsdetail (statt
+  2,4 s), Kreisbewegungen 1-2-3-4 (`.bewegung-kreis`, 1,6 s, `IM_KREIS`). Immer in einer Box `aspect-bild`; groß im Übungsdetail (statt
   Gerätebild und Figur), im Aufwärm-Player und -Blatt, als Kachel `w-28`
   rechts auf der Trainingskarte (statt Figur bzw. Gerätebild; ein eigenes
   Gerätefoto hat Vorrang). Steht still bei Figuren aus, reduced motion und

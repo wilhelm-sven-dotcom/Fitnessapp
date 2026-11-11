@@ -3,7 +3,9 @@
 Je Übung bzw. Aufwärmübung eine Datei mit vier Phasen nebeneinander: Start,
 zwei Zwischenschritte, Umkehrpunkt. Die App spielt sie hart in der Folge
 1-2-3-4-3-2 ab (`components/bewegung/BewegungsBild.tsx`, CSS `.bewegung` in
-`app/globals.css`). Übungen ohne Bild zeigen weiter die Phasenfigur.
+`app/globals.css`). Kreisbewegungen (Kurbel, Hüfte, Arme) laufen 1-2-3-4 durch,
+sonst liefe die Kurbel rückwärts; sie stehen in `IM_KREIS` (`lib/bewegung.ts`).
+Übungen ohne Bild zeigen weiter die Phasenfigur.
 
 ## Dateien
 
@@ -45,12 +47,40 @@ die alte Datei.
 | Z9 | `lateral` | Seitheben |
 | Z10 | `crunch` | Crunches |
 | Z11 | `calf_raise_bw` | Wadenheben (Körpergewicht) |
+| S1 | `leg_press` | Beinpresse |
+| S2 | `hack_squat` | Hack Squat (Maschine) |
+| S3 | `leg_extension` | Beinstrecker (Maschine) |
+| S4 | `leg_curl` | Beinbeuger (Maschine) |
+| S6 | `chest_press_machine` | Brustpresse (Maschine) |
 | S7 | `pec_deck` | Butterfly (Maschine) |
 | S8 | `reverse_fly_machine` | Reverse Butterfly (Maschine) |
+| S9 | `shoulder_press_machine` | Schulterpresse (Maschine) |
+| S10 | `row_machine` | Rudermaschine |
+| S11 | `calf_seated` | Wadenheben sitzend (Maschine) |
 | S12 | `pull_through` | Pull-Through am Kabel |
+| S13 | `cable_fly` | Fliegende am Kabel |
+| S14 | `cable_row` | Rudern am Kabel, sitzend |
+| S15 | `lat_pulldown` | Latzug am Kabel |
 | S16 | `straight_arm_pulldown` | Überzüge am Kabel |
+| S17 | `cable_curl` | Bizeps am Kabel |
+| S19 | `tri_cable_oh` | Trizeps über Kopf am Kabel |
+| S20 | `cable_lateral` | Seitheben am Kabel |
+| S22 | `cable_chop` | Holzfäller am Kabel |
+| A1 | `bike_easy` | Locker einrollen (Bike), im Kreis |
+| A2 | `jumping_jacks` | Hampelmänner |
 | A3 | `march_high` | Marschieren, Knie hoch |
 | A4 | `cat_cow` | Katze-Kuh |
+| A5 | `hip_circles` | Hüftkreisen, im Kreis |
+| A6 | `ankle_rocks` | Sprunggelenk mobilisieren |
+| A7 | `thoracic_open` | Brustwirbelsäule öffnen |
+| A8 | `shoulder_circles` | Schulterkreisen, im Kreis |
+| A9 | `worlds_greatest` | Weltbester Stretch |
+| A10 | `squat_pry` | Tiefe Kniebeuge, federn |
+| A13 | `arm_crossswings` | Armschwünge über Kreuz |
+| A14 | `glute_bridge` | Glute Bridge |
+| A15 | `gb_march` | Glute-Bridge-March (auch die Übung) |
+| A16 | `bird_dog` | Bird Dog |
+| A17 | `dead_bug` | Dead Bug |
 | A18 | `side_plank_dip` | Seitstütz mit Absenken |
 | A19 | `scap_pushup` | Schulterblatt-Liegestütz |
 | A20 | `band_pullapart` | Band auseinanderziehen |
@@ -63,4 +93,7 @@ Geliefert, aber nicht eingebaut: Z6 (Kurzhantelrudern vorgebeugt, beidarmig).
 Der Katalog hat diese Übung nicht; einarmiges und brustgestütztes Rudern
 sehen anders aus.
 
-Noch offen: S1 bis S6, S9 bis S11, S13 bis S15, S17 bis S22; A1, A2, A5 bis A17.
+Noch offen, von ChatGPT wegen Zeichenfehlern zurückgehalten: S5
+(`back_ext`, Rückenstrecker), S18 (`pushdown`, Trizepsdrücken am Kabel), S21
+(`face_pull_cable`, Face Pull am Kabel), A11 (`leg_swings`, Beinpendel), A12
+(`hip_flexor_dyn`, Hüftbeuger dynamisch).

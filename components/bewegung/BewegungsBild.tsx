@@ -1,11 +1,12 @@
 "use client";
 
-import { bewegungUrl } from "@/lib/bewegung";
+import { bewegungUrl, imKreis } from "@/lib/bewegung";
 import { cn } from "@/lib/utils";
 
 /**
  * Eine Übung als Bewegung: vier Phasen aus EINER Datei, hart nacheinander in
- * der Folge 1-2-3-4-3-2 (CSS `.bewegung` in globals.css, kein JS-Timer). Eine
+ * der Folge 1-2-3-4-3-2, Kreisbewegungen (Kurbel, Hüfte, Arme) 1-2-3-4 (CSS
+ * `.bewegung` und `.bewegung-kreis` in globals.css, kein JS-Timer). Eine
  * Datei statt vier, damit beim Phasenwechsel nichts nachlädt und nichts
  * flackert.
  *
@@ -38,7 +39,12 @@ export function BewegungsBild({
       role={titel ? "img" : undefined}
       aria-label={titel}
       aria-hidden={titel ? undefined : true}
-      className={cn("bewegung h-full w-full", steht && "bewegung-steht", className)}
+      className={cn(
+        "bewegung h-full w-full",
+        imKreis(id) && "bewegung-kreis",
+        steht && "bewegung-steht",
+        className,
+      )}
       style={{ backgroundImage: `url("${url}")` }}
     />
   );

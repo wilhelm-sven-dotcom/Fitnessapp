@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readdirSync } from "node:fs";
 import { describe, test } from "node:test";
-import { BEWEGUNGEN, bewegungUrl, hatBewegung } from "@/lib/bewegung";
+import { BEWEGUNGEN, KREISE, bewegungUrl, hatBewegung, imKreis } from "@/lib/bewegung";
 import { LIB, MASCHINEN_KEYS } from "@/lib/exercises";
 import { geraetBildUrl } from "@/lib/geraete";
 import { momentUrl, type Moment } from "@/lib/momente";
@@ -21,7 +21,7 @@ describe("Bewegungsbilder", () => {
   const drills = new Set(WARMUP_CATALOG.map((d) => d.id));
 
   test("jede eingetragene Bewegung hat beide Dateien", () => {
-    assert.ok(BEWEGUNGEN.length >= 20, `${BEWEGUNGEN.length} Bewegungen`);
+    assert.ok(BEWEGUNGEN.length >= 50, `${BEWEGUNGEN.length} Bewegungen`);
     for (const id of BEWEGUNGEN) {
       for (const klein of [false, true]) {
         const url = bewegungUrl(id, klein);
@@ -39,6 +39,14 @@ describe("Bewegungsbilder", () => {
       .filter((f) => f.endsWith(".webp"))
       .map((f) => f.replace(/(-klein)?\.webp$/, ""));
     for (const id of ids) assert.ok(hatBewegung(id), `public/bewegung/${id}: nicht eingetragen`);
+  });
+
+  test("Kreisbewegungen haben ein Bild, alles andere läuft hin und zurück", () => {
+    assert.ok(KREISE.length > 0);
+    for (const id of KREISE) assert.ok(hatBewegung(id), `${id}: im Kreis, aber ohne Bild`);
+    assert.equal(imKreis("bike_easy"), true);
+    assert.equal(imKreis("goblet"), false);
+    assert.equal(imKreis("gibt_es_nicht"), false);
   });
 
   test("ohne Bild gibt es keine Adresse", () => {
