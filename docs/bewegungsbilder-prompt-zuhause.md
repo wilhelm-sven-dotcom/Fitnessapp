@@ -1,10 +1,9 @@
 # Bewegungsbilder Zuhause: Prompt für ChatGPT
 
-Stand Nov 2026: Studio (22 Übungen) und Aufwärmen (24) haben alle ein
+Stand 11.11.2026: Studio (22 Übungen) und Aufwärmen (24) haben alle ein
 Bewegungsbild, im freien Bereich (Kurzhantel, Langhantel, Kettlebell, Band,
-Ringe, Box, Bank, Körpergewicht) erst 14 von 93. Die übrigen 79 Motive stehen
-hier, als vier Teile mit je einem vollständigen Prompt (Z12 bis Z90, Nummern
-fortlaufend nach Z1 bis Z11).
+Ringe, Box, Bank, Körpergewicht) 84 von 93. Die Teile 1 bis 4 sind geliefert
+und eingebaut; offen sind die neun Motive unter „Nachlieferung“ am Ende.
 
 So gehst du vor:
 
@@ -271,15 +270,15 @@ ABGABE
 Wenn alle Bilder dieses Teils fertig sind: alle unverändert als ZIP, Dateinamen nach dem Muster Z72_Face_Pull_mit_Band.png, dazu eine Liste der Nummern, die nicht gelungen sind, mit Grund.
 ```
 
-## Teil 1 · Nachlieferung (Z17, Z19, Z22, Z23)
+## Nachlieferung (9 Bilder: Z17, Z19, Z22, Z23, Z59, Z60, Z71, Z85, Z88)
 
-Teil 1 kam am 11.11.2026, 19 von 23 Bildern sind eingebaut. Diese vier
-müssen neu, weil die Füße zwischen den Phasen rutschen. Anhängen:
-Z01_Kniebeuge_mit_Kurzhantel_vor_der_Brust.png, Z12_Kniebeuge_Koerpergewicht.png,
-Z21_Split_Squat_mit_Kurzhanteln.png (die drei stehen sauber).
+Aus Teil 1 sind 19 von 23 eingebaut, aus den Teilen 2 bis 4 51 von 56. Diese
+neun müssen neu. Anhängen: Z12_Kniebeuge_Koerpergewicht.png,
+Z21_Split_Squat_mit_Kurzhanteln.png, Z36_Liegestuetze.png,
+Z57_Chin-ups.png, Z62_Hammer_Curls.png (alle fünf stehen sauber).
 
 ```text
-Erstelle mir vier Bewegungsbilder für eine Fitness-App neu, im exakt gleichen Stil wie die angehängten Bilder: gleiche Person, gleiche Linienstärke, gleiche Farben, gleiches 2 × 2-Raster. Erzeuge die Bilder direkt hintereinander ohne Rückfragen, eins nach dem anderen, und schreib über jedes Bild nur Nummer und Name (z. B. „Z17 · Wandsitz“). Wenn du aufhörst und ich „weiter“ schreibe, machst du mit dem nächsten Bild weiter. Gelingt ein Bild nicht, nenne die Nummer und mach mit dem nächsten weiter. Beginne mit Z17. Diese vier sind im ersten Durchgang daran gescheitert, dass die Füße zwischen den Phasen rutschen; die Punkte unter KORREKTUR sind deshalb Pflicht.
+Erstelle mir neun Bewegungsbilder für eine Fitness-App neu, im exakt gleichen Stil wie die angehängten Bilder: gleiche Person, gleiche Linienstärke, gleiche Farben, gleiches 2 × 2-Raster. Erzeuge die Bilder direkt hintereinander ohne Rückfragen, eins nach dem anderen, und schreib über jedes Bild nur Nummer und Name (z. B. „Z17 · Wandsitz“). Wenn du aufhörst und ich „weiter“ schreibe, machst du mit dem nächsten Bild weiter. Gelingt ein Bild nicht, nenne die Nummer und mach mit dem nächsten weiter. Beginne mit Z17. Diese neun sind im ersten Durchgang gescheitert; die Punkte unter KORREKTUR sind deshalb Pflicht.
 
 STIL
 - Flache Vektor-Illustration, keine Fotografie, keine Verläufe, keine weichen Schatten.
@@ -324,6 +323,20 @@ KORREKTUR: Beide Füße stehen in allen vier Feldern exakt an denselben Stellen,
 
 Z23 Cossack Squat, Frontansicht: sehr breiter Stand. 1 aufrecht → 4 ganz tief über einem Bein, Po nahe der Ferse, Fuß flach; das andere Bein gestreckt, Ferse am Boden, Zehen zeigen nach oben.
 KORREKTUR: Beide Fersen bleiben in allen vier Feldern exakt an denselben Stellen, die Standbreite bleibt gleich. Der Fuß des gestreckten Beins dreht nur auf der Ferse nach oben, er rutscht nicht nach außen.
+
+Z59 Negativ-Klimmzüge, Frontansicht: Obergriff an der Stange des Klimmzuggestells. 1 Kinn über der Stange, Arme gebeugt → 4 hängend mit gestreckten Armen, Knie leicht angewinkelt.
+KORREKTUR: Die Stange ist so hoch, dass die Füße auch in Phase 4 deutlich über dem Boden schweben; kein Fuß berührt oder überschneidet die Bodenlinie.
+
+Z60 Schulterblatt-Klimmzüge: hängend an der Stange, Arme in allen vier Feldern gestreckt. 1 passiv hängend, Schultern hochgezogen bis zu den Ohren → 4 Schultern deutlich nach unten gezogen, Brust vorgewölbt; der ganze Körper hängt dadurch sichtbar etwa eine Handbreit höher.
+KORREKTUR: Der Unterschied zwischen Phase 1 und 4 muss deutlich zu sehen sein, am Abstand zwischen Kopf und Stange.
+
+Z71 Reverse Curls im Obergriff: stehend, mit zwei Kurzhanteln, keine Langhantel. Handrücken zeigen nach vorn. 1 Arme gestreckt, Hanteln vor den Oberschenkeln → 4 Unterarme hochgebeugt, Handrücken zeigen nach oben, Ellbogen am Körper.
+
+Z85 Scheibenwischer, Ansicht vom Fußende: Rückenlage auf der Matte, Arme seitlich ausgestreckt am Boden, Knie angewinkelt über der Hüfte. 1 Knie weit zur linken Bildseite abgesenkt → 2 Knie halb zurück zur Mitte → 3 Knie halb zur rechten Bildseite → 4 Knie weit zur rechten Bildseite abgesenkt.
+KORREKTUR: Die Knie wandern Phase für Phase gleichmäßig von der linken zur rechten Bildseite, nie zurück. Schultern und Arme bleiben am Boden.
+
+Z88 Mountain Climbers: Liegestützposition auf der Matte, Arme gestreckt, Hüfte tief, die Hände bleiben in allen Feldern an derselben Stelle. 1 das dem Betrachter zugewandte Knie ganz an der Brust, das andere Bein gestreckt hinten → 4 das abgewandte Knie ganz an der Brust, das zugewandte Bein gestreckt hinten. Phase 2 und 3 zeigen den Wechsel: beide Knie auf halbem Weg.
+KORREKTUR: Phase 1 und Phase 4 unterscheiden sich deutlich: In Phase 1 ist das eine, in Phase 4 das andere Knie an der Brust.
 
 ABGABE
 Wenn alle Bilder dieses Teils fertig sind: alle unverändert als ZIP, Dateinamen nach dem Muster Z17_Wandsitz.png, dazu eine Liste der Nummern, die nicht gelungen sind, mit Grund.
