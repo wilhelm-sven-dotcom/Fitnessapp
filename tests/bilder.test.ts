@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readdirSync } from "node:fs";
 import { describe, test } from "node:test";
-import { BEWEGUNGEN, KREISE, bewegungUrl, hatBewegung, imKreis } from "@/lib/bewegung";
+import { BEWEGUNGEN, GLEICHE_BEWEGUNGEN, KREISE, bewegungUrl, hatBewegung, imKreis } from "@/lib/bewegung";
 import { LIB, MASCHINEN_KEYS } from "@/lib/exercises";
 import { geraetBildUrl } from "@/lib/geraete";
 import { momentUrl, type Moment } from "@/lib/momente";
@@ -47,6 +47,15 @@ describe("Bewegungsbilder", () => {
     assert.equal(imKreis("bike_easy"), true);
     assert.equal(imKreis("goblet"), false);
     assert.equal(imKreis("gibt_es_nicht"), false);
+  });
+
+  test("gleiche Bewegung: Katalog-Übung nutzt das Bild der Aufwärmübung", () => {
+    for (const [uebung, bild] of Object.entries(GLEICHE_BEWEGUNGEN)) {
+      assert.ok(uebungen.has(uebung), `${uebung} gibt es im Katalog nicht`);
+      assert.ok(BEWEGUNGEN.includes(bild), `${bild} hat kein Bild`);
+      assert.equal(bewegungUrl(uebung), bewegungUrl(bild));
+      assert.equal(bewegungUrl(uebung, true), bewegungUrl(bild, true));
+    }
   });
 
   test("ohne Bild gibt es keine Adresse", () => {

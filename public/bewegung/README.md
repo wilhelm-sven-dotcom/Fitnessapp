@@ -98,7 +98,13 @@ Geliefert, aber nicht eingebaut: Z6 (Kurzhantelrudern vorgebeugt, beidarmig).
 Der Katalog hat diese Übung nicht; einarmiges und brustgestütztes Rudern
 sehen anders aus.
 
-Damit sind alle Motive der Blöcke S und A eingebaut. Kleine Restfehler, beim
+Damit sind alle Motive der Blöcke S und A eingebaut: alle 22 Studio-Übungen
+und alle 24 Aufwärmübungen haben ein Bild. Im freien Bereich (Kurzhantel,
+Langhantel, Kettlebell, Band, Ringe, Box, Bank, Körpergewicht) sind es erst 14
+von 93; Bird Dog und Dead Bug aus dem Katalog nutzen dabei die Bilder der
+gleichnamigen Aufwärmübungen (`GLEICH_WIE` in `lib/bewegung.ts`). Der Prompt
+für die übrigen 79 steht in `docs/bewegungsbilder-prompt-zuhause.md` (Z12 bis
+Z90). Kleine Restfehler, beim
 Abspielen kaum sichtbar: S5 rundet unten den Rücken (Abrollen statt neutraler
 Rücken), bei S18 setzt das Kabel am Ende der Stange an statt in der Mitte, bei
 S21 endet in Phase 3 ein Seilende an der Schulter statt in der Hand.
