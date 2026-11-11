@@ -109,7 +109,9 @@ in `lib/atlas/call.ts`:
   (`fallbacks: "default"`).
 - Nimmt ein Modell die Anfrage gar nicht an (400, 403, 404), geht sie einmal an
   das Ersatzmodell. Fable 5.2 verlangt im Anthropic-Konto 30 Tage
-  Datenaufbewahrung und antwortet sonst mit 400.
+  Datenaufbewahrung und antwortet sonst mit 400. Ist das Guthaben im
+  Anthropic-Konto aufgebraucht, sagt die App genau das („ATLAS pausiert“) und
+  fragt kein Ersatzmodell, denn das Guthaben gilt für alle Modelle.
 - Textströme enden mit einer Statuszeile (`lib/atlas/fehler.ts`). Ein
   Fehlersatz steht nie im Text und damit nie im gespeicherten Chat.
 - Jeder Aufruf schreibt eine Zeile ins Server-Protokoll (`[atlas]`): Aufgabe,
