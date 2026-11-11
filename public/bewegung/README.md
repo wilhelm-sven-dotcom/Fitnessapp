@@ -51,6 +51,7 @@ die alte Datei.
 | S2 | `hack_squat` | Hack Squat (Maschine) |
 | S3 | `leg_extension` | Beinstrecker (Maschine) |
 | S4 | `leg_curl` | Beinbeuger (Maschine) |
+| S5 | `back_ext` | Rückenstrecker (Maschine/Bank) |
 | S6 | `chest_press_machine` | Brustpresse (Maschine) |
 | S7 | `pec_deck` | Butterfly (Maschine) |
 | S8 | `reverse_fly_machine` | Reverse Butterfly (Maschine) |
@@ -63,8 +64,10 @@ die alte Datei.
 | S15 | `lat_pulldown` | Latzug am Kabel |
 | S16 | `straight_arm_pulldown` | Überzüge am Kabel |
 | S17 | `cable_curl` | Bizeps am Kabel |
+| S18 | `pushdown` | Trizepsdrücken am Kabel |
 | S19 | `tri_cable_oh` | Trizeps über Kopf am Kabel |
 | S20 | `cable_lateral` | Seitheben am Kabel |
+| S21 | `face_pull_cable` | Face Pull am Kabel |
 | S22 | `cable_chop` | Holzfäller am Kabel |
 | A1 | `bike_easy` | Locker einrollen (Bike), im Kreis |
 | A2 | `jumping_jacks` | Hampelmänner |
@@ -76,6 +79,8 @@ die alte Datei.
 | A8 | `shoulder_circles` | Schulterkreisen, im Kreis |
 | A9 | `worlds_greatest` | Weltbester Stretch |
 | A10 | `squat_pry` | Tiefe Kniebeuge, federn |
+| A11 | `leg_swings` | Beinpendel |
+| A12 | `hip_flexor_dyn` | Hüftbeuger dynamisch |
 | A13 | `arm_crossswings` | Armschwünge über Kreuz |
 | A14 | `glute_bridge` | Glute Bridge |
 | A15 | `gb_march` | Glute-Bridge-March (auch die Übung) |
@@ -93,7 +98,7 @@ Geliefert, aber nicht eingebaut: Z6 (Kurzhantelrudern vorgebeugt, beidarmig).
 Der Katalog hat diese Übung nicht; einarmiges und brustgestütztes Rudern
 sehen anders aus.
 
-Noch offen, von ChatGPT wegen Zeichenfehlern zurückgehalten: S5
-(`back_ext`, Rückenstrecker), S18 (`pushdown`, Trizepsdrücken am Kabel), S21
-(`face_pull_cable`, Face Pull am Kabel), A11 (`leg_swings`, Beinpendel), A12
-(`hip_flexor_dyn`, Hüftbeuger dynamisch).
+Damit sind alle Motive der Blöcke S und A eingebaut. Kleine Restfehler, beim
+Abspielen kaum sichtbar: S5 rundet unten den Rücken (Abrollen statt neutraler
+Rücken), bei S18 setzt das Kabel am Ende der Stange an statt in der Mitte, bei
+S21 endet in Phase 3 ein Seilende an der Schulter statt in der Hand.

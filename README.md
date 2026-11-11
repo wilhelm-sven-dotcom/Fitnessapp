@@ -58,7 +58,7 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 
 ## Weitere Features
 
-- **Bewegungsbilder** — 51 Übungen und Aufwärmübungen zeigen eine
+- **Bewegungsbilder** — 56 Übungen und Aufwärmübungen zeigen eine
   Illustration mit Person, die in vier Phasen die Bewegung vormacht: groß im
   Übungsdetail und beim Aufwärmen, als Kachel auf der Trainingskarte. Übungen
   ohne Bild zeigen die Phasenfigur (`public/bewegung/README.md`).
