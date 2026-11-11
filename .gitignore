@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Bildschirmfotos aus scripts/fotos.mjs
 .fotos/
+
+# Python-Bytecode (scripts/bewegungsbild.py)
+__pycache__/
