@@ -64,9 +64,18 @@ export const istStudio = (g: GymProfile) => /studio/i.test(g.name);
 const equipKey = (equip: readonly string[]) => [...equip].sort().join(",");
 
 /** Erkennt Ortswechsel UND Geräte-Änderungen am selben Ort (inkl. „nur an
- *  Geräten“). */
-export function ortSignatur(g: Pick<GymProfile, "id" | "equip" | "nurGeraete">): string {
-  return `${g.id}|${equipKey(g.equip)}${g.nurGeraete ? "|nurGeraete" : ""}`;
+ *  Geräten“). Mit `ausgeblendet` auch eine geänderte Auswahl im Katalog: wer
+ *  Übungen ein- oder ausblendet, bekommt die Einheit neu zusammengestellt.
+ *  Ohne ausgeblendete Übungen bleibt die Signatur wie bisher. */
+export function ortSignatur(
+  g: Pick<GymProfile, "id" | "equip" | "nurGeraete">,
+  ausgeblendet?: readonly string[],
+): string {
+  const ort = `${g.id}|${equipKey(g.equip)}${g.nurGeraete ? "|nurGeraete" : ""}`;
+  if (!ausgeblendet?.length) return ort;
+  let h = 5381;
+  for (const ch of [...ausgeblendet].sort().join(",")) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0;
+  return `${ort}|aus:${ausgeblendet.length}:${h.toString(36)}`;
 }
 
 /** Geräte-Namen in Listenreihenfolge (für Anzeige und ATLAS). */

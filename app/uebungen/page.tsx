@@ -54,8 +54,23 @@ interface Gruppe {
 }
 
 export default function ExerciseCatalogPage() {
-  const { allLib, exerciseVideos, has, disabledExercises, toggleExerciseDisabled, gyms, activeGym } =
-    useTraining();
+  const {
+    allLib,
+    exerciseVideos,
+    has,
+    disabledExercises,
+    toggleExerciseDisabled,
+    setzeAusgeblendeteUebungen,
+    gyms,
+    activeGym,
+  } = useTraining();
+  // Ausgeblendete Übungen plant weder der Basisplan noch ATLAS. Sind es viele,
+  // bleibt kaum Auswahl; ein Tipp blendet alle wieder ein (mit Rückgängig).
+  const ausgeblendet = useMemo(() => {
+    const ids = new Set(allLib.map((e) => e.id));
+    return disabledExercises.filter((id) => ids.has(id)).length;
+  }, [allLib, disabledExercises]);
+  const [vorEinblenden, setVorEinblenden] = useState<string[] | null>(null);
   // Katalog nach Ort: null = der heutige Ort; „alle“ = der ganze Katalog.
   const [sicht, setSicht] = useState<string | null>(null);
   const sichtId = sicht ?? activeGym?.id ?? "alle";
@@ -216,6 +231,35 @@ export default function ExerciseCatalogPage() {
           </Pressable>
         )}
       </div>
+
+      {(ausgeblendet > 0 || vorEinblenden) && (
+        <div
+          role="status"
+          className="mb-4 flex items-center gap-3 rounded-inner border-dick border-rand bg-surface-1 px-3.5 py-2.5"
+        >
+          <p className="min-w-0 flex-1 text-sm leading-snug text-fg">
+            {ausgeblendet > 0
+              ? `${ausgeblendet} ${ausgeblendet === 1 ? "Übung ist" : "Übungen sind"} ausgeblendet und ${ausgeblendet === 1 ? "wird" : "werden"} nicht geplant.`
+              : "Alle Übungen sind wieder eingeblendet."}
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
+            onClick={() => {
+              if (ausgeblendet > 0) {
+                setVorEinblenden(disabledExercises);
+                setzeAusgeblendeteUebungen([]);
+              } else if (vorEinblenden) {
+                setzeAusgeblendeteUebungen(vorEinblenden);
+                setVorEinblenden(null);
+              }
+            }}
+          >
+            {ausgeblendet > 0 ? "Alle einblenden" : "Rückgängig"}
+          </Button>
+        </div>
+      )}
 
       {groups.length === 0 ? (
         <EmptyState

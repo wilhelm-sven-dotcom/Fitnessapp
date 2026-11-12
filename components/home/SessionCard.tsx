@@ -20,7 +20,7 @@ import { presc } from "@/lib/progression";
 import { startWeight } from "@/lib/start-weight";
 import { muscleOf, MUSCLE_LABEL } from "@/lib/volume";
 import type { DailySession } from "@/lib/session-model";
-import type { AtlasFehler } from "@/lib/today-session";
+import { ATLAS_MIN_UEBUNGEN, uebungsLage, type AtlasFehler } from "@/lib/today-session";
 import type { Exercise } from "@/lib/types";
 
 /** Warum nur der Basisplan steht — vorher hieß JEDER Ausgang „nicht
@@ -34,6 +34,8 @@ const FEHLER_TEXT: Record<AtlasFehler, string> = {
   schluessel: "Plan: Basisplan. Der Schlüssel für ATLAS wird nicht angenommen",
   guthaben: "Plan: Basisplan. ATLAS pausiert, das Guthaben im Anthropic-Konto ist aufgebraucht",
   zugang: "Plan: Basisplan. ATLAS braucht den Zugangscode (Einstellungen)",
+  // „wenig“ bekommt unten die Zahlen des Orts.
+  wenig: "Plan: Basisplan. Für ATLAS sind hier zu wenige Übungen wählbar",
   ablehnung: "Plan: Basisplan. ATLAS hat die Anfrage abgelehnt",
   abgeschnitten: "Plan: Basisplan. Der Plan von ATLAS kam unvollständig an",
   unbrauchbar: "Plan: Basisplan. Der Plan von ATLAS war nicht zu gebrauchen",
@@ -76,7 +78,7 @@ export function SessionCard({
   /** Slot für den „Rücken schonen"-Schalter der Startseite. */
   spareSlot?: React.ReactNode;
 }) {
-  const { lastPerf, settings, body, weightStep } = useTraining();
+  const { lastPerf, settings, body, weightStep, has, disabledExercises } = useTraining();
   const byId = useMemo(() => new Map(allLib.map((e) => [e.id, e])), [allLib]);
 
   // Gewichts-Vorschlag je Übung (presc; ohne Historie: Startgewichts-Engine)
@@ -107,13 +109,25 @@ export function SessionCard({
     });
   }, [session.items, byId, lastPerf, settings, body, weightStep]);
 
+  // ATLAS plant erst ab fünf wählbaren Übungen. Die Meldung sagt, woran es
+  // liegt: im Katalog ausgeblendet oder zu wenige Geräte am Ort.
+  const wenigText = useMemo(() => {
+    const { aktiv, ausgeblendet } = uebungsLage(allLib, has, disabledExercises);
+    const n = aktiv === 1 ? "ist nur 1 Übung" : `sind nur ${aktiv} Übungen`;
+    return ausgeblendet > 0
+      ? `Plan: Basisplan. ATLAS braucht mindestens ${ATLAS_MIN_UEBUNGEN} Übungen, hier ${n} aktiv. ${ausgeblendet} sind im Katalog ausgeblendet`
+      : `Plan: Basisplan. ATLAS braucht mindestens ${ATLAS_MIN_UEBUNGEN} Übungen, mit den Geräten hier ${n} möglich (Einstellungen → Orte & Geräte)`;
+  }, [allLib, has, disabledExercises]);
+
   const quelle = regenerating
     ? "Plan: Basisplan steht — ATLAS stellt gerade um"
     : session.source === "atlas"
       ? "Plan: von ATLAS zusammengestellt"
       : settings.aiPlanning === false
         ? "Plan: Basisplan (KI abgeschaltet)"
-        : FEHLER_TEXT[atlasFehler ?? "netz"];
+        : atlasFehler === "wenig"
+          ? wenigText
+          : FEHLER_TEXT[atlasFehler ?? "netz"];
 
   return (
     <div className="mb-4 space-y-3">

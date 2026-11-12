@@ -118,7 +118,10 @@ in `lib/atlas/call.ts`:
   das Ersatzmodell. Fable 5.2 verlangt im Anthropic-Konto 30 Tage
   Datenaufbewahrung und antwortet sonst mit 400. Ist das Guthaben im
   Anthropic-Konto aufgebraucht, sagt die App genau das („ATLAS pausiert“) und
-  fragt kein Ersatzmodell, denn das Guthaben gilt für alle Modelle.
+  fragt kein Ersatzmodell, denn das Guthaben gilt für alle Modelle. ATLAS plant
+  erst ab fünf wählbaren Übungen am Ort; darunter nennt Heute die Zahlen
+  (aktiv, im Katalog ausgeblendet) statt „nicht eingerichtet“, und der Katalog
+  bietet „Alle einblenden“ mit Rückgängig.
 - Textströme enden mit einer Statuszeile (`lib/atlas/fehler.ts`). Ein
   Fehlersatz steht nie im Text und damit nie im gespeicherten Chat.
 - Jeder Aufruf schreibt eine Zeile ins Server-Protokoll (`[atlas]`): Aufgabe,
