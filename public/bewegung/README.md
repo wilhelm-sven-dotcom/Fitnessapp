@@ -11,6 +11,9 @@ sonst liefe die Kurbel rückwärts; sie stehen in `IM_KREIS` (`lib/bewegung.ts`)
 
 - `<id>.webp`: vier Phasen je 720 × 480 (Übungsdetail, Aufwärmen)
 - `<id>-klein.webp`: vier Phasen je 360 × 240 (Kachel auf der Trainingskarte)
+- `<id>-mini.webp`: Vorschaubild 132 × 132 für Listen (Heute, Katalog): Phase 3,
+  quadratisch eng um Person und Gerät. Entsteht mit; für alle neu:
+  `python3 scripts/bewegungsbild.py --mini`
 - `<id>` = Übungs-Id aus `lib/exercises.ts` bzw. Drill-Id aus `lib/warmup.ts`
 
 ## Neues Bild

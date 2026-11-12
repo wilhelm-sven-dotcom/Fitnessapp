@@ -1,3 +1,5 @@
+import type { Pattern } from "@/lib/types";
+
 /**
  * Bewegungsbilder (`public/bewegung/`): je Übung bzw. Aufwärmübung eine Datei
  * mit vier Phasen nebeneinander (Start, zwei Zwischenschritte, Umkehrpunkt),
@@ -188,6 +190,31 @@ export function bewegungUrl(id: string | null | undefined, klein = false): strin
   if (!hatBewegung(id)) return null;
   return `/bewegung/${bildId(id as string)}${klein ? "-klein" : ""}.webp?v=${BEWEGUNG_STAND}`;
 }
+
+/** URL des Vorschaubilds für Listen (Phase 3, quadratisch, 132 × 132) oder null. */
+export function bewegungMiniUrl(id: string | null | undefined): string | null {
+  if (!hatBewegung(id)) return null;
+  return `/bewegung/${bildId(id as string)}-mini.webp?v=${BEWEGUNG_STAND}`;
+}
+
+/**
+ * Die Übung, deren Vorschaubild für ein ganzes Bewegungsmuster steht
+ * (Gruppenkopf und Filter im Katalog).
+ */
+export const MUSTER_BILD: Readonly<Record<Pattern, string>> = {
+  squat: "squat_bw",
+  lunge: "walking_lunge",
+  hinge: "rdl_db",
+  hpush: "pushup",
+  vpush: "ohp_stand",
+  hpull: "row1",
+  vpull: "pullup",
+  arm: "curl",
+  lateral: "lateral",
+  core: "plank",
+  calf: "calf_raise_bw",
+  cardio: "bike_easy",
+};
 
 /** Alle Kennungen mit Bild (für Tests und Prüfskripte). */
 export const BEWEGUNGEN: readonly string[] = [...MIT_BEWEGUNG];

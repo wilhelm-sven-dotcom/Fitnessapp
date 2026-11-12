@@ -7,7 +7,16 @@
 import assert from "node:assert/strict";
 import { existsSync, readdirSync } from "node:fs";
 import { describe, test } from "node:test";
-import { BEWEGUNGEN, GLEICHE_BEWEGUNGEN, KREISE, bewegungUrl, hatBewegung, imKreis } from "@/lib/bewegung";
+import {
+  BEWEGUNGEN,
+  GLEICHE_BEWEGUNGEN,
+  KREISE,
+  MUSTER_BILD,
+  bewegungMiniUrl,
+  bewegungUrl,
+  hatBewegung,
+  imKreis,
+} from "@/lib/bewegung";
 import { LIB, MASCHINEN_KEYS } from "@/lib/exercises";
 import { geraetBildUrl } from "@/lib/geraete";
 import { momentUrl, type Moment } from "@/lib/momente";
@@ -30,6 +39,17 @@ describe("Bewegungsbilder", () => {
     }
   });
 
+  test("jede Bewegung hat ihr Vorschaubild für Listen, jedes Muster ein Bild", () => {
+    for (const id of BEWEGUNGEN) {
+      const url = bewegungMiniUrl(id);
+      assert.ok(url && existsSync(datei(url)), `${id}: Vorschaubild fehlt`);
+    }
+    for (const [muster, id] of Object.entries(MUSTER_BILD))
+      assert.ok(hatBewegung(id), `Muster ${muster}: ${id} hat kein Bild`);
+    assert.equal(bewegungMiniUrl("birddog"), bewegungMiniUrl("bird_dog"));
+    assert.equal(bewegungMiniUrl("gibt_es_nicht"), null);
+  });
+
   test("jede Bewegung gehört zu einer Übung oder Aufwärmübung der App", () => {
     for (const id of BEWEGUNGEN) assert.ok(uebungen.has(id) || drills.has(id), `${id} gibt es nicht`);
   });
@@ -37,7 +57,7 @@ describe("Bewegungsbilder", () => {
   test("keine Datei ohne Eintrag", () => {
     const ids = readdirSync("public/bewegung")
       .filter((f) => f.endsWith(".webp"))
-      .map((f) => f.replace(/(-klein)?\.webp$/, ""));
+      .map((f) => f.replace(/(-klein|-mini)?\.webp$/, ""));
     for (const id of ids) assert.ok(hatBewegung(id), `public/bewegung/${id}: nicht eingetragen`);
   });
 
