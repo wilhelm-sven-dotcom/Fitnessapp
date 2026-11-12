@@ -1,7 +1,7 @@
 /** Orte: Gewichtsstufe, ein Ort je Name (lib/orte.ts). */
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { ensureOrte, freierOrtsname, gewichtsstufe, ORT_ZUHAUSE_ID } from "@/lib/orte";
+import { ensureOrte, freierOrtsname, gewichtsstufe, ORT_ZUHAUSE_ID, ortSignatur } from "@/lib/orte";
 import type { AppSettings, GymProfile } from "@/lib/types";
 
 describe("Gewichtsstufe je Ort", () => {
@@ -59,5 +59,22 @@ describe("Ein Ort je Name", () => {
     assert.equal(freierOrtsname("Zuhause", [alt, { id: "x", name: "Zuhause 2" }]), "Zuhause 3");
     // Umbenennen auf den eigenen Namen ist kein Konflikt.
     assert.equal(freierOrtsname("Zuhause", [alt, studio], "gym_abc"), "Zuhause");
+  });
+});
+
+describe("Signatur des Orts", () => {
+  const ort: GymProfile = { id: "gym_zuhause", name: "Zuhause", equip: ["db", "bench"] };
+
+  test("ohne ausgeblendete Übungen bleibt sie wie bisher", () => {
+    assert.equal(ortSignatur(ort), "gym_zuhause|bench,db");
+    assert.equal(ortSignatur(ort, []), ortSignatur(ort));
+  });
+
+  test("ändert sich mit der Auswahl im Katalog, die Reihenfolge ist egal", () => {
+    const a = ortSignatur(ort, ["pushup", "plank"]);
+    assert.notEqual(a, ortSignatur(ort));
+    assert.equal(a, ortSignatur(ort, ["plank", "pushup"]));
+    assert.notEqual(a, ortSignatur(ort, ["pushup"]));
+    assert.notEqual(a, ortSignatur(ort, ["pushup", "crunch"]));
   });
 });

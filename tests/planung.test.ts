@@ -5,6 +5,7 @@ import { stressesInjury } from "@/lib/progression";
 import { generateFallbackSession } from "@/lib/session-fallback";
 import { passeZeitAn, schoneRuecken, type DailySession } from "@/lib/session-model";
 import { estimateSessionMin } from "@/lib/session-time";
+import { ATLAS_MIN_UEBUNGEN, uebungsLage } from "@/lib/today-session";
 import { resolveDailySession } from "@/lib/session-model";
 import { einheit, ex, hasStudio, hasZuhause, satz, uebung } from "./helfer";
 
@@ -164,5 +165,26 @@ describe("ATLAS-Plan und Zeitfenster", () => {
     const s = plan(["leg_press", "chest_press_machine", "row_machine"]);
     const r = passeZeitAn(s, LIB, hasStudio, 90, { nurKuerzen: true });
     assert.deepEqual(r.items, s.items);
+  });
+});
+
+describe("Auswahl für ATLAS", () => {
+  it("zählt, was der Ort hergibt und was im Katalog ausgeblendet ist", () => {
+    const alle = uebungsLage(LIB, hasZuhause);
+    assert.ok(alle.aktiv >= 50, `${alle.aktiv} aktiv`);
+    assert.equal(alle.ausgeblendet, 0);
+
+    // Fast alles ausgeblendet: es bleiben zwei, ATLAS braucht fünf.
+    const bleibt = new Set(["bench_incline", "hanging_knee_raise"]);
+    const aus = LIB.filter((e) => !bleibt.has(e.id)).map((e) => e.id);
+    const wenig = uebungsLage(LIB, hasZuhause, aus);
+    assert.equal(wenig.aktiv, 2);
+    assert.equal(wenig.ausgeblendet, alle.aktiv - 2);
+    assert.ok(wenig.aktiv < ATLAS_MIN_UEBUNGEN);
+  });
+
+  it("ohne Geräte bleiben die Körpergewichts-Übungen, Cardio zählt nicht mit", () => {
+    const r = uebungsLage(LIB, () => false);
+    assert.equal(r.aktiv, LIB.filter((e) => e.pattern !== "cardio" && e.req.every((t) => t === "none")).length);
   });
 });

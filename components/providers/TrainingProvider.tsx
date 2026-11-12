@@ -307,6 +307,9 @@ interface TrainingContextValue {
   /** Deaktivierte Übungs-Ids — raus aus Planung/Tausch, sichtbar im Katalog. */
   disabledExercises: string[];
   toggleExerciseDisabled: (id: string) => void;
+  /** Die Liste der im Katalog ausgeblendeten Übungen ersetzen (leer = alle
+   *  wieder planbar; die alte Liste = Rückgängig). */
+  setzeAusgeblendeteUebungen: (ids: string[]) => void;
   setExerciseVideo: (exId: string, url: string | null) => void;
   setWarmupVideo: (drillId: string, url: string | null) => void;
   setExerciseNote: (exId: string, note: string | null) => void;
@@ -1472,6 +1475,10 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       setDisabledExercises(next);
       void storage.setJSON(KEYS.disabledExercises, next);
     };
+    const setzeAusgeblendeteUebungen = (ids: string[]) => {
+      setDisabledExercises(ids);
+      void storage.setJSON(KEYS.disabledExercises, ids);
+    };
     const updateCustom = (id: string, data: CustomExerciseInput) => {
       void saveCustom(custom.map((e) => (e.id === id ? buildCustom(id, data) : e)));
     };
@@ -1857,6 +1864,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       removeCustom,
       disabledExercises,
       toggleExerciseDisabled,
+      setzeAusgeblendeteUebungen,
       setExerciseVideo,
       setWarmupVideo,
       setExerciseNote,

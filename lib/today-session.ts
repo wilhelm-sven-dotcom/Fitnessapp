@@ -80,7 +80,25 @@ export interface AtlasSessionRequest {
  * `abgebrochen` ist KEIN Fehler: so endet jede Anfrage, die von einer neueren
  * verdrängt wurde (Weiterklicken am Zeitregler) — dazu gehört keine Meldung.
  */
-export type AtlasFehler = AtlasFehlerArt | "zeit";
+export type AtlasFehler = AtlasFehlerArt | "zeit" | "wenig";
+
+/** So viele wählbare Übungen braucht ATLAS mindestens für einen Plan. */
+export const ATLAS_MIN_UEBUNGEN = 5;
+
+/**
+ * Wie viele Übungen der Ort mit seinen Geräten hergibt: `aktiv` sind planbar,
+ * `ausgeblendet` hat der Nutzer im Katalog abgeschaltet. Erklärt, warum ATLAS
+ * nicht plant, wenn zu wenige übrig sind.
+ */
+export function uebungsLage(
+  allLib: Exercise[],
+  has: (k: string) => boolean,
+  disabled?: readonly string[],
+): { aktiv: number; ausgeblendet: number } {
+  const moeglich = availableExercises(allLib, has).length;
+  const aktiv = availableExercises(allLib, has, disabled).length;
+  return { aktiv, ausgeblendet: moeglich - aktiv };
+}
 
 export type AtlasSessionErgebnis =
   | { session: DailySession }
@@ -104,13 +122,15 @@ export async function requestAtlasSession(
     if (typeof navigator !== "undefined" && !navigator.onLine)
       return { fehler: "netz" };
     let avail = availableExercises(req.allLib, req.has, req.disabled);
-    if (avail.length < 5) return { fehler: "aus" };
+    // Zu wenig Auswahl ist kein „nicht eingerichtet“: die Oberfläche nennt
+    // die Zahlen und wo es sich ändern lässt.
+    if (avail.length < ATLAS_MIN_UEBUNGEN) return { fehler: "wenig" };
     // Rückenschonung ist eine harte Grenze, kein Hinweis im Prompt: was den
     // unteren Rücken belastet, steht heute gar nicht erst zur Wahl (solange
     // genug übrig bleibt).
     if (req.backSafe) {
       const schonend = avail.filter((e) => !stressesInjury(e, "rücken"));
-      if (schonend.length >= 5) avail = schonend;
+      if (schonend.length >= ATLAS_MIN_UEBUNGEN) avail = schonend;
     }
 
     const contextParts = [

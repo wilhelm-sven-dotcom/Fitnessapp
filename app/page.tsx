@@ -159,12 +159,13 @@ export default function HomePage() {
 
   const sessionLocked = !!running || !!todaySession?.completedAt;
 
-  // Trainingsort: die Signatur dieses Renders (Ort-Id + Geräte). compose()
+  // Trainingsort: die Signatur dieses Renders (Ort-Id + Geräte + im Katalog
+  // ausgeblendete Übungen). compose()
   // stempelt sie auf die Einheit — weicht sie später ab, passt die Einheit
   // nicht mehr zum Ort.
   const mehrereOrte = gyms.length >= 2;
   const ortJetzt = activeGym
-    ? { id: activeGym.id, name: activeGym.name, sig: ortSignatur(activeGym) }
+    ? { id: activeGym.id, name: activeGym.name, sig: ortSignatur(activeGym, disabledExercises) }
     : undefined;
 
   /** Frisch komponieren: Fallback sofort, ATLAS ersetzt still, wenn möglich.
