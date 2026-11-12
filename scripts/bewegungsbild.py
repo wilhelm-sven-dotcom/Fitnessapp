@@ -3,6 +3,7 @@
     python3 scripts/bewegungsbild.py <raster.png> <id> [<raster.png> <id> ...]
     python3 scripts/bewegungsbild.py --ziel <ordner> <raster.png> <id> ...
     python3 scripts/bewegungsbild.py --anker x0,y0,x1,y1 <raster.png> <id> ...
+    python3 scripts/bewegungsbild.py --mini [<id> ...]
 
 Braucht Pillow und numpy (`pip install pillow numpy`).
 
@@ -15,6 +16,12 @@ Ablauf je Bild:
      ablegen:
        public/bewegung/<id>.webp        vier Phasen je 720 × 480
        public/bewegung/<id>-klein.webp  vier Phasen je 360 × 240
+  4. Vorschaubild für Listen: Phase 3, quadratisch eng um Person und Gerät
+     geschnitten:
+       public/bewegung/<id>-mini.webp   132 × 132
+
+`--mini` rechnet nur die Vorschaubilder neu, aus den vorhandenen großen
+Dateien (ohne Ids: für alle).
 
 Danach die Kennung in `lib/bewegung.ts` eintragen. Ob die Geräte still
 stehen, zeigt `--zwiebel <datei.png>`: alle vier Phasen übereinander; was
@@ -35,6 +42,8 @@ from PIL import Image
 
 GRUND = np.array([0xEE, 0xF0, 0xF4], dtype=np.int16)  # Hintergrund der Bilder
 GROSS, KLEIN = (720, 480), (360, 240)
+MINI = 132  # Vorschaubild für Listen (44 px bei dreifacher Dichte)
+MINI_PHASE = 2  # Phase 3: immer mitten in der Bewegung
 
 
 def _steg(a: np.ndarray, achse: int) -> tuple[int, int]:
@@ -157,7 +166,35 @@ def speichere(bilder: list[Image.Image], ziel: Path, kennung: str) -> list[Path]
         p = ziel / f"{kennung}{anhang}.webp"
         bogen.save(p, "WEBP", quality=80, method=6)
         out.append(p)
+    out.append(mini(out[0]))
     return out
+
+
+def mini(gross: Path) -> Path:
+    """Vorschaubild aus der großen Datei: Phase 3, Quadrat eng um den Inhalt."""
+    bogen = Image.open(gross).convert("RGB")
+    fw = bogen.width // 4
+    f = np.asarray(bogen.crop((MINI_PHASE * fw, 0, (MINI_PHASE + 1) * fw, bogen.height))).astype(np.int16)
+    grund = np.median(f[:24, :24].reshape(-1, 3), axis=0)
+    _, gy = bodenlinie(f)
+    inhalt = np.abs(f - grund).max(axis=2) > 30
+    # Bodenlinie (auch wenn sie mehrere Zeilen dick ist) und alles darunter
+    # zählt nicht zum Inhalt.
+    dunkel = (f.max(axis=2) < 110).mean(axis=1)
+    oben = gy
+    while oben - 1 >= 0 and gy - oben < 14 and dunkel[oben - 1] > 0.3:
+        oben -= 1
+    inhalt[max(0, oben - 2):] = False
+    ys, xs = np.where(inhalt)
+    x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), min(f.shape[0], gy + 4)
+    seite = int(round(max(x1 - x0, y1 - y0) * 1.08))
+    cx, unten = (x0 + x1) // 2, y1 + (seite - (y1 - y0)) // 2
+    links, oben = cx - seite // 2, unten - seite
+    feld = Image.new("RGB", (seite, seite), tuple(int(v) for v in grund))
+    feld.paste(Image.fromarray(f.astype(np.uint8)), (-links, -oben))
+    ziel = gross.with_name(gross.stem + "-mini.webp")
+    feld.resize((MINI, MINI), Image.LANCZOS).save(ziel, "WEBP", quality=82, method=6)
+    return ziel
 
 
 def zwiebel(bilder: list[Image.Image], datei: Path) -> None:
@@ -167,6 +204,14 @@ def zwiebel(bilder: list[Image.Image], datei: Path) -> None:
 
 def main(argv: list[str]) -> int:
     ziel = Path(__file__).resolve().parent.parent / "public" / "bewegung"
+    if argv and argv[0] == "--mini":
+        dateien = [ziel / f"{k}.webp" for k in argv[1:]] or sorted(
+            f for f in ziel.glob("*.webp") if not f.stem.endswith(("-klein", "-mini"))
+        )
+        for f in dateien:
+            mini(f)
+        print(f"{len(dateien)} Vorschaubilder in {ziel}")
+        return 0
     zwiebel_datei = None
     auftraege: list[tuple[str, str, tuple[int, int, int, int] | None]] = []
     rest: list[str] = []

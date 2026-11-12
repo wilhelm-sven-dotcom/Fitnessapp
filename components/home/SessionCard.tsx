@@ -2,6 +2,7 @@
 
 import { Pencil, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
+import { BewegungsMini } from "@/components/bewegung/BewegungsMini";
 import { GeraetBild } from "@/components/geraete/GeraetBild";
 import { PhasenFigur } from "@/components/phasen/PhasenFigur";
 import { Kicker } from "@/components/ui/Kicker";
@@ -10,6 +11,7 @@ import { Sprechblase } from "@/components/ui/Sprechblase";
 import { WishBar } from "@/components/home/WishBar";
 import { useTraining } from "@/components/providers/TrainingProvider";
 import { effectiveProfile } from "@/lib/athlete";
+import { hatBewegung } from "@/lib/bewegung";
 import { fmtGewicht } from "@/lib/format";
 import { REGION_AUF, REGION_FLAECHE, regionOf } from "@/lib/phasen/band";
 import { geraetVon } from "@/lib/geraete";
@@ -149,8 +151,10 @@ export function SessionCard({
                   >
                     <GeraetBild geraet={geraetVon(z.ex)!} dekorativ klein />
                   </span>
+                ) : hatBewegung(z.ex.id) ? (
+                  <BewegungsMini id={z.ex.id} />
                 ) : (
-                  <span aria-hidden className="w-8 shrink-0">
+                  <span aria-hidden className="w-11 shrink-0 px-1.5">
                     <PhasenFigur figur={figurFor(z.ex)} color="var(--fg)" />
                   </span>
                 )}

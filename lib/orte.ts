@@ -82,6 +82,25 @@ export function ortMuster(g: Pick<GymProfile, "equip">): Pattern {
   return "squat";
 }
 
+/**
+ * Ortsname, den es noch nicht gibt: „Zuhause“ → „Zuhause 2“, wenn ein anderer
+ * Ort schon so heißt (Groß/Klein egal). Gleichnamige Orte sind in der
+ * Ortswahl nicht zu unterscheiden, `ensureOrte` legt sie beim nächsten Laden
+ * zusammen. `ausserId` = der Ort, der gerade umbenannt wird.
+ */
+export function freierOrtsname(
+  name: string,
+  gyms: readonly Pick<GymProfile, "id" | "name">[],
+  ausserId?: string,
+): string {
+  const vergeben = new Set(gyms.filter((g) => g.id !== ausserId).map((g) => g.name.toLowerCase()));
+  if (!vergeben.has(name.toLowerCase())) return name;
+  for (let n = 2; ; n++) {
+    const kandidat = `${name} ${n}`;
+    if (!vergeben.has(kandidat.toLowerCase())) return kandidat;
+  }
+}
+
 export interface OrteErgebnis {
   gyms: GymProfile[];
   settings: AppSettings;
@@ -94,8 +113,8 @@ export interface OrteErgebnis {
  * nach einem Import), BEVOR die Oberfläche rendert:
  * · keine Orte → „Zuhause“ aus der geladenen Geräteliste
  * · „Mein Gym“ (alter Auto-Name) heißt jetzt „Zuhause“
- * · Dubletten aus dem Cloud-Merge zweier Geräte (gleicher Name, gleiche
- *   Geräte) fallen weg
+ * · Je Name bleibt ein Ort (Dubletten aus dem Cloud-Merge oder aus einem
+ *   alten Profil): der aktive, sonst der vorbelegte, sonst der erste
  * · Erstlauf (`orteM1` fehlt): der aktive Ort übernimmt einmalig die flache
  *   Liste (die bis dahin die Wahrheit war), „Studio“ kommt dazu, wenn es
  *   keinen Studio-Ort gibt. Danach `orteM1` — ein gelöschtes Studio kommt
@@ -119,13 +138,19 @@ export function ensureOrte(
     return ort;
   });
 
-  const gesehen = new Set<string>();
-  gyms = gyms.filter((g) => {
-    const k = `${g.name.toLowerCase()}|${equipKey(g.equip)}`;
-    if (gesehen.has(k)) return false;
-    gesehen.add(k);
-    return true;
-  });
+  // Je Name bleibt EIN Ort. Zwei „Zuhause“ entstehen, wenn ein altes Profil
+  // („Mein Gym“, eigene Id) und der vorbelegte Ort zusammenkommen; in der
+  // Ortswahl lassen sie sich nicht unterscheiden. Es bleibt der gerade aktive,
+  // sonst der vorbelegte, sonst der erste, mit SEINEN Geräten.
+  const rang = (g: GymProfile) =>
+    g.id === settings.activeGymId ? 0 : g.id === ORT_ZUHAUSE_ID || g.id === ORT_STUDIO_ID ? 1 : 2;
+  const bleibt = new Map<string, GymProfile>();
+  for (const g of gyms) {
+    const k = g.name.toLowerCase();
+    const bisher = bleibt.get(k);
+    if (!bisher || rang(g) < rang(bisher)) bleibt.set(k, g);
+  }
+  gyms = gyms.filter((g) => bleibt.get(g.name.toLowerCase()) === g);
 
   if (gyms.length === 0) {
     gyms = [{ id: ORT_ZUHAUSE_ID, name: "Zuhause", equip: cleanEquip(equipFlat) }];

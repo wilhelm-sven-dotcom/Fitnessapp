@@ -14,8 +14,8 @@ import { GeraetBild } from "@/components/geraete/GeraetBild";
 import { GeraetFotoAktionen } from "@/components/geraete/GeraetFotoAktionen";
 import type { GeraetKey } from "@/components/geraete/GeraetZeichnung";
 import { GuideSheet } from "@/components/workout/GuideSheet";
-import { PhasenFigur } from "@/components/phasen/PhasenFigur";
-import { PATTERN_FIGUR } from "@/lib/phasen/figuren";
+import { BewegungsMini } from "@/components/bewegung/BewegungsMini";
+import { MUSTER_BILD } from "@/lib/bewegung";
 import { REGION_VAR, regionOf } from "@/lib/phasen/band";
 import { WarmupCatalogSection } from "@/components/warmup/WarmupCatalogSection";
 import { useTraining } from "@/components/providers/TrainingProvider";
@@ -251,9 +251,7 @@ export default function ExerciseCatalogPage() {
                     <GeraetBild geraet={g.geraet} dekorativ klein />
                   </span>
                 ) : g.pat ? (
-                  <span aria-hidden className="w-9 shrink-0">
-                    <PhasenFigur figur={PATTERN_FIGUR[g.pat]} color="var(--fg)" />
-                  </span>
+                  <BewegungsMini id={MUSTER_BILD[g.pat]} className="h-12 w-12" />
                 ) : null}
                 <h2
                   className={cn(
@@ -384,8 +382,8 @@ export default function ExerciseCatalogPage() {
                   aria-pressed={aktiv}
                   className="flex min-h-12 w-full items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fokus"
                 >
-                  <span aria-hidden className="w-8 shrink-0">
-                    {p && <PhasenFigur figur={PATTERN_FIGUR[p]} color="var(--fg)" />}
+                  <span aria-hidden className="w-10 shrink-0">
+                    {p && <BewegungsMini id={MUSTER_BILD[p]} className="h-10 w-10" />}
                   </span>
                   <span className="min-w-0 flex-1 text-base font-semibold text-fg">
                     {p ? PATTERN_LABEL[p] : "Alle Muster"}

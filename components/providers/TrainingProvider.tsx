@@ -55,7 +55,7 @@ import { setCueVolume as setBeepCueVolume } from "@/lib/beep";
 import { muscleOf, weeklyMuscleVolume, type MuscleVolume } from "@/lib/volume";
 import { trainingLevel } from "@/lib/achievements";
 import { mergeCloudLocal } from "@/lib/merge";
-import { ensureOrte, gewichtsstufe, hasFuer } from "@/lib/orte";
+import { ensureOrte, freierOrtsname, gewichtsstufe, hasFuer } from "@/lib/orte";
 import { prTimeline } from "@/lib/records";
 import {
   sanitizeBody,
@@ -1324,7 +1324,7 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const addGym = (name: string, equipPreset?: EquipKey[]): string => {
       const g: GymProfile = {
         id: "gym_" + Date.now().toString(36),
-        name: name.trim().slice(0, 40) || "Neuer Ort",
+        name: freierOrtsname(name.trim().slice(0, 40) || "Neuer Ort", gyms),
         equip: equipPreset ? [...equipPreset] : [...equip],
       };
       void saveGyms([...gyms, g]);
@@ -1333,7 +1333,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
     const renameGym = (id: string, name: string) => {
       const clean = name.trim().slice(0, 40);
       if (!clean) return;
-      void saveGyms(gyms.map((g) => (g.id === id ? { ...g, name: clean } : g)));
+      const frei = freierOrtsname(clean, gyms, id);
+      void saveGyms(gyms.map((g) => (g.id === id ? { ...g, name: frei } : g)));
     };
     const removeGym = (id: string) => {
       if (gyms.length <= 1) return;

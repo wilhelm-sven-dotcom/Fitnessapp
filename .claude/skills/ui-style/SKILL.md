@@ -187,10 +187,12 @@ keinen Kontrast). Die IWF-Tokens (`iwf-*`) bleiben die echten Scheibenfarben
   Gerätebild und Figur), im Aufwärm-Player und -Blatt, als Kachel `w-28`
   rechts auf der Trainingskarte (statt Figur bzw. Gerätebild; ein eigenes
   Gerätefoto hat Vorrang). Steht still bei Figuren aus, reduced motion und
-  erledigter Übung (Phase 1).
+  erledigter Übung (Phase 1). In Listen (Heute, Katalog-Gruppenkopf,
+  Muster-Filter) steht das Vorschaubild `BewegungsMini`: Phase 3, quadratisch,
+  Kachel 44 px mit `rounded-kachel border-dick border-rand`
+  (`<id>-mini.webp`); je Muster steht eine Übung (`MUSTER_BILD`).
 - **Phasenfiguren** (`components/phasen/PhasenFigur.tsx`): die
-  Übungs-Piktogramme für alles ohne Bewegungsbild und für Listen (Heute,
-  Katalog), in Tinte (`var(--fg)`) bzw. Weiß auf blauer Übungskarte;
+  Übungs-Piktogramme für alles ohne Bewegungsbild, in Tinte (`var(--fg)`) bzw. Weiß auf blauer Übungskarte;
   **kein Raster**. Zoetrop nur im Training, Doppel-Gate
   `settings.zoetrope !== false` UND reduced-motion.
 - **Momentbilder** (`lib/momente.ts`, `public/momente/`): Sticker mit weißer
@@ -250,8 +252,9 @@ Sheets 50.
   Bestandszeile (`heute-bestand`) → **Wochenleiste** (Mo–So als Kreise mit
   Rand: trainiert blau mit Haken, heute oranger Ring; Sticker „1 von 3
   Einheiten“) → Ort-Segment → **Einheitskarte** (Rand + harter Schatten: Name
-  der Einheit, Zeilen mit Nummer-Kachel in Regionsfarbe, Figur in Tinte bzw.
-  bei Geräte-Übungen das Gerät als Mini-Bild (44 × 32), Name,
+  der Einheit, Zeilen mit Nummer-Kachel in Regionsfarbe, Vorschaubild der
+  Bewegung (44 × 44; ohne Bild die Figur in Tinte) bzw. bei Geräte-Übungen
+  das Gerät als Mini-Bild (44 × 32), Name,
   „3 × 10–15 Wdh · Muskel“, Gewicht rechts; Trenner gestrichelt; unten die
   Plan-Quelle) → ATLAS-Begründung als Sprechblase → „Zuerst kommt das
   Aufwärmen.“ → Umbauen (Pillen mit Rand) und Wunschfeld → Hinweiskarten →
@@ -300,7 +303,8 @@ Sheets 50.
   Dock nutzen `scrollMarginBottom: var(--nav-h)`.
 - **Katalog:** oben ein Segment mit den Orten und „Alle“ (Vorauswahl: heutiger
   Ort). Am Ort steht nur, was er hergibt; Ort „nur an Geräten“ gruppiert nach
-  Gerät (Mini-Bild 64 × 48, Name, Anzahl, Kamera-Knopf), sonst nach Muster.
+  Gerät (Mini-Bild 64 × 48, Name, Anzahl, Kamera-Knopf), sonst nach Muster
+  (Vorschaubild 48 × 48 der Muster-Übung).
   Darunter eine Filterzeile („Muster“ und „Muskel“ öffnen je ein Blatt,
   „Meine Geräte“ nur unter „Alle“), Zeilen mit Regions-Quadrat (16 px, Rand)
   und „Muskel · Gerät“ (`geraetText`). Übungsdetail (`GuideSheet`) zeigt bei
