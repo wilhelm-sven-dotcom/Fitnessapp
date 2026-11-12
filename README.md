@@ -59,7 +59,7 @@ Muskeln (Wochenarbeit in vier Blaustufen).
 ## Weitere Features
 
 - **Bewegungsbilder** — alle Studio-Übungen (22), alle Aufwärmübungen (24)
-  und 84 der 93 freien Übungen zeigen eine Illustration mit Person, die in vier
+  und 88 der 93 freien Übungen zeigen eine Illustration mit Person, die in vier
   Phasen die Bewegung vormacht: groß im Übungsdetail und beim Aufwärmen, als
   Kachel auf der Trainingskarte. Übungen ohne Bild zeigen die Phasenfigur
   (`public/bewegung/README.md`, Prompt für die übrigen:

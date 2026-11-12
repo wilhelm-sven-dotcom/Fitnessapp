@@ -62,6 +62,7 @@ die alte Datei.
 | Z18 | `bss` | Bulgarian Split Squat |
 | Z20 | `stepup` | Step-ups |
 | Z21 | `split_squat` | Split Squat (statisch) |
+| Z23 | `cossack` | Cossack Squat (Nachlieferung) |
 | Z24 | `pistol_box` | Einbeinige Kniebeuge zur Box (Anker: Box) |
 | Z25 | `glutebridge` | Glute Bridge mit Gewicht |
 | Z26 | `hip_thrust` | Hip Thrust |
@@ -97,6 +98,7 @@ die alte Datei.
 | Z56 | `shrug_db` | Schulterheben mit Kurzhanteln, Frontansicht |
 | Z57 | `chinup` | Chin-ups im Untergriff, Frontansicht |
 | Z58 | `band_pulldown` | Latzug mit Band, Frontansicht |
+| Z59 | `pullup_negative` | Negativ-Klimmzüge (Nachlieferung) |
 | Z61 | `pullover_db` | Überzüge mit Kurzhantel |
 | Z62 | `hammer_curl` | Hammer Curls |
 | Z63 | `tri_oh` | Trizeps über Kopf mit Kurzhantel |
@@ -107,6 +109,7 @@ die alte Datei.
 | Z68 | `diamond_pushup` | Enge Liegestütze |
 | Z69 | `bench_dips` | Dips an der Bank |
 | Z70 | `wrist_curl` | Handgelenk-Curls |
+| Z71 | `reverse_curl` | Reverse Curls im Obergriff (Nachlieferung) |
 | Z72 | `face_pull` | Face Pull mit Band |
 | Z73 | `band_lateral` | Seitheben mit Band, Frontansicht |
 | Z74 | `reverse_fly_db` | Reverse Flys vorgebeugt, Frontansicht |
@@ -120,6 +123,7 @@ die alte Datei.
 | Z82 | `hanging_knee_raise` | Hängendes Knieheben |
 | Z83 | `db_chop` | Holzfäller mit Kurzhantel, Frontansicht |
 | Z84 | `around_world` | Around the World, Frontansicht, im Kreis |
+| Z85 | `wipers` | Scheibenwischer (Nachlieferung, Anker: Matte) |
 | Z86 | `reverse_crunch` | Reverse Crunch |
 | Z87 | `russian_twist` | Russian Twist, Frontansicht |
 | Z89 | `superman` | Rückenschwimmer (Superman) |
@@ -177,17 +181,16 @@ sehen anders aus.
 
 Damit sind alle Motive der Blöcke S und A eingebaut: alle 22 Studio-Übungen
 und alle 24 Aufwärmübungen haben ein Bild. Im freien Bereich (Kurzhantel,
-Langhantel, Kettlebell, Band, Ringe, Box, Bank, Körpergewicht) sind es 84 von
+Langhantel, Kettlebell, Band, Ringe, Box, Bank, Körpergewicht) sind es 88 von
 93; Bird Dog und Dead Bug aus dem Katalog nutzen dabei die Bilder der
 gleichnamigen Aufwärmübungen (`GLEICH_WIE` in `lib/bewegung.ts`). Prompts in
 `docs/bewegungsbilder-prompt-zuhause.md`.
 
-Noch offen (Nachlieferung, Prompt im selben Dokument): Z17 Wandsitz, Z19
-Ausfallschritt rückwärts, Z22 seitlicher Ausfallschritt, Z23 Cossack Squat
-(Füße rutschen), Z59 Negativ-Klimmzüge (Füße unter der Bodenlinie), Z60
-Schulterblatt-Klimmzüge (keine sichtbare Bewegung), Z71 Reverse Curls
-(Langhantel statt Kurzhanteln), Z85 Scheibenwischer (Phasen springen), Z88
-Mountain Climbers (kein Beinwechsel). Kleine Restfehler, beim
+Noch offen nach zwei Durchgängen (Prompt „Nachlieferung 2“ im selben
+Dokument): Z17 Wandsitz, Z19 Ausfallschritt rückwärts, Z22 seitlicher
+Ausfallschritt (Füße rutschen 30 bis 40 px), Z60 Schulterblatt-Klimmzüge
+(keine sichtbare Bewegung), Z88 Mountain Climbers (kein erkennbarer
+Beinwechsel). Bis dahin zeigen sie die Phasenfigur. Kleine Restfehler, beim
 Abspielen kaum sichtbar: S5 rundet unten den Rücken (Abrollen statt neutraler
 Rücken), bei S18 setzt das Kabel am Ende der Stange an statt in der Mitte, bei
 S21 endet in Phase 3 ein Seilende an der Schulter statt in der Hand.

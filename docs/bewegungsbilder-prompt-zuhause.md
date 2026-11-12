@@ -2,8 +2,9 @@
 
 Stand 11.11.2026: Studio (22 Übungen) und Aufwärmen (24) haben alle ein
 Bewegungsbild, im freien Bereich (Kurzhantel, Langhantel, Kettlebell, Band,
-Ringe, Box, Bank, Körpergewicht) 84 von 93. Die Teile 1 bis 4 sind geliefert
-und eingebaut; offen sind die neun Motive unter „Nachlieferung“ am Ende.
+Ringe, Box, Bank, Körpergewicht) 88 von 93. Die Teile 1 bis 4 und die erste
+Nachlieferung sind eingebaut; offen sind die fünf Motive unter
+„Nachlieferung 2“ am Ende.
 
 So gehst du vor:
 
@@ -270,15 +271,17 @@ ABGABE
 Wenn alle Bilder dieses Teils fertig sind: alle unverändert als ZIP, Dateinamen nach dem Muster Z72_Face_Pull_mit_Band.png, dazu eine Liste der Nummern, die nicht gelungen sind, mit Grund.
 ```
 
-## Nachlieferung (9 Bilder: Z17, Z19, Z22, Z23, Z59, Z60, Z71, Z85, Z88)
+## Nachlieferung 2 (5 Bilder: Z17, Z19, Z22, Z60, Z88)
 
-Aus Teil 1 sind 19 von 23 eingebaut, aus den Teilen 2 bis 4 51 von 56. Diese
-neun müssen neu. Anhängen: Z12_Kniebeuge_Koerpergewicht.png,
-Z21_Split_Squat_mit_Kurzhanteln.png, Z36_Liegestuetze.png,
-Z57_Chin-ups.png, Z62_Hammer_Curls.png (alle fünf stehen sauber).
+Aus der ersten Nachlieferung sind Z23, Z59, Z71 und Z85 eingebaut. Diese fünf
+sind zweimal gescheitert. Neu: kleine blaue Mattenstücke als feste
+Markierungen unter den Füßen, bei Z88 bewegt sich nur noch ein Bein. Klappt
+es wieder nicht, bleibt bei diesen fünf die Phasenfigur. Anhängen:
+Z12_Kniebeuge_Koerpergewicht.png, Z23_Cossack_Squat.png (aus der
+Nachlieferung), Z36_Liegestuetze.png, Z57_Chin-ups.png.
 
 ```text
-Erstelle mir neun Bewegungsbilder für eine Fitness-App neu, im exakt gleichen Stil wie die angehängten Bilder: gleiche Person, gleiche Linienstärke, gleiche Farben, gleiches 2 × 2-Raster. Erzeuge die Bilder direkt hintereinander ohne Rückfragen, eins nach dem anderen, und schreib über jedes Bild nur Nummer und Name (z. B. „Z17 · Wandsitz“). Wenn du aufhörst und ich „weiter“ schreibe, machst du mit dem nächsten Bild weiter. Gelingt ein Bild nicht, nenne die Nummer und mach mit dem nächsten weiter. Beginne mit Z17. Diese neun sind im ersten Durchgang gescheitert; die Punkte unter KORREKTUR sind deshalb Pflicht.
+Erstelle mir fünf Bewegungsbilder für eine Fitness-App neu, im exakt gleichen Stil wie die angehängten Bilder: gleiche Person, gleiche Linienstärke, gleiche Farben, gleiches 2 × 2-Raster. Erzeuge die Bilder direkt hintereinander ohne Rückfragen, eins nach dem anderen, und schreib über jedes Bild nur Nummer und Name (z. B. „Z17 · Wandsitz“). Wenn du aufhörst und ich „weiter“ schreibe, machst du mit dem nächsten Bild weiter. Gelingt ein Bild nicht, nenne die Nummer und mach mit dem nächsten weiter. Beginne mit Z17. Diese fünf sind zweimal gescheitert, weil Füße rutschen oder keine Bewegung zu sehen ist. Die blauen Mattenstücke sind feste Markierungen: Sie liegen in allen vier Feldern exakt gleich, und die Füße bleiben genau darauf. Die Punkte unter KORREKTUR sind Pflicht.
 
 STIL
 - Flache Vektor-Illustration, keine Fotografie, keine Verläufe, keine weichen Schatten.
@@ -312,31 +315,20 @@ AUSRÜSTUNG
 - Schrägbank: Flachbank mit schräg gestellter Lehne.
 
 BILDER
-Z17 Wandsitz: eine schlichte weiße Wand als senkrechter Streifen mit dunkler Kontur hinter der Person, mit Abstand zum Feldrand. Füße einen Schritt vor der Wand. 1 stehend, Rücken an der Wand → 4 Oberschenkel waagrecht, Knie im rechten Winkel, Rücken flach an der Wand. Phase 4 ist deutlich tiefer als Phase 3.
-KORREKTUR: Die Schuhe stehen in allen vier Feldern exakt an derselben Stelle, nur Knie, Hüfte und Oberkörper bewegen sich. Die Wand ist in allen vier Feldern gleich hoch, gleich breit und an derselben Stelle.
+Z17 Wandsitz: eine schlichte weiße Wand als senkrechter Streifen mit dunkler Kontur hinter der Person, mit Abstand zum Feldrand. Vor der Wand liegt flach am Boden ein kurzer blauer Mattenstreifen, etwa zwei Schuhlängen lang, in allen vier Feldern exakt an derselben Stelle. 1 stehend, Rücken an der Wand, die Schuhe stehen auf dem Mattenstreifen → 4 Oberschenkel waagrecht, Knie im rechten Winkel, Rücken flach an der Wand.
+KORREKTUR: Die Schuhe stehen in allen vier Feldern genau auf dem Mattenstreifen, die Fersen genau an seiner hinteren Kante. Nur Knie, Hüfte und Oberkörper bewegen sich; die Wand ist in allen Feldern gleich.
 
-Z19 Ausfallschritt rückwärts: 1 aufrecht, Füße nebeneinander → 4 ein Bein weit nach hinten gesetzt, hinteres Knie knapp über dem Boden, vorderer Oberschenkel waagrecht, Rumpf aufrecht.
-KORREKTUR: Der vordere Fuß steht in allen vier Feldern exakt an derselben Stelle wie in Phase 1; nur das hintere Bein setzt nach hinten.
+Z19 Ausfallschritt rückwärts: ohne Gewichte, beide Hände an der Hüfte. Am Boden liegt ein kleines blaues Mattenquadrat, etwa eine Schuhlänge groß, in allen vier Feldern exakt an derselben Stelle. 1 aufrecht, der vordere Fuß steht auf dem Quadrat, der andere daneben → 4 das andere Bein weit nach hinten gesetzt, hinteres Knie knapp über dem Boden, vorderer Oberschenkel waagrecht.
+KORREKTUR: Der vordere Fuß steht in allen vier Feldern genau auf dem Quadrat, die Fußspitze an seiner vorderen Kante.
 
-Z22 Seitlicher Ausfallschritt, Frontansicht: breiter Stand. 1 aufrecht → 4 in ein Bein gesetzt, Oberschenkel dieses Beins etwa waagrecht, anderes Bein gestreckt, beide Füße flach.
-KORREKTUR: Beide Füße stehen in allen vier Feldern exakt an denselben Stellen, die Standbreite bleibt gleich; nur Hüfte, Knie und Oberkörper bewegen sich. Die Bodenlinie liegt in allen vier Feldern auf derselben Höhe.
+Z22 Seitlicher Ausfallschritt, Frontansicht: ohne Gewichte, Hände vor der Brust gefaltet. Am Boden liegen zwei kleine blaue Mattenquadrate in breitem Abstand, in allen vier Feldern exakt an denselben Stellen. 1 aufrecht, je ein Fuß auf einem Quadrat → 4 in ein Bein gesetzt, Oberschenkel dieses Beins etwa waagrecht, anderes Bein gestreckt, beide Füße flach.
+KORREKTUR: Jeder Fuß steht in allen vier Feldern genau auf seinem Quadrat; die Standbreite ändert sich nicht.
 
-Z23 Cossack Squat, Frontansicht: sehr breiter Stand. 1 aufrecht → 4 ganz tief über einem Bein, Po nahe der Ferse, Fuß flach; das andere Bein gestreckt, Ferse am Boden, Zehen zeigen nach oben.
-KORREKTUR: Beide Fersen bleiben in allen vier Feldern exakt an denselben Stellen, die Standbreite bleibt gleich. Der Fuß des gestreckten Beins dreht nur auf der Ferse nach oben, er rutscht nicht nach außen.
+Z60 Schulterblatt-Klimmzüge: hängend an der Stange des Klimmzuggestells, Arme in allen vier Feldern gestreckt. 1 Schultern bis zu den Ohren hochgezogen, der Kopf ist zwischen den Oberarmen eingesunken, die Ohren sind hinter den Oberarmen verdeckt → 4 Schultern tief nach unten gezogen, der Hals ist frei sichtbar, der Kopf steht deutlich über den Schultern, die Brust ist vorgewölbt.
+KORREKTUR: Der ganze Körper hängt in Phase 4 sichtbar höher als in Phase 1: die Füße eine Handbreit höher, der Kopf entsprechend näher an der Stange.
 
-Z59 Negativ-Klimmzüge, Frontansicht: Obergriff an der Stange des Klimmzuggestells. 1 Kinn über der Stange, Arme gebeugt → 4 hängend mit gestreckten Armen, Knie leicht angewinkelt.
-KORREKTUR: Die Stange ist so hoch, dass die Füße auch in Phase 4 deutlich über dem Boden schweben; kein Fuß berührt oder überschneidet die Bodenlinie.
-
-Z60 Schulterblatt-Klimmzüge: hängend an der Stange, Arme in allen vier Feldern gestreckt. 1 passiv hängend, Schultern hochgezogen bis zu den Ohren → 4 Schultern deutlich nach unten gezogen, Brust vorgewölbt; der ganze Körper hängt dadurch sichtbar etwa eine Handbreit höher.
-KORREKTUR: Der Unterschied zwischen Phase 1 und 4 muss deutlich zu sehen sein, am Abstand zwischen Kopf und Stange.
-
-Z71 Reverse Curls im Obergriff: stehend, mit zwei Kurzhanteln, keine Langhantel. Handrücken zeigen nach vorn. 1 Arme gestreckt, Hanteln vor den Oberschenkeln → 4 Unterarme hochgebeugt, Handrücken zeigen nach oben, Ellbogen am Körper.
-
-Z85 Scheibenwischer, Ansicht vom Fußende: Rückenlage auf der Matte, Arme seitlich ausgestreckt am Boden, Knie angewinkelt über der Hüfte. 1 Knie weit zur linken Bildseite abgesenkt → 2 Knie halb zurück zur Mitte → 3 Knie halb zur rechten Bildseite → 4 Knie weit zur rechten Bildseite abgesenkt.
-KORREKTUR: Die Knie wandern Phase für Phase gleichmäßig von der linken zur rechten Bildseite, nie zurück. Schultern und Arme bleiben am Boden.
-
-Z88 Mountain Climbers: Liegestützposition auf der Matte, Arme gestreckt, Hüfte tief, die Hände bleiben in allen Feldern an derselben Stelle. 1 das dem Betrachter zugewandte Knie ganz an der Brust, das andere Bein gestreckt hinten → 4 das abgewandte Knie ganz an der Brust, das zugewandte Bein gestreckt hinten. Phase 2 und 3 zeigen den Wechsel: beide Knie auf halbem Weg.
-KORREKTUR: Phase 1 und Phase 4 unterscheiden sich deutlich: In Phase 1 ist das eine, in Phase 4 das andere Knie an der Brust.
+Z88 Mountain Climbers: Liegestützposition auf der Matte, Arme gestreckt, Hüfte tief, die Hände bleiben in allen Feldern an derselben Stelle. 1 beide Beine gestreckt nach hinten, wie im Liegestütz → 4 das dem Betrachter zugewandte Knie ganz nach vorn an die Brust gezogen; das andere Bein bleibt gestreckt.
+KORREKTUR: Nur das zugewandte Bein bewegt sich; Phase 2 und 3 zeigen es auf dem Weg nach vorn. Das abgewandte Bein ist in allen Feldern gleich.
 
 ABGABE
 Wenn alle Bilder dieses Teils fertig sind: alle unverändert als ZIP, Dateinamen nach dem Muster Z17_Wandsitz.png, dazu eine Liste der Nummern, die nicht gelungen sind, mit Grund.

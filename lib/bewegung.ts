@@ -20,7 +20,7 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "lateral",
   "crunch",
   "calf_raise_bw",
-  // Zuhause, Teil 1: Beine und Hüfte (Z12 bis Z34; Z17, Z19, Z22, Z23 fehlen noch)
+  // Zuhause, Teil 1: Beine und Hüfte (Z12 bis Z34; Z17, Z19, Z22 fehlen noch)
   "squat_bw",
   "squat_bar",
   "front_squat",
@@ -29,6 +29,7 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "bss",
   "stepup",
   "split_squat",
+  "cossack",
   "pistol_box",
   "glutebridge",
   "hip_thrust",
@@ -55,7 +56,7 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "arnold_press",
   "push_press",
   "ohp_kb",
-  // Zuhause, Teil 3: Ziehen und Arme (Z49 bis Z71; Z59, Z60, Z71 fehlen noch)
+  // Zuhause, Teil 3: Ziehen und Arme (Z49 bis Z71; Z60 fehlt noch)
   "row1",
   "ringrow",
   "band_row",
@@ -66,6 +67,7 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "shrug_db",
   "chinup",
   "band_pulldown",
+  "pullup_negative",
   "pullover_db",
   "hammer_curl",
   "tri_oh",
@@ -76,7 +78,8 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "diamond_pushup",
   "bench_dips",
   "wrist_curl",
-  // Zuhause, Teil 4: Schultern und Rumpf (Z72 bis Z90; Z85, Z88 fehlen noch)
+  "reverse_curl",
+  // Zuhause, Teil 4: Schultern und Rumpf (Z72 bis Z90; Z88 fehlt noch)
   "face_pull",
   "band_lateral",
   "reverse_fly_db",
@@ -90,6 +93,7 @@ const MIT_BEWEGUNG: ReadonlySet<string> = new Set([
   "hanging_knee_raise",
   "db_chop",
   "around_world",
+  "wipers",
   "reverse_crunch",
   "russian_twist",
   "superman",
